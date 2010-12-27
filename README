@@ -1,1 +1,4 @@
 See http://forum.hey0.net for information about these plugins.
+
+To compile some packages are required (VersionCheck, JDBCPool)
+that are available here: https://github.com/bootswithdefer/boots-plugins/
