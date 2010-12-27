@@ -6,8 +6,6 @@ import java.util.logging.*;
 import java.sql.*;
 import java.io.*;
 
-import net.minecraft.server.MinecraftServer;
-
 public class LogBlock extends Plugin
 {
 	private static String name = "LogBlock";
@@ -21,7 +19,7 @@ public class LogBlock extends Plugin
 	private int delay = 10;
 	private int defaultDist = 20;
 	private int toolID = 270; // 270 is wood pick axe
-	private int toolblockID = 7; // 78 is adminium
+	private int toolblockID = 7; // 7 is adminium
 	private boolean toolblockRemove = true;
 	private Consumer consumer = null;
 	private Block lastface = null;
@@ -99,7 +97,7 @@ public class LogBlock extends Plugin
 		etc.getLoader().addListener(PluginLoader.Hook.BLOCK_RIGHTCLICKED, listener, this, PluginListener.Priority.LOW);
 		etc.getLoader().addListener(PluginLoader.Hook.BLOCK_PLACE, listener, this, PluginListener.Priority.LOW);
 		etc.getLoader().addListener(PluginLoader.Hook.BLOCK_BROKEN, listener, this, PluginListener.Priority.LOW);
-		etc.getLoader().addListener(PluginLoader.Hook.COMPLEX_BLOCK_CHANGE, listener, this, PluginListener.Priority.LOW);
+		etc.getLoader().addListener(PluginLoader.Hook.SIGN_CHANGE, listener, this, PluginListener.Priority.LOW);
 		etc.getLoader().addListener(PluginLoader.Hook.ITEM_USE, listener, this, PluginListener.Priority.LOW);
 	}
 	
@@ -393,13 +391,9 @@ public class LogBlock extends Plugin
 			return false;
 		}
 		
-		public boolean onComplexBlockChange(Player player, ComplexBlock cb)
+		public boolean onSignChange(Player player, Sign sign)
 		{
-			if (cb instanceof Sign)
-			{
-				Sign sign = (Sign)cb;
-				queueSign(player, sign);
-			}
+			queueSign(player, sign);
 			return false;
 		}
 		
@@ -524,6 +518,7 @@ public class LogBlock extends Plugin
 		}
 	} // end BlockRow
 	
+/* Never used (TooMuchPete 12/26)
 	private class Result // start
 	{
 		public String player;
@@ -542,7 +537,7 @@ public class LogBlock extends Plugin
 			return(String.format("%-6d %-6d %s", created, destroyed, player));
 		}
 	} // end Result
-
+*/
 	private class LogFormatter extends Formatter //start
 	{
 		public String format(LogRecord rec)
