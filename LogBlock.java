@@ -23,8 +23,20 @@ public class LogBlock extends Plugin
 	private boolean toolblockRemove = true;
 	private Consumer consumer = null;
 	private Block lastface = null;
+
+	public enum LogRowType {
+		BLOCK,
+		INVENTORY,
+		REDSTONE,
+		EXPLOSION,
+		VEHICLE,
+		FOOD,
+		ITEM
+	}
 	
-	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
+	
+	
+	private LinkedBlockingQueue<LogRow> bqueue = new LinkedBlockingQueue<LogRow>();
 	
 	static final Logger log = Logger.getLogger("Minecraft");
 	
@@ -99,6 +111,7 @@ public class LogBlock extends Plugin
 		etc.getLoader().addListener(PluginLoader.Hook.BLOCK_BROKEN, listener, this, PluginListener.Priority.LOW);
 		etc.getLoader().addListener(PluginLoader.Hook.SIGN_CHANGE, listener, this, PluginListener.Priority.LOW);
 		etc.getLoader().addListener(PluginLoader.Hook.ITEM_USE, listener, this, PluginListener.Priority.LOW);
+		etc.getLoader().addListener(PluginLoader.Hook.OPEN_INVENTORY, listener, this, PluginListener.Priority.LOW);
 	}
 	
 	private Connection getConnection() throws SQLException
@@ -217,7 +230,7 @@ public class LogBlock extends Plugin
 		if (b == null || typeA < 0 || typeB < 0)
 			return;
 			
-		BlockRow row = new BlockRow(player.getName(), typeB, typeA, b.getX(), b.getY(), b.getZ());
+		LogRow row = new LogRow(LogRowType.BLOCK, player.getName(), typeB, typeA, b.getX(), b.getY(), b.getZ());
 		boolean result = bqueue.offer(row);
 		if (debug)
 			lblog.info(row.toString());
@@ -228,7 +241,7 @@ public class LogBlock extends Plugin
 	private void queueSign(Player player, Sign sign)
 	{
 		int type = etc.getDataSource().getItem("sign");
-		BlockRow row = new BlockRow(player.getName(), 0, type, sign.getX(), sign.getY(), sign.getZ());
+		LogRow row = new LogRow(LogRowType.BLOCK, player.getName(), 0, type, sign.getX(), sign.getY(), sign.getZ());
 
 		String text = "sign";
 		for (int i=0; i < 4; i++)
@@ -240,6 +253,20 @@ public class LogBlock extends Plugin
 			lblog.info(row.toString());
 		if (!result)
 			log.info(name + " failed to queue block for " + player.getName());
+	}
+	
+	private void queueEvent(Player player, int type, int x, int y, int z, LogRowType eventType)
+	{
+		LogRow row = new LogRow(eventType, player.getName(), type, x, y, z);
+
+		boolean result = bqueue.offer(row);
+		if (debug) {
+			lblog.info(row.toString());
+		}
+		
+		if (!result) {
+			log.info(name + " failed to queue block for " + player.getName());
+		}
 	}
 	
 	private int parseTimeSpec(String ts)
@@ -408,6 +435,29 @@ public class LogBlock extends Plugin
 
 			return false;
 		}
+		
+		public boolean onOpenInventory(Player player, Inventory inventory) 
+		{
+			Block storageBlock = null;
+			
+			if (inventory instanceof Chest) {
+				Chest c = (Chest)inventory;
+				storageBlock = c.getBlock();
+			} else if (inventory instanceof DoubleChest) {
+				DoubleChest c = (DoubleChest)inventory;
+				storageBlock = c.getBlock();
+			} else if (inventory instanceof Furnace) {
+				Furnace f = (Furnace)inventory;
+				storageBlock = f.getBlock();
+			} else {
+				// not supported
+				return false;
+			}
+			
+			queueEvent(player, storageBlock.getType(), storageBlock.getX(), storageBlock.getY(), storageBlock.getZ(), LogRowType.INVENTORY);
+			
+	        return false;
+	    }		
 	} // end LBListener
 
 	private class Consumer implements Runnable // start
@@ -419,7 +469,7 @@ public class LogBlock extends Plugin
 		{
 			PreparedStatement ps = null;
 			Connection conn = null;
-			BlockRow b;
+			LogRow b;
 			
 			while (!stop)
 			{
@@ -444,29 +494,70 @@ public class LogBlock extends Plugin
 
 						if (b == null)
 							continue;
-						//b.log();
-						ps = conn.prepareStatement("INSERT INTO blocks (date, player, replaced, type, x, y, z) VALUES (now(),?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
-						ps.setString(1, b.name);
-						ps.setInt(2, b.replaced);
-						ps.setInt(3, b.type);
-						ps.setInt(4, b.x);
-						ps.setInt(5, b.y);
-						ps.setInt(6, b.z);
-						ps.executeUpdate();
 						
-						if (b.extra != null)
-						{
-							ResultSet keys = ps.getGeneratedKeys();
-							keys.next();
-							int key = keys.getInt(1);
-							
-							ps = conn.prepareStatement("INSERT INTO extra (id, extra) values (?,?)");
-							ps.setInt(1, key);
-							ps.setString(2, b.extra);
+						if (b.eventType == LogRowType.BLOCK) {
+							//b.log();
+							ps = conn.prepareStatement("INSERT INTO blocks (date, player, replaced, type, x, y, z) VALUES (now(),?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+							ps.setString(1, b.name);
+							ps.setInt(2, b.replaced);
+							ps.setInt(3, b.type);
+							ps.setInt(4, b.x);
+							ps.setInt(5, b.y);
+							ps.setInt(6, b.z);
 							ps.executeUpdate();
+							
+							if (b.extra != null)
+							{
+								ResultSet keys = ps.getGeneratedKeys();
+								keys.next();
+								int key = keys.getInt(1);
+								
+								ps = conn.prepareStatement("INSERT INTO extra (id, extra) values (?,?)");
+								ps.setInt(1, key);
+								ps.setString(2, b.extra);
+								ps.executeUpdate();
+							}
+							
+							count++;
+						} else {
+							String eventCategory = "";
+							
+							switch (b.eventType) {
+								case INVENTORY:
+									eventCategory = "viewContents";
+									break;
+								case REDSTONE:
+									eventCategory = "redstone";
+									break;
+								case VEHICLE:
+									//TODO: Vehicles should probably have more granularity, use extra?
+									eventCategory = "vehicle";
+									break;
+								case FOOD:
+									eventCategory = "eat";
+									break;
+								case EXPLOSION:
+									eventCategory = "explosion";
+									break;
+								case ITEM:
+									eventCategory = "useItem";
+									break;
+								default:
+									eventCategory = "unknownEvent";
+									break;
+							}
+							
+							ps = conn.prepareStatement("INSERT INTO events (date, category, player, type, x, y, z) VALUES (now(),?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+							ps.setString(1, eventCategory);
+							ps.setString(2, b.name);
+							ps.setInt(3, b.type);
+							ps.setInt(4, b.x);
+							ps.setInt(5, b.y);
+							ps.setInt(6, b.z);
+							ps.executeUpdate();
+							
+							count++;
 						}
-						
-						count++;
 					}
 					if (debug && count > 0)
 						lblog.info("Commiting " + count + " inserts.");
@@ -489,15 +580,17 @@ public class LogBlock extends Plugin
 		}
 	} // end LBDB
 	
-	private class BlockRow // start
+	private class LogRow // start
 	{
+		public LogRowType eventType;
 		public String name;
 		public int replaced, type;
 		public int x, y, z;
 		public String extra;
 		
-		BlockRow(String name, int replaced, int type, int x, int y, int z)
+		LogRow(LogRowType eventType, String name, int replaced, int type, int x, int y, int z)
 		{
+			this.eventType = eventType;
 			this.name = name;
 			this.replaced = replaced;
 			this.type = type;
@@ -505,6 +598,18 @@ public class LogBlock extends Plugin
 			this.y = y;
 			this.z = z;
 			this.extra = null;
+		}
+		
+		LogRow(LogRowType eventType, String name, int type, int x, int y, int z)
+		{
+			this.eventType = eventType;
+			this.name = name;
+			this.type = type;
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.extra = null;
+			this.replaced = -1;
 		}
 
 		public void addExtra(String extra)
