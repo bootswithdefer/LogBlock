@@ -99,7 +99,7 @@ public class LogBlock extends Plugin
 		etc.getLoader().addListener(PluginLoader.Hook.BLOCK_RIGHTCLICKED, listener, this, PluginListener.Priority.LOW);
 		etc.getLoader().addListener(PluginLoader.Hook.BLOCK_PLACE, listener, this, PluginListener.Priority.LOW);
 		etc.getLoader().addListener(PluginLoader.Hook.BLOCK_BROKEN, listener, this, PluginListener.Priority.LOW);
-		etc.getLoader().addListener(PluginLoader.Hook.COMPLEX_BLOCK_CHANGE, listener, this, PluginListener.Priority.LOW);
+		etc.getLoader().addListener(PluginLoader.Hook.SIGN_CHANGE, listener, this, PluginListener.Priority.LOW);
 		etc.getLoader().addListener(PluginLoader.Hook.ITEM_USE, listener, this, PluginListener.Priority.LOW);
 	}
 	
@@ -393,13 +393,9 @@ public class LogBlock extends Plugin
 			return false;
 		}
 		
-		public boolean onComplexBlockChange(Player player, ComplexBlock cb)
+		public boolean onSignChange(Player player, Sign sign)
 		{
-			if (cb instanceof Sign)
-			{
-				Sign sign = (Sign)cb;
-				queueSign(player, sign);
-			}
+			queueSign(player, sign);
 			return false;
 		}
 		
