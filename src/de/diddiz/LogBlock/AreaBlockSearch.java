@@ -1,4 +1,4 @@
-package com.bukkit.diddiz.LogBlock;
+package de.diddiz.LogBlock;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

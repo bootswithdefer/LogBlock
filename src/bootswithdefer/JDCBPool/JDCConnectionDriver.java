@@ -1,4 +1,4 @@
-package com.bukkit.bootswithdefer.JDCBPool;
+package bootswithdefer.JDCBPool;
 
 import java.sql.Connection;
 import java.sql.Driver;

@@ -1,4 +1,4 @@
-package com.bukkit.diddiz.LogBlock;
+package de.diddiz.LogBlock;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -16,6 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -34,8 +35,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import com.bukkit.bootswithdefer.JDCBPool.JDCConnectionDriver;
+import bootswithdefer.JDCBPool.JDCConnectionDriver;
 import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class LogBlock extends JavaPlugin
@@ -50,14 +50,12 @@ public class LogBlock extends JavaPlugin
 	private String dbUsername = "";
 	private String dbPassword = "";
 	private String name = "[LogBlock]";
-	private int delay = 10;
+	private int delay = 6;
 	private int defaultDist = 20;
 	private int toolID = 270;
 	private int toolblockID = 7;
 	private boolean toolblockRemove = true;
 	private Consumer consumer = null;
-	
-	
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	
 	public LogBlock(PluginLoader pluginLoader, Server instance,	PluginDescriptionFile desc, File folder, File plugin, ClassLoader cLoader)
@@ -139,7 +137,7 @@ public class LogBlock extends JavaPlugin
 		pm.registerEvent(Type.PLAYER_ITEM, lblPlayerListener, Event.Priority.Monitor, this);
 		consumer = new Consumer();
 		new Thread(consumer).start();
-		log.info(name + " v" + getDescription().getVersion() + " Plugin Enabled.");
+		log.info("Logblock v" + getDescription().getVersion() + " enabled.");
 	}
     
 	@Override
@@ -220,7 +218,7 @@ public class LogBlock extends JavaPlugin
 					msg = msg + "destroyed " + Material.getMaterial(rs.getInt("replaced")).toString().toLowerCase().replace('_', ' ');
 				else if (rs.getInt("replaced") == 0)
 				{
-					if (rs.getInt("type") == 323) // sign
+					if (rs.getInt("type") == 323)
 						msg = msg + "created " + rs.getString("extra");
 					else
 						msg = msg + "created " + Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' ');
@@ -248,11 +246,11 @@ public class LogBlock extends JavaPlugin
 			player.sendMessage("§3None.");
 	}
 
-	private void queueBlock(String playerName, Block block, int typeBefore, int typeAfter)
+	private void queueBlock(String playerName, Block block, int typeBefore, int typeAfter, byte data)
 	{
 		if (block == null || typeBefore < 0 || typeAfter < 0)
 			return;
-		BlockRow row = new BlockRow(playerName, typeBefore, typeAfter, block.getX(), block.getY(), block.getZ());
+		BlockRow row = new BlockRow(playerName, typeBefore, typeAfter, data, block.getX(), block.getY(), block.getZ());
 		boolean result = bqueue.offer(row);
 		if (!result)
 			log.info(name + " failed to queue block for " + playerName);
@@ -275,8 +273,7 @@ public class LogBlock extends JavaPlugin
     {
     	if (usePermissions)
     		return Permissions.Security.permission(player, permission);
-    	else
-    	{
+    	else {
     		if (permission.equals("logblock.lookup"))
     			return true;
     		else if (permission.equals("logblock.area"))
@@ -406,10 +403,12 @@ public class LogBlock extends JavaPlugin
 		
 		public void onPlayerItem(PlayerItemEvent event)
 		{
-			if (event.getMaterial() == Material.WATER_BUCKET)
-				queueBlock(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()), 0, 9);
-			else if (event.getMaterial() == Material.LAVA_BUCKET)
-				queueBlock(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()), 0, 11);
+			if (event.getPlayer().getWorld() == worlds.get(0)) {
+				if (event.getMaterial() == Material.WATER_BUCKET)
+					queueBlock(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()), 0, 9, (byte)0);
+				else if (event.getMaterial() == Material.LAVA_BUCKET)
+					queueBlock(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()), 0, 11, (byte)0);
+			}
 		}
 	}
 		
@@ -417,25 +416,28 @@ public class LogBlock extends JavaPlugin
 	{ 
 		public void onBlockRightClick(BlockRightClickEvent event)
 		{
-			if (event.getItemInHand().getTypeId() == toolID && CheckPermission(event.getPlayer(), "logblock.lookup"))
+			if (event.getItemInHand().getTypeId() == toolID && CheckPermission(event.getPlayer(), "logblock.lookup") && event.getPlayer().getWorld() == worlds.get(0))
 				showBlockHistory(event.getPlayer(), event.getBlock());
 		}
 		
 	    public void onBlockPlace(BlockPlaceEvent event)
 	    {
-	    	if (event.getItemInHand().getTypeId() == toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup"))
-	    	{
-	    		showBlockHistory(event.getPlayer(), event.getBlockPlaced());
-				if (toolblockRemove)
-					event.setCancelled(true);
+	    	if (event.getPlayer().getWorld() == worlds.get(0)) {
+		    	if (event.getItemInHand().getTypeId() == toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup"))
+		    	{
+		    		showBlockHistory(event.getPlayer(), event.getBlockPlaced());
+					if (toolblockRemove)
+						event.setCancelled(true);
+		    	}
+		    	else
+		    		queueBlock(event.getPlayer().getName(), event.getBlockPlaced(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
 	    	}
-	    	else
-	    		queueBlock(event.getPlayer().getName(), event.getBlockPlaced(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId());
 	    }
 	    
 	    public void onBlockBreak(BlockBreakEvent event)
 	    {
-	    	queueBlock(event.getPlayer().getName(), event.getBlock(), event.getBlock().getTypeId(), 0);
+	    	if (event.getPlayer().getWorld() == getServer().getWorlds().get(0))
+	    		queueBlock(event.getPlayer().getName(), event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 	    }
 	}
 
@@ -467,13 +469,14 @@ public class LogBlock extends JavaPlugin
 
 						if (b == null)
 							continue;
-						ps = conn.prepareStatement("INSERT INTO blocks (date, player, replaced, type, x, y, z) VALUES (now(),?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+						ps = conn.prepareStatement("INSERT INTO blocks (date, player, replaced, type, data, x, y, z) VALUES (now(),?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
 						ps.setString(1, b.name);
 						ps.setInt(2, b.replaced);
 						ps.setInt(3, b.type);
-						ps.setInt(4, b.x);
-						ps.setInt(5, b.y);
-						ps.setInt(6, b.z);
+						ps.setByte(4, b.data);
+						ps.setInt(5, b.x);
+						ps.setInt(6, b.y);
+						ps.setInt(7, b.z);
 						ps.executeUpdate();
 						
 						if (b.extra != null)
@@ -513,14 +516,16 @@ public class LogBlock extends JavaPlugin
 	{
 		public String name;
 		public int replaced, type;
+		public byte data;
 		public int x, y, z;
 		public String extra;
 		
-		BlockRow(String name, int replaced, int type, int x, int y, int z)
+		BlockRow(String name, int replaced, int type, byte data, int x, int y, int z)
 		{
 			this.name = name;
 			this.replaced = replaced;
 			this.type = type;
+			this.data = data;
 			this.x = x;
 			this.y = y;
 			this.z = z;
@@ -544,7 +549,7 @@ public class LogBlock extends JavaPlugin
 
 		Rollback(Connection conn, String name, int minutes)
 		{
-			String query = "select type, replaced, x, y, z from blocks where player = ? and date > date_sub(now(), interval ? minute) order by date desc";
+			String query = "select type, data, replaced, x, y, z from blocks where player = ? and date > date_sub(now(), interval ? minute) order by date desc";
 			PreparedStatement ps = null;
 			ResultSet rs = null;
 			edits.clear();
@@ -558,7 +563,7 @@ public class LogBlock extends JavaPlugin
 
 				while (rs.next())
 				{
-					Edit e = new Edit(rs.getInt("type"), rs.getInt("replaced"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
+					Edit e = new Edit(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
 					edits.offer(e);
 				}
 			} catch (SQLException ex) {
@@ -599,11 +604,13 @@ public class LogBlock extends JavaPlugin
 		{
 			int type, replaced;
 			int x, y, z;
+			byte data;
 			
-			Edit(int type, int replaced, int x, int y, int z)
+			Edit(int type, int replaced, byte data, int x, int y, int z)
 			{
 				this.type = type;
 				this.replaced = replaced;
+				this.data = data;
 				this.x = x;
 				this.y = y;
 				this.z = z;
@@ -614,8 +621,10 @@ public class LogBlock extends JavaPlugin
 				Block block = getServer().getWorlds().get(0).getBlockAt(x, y, z);
 				if (block.getTypeId() == type)
 				{
-					if (block.setTypeId(replaced))
+					if (block.setTypeId(replaced)) {
+						block.setData(data);
 						log.info("R (" + x + ", " + y + ", " + z + ") " + replaced + " " + type);
+					}
 					else
 						log.info("r (" + x + ", " + y + ", " + z + ") " + replaced + " " + type);
 				}

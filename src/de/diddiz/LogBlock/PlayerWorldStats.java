@@ -1,4 +1,4 @@
-package com.bukkit.diddiz.LogBlock;
+package de.diddiz.LogBlock;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,17 +12,15 @@ import java.util.logging.Logger;
 
 import org.bukkit.entity.Player;
 
-public class AreaStats implements Runnable
+public class PlayerWorldStats implements Runnable
 {
 	static final Logger log = Logger.getLogger("Minecraft");
 	private Player player;
-	private int size;
 	private Connection conn = null;
-	
-	AreaStats(Connection conn, Player player, int size)
+
+	PlayerWorldStats(Connection conn, Player player)
 	{
 		this.player = player;
-		this.size = size;
 		this.conn = conn;
 	}
 	public void run()
@@ -36,13 +34,7 @@ public class AreaStats implements Runnable
 
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT player, count(player) as num from blocks where type > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by player order by count(player) desc limit 10", Statement.RETURN_GENERATED_KEYS);
-			ps.setInt(1, player.getLocation().getBlockY()-size);
-			ps.setInt(2, player.getLocation().getBlockY()+size);
-			ps.setInt(3, player.getLocation().getBlockX()-size);
-			ps.setInt(4, player.getLocation().getBlockX()+size);
-			ps.setInt(5, player.getLocation().getBlockZ()-size);
-			ps.setInt(6, player.getLocation().getBlockZ()+size);
+			ps = conn.prepareStatement("SELECT player, count(player) as num from blocks where type > 0 group by player order by count(player) desc limit 5", Statement.RETURN_GENERATED_KEYS);
 			rs = ps.executeQuery();
 			while (rs.next())
 			{
@@ -52,13 +44,7 @@ public class AreaStats implements Runnable
 			rs.close();
 			ps.close();
 			
-			ps = conn.prepareStatement("SELECT player, count(player) as num from blocks where replaced > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by player order by count(player) desc limit 10", Statement.RETURN_GENERATED_KEYS);
-			ps.setInt(1, player.getLocation().getBlockY()-size);
-			ps.setInt(2, player.getLocation().getBlockY()+size);
-			ps.setInt(3, player.getLocation().getBlockX()-size);
-			ps.setInt(4, player.getLocation().getBlockX()+size);
-			ps.setInt(5, player.getLocation().getBlockZ()-size);
-			ps.setInt(6, player.getLocation().getBlockZ()+size);
+			ps = conn.prepareStatement("SELECT player, count(player) as num from blocks where replaced > 0 group by player order by count(player) desc limit 5", Statement.RETURN_GENERATED_KEYS);
 			rs = ps.executeQuery();
 			while (rs.next())
 			{
@@ -81,7 +67,7 @@ public class AreaStats implements Runnable
 			}
 		}
 
-		player.sendMessage("§3Within " + size + " blocks of you: ");
+		player.sendMessage("§3Within entire world:");
 		if (players.size() == 0)
 		{
 			player.sendMessage("§3No results found.");
@@ -101,3 +87,4 @@ public class AreaStats implements Runnable
 		}
 	}
 }
+// END threaded commands

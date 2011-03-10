@@ -1,6 +1,6 @@
 name: LogBlock
-version: 0.1
+version: 0.2
 author: DiddiZ, bootswithdefer
 website: http://www.diddiz.de/minecraft/
-main: com.bukkit.diddiz.LogBlock.LogBlock
+main: de.diddiz.LogBlock.LogBlock
 description: Logs blocks.
