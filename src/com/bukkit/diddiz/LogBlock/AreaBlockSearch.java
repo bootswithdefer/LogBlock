@@ -1,9 +1,18 @@
-import java.util.HashSet;
-import java.util.HashMap;
-import java.text.SimpleDateFormat;
+package com.bukkit.diddiz.LogBlock;
 
-import java.util.logging.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
 public class AreaBlockSearch implements Runnable
 {
@@ -35,15 +44,15 @@ public class AreaBlockSearch implements Runnable
 			ps = conn.prepareStatement("SELECT * from blocks where (type = ? or replaced = ?) and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? order by date desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, type);
 			ps.setInt(2, type);
-			ps.setInt(3, (int)(location.y) - size);
-			ps.setInt(4, (int)(location.y) + size);
-			ps.setInt(5, (int)(location.x) - size);
-			ps.setInt(6, (int)(location.x) + size);
-			ps.setInt(7, (int)(location.z) - size);
-			ps.setInt(8, (int)(location.z) + size);
+			ps.setInt(3, location.getBlockY() - size);
+			ps.setInt(4, location.getBlockY() + size);
+			ps.setInt(5, location.getBlockX() - size);
+			ps.setInt(6, location.getBlockX() + size);
+			ps.setInt(7, location.getBlockZ() - size);
+			ps.setInt(8, location.getBlockZ() + size);
 			rs = ps.executeQuery();
 
-			player.sendMessage(Colors.Blue + "Block history within " + size + " blocks of  " + (int)(location.x) + ", " + (int)(location.y) + ", " + (int)(location.z) + ": ");
+			player.sendMessage("§3Block history within " + size + " blocks of  " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + ": ");
 
 			while (rs.next())
 			{
@@ -51,12 +60,12 @@ public class AreaBlockSearch implements Runnable
 				String datestr = formatter.format(date);
 				String msg = datestr + " " + rs.getString("player") + " (" + rs.getInt("x") + ", " + rs.getInt("y") + ", " + rs.getInt("z") + ") ";
 				if (rs.getInt("type") == 0)
-					msg = msg + "destroyed " + etc.getDataSource().getItem(rs.getInt("replaced"));
+					msg = msg + "destroyed " + Material.getMaterial(rs.getInt("replaced")).toString().toLowerCase().replace('_', ' ');
 				else if (rs.getInt("replaced") == 0)
-					msg = msg + "created " + etc.getDataSource().getItem(rs.getInt("type"));
+					msg = msg + "created " + Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' ');
 				else
-					msg = msg + "replaced " + etc.getDataSource().getItem(rs.getInt("replaced")) + " with " + etc.getDataSource().getItem(rs.getInt("type"));
-				player.sendMessage(Colors.Gold + msg);
+					msg = msg + "replaced " + Material.getMaterial(rs.getInt("replaced")).toString().toLowerCase().replace('_', ' ') + " with " + Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' ');
+				player.sendMessage("§6" + msg);
 				hist = true;
 			}
 		} catch (SQLException ex) {
@@ -74,6 +83,6 @@ public class AreaBlockSearch implements Runnable
 			}
 		}
 		if (!hist)
-			player.sendMessage(Colors.Blue + "None.");
+			player.sendMessage("§3None.");
 	}
 }

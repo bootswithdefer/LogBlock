@@ -1,8 +1,16 @@
-import java.util.HashSet;
-import java.util.HashMap;
+package com.bukkit.diddiz.LogBlock;
 
-import java.util.logging.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.bukkit.entity.Player;
 
 public class PlayerWorldStats implements Runnable
 {
@@ -59,14 +67,14 @@ public class PlayerWorldStats implements Runnable
 			}
 		}
 
-		player.sendMessage(Colors.Blue + "Within entire world:");
+		player.sendMessage("§3Within entire world:");
 		if (players.size() == 0)
 		{
-			player.sendMessage(Colors.Blue + "No results found.");
+			player.sendMessage("§3No results found.");
 			return;
 		}
 		
-		player.sendMessage(Colors.Gold + String.format("%-6s %-6s %s", "Creat", "Destr", "Player"));
+		player.sendMessage("§6" + String.format("%-6s %-6s %s", "Creat", "Destr", "Player"));
 		for (String p: players)
 		{
 			Integer c = created.get(p);
@@ -75,7 +83,7 @@ public class PlayerWorldStats implements Runnable
 				c = 0;
 			if (d == null)
 				d = 0;
-			player.sendMessage(Colors.Gold + String.format("%-6d %-6d %s", c, d, p));
+			player.sendMessage("§6" + String.format("%-6d %-6d %s", c, d, p));
 		}
 	}
 }

@@ -1,8 +1,17 @@
-import java.util.HashSet;
-import java.util.HashMap;
+package com.bukkit.diddiz.LogBlock;
 
-import java.util.logging.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
 public class PlayerAreaStats implements Runnable
 {
@@ -32,30 +41,30 @@ public class PlayerAreaStats implements Runnable
 			conn.setAutoCommit(false);
 			ps = conn.prepareStatement("SELECT type, count(type) as num from blocks where type > 0 and player = ? and y > 0 and x > ? and x < ? and z > ? and z < ? group by type order by count(replaced) desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, name);
-			ps.setInt(2, (int)player.getX()-size);
-			ps.setInt(3, (int)player.getX()+size);
-			ps.setInt(4, (int)player.getZ()-size);
-			ps.setInt(5, (int)player.getZ()+size);
+			ps.setInt(2, player.getLocation().getBlockX()-size);
+			ps.setInt(3, player.getLocation().getBlockX()+size);
+			ps.setInt(4, player.getLocation().getBlockZ()-size);
+			ps.setInt(5, player.getLocation().getBlockZ()+size);
 			rs = ps.executeQuery();
 			while (rs.next())
 			{
-				types.add(etc.getDataSource().getItem(rs.getInt("type")));
-				created.put(etc.getDataSource().getItem(rs.getInt("type")), rs.getInt("num"));
+				types.add(Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' '));
+				created.put(Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' '), rs.getInt("num"));
 			}
 			rs.close();
 			ps.close();
 			
 			ps = conn.prepareStatement("SELECT replaced, count(replaced) as num from blocks where replaced > 0 and player = ? and y > 0 and x > ? and x < ? and z > ? and z < ? group by replaced order by count(replaced) desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, name);
-			ps.setInt(2, (int)player.getX()-size);
-			ps.setInt(3, (int)player.getX()+size);
-			ps.setInt(4, (int)player.getZ()-size);
-			ps.setInt(5, (int)player.getZ()+size);
+			ps.setInt(2, player.getLocation().getBlockX()-size);
+			ps.setInt(3, player.getLocation().getBlockX()+size);
+			ps.setInt(4, player.getLocation().getBlockZ()-size);
+			ps.setInt(5, player.getLocation().getBlockZ()+size);
 			rs = ps.executeQuery();
 			while (rs.next())
 			{
-				types.add(etc.getDataSource().getItem(rs.getInt("replaced")));
-				destroyed.put(etc.getDataSource().getItem(rs.getInt("replaced")), rs.getInt("num"));
+				types.add(Material.getMaterial(rs.getInt("replaced")).toString().toLowerCase().replace('_', ' '));
+				destroyed.put(Material.getMaterial(rs.getInt("replaced")).toString().toLowerCase().replace('_', ' '), rs.getInt("num"));
 			}
 			
 		} catch (SQLException ex) {
@@ -73,14 +82,14 @@ public class PlayerAreaStats implements Runnable
 			}
 		}
 
-		player.sendMessage(Colors.Blue + "Player " + name + " within " + size + " blocks of you: ");
+		player.sendMessage("§3Player " + name + " within " + size + " blocks of you: ");
 		if (types.size() == 0)
 		{
-			player.sendMessage(Colors.Blue + "No results found.");
+			player.sendMessage("§3No results found.");
 			return;
 		}
 		
-		player.sendMessage(Colors.Gold + String.format("%-6s %-6s %s", "Creat", "Destr", "Block"));
+		player.sendMessage("§6" + String.format("%-6s %-6s %s", "Creat", "Destr", "Block"));
 		for (String t: types)
 		{
 			Integer c = created.get(t);
@@ -89,7 +98,7 @@ public class PlayerAreaStats implements Runnable
 				c = 0;
 			if (d == null)
 				d = 0;
-			player.sendMessage(Colors.Gold + String.format("%-6d %-6d %s", c, d, t));
+			player.sendMessage("§6" + String.format("%-6d %-6d %s", c, d, t));
 		}
 	}
 }
