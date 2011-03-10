@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -22,8 +23,7 @@ public class AreaBlockSearch implements Runnable
 	private Connection conn = null;
 	private String table;
 	
-	AreaBlockSearch(Connection conn, Player player, int type, int size, String table)
-	{
+	AreaBlockSearch(Connection conn, Player player, int type, int size, String table) {
 		this.player = player;
 		this.location = player.getLocation();
 		this.type = type;
@@ -31,8 +31,8 @@ public class AreaBlockSearch implements Runnable
 		this.conn = conn;
 		this.table = table;
 	}
-	public void run()
-	{
+	
+	public void run() {
 		boolean hist = false;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -52,7 +52,7 @@ public class AreaBlockSearch implements Runnable
 			ps.setInt(8, location.getBlockZ() + size);
 			rs = ps.executeQuery();
 
-			player.sendMessage("§3Block history within " + size + " blocks of  " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + ": ");
+			player.sendMessage(ChatColor.DARK_AQUA + "Block history for " + getMaterialName(type) + " within " + size + " blocks of  " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ() + ": ");
 
 			while (rs.next())
 			{
@@ -60,11 +60,11 @@ public class AreaBlockSearch implements Runnable
 				String datestr = formatter.format(date);
 				String msg = datestr + " " + rs.getString("player") + " (" + rs.getInt("x") + ", " + rs.getInt("y") + ", " + rs.getInt("z") + ") ";
 				if (rs.getInt("type") == 0)
-					msg = msg + "destroyed " + Material.getMaterial(rs.getInt("replaced")).toString().toLowerCase().replace('_', ' ');
+					msg = msg + "destroyed " + getMaterialName(rs.getInt("replaced"));
 				else if (rs.getInt("replaced") == 0)
-					msg = msg + "created " + Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' ');
+					msg = msg + "created " + getMaterialName(rs.getInt("type"));
 				else
-					msg = msg + "replaced " + Material.getMaterial(rs.getInt("replaced")).toString().toLowerCase().replace('_', ' ') + " with " + Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' ');
+					msg = msg + "replaced " + getMaterialName(rs.getInt("replaced")) + " with " + getMaterialName(rs.getInt("type"));
 				player.sendMessage("§6" + msg);
 				hist = true;
 			}
@@ -84,5 +84,9 @@ public class AreaBlockSearch implements Runnable
 		}
 		if (!hist)
 			player.sendMessage("§3None.");
+	}
+	
+	private String getMaterialName(int type) {
+		return Material.getMaterial(type).toString().toLowerCase().replace('_', ' ');
 	}
 }
