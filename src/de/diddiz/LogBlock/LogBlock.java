@@ -28,6 +28,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRightClickEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerItemEvent;
 import org.bukkit.event.player.PlayerListener;
@@ -54,6 +55,7 @@ public class LogBlock extends JavaPlugin
 	private int defaultDist = 20;
 	private int toolID = 270;
 	private int toolblockID = 7;
+	private int keepLogDays = -1;
 	private boolean toolblockRemove = true;
 	private Consumer consumer = null;
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
@@ -83,7 +85,8 @@ public class LogBlock extends JavaPlugin
 						+ "tool-block-id : 7" + crlf
 						+ "tool-block-remove : true" + crlf
 						+ "default-distance : 20" + crlf
-						+ "usePermissions : false");
+						+ "usePermissions : false" + crlf
+						+ "keepLogDays : -1");
 				writer.close();
 				log.info(name + " Config created");
 			}
@@ -97,6 +100,7 @@ public class LogBlock extends JavaPlugin
 			toolblockID = getConfiguration().getInt("tool-block-id", 7);
 			toolblockRemove = getConfiguration().getBoolean("tool-block-remove", true);
 			defaultDist = getConfiguration().getInt("default-distance", 20);
+			keepLogDays = getConfiguration().getInt("keepLogDays", -1);
 			if (getConfiguration().getBoolean("usePermissions", false))
 			{
 				if (getServer().getPluginManager().getPlugin("Permissions") != null)
@@ -129,11 +133,14 @@ public class LogBlock extends JavaPlugin
 			log.log(Level.SEVERE, name + " Errors while loading, check logs for more information.");
 			return;
 		}
+		if (keepLogDays >= 0)
+			dropOldLogs();
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_COMMAND, lblPlayerListener, Event.Priority.Normal, this);
 		pm.registerEvent(Type.BLOCK_RIGHTCLICKED, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.BLOCK_PLACED, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.BLOCK_BREAK, lblBlockListener, Event.Priority.Monitor, this);
+		pm.registerEvent(Type.SIGN_CHANGE, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.PLAYER_ITEM, lblPlayerListener, Event.Priority.Monitor, this);
 		consumer = new Consumer();
 		new Thread(consumer).start();
@@ -191,6 +198,30 @@ public class LogBlock extends JavaPlugin
 		return false;
 	}
 	
+	private void dropOldLogs()
+	{
+		Connection conn = null;
+		Statement state = null;
+		try {
+			conn = getConnection();
+			state = conn.createStatement();
+			int deleted = state.executeUpdate("DELETE FROM blocks WHERE date < date_sub(now(), INTERVAL " + keepLogDays + " DAY)");
+			log.info(name + "Cleared out database. Deleted " + deleted + " entries.");
+		} catch (SQLException ex) {
+			log.log(Level.SEVERE, name + " SQL exception", ex);
+		} finally {
+			try {
+				if (state != null)
+					state.close();
+				if (conn != null)
+					conn.close();
+			} catch (SQLException ex) {
+				log.log(Level.SEVERE, name + " SQL exception on close", ex);
+			}
+		}
+	}
+	
+	
 	private void showBlockHistory(Player player, Block b)
 	{
 		player.sendMessage("§3Block history (" + b.getX() + ", " + b.getY() + ", " + b.getZ() + "): ");
@@ -218,7 +249,7 @@ public class LogBlock extends JavaPlugin
 					msg = msg + "destroyed " + Material.getMaterial(rs.getInt("replaced")).toString().toLowerCase().replace('_', ' ');
 				else if (rs.getInt("replaced") == 0)
 				{
-					if (rs.getInt("type") == 323)
+					if (rs.getInt("type") == 63)
 						msg = msg + "created " + rs.getString("extra");
 					else
 						msg = msg + "created " + Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' ');
@@ -256,18 +287,17 @@ public class LogBlock extends JavaPlugin
 			log.info(name + " failed to queue block for " + playerName);
 	}
 	
-	//private void queueSign(Player player, Sign sign)
-	//{
-	//	int type = 63;
-	//	BlockRow row = new BlockRow(player.getName(), 0, type, sign.getX(), sign.getY(), sign.getZ());
-	//	String text = "sign";
-	//	for (int i=0; i < 4; i++)
-	//		text = text + " [" + sign.getLine(i) + "]";
-	//	row.addExtra(text);
-	//	boolean result = bqueue.offer(row);
-	//	if (!result)
-	//		log.info(name + " failed to queue block for " + player.getName());
-	//}
+	private void queueSign(String playerName, Block block, String[] signText)
+	{
+		BlockRow row = new BlockRow(playerName, 0, 63, block.getData(), block.getX(), block.getY(), block.getZ());
+		String text = "sign";
+		for (int i = 0; i < 4; i++)
+			text += " [" + signText[i] + "]";
+		row.addExtra(text);
+		boolean result = bqueue.offer(row);
+		if (!result)
+			log.info(name + " failed to queue block for " + playerName);
+	}
 	
     private boolean CheckPermission(Player player, String permission)
     {
@@ -408,6 +438,8 @@ public class LogBlock extends JavaPlugin
 					queueBlock(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()), 0, 9, (byte)0);
 				else if (event.getMaterial() == Material.LAVA_BUCKET)
 					queueBlock(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()), 0, 11, (byte)0);
+				else if (event.getMaterial() == Material.FLINT_AND_STEEL)
+					queueBlock(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()), 0, 51, (byte)0);
 			}
 		}
 	}
@@ -436,8 +468,13 @@ public class LogBlock extends JavaPlugin
 	    
 	    public void onBlockBreak(BlockBreakEvent event)
 	    {
-	    	if (event.getPlayer().getWorld() == getServer().getWorlds().get(0))
+	    	if (event.getPlayer().getWorld() == worlds.get(0))
 	    		queueBlock(event.getPlayer().getName(), event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+	    }
+	    
+	    public void onSignChange(SignChangeEvent event) {
+	    	if (event.getPlayer().getWorld() == worlds.get(0))
+	    		queueSign(event.getPlayer().getName(), event.getBlock(), event.getLines());
 	    }
 	}
 
@@ -532,10 +569,10 @@ public class LogBlock extends JavaPlugin
 			this.extra = null;
 		}
 
-		//public void addExtra(String extra)
-		//{
-		//	this.extra = extra;
-		//}
+		public void addExtra(String extra)
+		{
+			this.extra = extra;
+		}
 		
 		public String toString()
 		{
@@ -619,7 +656,7 @@ public class LogBlock extends JavaPlugin
 			public void perform()
 			{
 				Block block = getServer().getWorlds().get(0).getBlockAt(x, y, z);
-				if (block.getTypeId() == type)
+				if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11))
 				{
 					if (block.setTypeId(replaced)) {
 						block.setData(data);
