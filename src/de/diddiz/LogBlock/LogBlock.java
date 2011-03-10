@@ -23,6 +23,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Type;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRightClickEvent;
@@ -60,6 +61,7 @@ public class LogBlock extends JavaPlugin
 	private int keepLogDays = -1;
 	private boolean toolblockRemove = true;
 	private boolean logExplosions = false;
+	private boolean logFire = false;
 	private Consumer consumer = null;
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	
@@ -87,6 +89,7 @@ public class LogBlock extends JavaPlugin
 			worldNames = getConfiguration().getStringList("worldNames", null);
 			worldTables = getConfiguration().getStringList("worldTables", null);
 			logExplosions = getConfiguration().getBoolean("logExplosions", false);
+			logFire = getConfiguration().getBoolean("logFire", false);
 			if (getConfiguration().getBoolean("usePermissions", false))	{
 				if (getServer().getPluginManager().getPlugin("Permissions") != null) {
 					usePermissions = true;
@@ -131,6 +134,8 @@ public class LogBlock extends JavaPlugin
 		pm.registerEvent(Type.BLOCK_PLACED, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.BLOCK_BREAK, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.SIGN_CHANGE, lblBlockListener, Event.Priority.Monitor, this);
+		if (logFire)
+			pm.registerEvent(Type.BLOCK_BURN, lblBlockListener, Event.Priority.Monitor, this);
 		
 		if (logExplosions) {
 			lblEntityListener = new LBLEntityListener();
@@ -299,10 +304,10 @@ public class LogBlock extends JavaPlugin
 	
 	private void queueSign(String playerName, Block block, String[] signText)
 	{
-		int idx = worldNames.indexOf(block.getWorld().getName());
-		if (idx == -1)
+		String table = GetTable(block.getWorld().getName());
+		if (table == null)
 			return;
-		BlockRow row = new BlockRow(worldTables.get(idx), playerName, 0, block.getTypeId(), block.getData(), block.getX(), block.getY(), block.getZ());
+		BlockRow row = new BlockRow(table, playerName, 0, block.getTypeId(), block.getData(), block.getX(), block.getY(), block.getZ());
 		String text = "sign";
 		for (int i = 0; i < 4; i++)
 			text += " [" + signText[i] + "]";
@@ -494,6 +499,11 @@ public class LogBlock extends JavaPlugin
 	    public void onSignChange(SignChangeEvent event) {
 	    	if (!event.isCancelled())
 	    		queueSign(event.getPlayer().getName(), event.getBlock(), event.getLines());
+	    }
+	    
+	    public void onBlockBurn(BlockBurnEvent event) {
+	    	if (!event.isCancelled())
+	    		queueBlock("environment", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 	    }
 	}
 
