@@ -7,34 +7,66 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 
 public class Rollback implements Runnable
 {
-	static final Logger log = Logger.getLogger("Minecraft");
 	private LinkedBlockingQueue<Edit> edits = new LinkedBlockingQueue<Edit>();
-
-	Rollback(Connection conn, String name, int minutes, World world, String table)
-	{
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		edits.clear();
+	PreparedStatement ps = null;
+	private Player player;
+	private Connection conn = null;
+	
+	Rollback(Player player, Connection conn, String name, int minutes, String table) {
+		this.player = player;
+		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
 			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE player = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, name);
 			ps.setInt(2, minutes);
+		} catch (SQLException ex) {
+			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
+			player.sendMessage(ChatColor.RED + "Error, check server logs.");
+			return;
+		}
+	}
+	
+	Rollback(Player player, Connection conn, int radius, int minutes, String table) {
+		this.player = player;
+		this.conn = conn;
+		try {
+			conn.setAutoCommit(false);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE y > 0 and x > ? and x < ? and z > ? and z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps.setInt(1, player.getLocation().getBlockX()-radius);
+			ps.setInt(2, player.getLocation().getBlockX()+radius);
+			ps.setInt(3, player.getLocation().getBlockZ()-radius);
+			ps.setInt(4, player.getLocation().getBlockZ()+radius);
+			ps.setInt(5, minutes);
+		} catch (SQLException ex) {
+			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
+			player.sendMessage(ChatColor.RED + "Error, check server logs.");
+			return;
+		}
+	}
+	
+	public void run()
+	{
+		ResultSet rs = null;
+		edits.clear();
+		try {
 			rs = ps.executeQuery();
-
 			while (rs.next()) {
-				Edit e = new Edit(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), world);
+				Edit e = new Edit(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), player.getWorld());
 				edits.offer(e);
 			}
 		} catch (SQLException ex) {
-			log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
+			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
+			player.sendMessage("§cError, check server logs.");
+			return;
 		} finally {
 			try {
 				if (rs != null)
@@ -44,27 +76,23 @@ public class Rollback implements Runnable
 				if (conn != null)
 					conn.close();
 			} catch (SQLException ex) {
-				log.log(Level.SEVERE, this.getClass().getName() + " SQL exception on close", ex);
+				LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception on close", ex);
+				player.sendMessage("§cError, check server logs.");
+				return;
 			}
 		}
-		
-	}
-	
-	public int count()
-	{
-		return edits.size();
-	}
-	
-	public void run()
-	{
+		int changes = edits.size();
+		int rolledBack = 0;
+		player.sendMessage(ChatColor.GREEN + "" + changes + " Changes found.");
 		Edit e = edits.poll();
-
 		while (e != null)
 		{
-			e.perform();
-			e.log();
+			if (e.perform())
+				rolledBack++;
 			e = edits.poll();
 		}
+		player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
+		player.sendMessage(ChatColor.GREEN + "Undid " + rolledBack + " of " + changes + " changes");
 	}
 	
 	private class Edit
@@ -85,27 +113,16 @@ public class Rollback implements Runnable
 			this.world = world;
 		}
 		
-		public void perform()
+		public boolean perform()
 		{
 			Block block = world.getBlockAt(x, y, z);
-			if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11))
-			{
+			if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11)) {
 				if (block.setTypeId(replaced)) {
 					block.setData(data);
-					log.info("R (" + x + ", " + y + ", " + z + ") " + replaced + " " + type);
+					return true;	
 				}
-				else
-					log.info("r (" + x + ", " + y + ", " + z + ") " + replaced + " " + type);
 			}
-		}
-		
-		public void log()
-		{
-			int current = world.getBlockTypeIdAt(x, y, z);
-			if (current == type)
-				log.info("+ (" + x + ", " + y + ", " + z + ") " + replaced + " " + type);
-			else
-				log.info("- (" + x + ", " + y + ", " + z + ") " + replaced + " " + type);
+			return false;
 		}
 	}
 }

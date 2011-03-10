@@ -1,7 +1,6 @@
 package de.diddiz.LogBlock;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -17,8 +16,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.Server;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -28,11 +27,11 @@ import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRightClickEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerItemEvent;
 import org.bukkit.event.player.PlayerListener;
-import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -42,10 +41,10 @@ import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class LogBlock extends JavaPlugin
 {
-	private LBLPlayerListener lblPlayerListener = new LBLPlayerListener();
-	private LBLBlockListener lblBlockListener = new LBLBlockListener();
-	//private LBLEntityListener lblEntityListener = new LBLEntityListener();
-	static final Logger log = Logger.getLogger("Minecraft");
+	private LBLPlayerListener lblPlayerListener;
+	private LBLBlockListener lblBlockListener;
+	private LBLEntityListener lblEntityListener;
+	static Logger log;
 	private List<String> worldNames;
 	private List<String> worldTables;
 	private boolean usePermissions = false;
@@ -60,38 +59,19 @@ public class LogBlock extends JavaPlugin
 	private int toolblockID = 7;
 	private int keepLogDays = -1;
 	private boolean toolblockRemove = true;
+	private boolean logExplosions = false;
 	private Consumer consumer = null;
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
-	
-	public LogBlock(PluginLoader pluginLoader, Server instance,	PluginDescriptionFile desc, File folder, File plugin, ClassLoader cLoader)
-	{
-		super(pluginLoader, instance, desc, folder, plugin, cLoader);
-	}
 	
 	@Override
 	public void onEnable()
 	{
+		log = getServer().getLogger();
 		try	{
-			File file = new File (getDataFolder(), "config.yml");
-			if (!file.exists())	{
-				file.getParentFile().mkdirs();
-				FileWriter writer = new FileWriter(file);
-				String crlf = System.getProperty("line.separator");
-				writer.write("driver : com.mysql.jdbc.Driver" + crlf
-						+ "url : jdbc:mysql://localhost:3306/db" + crlf
-						+ "username : user" + crlf
-						+ "password : pass" + crlf
-						+ "delay : 6" + crlf
-						+ "tool-id : 270" + crlf
-						+ "tool-block-id : 7" + crlf
-						+ "tool-block-remove : true" + crlf
-						+ "default-distance : 20" + crlf
-						+ "usePermissions : false" + crlf
-						+ "keepLogDays : false" + crlf
-						+ "worldNames : [world]" + crlf
-						+ "worldTables : [lb-main]");
-				writer.close();
-				log.info(name + " Config created");
+			if (!new File (getDataFolder(), "config.yml").exists())	{
+	        	log.log(Level.SEVERE, name + " Config not found");
+	        	getServer().getPluginManager().disablePlugin(this);
+	        	return;
 			}
 			getConfiguration().load();
 			dbDriver = getConfiguration().getString("driver", "com.mysql.jdbc.Driver");
@@ -106,6 +86,7 @@ public class LogBlock extends JavaPlugin
 			keepLogDays = getConfiguration().getInt("keepLogDays", -1);
 			worldNames = getConfiguration().getStringList("worldNames", null);
 			worldTables = getConfiguration().getStringList("worldTables", null);
+			logExplosions = getConfiguration().getBoolean("logExplosions", false);
 			if (getConfiguration().getBoolean("usePermissions", false))	{
 				if (getServer().getPluginManager().getPlugin("Permissions") != null) {
 					usePermissions = true;
@@ -121,12 +102,12 @@ public class LogBlock extends JavaPlugin
 		try	{
 			new JDCConnectionDriver(dbDriver, dbUrl, dbUsername, dbPassword);
 		} catch (Exception ex) {
-			log.log(Level.SEVERE, name + "Exception while creation database connection pool", ex);
+			log.log(Level.SEVERE, name + " Exception while creation database connection pool", ex);
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
 		if (worldNames == null || worldTables == null || worldNames.size() == 0 || worldNames.size() != worldTables.size()) {
-			log.log(Level.SEVERE, name + ": worldNames or worldTables not set porperly");
+			log.log(Level.SEVERE, name + " worldNames or worldTables not set porperly");
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
@@ -140,13 +121,21 @@ public class LogBlock extends JavaPlugin
 		if (keepLogDays >= 0)
 			dropOldLogs();
 		PluginManager pm = getServer().getPluginManager();
+		
+		lblPlayerListener = new LBLPlayerListener();
 		pm.registerEvent(Type.PLAYER_COMMAND, lblPlayerListener, Event.Priority.Normal, this);
-		pm.registerEvent(Type.BLOCK_RIGHTCLICKED, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.PLAYER_ITEM, lblPlayerListener, Event.Priority.Monitor, this);
+		
+		lblBlockListener = new LBLBlockListener();
+		pm.registerEvent(Type.BLOCK_RIGHTCLICKED, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.BLOCK_PLACED, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.BLOCK_BREAK, lblBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.SIGN_CHANGE, lblBlockListener, Event.Priority.Monitor, this);
-		//pm.registerEvent(Type.ENTITY_EXPLODE, lblEntityListener, Event.Priority.Monitor, this);
+		
+		if (logExplosions) {
+			lblEntityListener = new LBLEntityListener();
+			pm.registerEvent(Type.ENTITY_EXPLODE, lblEntityListener, Event.Priority.Monitor, this);
+		}
 		consumer = new Consumer();
 		new Thread(consumer).start();
 		log.info("Logblock v" + getDescription().getVersion() + " enabled.");
@@ -162,9 +151,14 @@ public class LogBlock extends JavaPlugin
 		log.info("LogBlock disabled.");
 	}
 	
-	private Connection getConnection() throws SQLException
+	private Connection getConnection()
 	{
-		return DriverManager.getConnection("jdbc:jdc:jdcpool");
+		try {
+			return DriverManager.getConnection("jdbc:jdc:jdcpool");
+		} catch (SQLException ex) {
+			log.log(Level.SEVERE, name + " SQL exception", ex);
+			return null;
+		}
 	}
 	
 	private boolean checkTables(String table)
@@ -225,6 +219,13 @@ public class LogBlock extends JavaPlugin
 		}
 	}
 	
+	private String GetTable (String worldName) {
+		int idx = worldNames.indexOf(worldName);
+		if (idx == -1)
+			return null;
+		return worldTables.get(idx);
+	}
+
 	
 	private void showBlockHistory(Player player, Block b)
 	{
@@ -288,10 +289,10 @@ public class LogBlock extends JavaPlugin
 	{
 		if (block == null || typeBefore < 0 || typeAfter < 0)
 			return;
-		int idx = worldNames.indexOf(block.getWorld().getName());
-		if (idx == -1)
+		String table = GetTable(block.getWorld().getName());
+		if (table == null)
 			return;
-		BlockRow row = new BlockRow(worldTables.get(idx), playerName, typeBefore, typeAfter, data, block.getX(), block.getY(), block.getZ());
+		BlockRow row = new BlockRow(table, playerName, typeBefore, typeAfter, data, block.getX(), block.getY(), block.getZ());
 		if (!bqueue.offer(row))
 			log.info(name + " failed to queue block for " + playerName);
 	}
@@ -326,23 +327,18 @@ public class LogBlock extends JavaPlugin
     	return false;
     }
 	
-	private int parseTimeSpec(String ts)
+	private int parseTimeSpec(String time, String unit)
 	{
-		String[] split = ts.split(" ");
-		
-		if (split.length < 2)
-			return 0;
-			
 		int min;
 		try {
-			min = Integer.parseInt(split[0]);
+			min = Integer.parseInt(time);
 		} catch (NumberFormatException ex) {
 			return 0;
 		}
 		
-		if (split[1].startsWith("hour"))
+		if (unit.startsWith("hour"))
 			min *= 60;
-		else if (split[1].startsWith("day"))
+		else if (unit.startsWith("day"))
 			min *= (60*24);
 		return min;
 	}
@@ -356,22 +352,18 @@ public class LogBlock extends JavaPlugin
 			Player player = event.getPlayer();
 			if (split[0].equalsIgnoreCase("/lb")) {
 				event.setCancelled(true);
-				int idx = worldNames.indexOf(player.getWorld().getName());
-				if (idx == -1)
-					return;
-				String table = worldTables.get(idx);
-				if (!CheckPermission(event.getPlayer(),"logblock.area"))
-				{
+				Connection conn = getConnection();
+				String table = GetTable(event.getPlayer().getWorld().getName());
+				if (!CheckPermission(event.getPlayer(),"logblock.rollback")) {
 					event.getPlayer().sendMessage("§cInsufficient permissions");
 					return;
 				}
-				Connection conn;
-				try	{
-					conn = getConnection();
+				if (conn == null) {
+					player.sendMessage(ChatColor.RED + "Can't create SQL connection.");
+					return;
 				}
-				catch (SQLException ex)	{
-					log.log(Level.SEVERE, name + " SQL exception", ex);
-					player.sendMessage("§cError, check server logs.");
+				if (table == null) {
+					player.sendMessage(ChatColor.RED + "This world isn't logged");
 					return;
 				}
 				if (split.length == 1) {
@@ -417,36 +409,40 @@ public class LogBlock extends JavaPlugin
 			}
 			if (split[0].equalsIgnoreCase("/rollback"))	{
 				event.setCancelled(true);
+				if (split.length != 5)
+				{
+					player.sendMessage(ChatColor.RED + "Usage:");
+					player.sendMessage(ChatColor.RED + "/rollback player [name] [time] [minutes|hours|days]");
+					player.sendMessage(ChatColor.RED + "/rollback area [radius] [time] [minutes|hours|days]");
+					return;
+				}
+				Connection conn = getConnection();
+				String table = GetTable(event.getPlayer().getWorld().getName());
 				if (!CheckPermission(event.getPlayer(),"logblock.rollback")) {
 					event.getPlayer().sendMessage("§cInsufficient permissions");
 					return;
 				}
-				int idx = worldNames.indexOf(player.getWorld().getName());
-				if (idx == -1)
-					return;
-				String table = worldTables.get(idx);
-				int minutes;
-				String name;
-				if (split.length < 3)
-				{
-					player.sendMessage("§cUsage: /rollback [player] [time spec]");
+				if (conn == null) {
+					player.sendMessage(ChatColor.RED + "Can't create SQL connection.");
 					return;
 				}
-				name = split[1];
-				minutes = parseTimeSpec(event.getMessage().substring(event.getMessage().indexOf(' ', 11) + 1));
-				player.sendMessage("§cRolling back " + name + " by " + minutes + " minutes.");
-				Connection conn;
-				try {
-					conn = getConnection();
-				} catch (SQLException ex) {
-					log.log(Level.SEVERE, name + " SQL exception", ex);
-					player.sendMessage("§cError, check server logs.");
+				if (table == null) {
+					player.sendMessage(ChatColor.RED + "This world isn't logged");
 					return;
 				}
-				Rollback rb = new Rollback(conn, name, minutes, player.getWorld(), table);
-				player.sendMessage("§cEdit count: " + rb.count());
-				new Thread(rb).start();
-				return;
+				int minutes = parseTimeSpec(split[3], split[4]);
+				if (split[1].equalsIgnoreCase("player")) {
+					player.sendMessage(ChatColor.GREEN + "Rolling back " + split[2] + " by " + minutes + " minutes.");
+					Rollback rb = new Rollback(event.getPlayer(), conn, split[2], minutes, table);
+					new Thread(rb).start();
+					return;
+				}
+				if (split[1].equalsIgnoreCase("area")) {
+					player.sendMessage(ChatColor.GREEN + "Rolling back area within " + split[2] + " blocks of you by " + minutes + " minutes.");
+					Rollback rb = new Rollback(event.getPlayer(), conn, Integer.parseInt(split[2]), minutes, table);
+					new Thread(rb).start();
+					return;
+				}
 			}
 			if (split[0].equalsIgnoreCase("/getworldname"))	{
 				event.setCancelled(true);
@@ -501,16 +497,15 @@ public class LogBlock extends JavaPlugin
 	    }
 	}
 
-	//private class LBLEntityListener extends EntityListener
-	//{
-	//	public void onEntityExplode(EntityExplodeEvent event) {
-	//    	if (!event.isCancelled()) {	
-	//    		if (event.getEntity() == null) {
-	//    			log.info("Exploding tnt at: " + event.getLocation().getBlockX() + ":" + event.getLocation().getBlockY() + ":" + event.getLocation().getBlockZ());
-	//   		}
-	//    	}
-	//   }
-	//}
+	private class LBLEntityListener extends EntityListener
+	{
+		public void onEntityExplode(EntityExplodeEvent event) {
+	    	if (!event.isCancelled()) {	
+	    		for (Block block : event.blockList())
+	    			queueBlock("environment", block, block.getTypeId(), 0, block.getData());
+	    	}
+		}
+	}
 	
 	private class Consumer implements Runnable
 	{

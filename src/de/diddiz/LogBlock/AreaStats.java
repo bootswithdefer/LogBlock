@@ -8,13 +8,11 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.bukkit.entity.Player;
 
 public class AreaStats implements Runnable
 {
-	static final Logger log = Logger.getLogger("Minecraft");
 	private Player player;
 	private int size;
 	private Connection conn = null;
@@ -69,7 +67,7 @@ public class AreaStats implements Runnable
 			}
 			
 		} catch (SQLException ex) {
-			log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
+			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
 		} finally {
 			try {
 				if (rs != null)
@@ -79,7 +77,7 @@ public class AreaStats implements Runnable
 				if (conn != null)
 					conn.close();
 			} catch (SQLException ex) {
-				log.log(Level.SEVERE, this.getClass().getName() + " SQL exception on close", ex);
+				LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception on close", ex);
 			}
 		}
 

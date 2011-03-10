@@ -8,7 +8,6 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -16,7 +15,6 @@ import org.bukkit.entity.Player;
 
 public class AreaBlockSearch implements Runnable
 {
-	static final Logger log = Logger.getLogger("Minecraft");
 	private Player player;
 	private Location location;
 	private int type;
@@ -71,7 +69,7 @@ public class AreaBlockSearch implements Runnable
 				hist = true;
 			}
 		} catch (SQLException ex) {
-			log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
+			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
 		} finally {
 			try {
 				if (rs != null)
@@ -81,7 +79,7 @@ public class AreaBlockSearch implements Runnable
 				if (conn != null)
 					conn.close();
 			} catch (SQLException ex) {
-				log.log(Level.SEVERE, this.getClass().getName() + " SQL exception on close", ex);
+				LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception on close", ex);
 			}
 		}
 		if (!hist)
