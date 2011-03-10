@@ -24,7 +24,7 @@ public class Rollback implements Runnable
 		edits.clear();
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE player = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDERr BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE player = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, name);
 			ps.setInt(2, minutes);
 			rs = ps.executeQuery();
@@ -82,6 +82,7 @@ public class Rollback implements Runnable
 			this.x = x;
 			this.y = y;
 			this.z = z;
+			this.world = world;
 		}
 		
 		public void perform()
