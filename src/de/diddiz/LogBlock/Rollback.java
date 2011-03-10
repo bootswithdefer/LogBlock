@@ -84,11 +84,22 @@ public class Rollback implements Runnable
 		int changes = edits.size();
 		int rolledBack = 0;
 		player.sendMessage(ChatColor.GREEN + "" + changes + " Changes found.");
+		int counter = 0;
 		Edit e = edits.poll();
 		while (e != null)
 		{
 			if (e.perform())
 				rolledBack++;
+			counter++;
+			if (counter > 100) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException ex) {
+					LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
+					player.sendMessage("§cError, check server logs.");
+				}
+				counter = 0;
+			}
 			e = edits.poll();
 		}
 		player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
@@ -116,7 +127,7 @@ public class Rollback implements Runnable
 		public boolean perform()
 		{
 			Block block = world.getBlockAt(x, y, z);
-			if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11)) {
+			if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11) || block.getTypeId() == 51) {
 				if (block.setTypeId(replaced)) {
 					block.setData(data);
 					return true;	

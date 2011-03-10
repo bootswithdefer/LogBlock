@@ -359,7 +359,7 @@ public class LogBlock extends JavaPlugin
 				event.setCancelled(true);
 				Connection conn = getConnection();
 				String table = GetTable(event.getPlayer().getWorld().getName());
-				if (!CheckPermission(event.getPlayer(),"logblock.rollback")) {
+				if (!CheckPermission(event.getPlayer(),"logblock.area")) {
 					event.getPlayer().sendMessage("§cInsufficient permissions");
 					return;
 				}
