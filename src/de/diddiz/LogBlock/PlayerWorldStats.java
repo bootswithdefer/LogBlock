@@ -17,11 +17,13 @@ public class PlayerWorldStats implements Runnable
 	static final Logger log = Logger.getLogger("Minecraft");
 	private Player player;
 	private Connection conn = null;
+	private String table;
 
-	PlayerWorldStats(Connection conn, Player player)
+	PlayerWorldStats(Connection conn, Player player, String table)
 	{
 		this.player = player;
 		this.conn = conn;
+		this.table = table;
 	}
 	public void run()
 	{
@@ -34,7 +36,7 @@ public class PlayerWorldStats implements Runnable
 
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT player, count(player) as num from blocks where type > 0 group by player order by count(player) desc limit 5", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT player, count(player) as num from `" + table + "` where type > 0 group by player order by count(player) desc limit 5", Statement.RETURN_GENERATED_KEYS);
 			rs = ps.executeQuery();
 			while (rs.next())
 			{
@@ -44,7 +46,7 @@ public class PlayerWorldStats implements Runnable
 			rs.close();
 			ps.close();
 			
-			ps = conn.prepareStatement("SELECT player, count(player) as num from blocks where replaced > 0 group by player order by count(player) desc limit 5", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT player, count(player) as num from `" + table + "` where replaced > 0 group by player order by count(player) desc limit 5", Statement.RETURN_GENERATED_KEYS);
 			rs = ps.executeQuery();
 			while (rs.next())
 			{

@@ -22,14 +22,16 @@ public class AreaBlockSearch implements Runnable
 	private int type;
 	private int size;
 	private Connection conn = null;
+	private String table;
 	
-	AreaBlockSearch(Connection conn, Player player, int type, int size)
+	AreaBlockSearch(Connection conn, Player player, int type, int size, String table)
 	{
 		this.player = player;
 		this.location = player.getLocation();
 		this.type = type;
 		this.size = size;
 		this.conn = conn;
+		this.table = table;
 	}
 	public void run()
 	{
@@ -41,7 +43,7 @@ public class AreaBlockSearch implements Runnable
 		
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT * from blocks where (type = ? or replaced = ?) and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? order by date desc limit 10", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT * FROM `" + table + "` WHERE (type = ? or replaced = ?) and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? order by date desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, type);
 			ps.setInt(2, type);
 			ps.setInt(3, location.getBlockY() - size);

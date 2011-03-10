@@ -18,12 +18,14 @@ public class AreaStats implements Runnable
 	private Player player;
 	private int size;
 	private Connection conn = null;
+	private String table;
 	
-	AreaStats(Connection conn, Player player, int size)
+	AreaStats(Connection conn, Player player, int size, String table)
 	{
 		this.player = player;
 		this.size = size;
 		this.conn = conn;
+		this.table = table;
 	}
 	public void run()
 	{
@@ -36,7 +38,7 @@ public class AreaStats implements Runnable
 
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT player, count(player) as num from blocks where type > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by player order by count(player) desc limit 10", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT player, count(player) as num from `" + table + "` where type > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by player order by count(player) desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, player.getLocation().getBlockY()-size);
 			ps.setInt(2, player.getLocation().getBlockY()+size);
 			ps.setInt(3, player.getLocation().getBlockX()-size);
@@ -52,7 +54,7 @@ public class AreaStats implements Runnable
 			rs.close();
 			ps.close();
 			
-			ps = conn.prepareStatement("SELECT player, count(player) as num from blocks where replaced > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by player order by count(player) desc limit 10", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT player, count(player) as num from `" + table + "` where replaced > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by player order by count(player) desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, player.getLocation().getBlockY()-size);
 			ps.setInt(2, player.getLocation().getBlockY()+size);
 			ps.setInt(3, player.getLocation().getBlockX()-size);
