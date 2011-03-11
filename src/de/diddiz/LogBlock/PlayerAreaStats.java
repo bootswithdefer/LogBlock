@@ -37,7 +37,7 @@ public class PlayerAreaStats implements Runnable
 		ResultSet rs = null;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, count(type) as num from `" + table + "` INNER JOIN `players` USING (`playerid`) where type > 0 and playername = ? and y > 0 and x > ? and x < ? and z > ? and z < ? group by type order by count(replaced) desc limit 10", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, count(type) as num from `" + table + "` INNER JOIN `lb-players` USING (`playerid`) where type > 0 and playername = ? and y > 0 and x > ? and x < ? and z > ? and z < ? group by type order by count(replaced) desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, name);
 			ps.setInt(2, player.getLocation().getBlockX()-size);
 			ps.setInt(3, player.getLocation().getBlockX()+size);
@@ -50,7 +50,7 @@ public class PlayerAreaStats implements Runnable
 			}
 			rs.close();
 			ps.close();
-			ps = conn.prepareStatement("SELECT replaced, count(replaced) as num from `" + table + "` INNER JOIN `players` USING (`playerid`) where replaced > 0 and playername = ? and y > 0 and x > ? and x < ? and z > ? and z < ? group by replaced order by count(replaced) desc limit 10", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT replaced, count(replaced) as num from `" + table + "` INNER JOIN `lb-players` USING (`playerid`) where replaced > 0 and playername = ? and y > 0 and x > ? and x < ? and z > ? and z < ? group by replaced order by count(replaced) desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, name);
 			ps.setInt(2, player.getLocation().getBlockX()-size);
 			ps.setInt(3, player.getLocation().getBlockX()+size);

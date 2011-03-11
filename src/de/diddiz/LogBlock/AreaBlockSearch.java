@@ -38,7 +38,7 @@ public class AreaBlockSearch implements Runnable
 		SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT * FROM `" + table + "` INNER JOIN `players` USING (`playerid`) WHERE (type = ? or replaced = ?) and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? order by date desc limit 10", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT * FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE (type = ? or replaced = ?) and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? order by date desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, type);
 			ps.setInt(2, type);
 			ps.setInt(3, location.getBlockY() - size);

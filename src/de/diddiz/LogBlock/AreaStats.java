@@ -34,7 +34,7 @@ public class AreaStats implements Runnable
 		ResultSet rs = null;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT playername, count(playername) as num from `" + table + "` INNER JOIN `players` USING (`playerid`) where type > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by playername order by count(playername) desc limit 10", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT playername, count(playername) as num from `" + table + "` INNER JOIN `lb-players` USING (`playerid`) where type > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by playername order by count(playername) desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, player.getLocation().getBlockY()-size);
 			ps.setInt(2, player.getLocation().getBlockY()+size);
 			ps.setInt(3, player.getLocation().getBlockX()-size);
@@ -48,7 +48,7 @@ public class AreaStats implements Runnable
 			}
 			rs.close();
 			ps.close();
-			ps = conn.prepareStatement("SELECT playername, count(playername) as num from `" + table + "` INNER JOIN `players` USING (`playerid`) where replaced > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by playername order by count(playername) desc limit 10", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT playername, count(playername) as num from `" + table + "` INNER JOIN `lb-players` USING (`playerid`) where replaced > 0 and y > ? and y < ? and x > ? and x < ? and z > ? and z < ? group by playername order by count(playername) desc limit 10", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, player.getLocation().getBlockY()-size);
 			ps.setInt(2, player.getLocation().getBlockY()+size);
 			ps.setInt(3, player.getLocation().getBlockX()-size);

@@ -263,11 +263,11 @@ public class LogBlock extends JavaPlugin
 		try {
 			DatabaseMetaData dbm = conn.getMetaData();
 			state = conn.createStatement();
-			if (!dbm.getTables(null, null, "players", null).next())	{
+			if (!dbm.getTables(null, null, "lb-players", null).next())	{
 				log.log(Level.INFO, "[LogBlock] Crating table players.");
-				state.execute("CREATE TABLE `players` (`playerid` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, `playername` varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (`playerid`), UNIQUE (`playername`))");
-				state.execute("INSERT INTO `players` (`playername`) VALUES ('environment');");
-				if (!dbm.getTables(null, null, "players", null).next())
+				state.execute("CREATE TABLE `lb-players` (`playerid` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, `playername` varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (`playerid`), UNIQUE (`playername`))");
+				state.execute("INSERT INTO `lb-players` (`playername`) VALUES ('environment');");
+				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
 			}
 			for (int i = 0; i < Config.worldNames.size(); i++) {
@@ -448,7 +448,7 @@ private boolean CheckPermission(Player player, String permission) {
 				return;
 			try {
 				state = conn.createStatement();
-				state.execute("INSERT IGNORE INTO `players` (`playername`) VALUES ('" + event.getPlayer().getName() + "');");
+				state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + event.getPlayer().getName() + "');");
 			} catch (SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
 			} finally {
@@ -567,7 +567,7 @@ private boolean CheckPermission(Player player, String permission) {
 						b = bqueue.poll(1L, TimeUnit.SECONDS);
 						if (b == null)
 							continue;
-						ps = conn.prepareStatement("INSERT INTO `" + b.table + "` (`date`, `playerid`, `replaced`, `type`, `data`, `x`, `y`, `z`) SELECT now(), `playerid`, ?, ?, ?, ?, ? , ? FROM `players` WHERE `playername` = ?", Statement.RETURN_GENERATED_KEYS);
+						ps = conn.prepareStatement("INSERT INTO `" + b.table + "` (`date`, `playerid`, `replaced`, `type`, `data`, `x`, `y`, `z`) SELECT now(), `playerid`, ?, ?, ?, ?, ? , ? FROM `lb-players` WHERE `playername` = ?", Statement.RETURN_GENERATED_KEYS);
 						ps.setInt(1, b.replaced);
 						ps.setInt(2, b.type);
 						ps.setByte(3, b.data);

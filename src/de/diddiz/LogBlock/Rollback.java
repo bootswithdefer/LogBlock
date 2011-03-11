@@ -26,7 +26,7 @@ public class Rollback implements Runnable
 		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `players` USING (`playerid`) WHERE playername = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE playername = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, name);
 			ps.setInt(2, minutes);
 		} catch (SQLException ex) {
@@ -41,7 +41,7 @@ public class Rollback implements Runnable
 		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE y > 0 and x > ? and x < ? and z > ? and z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` and x > ? and x < ? and z > ? and z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, player.getLocation().getBlockX()-radius);
 			ps.setInt(2, player.getLocation().getBlockX()+radius);
 			ps.setInt(3, player.getLocation().getBlockZ()-radius);
