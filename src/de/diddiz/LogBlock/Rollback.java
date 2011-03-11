@@ -20,13 +20,13 @@ public class Rollback implements Runnable
 	PreparedStatement ps = null;
 	private Player player;
 	private Connection conn = null;
-	
+
 	Rollback(Player player, Connection conn, String name, int minutes, String table) {
 		this.player = player;
 		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE player = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `players` USING (`playerid`) WHERE playername = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
 			ps.setString(1, name);
 			ps.setInt(2, minutes);
 		} catch (SQLException ex) {
@@ -35,7 +35,7 @@ public class Rollback implements Runnable
 			return;
 		}
 	}
-	
+
 	Rollback(Player player, Connection conn, int radius, int minutes, String table) {
 		this.player = player;
 		this.conn = conn;
@@ -74,8 +74,7 @@ public class Rollback implements Runnable
 		}
 	}
 	
-	public void run()
-	{
+	public void run() {
 		ResultSet rs = null;
 		edits.clear();
 		try {
@@ -126,7 +125,7 @@ public class Rollback implements Runnable
 		player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
 		player.sendMessage(ChatColor.GREEN + "Undid " + rolledBack + " of " + changes + " changes");
 	}
-	
+
 	private class Edit
 	{
 		int type, replaced;
@@ -134,8 +133,7 @@ public class Rollback implements Runnable
 		byte data;
 		World world;
 		
-		Edit(int type, int replaced, byte data, int x, int y, int z, World world)
-		{
+		Edit(int type, int replaced, byte data, int x, int y, int z, World world) {
 			this.type = type;
 			this.replaced = replaced;
 			this.data = data;
@@ -145,8 +143,9 @@ public class Rollback implements Runnable
 			this.world = world;
 		}
 		
-		public boolean perform()
-		{
+		public boolean perform() {
+			if (type == replaced)
+				return false;
 			Block block = world.getBlockAt(x, y, z);
 			if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11) || block.getTypeId() == 51) {
 				if (block.setTypeId(replaced)) {

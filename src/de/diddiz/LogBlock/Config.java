@@ -19,8 +19,10 @@ public class Config {
 	static int toolID;
 	static int toolblockID;
 	static boolean toolblockRemove;
+	static boolean logSignTexts;
 	static boolean logExplosions;
 	static boolean logFire;
+	static boolean logChestAccess;
 	static boolean usePermissions;
 	
 	static boolean Load(Configuration config) {
@@ -52,10 +54,14 @@ public class Config {
 			config.setProperty("toolblockID", 7);
 		if (!keys.contains("toolblockRemove"))
 			config.setProperty("toolblockRemove", true);
+		if (!keys.contains("logSignTexts"))
+			config.setProperty("logSignTexts", false);
 		if (!keys.contains("logExplosions"))
 			config.setProperty("logExplosions", false);
 		if (!keys.contains("logFire"))
 			config.setProperty("logFire", false);
+		if (!keys.contains("logChestAccess"))
+			config.setProperty("logChestAccess", false);
 		if (!keys.contains("usePermissions"))
 			config.setProperty("usePermissions", false);
 		if (!config.save()){
@@ -75,8 +81,10 @@ public class Config {
 		toolID = config.getInt("toolID", 270);
 		toolblockID = config.getInt("toolblockID", 7);
 		toolblockRemove = config.getBoolean("toolblockRemove", true);
+		logSignTexts = config.getBoolean("logSignTexts", false);
 		logExplosions = config.getBoolean("logExplosions", false);
 		logFire = config.getBoolean("logFire", false);
+		logChestAccess  = config.getBoolean("logChestAccess", false);
 		usePermissions = config.getBoolean("usePermissions", false);
 		return true;
 	}
