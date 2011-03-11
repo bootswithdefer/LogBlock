@@ -266,15 +266,15 @@ public class LogBlock extends JavaPlugin
 			if (!dbm.getTables(null, null, "players", null).next())	{
 				log.log(Level.INFO, "[LogBlock] Crating table players.");
 				state.execute("CREATE TABLE `players` (`playerid` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, `playername` varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (`playerid`), UNIQUE (`playername`))");
+				state.execute("INSERT INTO `players` (`playername`) VALUES ('environment');");
 				if (!dbm.getTables(null, null, "players", null).next())
 					return false;
 			}
 			for (int i = 0; i < Config.worldNames.size(); i++) {
 				String table = Config.worldTables.get(i);
-				
 				if (!dbm.getTables(null, null, table, null).next())	{
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
-					state.execute("CREATE TABLE `" + table + "` (`id` int(11) NOT NULL AUTO_INCREMENT, `date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00', `player` varchar(32) NOT NULL DEFAULT '-', `replaced` int(11) NOT NULL DEFAULT '0', `type` int(11) NOT NULL DEFAULT '0', `data` TINYINT NOT NULL DEFAULT '0', `x` int(11) NOT NULL DEFAULT '0', `y` int(11) NOT NULL DEFAULT '0',`z` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`id`), KEY `coords` (`y`,`x`,`z`), KEY `type` (`type`), KEY `data` (`data`), KEY `replaced` (`replaced`), KEY `player` (`player`));");
+					state.execute("CREATE TABLE `" + table + "` (`id` int(11) NOT NULL AUTO_INCREMENT, `date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00', `playerid` SMALLINT UNSIGNED NOT NULL DEFAULT '0', `replaced` int(11) NOT NULL DEFAULT '0', `type` int(11) NOT NULL DEFAULT '0', `data` TINYINT NOT NULL DEFAULT '0', `x` int(11) NOT NULL DEFAULT '0', `y` int(11) NOT NULL DEFAULT '0',`z` int(11) NOT NULL DEFAULT '0', PRIMARY KEY (`id`), KEY `coords` (`y`,`x`,`z`), KEY `type` (`type`), KEY `data` (`data`), KEY `replaced` (`replaced`));");
 					if (!dbm.getTables(null, null, table, null).next())
 						return false;
 				}
