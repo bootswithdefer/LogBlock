@@ -23,6 +23,7 @@ public class Config {
 	static boolean logExplosions;
 	static boolean logFire;
 	static boolean logChestAccess;
+	static boolean logLeavesDecay;
 	static boolean usePermissions;
 	
 	static boolean Load(Configuration config) {
@@ -62,6 +63,8 @@ public class Config {
 			config.setProperty("logFire", false);
 		if (!keys.contains("logChestAccess"))
 			config.setProperty("logChestAccess", false);
+		if (!keys.contains("logLeavesDecay"))
+			config.setProperty("logLeavesDecay", false);
 		if (!keys.contains("usePermissions"))
 			config.setProperty("usePermissions", false);
 		if (!config.save()){
@@ -85,6 +88,7 @@ public class Config {
 		logExplosions = config.getBoolean("logExplosions", false);
 		logFire = config.getBoolean("logFire", false);
 		logChestAccess  = config.getBoolean("logChestAccess", false);
+		logLeavesDecay  = config.getBoolean("logLeavesDecay", false);
 		usePermissions = config.getBoolean("usePermissions", false);
 		return true;
 	}

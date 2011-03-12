@@ -28,6 +28,7 @@ import org.bukkit.event.block.BlockInteractEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRightClickEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityListener;
@@ -96,6 +97,8 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.ENTITY_EXPLODE, new LBEntityListener(), Event.Priority.Monitor, this);
 		if (Config.logChestAccess)
 			pm.registerEvent(Type.BLOCK_INTERACT, lbBlockListener, Event.Priority.Monitor, this);
+		if (Config.logLeavesDecay)
+			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Event.Priority.Monitor, this);
 		consumer = new Consumer();
 		new Thread(consumer).start();
 		log.info("Logblock v" + getDescription().getVersion() + " enabled.");
@@ -513,6 +516,11 @@ private boolean CheckPermission(Player player, String permission) {
 	    		else
 	    			queueBlock((Player)event.getEntity(), event.getBlock(), (short)0, (byte)0, (short)0, (byte)0);
 	    	}
+	    }
+	    
+	    public void onLeavesDecay(LeavesDecayEvent event) {
+	    	if (!event.isCancelled())
+	    		queueBlock("environment", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 	    }
 	}
 
