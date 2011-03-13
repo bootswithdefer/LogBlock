@@ -356,6 +356,8 @@ public class LogBlock extends JavaPlugin
 		String table = getTable(block);
 		if (table == null)
 			return;
+		if (playerName.length() > 32)
+			playerName = playerName.substring(0, 31);
 		BlockRow row = new BlockRow(table, playerName, typeBefore, typeAfter, data, block.getX(), block.getY(), block.getZ());
 		if (signtext != null)
 			row.signtext = signtext;
