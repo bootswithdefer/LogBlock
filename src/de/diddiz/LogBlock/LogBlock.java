@@ -229,7 +229,7 @@ public class LogBlock extends JavaPlugin
 										} else
 											player.sendMessage(ChatColor.RED + "Wrong rollback mode");
 									} else {
-										player.sendMessage(ChatColor.RED + "No rollback mode");
+										player.sendMessage(ChatColor.RED + "Usage: ");
 										player.sendMessage(ChatColor.RED + "/lb rollback player [name] <time> <minutes|hours|days>");
 										player.sendMessage(ChatColor.RED + "/lb rollback area [radius] <time> <minutes|hours|days>");
 										player.sendMessage(ChatColor.RED + "/lb rollback playerarea [name] [radius] <time> <minutes|hours|days>");
