@@ -41,7 +41,7 @@ public class Rollback implements Runnable
 		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` and x > ? and x < ? and z > ? and z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE x > ? AND x < ? AND z > ? AND z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, player.getLocation().getBlockX()-radius);
 			ps.setInt(2, player.getLocation().getBlockX()+radius);
 			ps.setInt(3, player.getLocation().getBlockZ()-radius);
@@ -59,7 +59,7 @@ public class Rollback implements Runnable
 		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE x >= ? and x <= ? and y >= ? and y <= ? and z >= ? and z <= ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE x >= ? AND x <= ? AND y >= ? AND y <= ? AND z >= ? AND z <= ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, Math.min(loc1.getBlockX(), loc2.getBlockX()));
 			ps.setInt(2, Math.max(loc1.getBlockX(), loc2.getBlockX()));
 			ps.setInt(3, Math.min(loc1.getBlockY(), loc2.getBlockY()));
