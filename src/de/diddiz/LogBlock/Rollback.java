@@ -123,6 +123,7 @@ public class Rollback implements Runnable
 		int changes = edits.size();
 		int rolledBack = 0;
 		player.sendMessage(ChatColor.GREEN + "" + changes + " Changes found.");
+		player.sendMessage(ChatColor.GOLD + "This may take " + (int)Math.ceil(changes/1000) + " seconds.");
 		int counter = 0;
 		Edit e = edits.poll();
 		while (e != null)

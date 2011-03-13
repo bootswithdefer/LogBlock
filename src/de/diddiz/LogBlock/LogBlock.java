@@ -107,158 +107,174 @@ public class LogBlock extends JavaPlugin
 	@Override
 	public void onDisable() {
 		if (consumer != null) {
+			log.info("[LogBlock] Stopping consumer");
 			consumer.stop();
-			consumer = null;
 		}
 		log.info("LogBlock disabled.");
 	}
 	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)	{
-		if (cmd.getName().equalsIgnoreCase("lb")) {
-			try {
-				if ((sender instanceof Player)) {
-					Player player = (Player)sender;
-					Connection conn = getConnection();
-					if (conn != null) {
-						String table = getTable(player);
-						if (table != null) {
-							if (CheckPermission(player,"logblock.area")) {
-								if (args.length == 0) {
-									player.sendMessage(ChatColor.RED + "No argument. Type /lb help for help");
-								} else if (args[0].equalsIgnoreCase("area")) {
-									int radius = Config.defaultDist;
-									if (args.length == 2 && isInt(args[1]))
-										radius = Integer.parseInt(args[1]);
-									new Thread(new AreaStats(conn, player, radius, table)).start();
-								} else if (args[0].equalsIgnoreCase("world")) {
-									new Thread(new AreaStats(conn, player, Short.MAX_VALUE, table)).start();
-								} else if (args[0].equalsIgnoreCase("player")) {
-									if (args.length >= 2) {
-										int radius = Config.defaultDist;
-										if (args.length == 3 && isInt(args[2]))
-											radius = Integer.parseInt(args[2]);
-										new Thread(new PlayerAreaStats(conn, player, args[1], radius, table)).start();
-									} else
-										player.sendMessage(ChatColor.RED + "Usage: /lb player [name] <radius>");
-								} else if (args[0].equalsIgnoreCase("block")) {
-									if (args.length >= 2) {
-										if (Material.matchMaterial(args[1]) != null) {
-											int type = Material.matchMaterial(args[1]).getId();
-											int radius = Config.defaultDist;
-											if (args.length == 3 && isInt(args[2]))
-												radius = Integer.parseInt(args[2]);
-											new Thread(new AreaBlockSearch(conn, player, type, radius, table)).start();
-										} else
-											player.sendMessage(ChatColor.RED + "Can't find any item like '" + args[1] + "'");
-									} else
-										player.sendMessage(ChatColor.RED + "Usage: /lb block [type] <radius>");
-								} else if (args[0].equalsIgnoreCase("setpos")) {
-									Session session = getSession(player);
-									Location loc = player.getTargetBlock(null, Integer.MAX_VALUE).getLocation();
-									if (args.length == 1) {
-										if (!session.isloc1Set()) {
-											session.loc1 = loc;
-											player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
-										} else if (!session.isloc2Set()) {
-											session.loc2 = loc;
-											player.sendMessage(ChatColor.GREEN + "Pos 2 set.");
-										} else {
-											session.loc1 = loc;
-											session.loc2 = null;
-											player.sendMessage(ChatColor.GREEN + "Positions cleared.");
-											player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
-										}
-									} else if (args.length == 2) {
-										if (args[1].equalsIgnoreCase("1")) {
-											session.loc1 = loc;
-											player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
-										} else if (args[1].equalsIgnoreCase("2")) {
-											session.loc2 = loc;
-											player.sendMessage(ChatColor.GREEN + "Pos 2 set.");
-										} else
-											player.sendMessage(ChatColor.RED + "Usage: /lb setpos <1|2>");
-									} else {
-										player.sendMessage(ChatColor.RED + "Usage: /lb setpos <1|2>");
-									}
-								} else if (args[0].equalsIgnoreCase("rollback")) {
-									if (args.length >= 2) {
-										int minutes = Config.defaultTime;
-										if (args[1].equalsIgnoreCase("player")) {
-											if (args.length == 3 || args.length == 5) {
-												if (args.length == 5)
-													minutes = parseTimeSpec(args[3], args[4]);
-												player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " by " + minutes + " minutes.");
-												new Thread(new Rollback(player, conn, args[2], minutes, table)).start();
-											} else 
-												player.sendMessage(ChatColor.RED + "Usage: /lb rollback player [name] <time> <minutes|hours|days>");
-										} else if (args[1].equalsIgnoreCase("area")) {
-											if (args.length == 3 || args.length == 5) {
-												if (args.length == 5)
-													minutes = parseTimeSpec(args[3], args[4]);
-												if (isInt(args[2])) {
-													player.sendMessage(ChatColor.GREEN + "Rolling back area within " + args[2] + " blocks of you by " + minutes + " minutes.");
-													new Thread(new Rollback(player, conn, Integer.parseInt(args[2]), minutes, table)).start();
-												} else
-													player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[2]);
-											} else
-												player.sendMessage(ChatColor.RED + "Usage /lb rollback area [radius] <time> <minutes|hours|days>");
-										} else if (args[1].equalsIgnoreCase("playerarea")) {
-											if (args.length == 4 || args.length == 6) {
-												if (args.length == 6)
-													minutes = parseTimeSpec(args[4], args[5]);
-												if (isInt(args[3])) {
-													player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " within " + args[3] + " blocks by " + minutes + " minutes.");
-													new Thread(new Rollback(player, conn, args[2], Integer.parseInt(args[3]), minutes, table)).start();
-												} else
-													player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[3]);
-											} else
-												player.sendMessage(ChatColor.RED + "Usage: /lb rollback playerarea [player] [radius] <time> <minutes|hours|days>");
-										} else if (args[1].equalsIgnoreCase("cuboid")) {
-											if (args.length == 2 || args.length == 4) {
-												if (args.length == 4)
-													minutes = parseTimeSpec(args[2], args[3]);
-												Session session = getSession(player);
-												if (session.isloc1Set() && session.isloc2Set()) {
-													player.sendMessage(ChatColor.GREEN + "Rolling back selected cuboid by " + minutes + " minutes.");
-													new Thread(new Rollback(player, conn, session.loc1, session.loc2, minutes, table)).start();
-												} else
-													player.sendMessage(ChatColor.RED + "No cuboid selected. Use /lb setpos");
-											} else 
-												player.sendMessage(ChatColor.RED + "Usage: /lb rollback cuboid <time> <minutes|hours|days>");
-										} else
-											player.sendMessage(ChatColor.RED + "Wrong rollback mode");
-									} else {
-										player.sendMessage(ChatColor.RED + "Usage: ");
-										player.sendMessage(ChatColor.RED + "/lb rollback player [name] <time> <minutes|hours|days>");
-										player.sendMessage(ChatColor.RED + "/lb rollback area [radius] <time> <minutes|hours|days>");
-										player.sendMessage(ChatColor.RED + "/lb rollback playerarea [name] [radius] <time> <minutes|hours|days>");
-										player.sendMessage(ChatColor.RED + "/lb rollback cuboid <time> <minutes|hours|days>");
-									}
-								} else if (args[0].equalsIgnoreCase("help")) {
-									player.sendMessage("§dLogBlock Commands:");
-									player.sendMessage("§d/lb area <radius>");
-									player.sendMessage("§d/lb world");
-									player.sendMessage("§d/lb player [name] <radius>");
-									player.sendMessage("§d/lb block [type] <radius>");
-									player.sendMessage("§d/lb setpos <1|2>");
-									player.sendMessage("§d/lb rollback [rollback mode]");
-								} else
-									player.sendMessage(ChatColor.RED + "Wrong argument. Type /lb help for help");
-							} else
-								player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
-						} else
-							player.sendMessage(ChatColor.RED + "This world isn't logged");
-					} else
-						player.sendMessage(ChatColor.RED + "Can't create SQL connection.");
-				} else
-					sender.sendMessage("You aren't a player");
-			} catch (Exception ex) {
-				sender.sendMessage(ChatColor.RED + "An error occured. Check you syntax:");
-			}
-				return true;
-		} else
+		if (!cmd.getName().equalsIgnoreCase("lb"))
 			return false;
+		if (!(sender instanceof Player)) {
+			sender.sendMessage("You aren't a player");
+			return true;
+		}
+		Player player = (Player)sender;
+		Connection conn = getConnection();
+		String table = getTable(player);
+		if (conn == null) {
+			player.sendMessage(ChatColor.RED + "Can't create SQL connection.");
+			return true;
+		} else if (table == null) {
+			player.sendMessage(ChatColor.RED + "This world isn't logged");
+			return true;
+		}
+		if (args.length == 0)
+			player.sendMessage(ChatColor.RED + "No argument. Type /lb help for help");
+		else if (args[0].equalsIgnoreCase("area")) {
+			if (CheckPermission(player,"logblock.area")) {
+				int radius = Config.defaultDist;
+				if (args.length == 2 && isInt(args[1]))
+					radius = Integer.parseInt(args[1]);
+				new Thread(new AreaStats(conn, player, radius, table)).start();
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("world")) {
+			if (CheckPermission(player,"logblock.area")) {
+				new Thread(new AreaStats(conn, player, Short.MAX_VALUE, table)).start();
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("player")) {
+			if (CheckPermission(player,"logblock.area")) {
+				if (args.length == 2 || args.length == 3) {
+					int radius = Config.defaultDist;
+					if (args.length == 3 && isInt(args[2]))
+						radius = Integer.parseInt(args[2]);
+					new Thread(new PlayerAreaStats(conn, player, args[1], radius, table)).start();
+					} else
+						player.sendMessage(ChatColor.RED + "Usage: /lb player [name] <radius>"); 
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("block")) {
+			if (CheckPermission(player,"logblock.area")) {
+				if (args.length == 2 || args.length == 3) {
+					Material mat = Material.matchMaterial(args[1]);
+					int radius = Config.defaultDist;
+					if (args.length == 3 && isInt(args[2]))
+						radius = Integer.parseInt(args[2]);
+					if (mat != null)
+						new Thread(new AreaBlockSearch(conn, player, mat.getId(), radius, table)).start();
+					else
+						player.sendMessage(ChatColor.RED + "Can't find any item like '" + args[1] + "'");
+				} else
+					player.sendMessage(ChatColor.RED + "Usage: /lb block [type] <radius>");
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("setpos")) {
+			if (CheckPermission(player,"logblock.rollback")) {
+				Session session = getSession(player);
+				Location loc = player.getTargetBlock(null, Integer.MAX_VALUE).getLocation();
+				if (args.length == 1) {
+					if (!session.isloc1Set()) {
+						session.loc1 = loc;
+						player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
+					} else if (!session.isloc2Set()) {
+						session.loc2 = loc;
+						player.sendMessage(ChatColor.GREEN + "Pos 2 set.");
+					} else {
+						session.loc1 = loc;
+						session.loc2 = null;
+						player.sendMessage(ChatColor.GREEN + "Positions cleared.");
+						player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
+					}
+				} else if (args.length == 2) {
+					if (args[1].equalsIgnoreCase("1")) {
+						session.loc1 = loc;
+						player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
+					} else if (args[1].equalsIgnoreCase("2")) {
+						session.loc2 = loc;
+						player.sendMessage(ChatColor.GREEN + "Pos 2 set.");
+					} else
+						player.sendMessage(ChatColor.RED + "Wrong parameter. Try to use either 1 or 2");
+				} else
+					player.sendMessage(ChatColor.RED + "Usage: /lb setpos <1|2>");
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("rollback")) {
+			if (CheckPermission(player,"logblock.rollback")) {
+				if (args.length >= 2) {
+					int minutes = Config.defaultTime;
+					if (args[1].equalsIgnoreCase("player")) {
+						if (args.length == 3 || args.length == 5) {
+							if (args.length == 5)
+								minutes = parseTimeSpec(args[3], args[4]);
+							player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " by " + minutes + " minutes.");
+							new Thread(new Rollback(player, conn, args[2], minutes, table)).start();
+						} else 
+							player.sendMessage(ChatColor.RED + "Usage: /lb rollback player [name] <time> <minutes|hours|days>");
+					} else if (args[1].equalsIgnoreCase("area")) {
+						if (args.length == 3 || args.length == 5) {
+							if (args.length == 5)
+								minutes = parseTimeSpec(args[3], args[4]);
+							if (isInt(args[2])) {
+								player.sendMessage(ChatColor.GREEN + "Rolling back area within " + args[2] + " blocks of you by " + minutes + " minutes.");
+								new Thread(new Rollback(player, conn, Integer.parseInt(args[2]), minutes, table)).start();
+							} else
+								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[2]);
+						} else
+							player.sendMessage(ChatColor.RED + "Usage /lb rollback area [radius] <time> <minutes|hours|days>");
+					} else if (args[1].equalsIgnoreCase("playerarea")) {
+						if (args.length == 4 || args.length == 6) {
+							if (args.length == 6)
+								minutes = parseTimeSpec(args[4], args[5]);
+							if (isInt(args[3])) {
+								player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " within " + args[3] + " blocks by " + minutes + " minutes.");
+								new Thread(new Rollback(player, conn, args[2], Integer.parseInt(args[3]), minutes, table)).start();
+							} else
+								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[3]);
+						} else
+							player.sendMessage(ChatColor.RED + "Usage: /lb rollback playerarea [player] [radius] <time> <minutes|hours|days>");
+					} else if (args[1].equalsIgnoreCase("cuboid")) {
+						if (args.length == 2 || args.length == 4) {
+							if (args.length == 4)
+								minutes = parseTimeSpec(args[2], args[3]);
+							Session session = getSession(player);
+							if (session.isloc1Set() && session.isloc2Set()) {
+								player.sendMessage(ChatColor.GREEN + "Rolling back selected cuboid by " + minutes + " minutes.");
+								new Thread(new Rollback(player, conn, session.loc1, session.loc2, minutes, table)).start();
+							} else
+								player.sendMessage(ChatColor.RED + "No cuboid selected. Use /lb setpos");
+						} else 
+							player.sendMessage(ChatColor.RED + "Usage: /lb rollback cuboid <time> <minutes|hours|days>");
+					} else
+						player.sendMessage(ChatColor.RED + "Wrong rollback mode");
+				} else {
+					player.sendMessage(ChatColor.RED + "Usage: ");
+					player.sendMessage(ChatColor.RED + "/lb rollback player [name] <time> <minutes|hours|days>");
+					player.sendMessage(ChatColor.RED + "/lb rollback area [radius] <time> <minutes|hours|days>");
+					player.sendMessage(ChatColor.RED + "/lb rollback playerarea [name] [radius] <time> <minutes|hours|days>");
+					player.sendMessage(ChatColor.RED + "/lb rollback cuboid <time> <minutes|hours|days>");
+				}
+			} else if (args[0].equalsIgnoreCase("me")) {
+				if (CheckPermission(player,"logblock.me")) {
+					new Thread(new PlayerAreaStats(conn, player, player.getName(), Short.MAX_VALUE, table)).start();
+				} else
+					player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("help")) {
+			player.sendMessage("§dLogBlock Commands:");
+			player.sendMessage("§d/lb area <radius>");
+			player.sendMessage("§d/lb world");
+			player.sendMessage("§d/lb player [name] <radius>");
+			player.sendMessage("§d/lb block [type] <radius>");
+			player.sendMessage("§d/lb setpos <1|2>");
+			player.sendMessage("§d/lb rollback [rollback mode]");
+		} else
+			player.sendMessage(ChatColor.RED + "Wrong argument. Type /lb help for help");
+		return true;
 	}
 
 	private Connection getConnection()
