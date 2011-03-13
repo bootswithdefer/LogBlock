@@ -35,6 +35,25 @@ public class Rollback implements Runnable
 			return;
 		}
 	}
+	
+	Rollback(Player player, Connection conn, String name, int radius, int minutes, String table) {
+		this.player = player;
+		this.conn = conn;
+		try {
+			conn.setAutoCommit(false);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE playername = ? AND x > ? AND x < ? AND z > ? AND z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps.setString(1, name);
+			ps.setInt(2, player.getLocation().getBlockX()-radius);
+			ps.setInt(3, player.getLocation().getBlockX()+radius);
+			ps.setInt(4, player.getLocation().getBlockZ()-radius);
+			ps.setInt(5, player.getLocation().getBlockZ()+radius);
+			ps.setInt(6, minutes);
+		} catch (SQLException ex) {
+			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
+			player.sendMessage(ChatColor.RED + "Error, check server logs.");
+			return;
+		}
+	}
 
 	Rollback(Player player, Connection conn, int radius, int minutes, String table) {
 		this.player = player;
