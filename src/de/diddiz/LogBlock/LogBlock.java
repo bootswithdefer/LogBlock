@@ -257,11 +257,11 @@ public class LogBlock extends JavaPlugin
 					player.sendMessage(ChatColor.RED + "/lb rollback playerarea [name] [radius] <time> <minutes|hours|days>");
 					player.sendMessage(ChatColor.RED + "/lb rollback cuboid <time> <minutes|hours|days>");
 				}
-			} else if (args[0].equalsIgnoreCase("me")) {
-				if (CheckPermission(player,"logblock.me")) {
-					new Thread(new PlayerAreaStats(conn, player, player.getName(), Short.MAX_VALUE, table)).start();
-				} else
-					player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("me")) {
+			if (CheckPermission(player,"logblock.me")) {
+				new Thread(new PlayerAreaStats(conn, player, player.getName(), Short.MAX_VALUE, table)).start();
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("help")) {
