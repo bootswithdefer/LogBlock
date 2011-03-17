@@ -259,6 +259,15 @@ public class LogBlock extends JavaPlugin
 				}
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("writelogfile")) {
+			if (CheckPermission(player,"logblock.rollback")) {
+				if (args.length == 2) {
+					new Thread(new WriteLogFile(conn, player, args[1], table)).start();
+				}
+				else
+					player.sendMessage(ChatColor.RED + "Usage: /lb writelogfile [name]");
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("me")) {
 			if (CheckPermission(player,"logblock.me")) {
 				new Thread(new PlayerAreaStats(conn, player, player.getName(), Short.MAX_VALUE, table)).start();
