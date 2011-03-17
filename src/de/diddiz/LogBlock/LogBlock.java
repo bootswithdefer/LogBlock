@@ -389,6 +389,8 @@ private boolean CheckPermission(Player player, String permission) {
 	else {
 		if (permission.equals("logblock.lookup"))
 			return true;
+		else if (permission.equals("logblock.me"))
+			return true;
 		else if (permission.equals("logblock.area"))
 			return player.isOp();
 		else if (permission.equals("logblock.rollback"))
