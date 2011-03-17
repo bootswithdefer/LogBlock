@@ -125,6 +125,7 @@ public class Rollback implements Runnable
 		player.sendMessage(ChatColor.GREEN + "" + changes + " Changes found.");
 		player.sendMessage(ChatColor.GOLD + "This may take " + (int)Math.ceil(changes/1000) + " seconds.");
 		int counter = 0;
+		long start = System.currentTimeMillis();
 		Edit e = edits.poll();
 		while (e != null)
 		{
@@ -136,7 +137,7 @@ public class Rollback implements Runnable
 					Thread.sleep(100);
 				} catch (InterruptedException ex) {
 					LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
-					player.sendMessage("§cError, check server logs.");
+					player.sendMessage(ChatColor.RED + "Error, check server logs.");
 				}
 				counter = 0;
 			}
@@ -144,6 +145,7 @@ public class Rollback implements Runnable
 		}
 		player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
 		player.sendMessage(ChatColor.GREEN + "Undid " + rolledBack + " of " + changes + " changes");
+		player.sendMessage(ChatColor.GREEN + "Took:  " + (System.currentTimeMillis() - start) + "ms");
 	}
 
 	private class Edit
@@ -166,12 +168,14 @@ public class Rollback implements Runnable
 		public boolean perform() {
 			if (type == replaced)
 				return false;
-			Block block = world.getBlockAt(x, y, z);
-			if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11) || block.getTypeId() == 51) {
-				if (block.setTypeId(replaced)) {
-					block.setData(data);
-					return true;	
-				}
+			try {
+				Block block = world.getBlockAt(x, y, z);
+				if (!world.isChunkLoaded(block.getChunk()))
+					world.loadChunk(block.getChunk());
+				if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11) || block.getTypeId() == 51)
+					return block.setTypeIdAndData(replaced, data, false);
+			} catch (Exception ex) {
+					LogBlock.log.severe("[LogBlock Rollback] " + ex.toString());
 			}
 			return false;
 		}
