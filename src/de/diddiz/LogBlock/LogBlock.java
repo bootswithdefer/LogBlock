@@ -298,10 +298,10 @@ public class LogBlock extends JavaPlugin
 			if (!dbm.getTables(null, null, "lb-players", null).next())	{
 				log.log(Level.INFO, "[LogBlock] Crating table players.");
 				state.execute("CREATE TABLE `lb-players` (`playerid` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, `playername` varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (`playerid`), UNIQUE (`playername`))");
-				state.execute("INSERT INTO `lb-players` (`playername`) VALUES ('environment');");
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
 			}
+			state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + Config.logTNTExplosionsAs + "'), ('" + Config.logCreeperExplosionsAs + "'), ('" + Config.logFireAs + "'), ('" + Config.logLeavesDecayAs + "')");
 			for (int i = 0; i < Config.worldNames.size(); i++) {
 				String table = Config.worldTables.get(i);
 				if (!dbm.getTables(null, null, table, null).next())	{
@@ -505,7 +505,7 @@ private boolean CheckPermission(Player player, String permission) {
 	
 		public void onBlockBurn(BlockBurnEvent event) {
 			if (!event.isCancelled())
-				queueBlock("environment", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+				queueBlock(Config.logFireAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 		}
 		
 	    public void onBlockInteract(BlockInteractEvent event) {
@@ -519,7 +519,7 @@ private boolean CheckPermission(Player player, String permission) {
 	    
 	    public void onLeavesDecay(LeavesDecayEvent event) {
 	    	if (!event.isCancelled())
-	    		queueBlock("environment", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+	    		queueBlock(Config.logLeavesDecayAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 	    }
 	}
 
@@ -527,8 +527,13 @@ private boolean CheckPermission(Player player, String permission) {
 	{
 		public void onEntityExplode(EntityExplodeEvent event) {
 		if (!event.isCancelled()) {	
+			String name;
+			if (event.getEntity() == null) 
+				name = Config.logTNTExplosionsAs;
+			else
+				name = Config.logCreeperExplosionsAs;
 			for (Block block : event.blockList())
-				queueBlock("environment", block, block.getTypeId(), 0, block.getData());
+				queueBlock(name, block, block.getTypeId(), 0, block.getData());
 			}
 		}
 	}

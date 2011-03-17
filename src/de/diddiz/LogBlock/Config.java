@@ -22,8 +22,12 @@ public class Config {
 	static boolean logSignTexts;
 	static boolean logExplosions;
 	static boolean logFire;
-	static boolean logChestAccess;
 	static boolean logLeavesDecay;
+	static boolean logChestAccess;
+	static String logTNTExplosionsAs;
+	static String logCreeperExplosionsAs;
+	static String logFireAs;
+	static String logLeavesDecayAs;
 	static boolean usePermissions;
 	
 	static boolean Load(Configuration config) {
@@ -65,6 +69,14 @@ public class Config {
 			config.setProperty("logChestAccess", false);
 		if (!keys.contains("logLeavesDecay"))
 			config.setProperty("logLeavesDecay", false);
+		if (!keys.contains("logTNTExplosionsAs"))
+			config.setProperty("logTNTExplosionsAs", "TNT");
+		if (!keys.contains("logCreeperExplosionsAs"))
+			config.setProperty("logCreeperExplosionsAs", "Creeper");
+		if (!keys.contains("logFireAs"))
+			config.setProperty("logFireAs", "Fire");
+		if (!keys.contains("logLeavesDecayAs"))
+			config.setProperty("logLeavesDecayAs", "LeavesDecay");
 		if (!keys.contains("usePermissions"))
 			config.setProperty("usePermissions", false);
 		if (!config.save()){
@@ -87,8 +99,12 @@ public class Config {
 		logSignTexts = config.getBoolean("logSignTexts", false);
 		logExplosions = config.getBoolean("logExplosions", false);
 		logFire = config.getBoolean("logFire", false);
-		logChestAccess  = config.getBoolean("logChestAccess", false);
-		logLeavesDecay  = config.getBoolean("logLeavesDecay", false);
+		logChestAccess = config.getBoolean("logChestAccess", false);
+		logLeavesDecay = config.getBoolean("logLeavesDecay", false);
+		logTNTExplosionsAs = config.getString("logTNTExplosionsAs");
+		logCreeperExplosionsAs = config.getString("logCreeperExplosionsAs");
+		logFireAs = config.getString("logFireAs");
+		logLeavesDecayAs = config.getString("logLeavesDecayAs");
 		usePermissions = config.getBoolean("usePermissions", false);
 		return true;
 	}
