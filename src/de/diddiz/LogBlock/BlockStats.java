@@ -43,7 +43,7 @@ public class BlockStats implements Runnable
 		SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT * FROM `" + table + "` LEFT JOIN `" + table + "-sign` USING (`id`) INNER JOIN `lb-players` USING (`playerid`) WHERE `x` = ? AND `y` = ? AND `z` = ? ORDER BY `date` DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT * FROM `" + table + "` LEFT JOIN `" + table + "-sign` USING (`id`) INNER JOIN `lb-players` USING (`playerid`) WHERE `x` = ? AND `y` = ? AND `z` = ? ORDER BY `date` DESC LIMIT 15", Statement.RETURN_GENERATED_KEYS);
 			ps.setInt(1, block.getX());
 			ps.setInt(2, block.getY());
 			ps.setInt(3, block.getZ());
