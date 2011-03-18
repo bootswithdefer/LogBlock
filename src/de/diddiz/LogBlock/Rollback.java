@@ -166,13 +166,13 @@ public class Rollback implements Runnable
 		}
 		
 		public boolean perform() {
-			if (type == replaced)
+			if (type > 0 && type == replaced)
 				return false;
 			try {
 				Block block = world.getBlockAt(x, y, z);
 				if (!world.isChunkLoaded(block.getChunk()))
 					world.loadChunk(block.getChunk());
-				if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11) || block.getTypeId() == 51)
+				if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11) || block.getTypeId() == 51 || (type == 0 && replaced == 0))
 					return block.setTypeIdAndData(replaced, data, false);
 			} catch (Exception ex) {
 					LogBlock.log.severe("[LogBlock Rollback] " + ex.toString());
