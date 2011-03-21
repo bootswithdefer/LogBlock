@@ -7,7 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -47,7 +47,7 @@ public class LogBlock extends JavaPlugin
 	static Logger log;
 	private Consumer consumer = null;
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
-	private ArrayList<Session> sessions = new ArrayList<Session>();
+	private HashMap<Integer, Session> sessions = new HashMap<Integer, Session>();
 	
 	@Override
 	public void onEnable() {
@@ -550,13 +550,12 @@ private boolean CheckPermission(Player player, String permission) {
 	}
 	
 	private Session getSession(Player player) {
-		int idx = sessions.indexOf(new Session(player));
-		if (idx != -1)
-			return sessions.get(idx);
-		else {
-			sessions.add(new Session(player));
-			return getSession(player);
+		Session session = sessions.get(player.getName().hashCode());
+		if (session == null) {
+			session = new Session(player);
+			sessions.put(player.getName().hashCode(), session);
 		}
+		return session;
 	}
 
 	private boolean isInt(String str) {
@@ -682,33 +681,39 @@ private boolean CheckPermission(Player player, String permission) {
 			this.ca = null;
 		}
 	}
-	
+
 	private class Session
 	{
 		public String user;
 		public Location loc1 = null, loc2 = null;
 		
-	public Session (Player player) {
-		this.user = player.getName();
-	}
-	
-	public boolean isloc1Set() {
-		if (loc1 == null)
-			return false;
-		else
-			return true;
-	}
-	
-	public boolean isloc2Set() {
-		if (loc2 == null)
-			return false;
-		else
-			return true;
-	}
-	
+		public Session (Player player) {
+			this.user = player.getName();
+		}
+
+		public boolean isloc1Set() {
+			if (loc1 == null)
+				return false;
+			else
+				return true;
+		}
+
+		public boolean isloc2Set() {
+			if (loc2 == null)
+				return false;
+			else
+				return true;
+		}
+
 		@Override
-		public boolean equals(Object obj)
-		{
+		public int hashCode() {
+			return user.hashCode();
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
 			if (obj == null)
 				return false;
 			if (!user.equalsIgnoreCase(((Session)obj).user))
