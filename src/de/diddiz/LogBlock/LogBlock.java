@@ -132,9 +132,10 @@ public class LogBlock extends JavaPlugin
 			player.sendMessage(ChatColor.RED + "This world isn't logged");
 			return true;
 		}
-		if (args.length == 0)
-			player.sendMessage(ChatColor.RED + "No argument. Type /lb help for help");
-		else if (args[0].equalsIgnoreCase("area")) {
+		if (args.length == 0) {
+			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + getDescription().getVersion() + " by DiddiZ");
+			player.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
+		} else if (args[0].equalsIgnoreCase("area")) {
 			if (CheckPermission(player,"logblock.area")) {
 				int radius = Config.defaultDist;
 				if (args.length == 2 && isInt(args[1]))
