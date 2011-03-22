@@ -7,14 +7,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -35,19 +33,22 @@ import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerItemEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import bootswithdefer.JDCBPool.JDCConnectionDriver;
 
 import com.nijikokun.bukkit.Permissions.Permissions;
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
+import com.sk89q.worldedit.bukkit.selections.Selection;
 
 public class LogBlock extends JavaPlugin
 {
 	static Logger log;
 	private Consumer consumer = null;
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
-	private HashMap<Integer, Session> sessions = new HashMap<Integer, Session>();
 	
 	@Override
 	public void onEnable() {
@@ -172,36 +173,6 @@ public class LogBlock extends JavaPlugin
 					player.sendMessage(ChatColor.RED + "Usage: /lb block [type] <radius>");
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
-		} else if (args[0].equalsIgnoreCase("setpos")) {
-			if (CheckPermission(player,"logblock.rollback")) {
-				Session session = getSession(player);
-				Location loc = player.getTargetBlock(null, Integer.MAX_VALUE).getLocation();
-				if (args.length == 1) {
-					if (!session.isloc1Set()) {
-						session.loc1 = loc;
-						player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
-					} else if (!session.isloc2Set()) {
-						session.loc2 = loc;
-						player.sendMessage(ChatColor.GREEN + "Pos 2 set.");
-					} else {
-						session.loc1 = loc;
-						session.loc2 = null;
-						player.sendMessage(ChatColor.GREEN + "Positions cleared.");
-						player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
-					}
-				} else if (args.length == 2) {
-					if (args[1].equalsIgnoreCase("1")) {
-						session.loc1 = loc;
-						player.sendMessage(ChatColor.GREEN + "Pos 1 set.");
-					} else if (args[1].equalsIgnoreCase("2")) {
-						session.loc2 = loc;
-						player.sendMessage(ChatColor.GREEN + "Pos 2 set.");
-					} else
-						player.sendMessage(ChatColor.RED + "Wrong parameter. Try to use either 1 or 2");
-				} else
-					player.sendMessage(ChatColor.RED + "Usage: /lb setpos <1|2>");
-			} else
-				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("rollback")) {
 			if (CheckPermission(player,"logblock.rollback")) {
 				if (args.length >= 2) {
@@ -236,18 +207,24 @@ public class LogBlock extends JavaPlugin
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[3]);
 						} else
 							player.sendMessage(ChatColor.RED + "Usage: /lb rollback playerarea [player] [radius] <time> <minutes|hours|days>");
-					} else if (args[1].equalsIgnoreCase("cuboid")) {
+					} else if (args[1].equalsIgnoreCase("selection")) {
 						if (args.length == 2 || args.length == 4) {
 							if (args.length == 4)
 								minutes = parseTimeSpec(args[2], args[3]);
-							Session session = getSession(player);
-							if (session.isloc1Set() && session.isloc2Set()) {
-								player.sendMessage(ChatColor.GREEN + "Rolling back selected cuboid by " + minutes + " minutes.");
-								new Thread(new Rollback(player, conn, session.loc1, session.loc2, minutes, table)).start();
+							Plugin we = getServer().getPluginManager().getPlugin("WorldEdit");
+							if (we != null) {
+								Selection sel = ((WorldEditPlugin)we).getSelection(player);
+								if (sel != null) {
+									if (sel instanceof CuboidSelection)
+										new Thread(new Rollback(player, conn, sel.getMinimumPoint(), sel.getMaximumPoint(), minutes, table)).start();
+									else
+										player.sendMessage(ChatColor.RED + "You have to define a cuboid selection");
+								} else
+									player.sendMessage(ChatColor.RED + "No selection defined");
 							} else
-								player.sendMessage(ChatColor.RED + "No cuboid selected. Use /lb setpos");
+								player.sendMessage(ChatColor.RED + "WorldEdit plugin not found");
 						} else 
-							player.sendMessage(ChatColor.RED + "Usage: /lb rollback cuboid <time> <minutes|hours|days>");
+							player.sendMessage(ChatColor.RED + "Usage: /lb rollback selection <time> <minutes|hours|days>");
 					} else
 						player.sendMessage(ChatColor.RED + "Wrong rollback mode");
 				} else {
@@ -548,15 +525,6 @@ private boolean CheckPermission(Player player, String permission) {
 			}
 		}
 	}
-	
-	private Session getSession(Player player) {
-		Session session = sessions.get(player.getName().hashCode());
-		if (session == null) {
-			session = new Session(player);
-			sessions.put(player.getName().hashCode(), session);
-		}
-		return session;
-	}
 
 	private boolean isInt(String str) {
 		try {
@@ -679,46 +647,6 @@ private boolean CheckPermission(Player player, String permission) {
 			this.z = z;
 			this.signtext = null;
 			this.ca = null;
-		}
-	}
-
-	private class Session
-	{
-		public String user;
-		public Location loc1 = null, loc2 = null;
-		
-		public Session (Player player) {
-			this.user = player.getName();
-		}
-
-		public boolean isloc1Set() {
-			if (loc1 == null)
-				return false;
-			else
-				return true;
-		}
-
-		public boolean isloc2Set() {
-			if (loc2 == null)
-				return false;
-			else
-				return true;
-		}
-
-		@Override
-		public int hashCode() {
-			return user.hashCode();
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (!user.equalsIgnoreCase(((Session)obj).user))
-				return false;
-			return true;
 		}
 	}
 }
