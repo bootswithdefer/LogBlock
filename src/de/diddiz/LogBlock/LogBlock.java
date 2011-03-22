@@ -59,7 +59,7 @@ public class LogBlock extends JavaPlugin
 				if (getServer().getPluginManager().getPlugin("Permissions") != null) 
 					log.info("[LogBlock] Permissions enabled");
 				else {
-					Config.usePermissions = true;
+					Config.usePermissions = false;
 					log.warning("[LogBlock] Permissions plugin not found. Using default permissions.");
 				}
 			}
@@ -232,7 +232,7 @@ public class LogBlock extends JavaPlugin
 					player.sendMessage(ChatColor.RED + "/lb rollback player [name] <time> <minutes|hours|days>");
 					player.sendMessage(ChatColor.RED + "/lb rollback area [radius] <time> <minutes|hours|days>");
 					player.sendMessage(ChatColor.RED + "/lb rollback playerarea [name] [radius] <time> <minutes|hours|days>");
-					player.sendMessage(ChatColor.RED + "/lb rollback cuboid <time> <minutes|hours|days>");
+					player.sendMessage(ChatColor.RED + "/lb rollback selection <time> <minutes|hours|days>");
 				}
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
