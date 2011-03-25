@@ -192,7 +192,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[3], args[4]);
 							if (isInt(args[2])) {
 								player.sendMessage(ChatColor.GREEN + "Rolling back area within " + args[2] + " blocks of you by " + minutes + " minutes.");
-								new Thread(new Rollback(player, conn, Integer.parseInt(args[2]), minutes, table)).start();
+								getServer().getScheduler().scheduleSyncDelayedTask(this, new Rollback(player, conn, Integer.parseInt(args[2]), minutes, table));
 							} else
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[2]);
 						} else
@@ -203,7 +203,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[4], args[5]);
 							if (isInt(args[3])) {
 								player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " within " + args[3] + " blocks by " + minutes + " minutes.");
-								new Thread(new Rollback(player, conn, args[2], Integer.parseInt(args[3]), minutes, table)).start();
+								getServer().getScheduler().scheduleSyncDelayedTask(this, new Rollback(player, conn, args[2], Integer.parseInt(args[3]), minutes, table));
 							} else
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[3]);
 						} else
@@ -216,9 +216,10 @@ public class LogBlock extends JavaPlugin
 							if (we != null) {
 								Selection sel = ((WorldEditPlugin)we).getSelection(player);
 								if (sel != null) {
-									if (sel instanceof CuboidSelection)
-										new Thread(new Rollback(player, conn, sel.getMinimumPoint(), sel.getMaximumPoint(), minutes, table)).start();
-									else
+									if (sel instanceof CuboidSelection) {
+										player.sendMessage(ChatColor.GREEN + "Rolling back selection by " + minutes + " minutes.");
+										getServer().getScheduler().scheduleSyncDelayedTask(this, new Rollback(player, conn, sel.getMinimumPoint(), sel.getMaximumPoint(), minutes, table));
+									} else
 										player.sendMessage(ChatColor.RED + "You have to define a cuboid selection");
 								} else
 									player.sendMessage(ChatColor.RED + "No selection defined");

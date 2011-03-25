@@ -123,24 +123,12 @@ public class Rollback implements Runnable
 		int changes = edits.size();
 		int rolledBack = 0;
 		player.sendMessage(ChatColor.GREEN + "" + changes + " Changes found.");
-		player.sendMessage(ChatColor.GOLD + "This may take " + (int)Math.ceil(changes/1000) + " seconds.");
-		int counter = 0;
 		long start = System.currentTimeMillis();
 		Edit e = edits.poll();
 		while (e != null)
 		{
 			if (e.perform())
 				rolledBack++;
-			counter++;
-			if (counter > 100) {
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException ex) {
-					LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
-					player.sendMessage(ChatColor.RED + "Error, check server logs.");
-				}
-				counter = 0;
-			}
 			e = edits.poll();
 		}
 		player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
