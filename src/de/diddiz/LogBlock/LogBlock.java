@@ -254,13 +254,12 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("help")) {
-			player.sendMessage("§dLogBlock Commands:");
-			player.sendMessage("§d/lb area <radius>");
-			player.sendMessage("§d/lb world");
-			player.sendMessage("§d/lb player [name] <radius>");
-			player.sendMessage("§d/lb block [type] <radius>");
-			player.sendMessage("§d/lb setpos <1|2>");
-			player.sendMessage("§d/lb rollback [rollback mode]");
+			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock Commands:");
+			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb area <radius>");
+			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb world");
+			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb player [name] <radius>");
+			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb block [type] <radius>");
+			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb rollback [rollback mode]");
 		} else
 			player.sendMessage(ChatColor.RED + "Wrong argument. Type /lb help for help");
 		return true;
