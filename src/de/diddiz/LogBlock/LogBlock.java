@@ -47,6 +47,7 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 public class LogBlock extends JavaPlugin
 {
 	static Logger log;
+	static Config config;
 	private Consumer consumer = null;
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 
@@ -54,16 +55,16 @@ public class LogBlock extends JavaPlugin
 	public void onEnable() {
 		log = getServer().getLogger();
 		try	{
-			Config.Load(getConfiguration());
-			if (Config.usePermissions)	{
+			config = new Config(getConfiguration());
+			if (config.usePermissions)	{
 				if (getServer().getPluginManager().getPlugin("Permissions") != null) 
 					log.info("[LogBlock] Permissions enabled");
 				else {
-					Config.usePermissions = false;
+					config.usePermissions = false;
 					log.warning("[LogBlock] Permissions plugin not found. Using default permissions.");
 				}
 			}
-			new JDCConnectionDriver(Config.dbDriver, Config.dbUrl, Config.dbUsername, Config.dbPassword);
+			new JDCConnectionDriver(config.dbDriver, config.dbUrl, config.dbUsername, config.dbPassword);
 			Connection conn = getConnection();
 			conn.close();
 		} catch (Exception ex) {
@@ -71,7 +72,7 @@ public class LogBlock extends JavaPlugin
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
-		if (Config.worldNames == null || Config.worldTables == null || Config.worldNames.size() == 0 || Config.worldNames.size() != Config.worldTables.size()) {
+		if (config.worldNames == null || config.worldTables == null || config.worldNames.size() == 0 || config.worldNames.size() != config.worldTables.size()) {
 			log.log(Level.SEVERE, "[LogBlock] worldNames or worldTables not set porperly");
 			getServer().getPluginManager().disablePlugin(this);
 			return;
@@ -81,7 +82,7 @@ public class LogBlock extends JavaPlugin
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
-		if (Config.keepLogDays >= 0)
+		if (config.keepLogDays >= 0)
 			new Thread(new ClearLog(getConnection())).start();
 		LBBlockListener lbBlockListener = new LBBlockListener();
 		LBPlayerListener lbPlayerListener = new LBPlayerListener();
@@ -92,13 +93,13 @@ public class LogBlock extends JavaPlugin
 		pm.registerEvent(Type.BLOCK_PLACED, lbBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Event.Priority.Monitor, this);
-		if (Config.logFire)
+		if (config.logFire)
 			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Event.Priority.Monitor, this);
-		if (Config.logExplosions) 
+		if (config.logExplosions) 
 			pm.registerEvent(Type.ENTITY_EXPLODE, new LBEntityListener(), Event.Priority.Monitor, this);
-		if (Config.logChestAccess)
+		if (config.logChestAccess)
 			pm.registerEvent(Type.BLOCK_INTERACT, lbBlockListener, Event.Priority.Monitor, this);
-		if (Config.logLeavesDecay)
+		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Event.Priority.Monitor, this);
 		consumer = new Consumer();
 		new Thread(consumer).start();
@@ -137,7 +138,7 @@ public class LogBlock extends JavaPlugin
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
 		} else if (args[0].equalsIgnoreCase("area")) {
 			if (CheckPermission(player,"logblock.area")) {
-				int radius = Config.defaultDist;
+				int radius = config.defaultDist;
 				if (args.length == 2 && isInt(args[1]))
 					radius = Integer.parseInt(args[1]);
 				new Thread(new AreaStats(conn, player, radius, table)).start();
@@ -151,7 +152,7 @@ public class LogBlock extends JavaPlugin
 		} else if (args[0].equalsIgnoreCase("player")) {
 			if (CheckPermission(player,"logblock.area")) {
 				if (args.length == 2 || args.length == 3) {
-					int radius = Config.defaultDist;
+					int radius = config.defaultDist;
 					if (args.length == 3 && isInt(args[2]))
 						radius = Integer.parseInt(args[2]);
 					new Thread(new PlayerAreaStats(conn, player, args[1], radius, table)).start();
@@ -163,7 +164,7 @@ public class LogBlock extends JavaPlugin
 			if (CheckPermission(player,"logblock.area")) {
 				if (args.length == 2 || args.length == 3) {
 					Material mat = Material.matchMaterial(args[1]);
-					int radius = Config.defaultDist;
+					int radius = config.defaultDist;
 					if (args.length == 3 && isInt(args[2]))
 						radius = Integer.parseInt(args[2]);
 					if (mat != null)
@@ -177,7 +178,7 @@ public class LogBlock extends JavaPlugin
 		} else if (args[0].equalsIgnoreCase("rollback")) {
 			if (CheckPermission(player,"logblock.rollback")) {
 				if (args.length >= 2) {
-					int minutes = Config.defaultTime;
+					int minutes = config.defaultTime;
 					if (args[1].equalsIgnoreCase("player")) {
 						if (args.length == 3 || args.length == 5) {
 							if (args.length == 5)
@@ -289,9 +290,9 @@ public class LogBlock extends JavaPlugin
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
 			}
-			state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + Config.logTNTExplosionsAs + "'), ('" + Config.logCreeperExplosionsAs + "'), ('" + Config.logFireAs + "'), ('" + Config.logLeavesDecayAs + "')");
-			for (int i = 0; i < Config.worldNames.size(); i++) {
-				String table = Config.worldTables.get(i);
+			state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + config.logTNTExplosionsAs + "'), ('" + config.logCreeperExplosionsAs + "'), ('" + config.logFireAs + "'), ('" + config.logLeavesDecayAs + "')");
+			for (int i = 0; i < config.worldNames.size(); i++) {
+				String table = config.worldTables.get(i);
 				if (!dbm.getTables(null, null, table, null).next())	{
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
 					state.execute("CREATE TABLE `" + table + "` (`id` INT NOT NULL AUTO_INCREMENT, `date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00', `playerid` SMALLINT UNSIGNED NOT NULL DEFAULT '0', `replaced` TINYINT UNSIGNED NOT NULL DEFAULT '0', `type` TINYINT UNSIGNED NOT NULL DEFAULT '0', `data` TINYINT UNSIGNED NOT NULL DEFAULT '0', `x` SMALLINT NOT NULL DEFAULT '0', `y` TINYINT UNSIGNED NOT NULL DEFAULT '0',`z` SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (`id`), KEY `coords` (`y`,`x`,`z`), KEY `type` (`type`), KEY `data` (`data`), KEY `replaced` (`replaced`));");
@@ -336,10 +337,10 @@ public class LogBlock extends JavaPlugin
 	}
 
 	private String getTable (String worldName) {
-		int idx = Config.worldNames.indexOf(worldName);
+		int idx = config.worldNames.indexOf(worldName);
 		if (idx == -1)
 			return null;
-		return Config.worldTables.get(idx);
+		return config.worldTables.get(idx);
 	}
 
 	private void queueBlock(Player player, Block block, int typeAfter) {
@@ -372,7 +373,7 @@ public class LogBlock extends JavaPlugin
 	}
 
 	private boolean CheckPermission(Player player, String permission) {
-		if (Config.usePermissions)
+		if (config.usePermissions)
 			return Permissions.Security.permission(player, permission);
 		else {
 			if (permission.equals("logblock.lookup"))
@@ -438,10 +439,10 @@ public class LogBlock extends JavaPlugin
 				}
 			}
 		}
-		
-	    public void onPlayerJoin(PlayerEvent event) {
-	    	Connection conn = getConnection();
-	    	Statement state = null;
+
+		public void onPlayerJoin(PlayerEvent event) {
+			Connection conn = getConnection();
+			Statement state = null;
 			if (conn == null)
 				return;
 			try {
@@ -459,21 +460,21 @@ public class LogBlock extends JavaPlugin
 					log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
 				}
 			}
-	    }
+		}
 	}
 
 	private class LBBlockListener extends BlockListener
 	{
 		public void onBlockRightClick(BlockRightClickEvent event) {
-			if (event.getItemInHand().getTypeId()== Config.toolID && CheckPermission(event.getPlayer(), "logblock.lookup"))
+			if (event.getItemInHand().getTypeId()== config.toolID && CheckPermission(event.getPlayer(), "logblock.lookup"))
 				new Thread(new BlockStats(getConnection(), event.getPlayer(), event.getBlock(), getTable(event.getBlock()))).start();
 		}
 		
 		public void onBlockPlace(BlockPlaceEvent event) {
 			if (!event.isCancelled()) {
-				if (event.getItemInHand().getTypeId() == Config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
+				if (event.getItemInHand().getTypeId() == config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
 					new Thread(new BlockStats(getConnection(), event.getPlayer(), event.getBlock(), getTable(event.getBlock()))).start();
-					if (Config.toolblockRemove)
+					if (config.toolblockRemove)
 						event.setCancelled(true);
 				} else
 					queueBlock(event.getPlayer().getName(), event.getBlockPlaced(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
@@ -487,7 +488,7 @@ public class LogBlock extends JavaPlugin
 	
 		public void onSignChange(SignChangeEvent event) {
 			if (!event.isCancelled())
-				if (Config.logSignTexts)
+				if (config.logSignTexts)
 					queueBlock(event.getPlayer().getName(), event.getBlock(), 0, event.getBlock().getTypeId(), event.getBlock().getData(), "sign [" + event.getLine(0) + "] [" + event.getLine(1) + "] [" + event.getLine(2) + "] [" + event.getLine(3) + "]", null);
 				else
 					queueBlock(event.getPlayer().getName(), event.getBlock(), 0, event.getBlock().getTypeId(), event.getBlock().getData());
@@ -495,22 +496,22 @@ public class LogBlock extends JavaPlugin
 	
 		public void onBlockBurn(BlockBurnEvent event) {
 			if (!event.isCancelled())
-				queueBlock(Config.logFireAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+				queueBlock(config.logFireAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 		}
 		
-	    public void onBlockInteract(BlockInteractEvent event) {
-	    	if (!event.isCancelled() && event.isPlayer() && event.getBlock().getType() == Material.CHEST)  {
-	    		if (((Player)event.getEntity()).getItemInHand().getTypeId() == Config.toolID)
-	    			event.setCancelled(true);
-	    		else
-	    			queueBlock((Player)event.getEntity(), event.getBlock(), (short)0, (byte)0, (short)0, (byte)0);
-	    	}
-	    }
-	    
-	    public void onLeavesDecay(LeavesDecayEvent event) {
-	    	if (!event.isCancelled())
-	    		queueBlock(Config.logLeavesDecayAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
-	    }
+		public void onBlockInteract(BlockInteractEvent event) {
+			if (!event.isCancelled() && event.isPlayer() && event.getBlock().getType() == Material.CHEST)  {
+				if (((Player)event.getEntity()).getItemInHand().getTypeId() == config.toolID)
+					event.setCancelled(true);
+				else
+					queueBlock((Player)event.getEntity(), event.getBlock(), (short)0, (byte)0, (short)0, (byte)0);
+			}
+		}
+
+		public void onLeavesDecay(LeavesDecayEvent event) {
+			if (!event.isCancelled())
+				queueBlock(config.logLeavesDecayAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+		}
 	}
 
 	private class LBEntityListener extends EntityListener
@@ -519,9 +520,9 @@ public class LogBlock extends JavaPlugin
 		if (!event.isCancelled()) {	
 			String name;
 			if (event.getEntity() == null) 
-				name = Config.logTNTExplosionsAs;
+				name = config.logTNTExplosionsAs;
 			else
-				name = Config.logCreeperExplosionsAs;
+				name = config.logCreeperExplosionsAs;
 			for (Block block : event.blockList())
 				queueBlock(name, block, block.getTypeId(), 0, block.getData());
 			}
@@ -561,7 +562,7 @@ public class LogBlock extends JavaPlugin
 				try {
 					conn = getConnection();
 					conn.setAutoCommit(false);
-					while (count < 100 && start+Config.delay > (System.currentTimeMillis()/1000L)) {
+					while (count < 100 && start + config.delay > (System.currentTimeMillis()/1000L)) {
 						b = bqueue.poll(1L, TimeUnit.SECONDS);
 						if (b == null)
 							continue;

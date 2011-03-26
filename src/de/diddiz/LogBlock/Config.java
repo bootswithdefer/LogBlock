@@ -6,31 +6,31 @@ import java.util.List;
 import org.bukkit.util.config.Configuration;
 
 public class Config {
-	static List<String> worldNames;
-	static List<String> worldTables;
-	static String dbDriver;
-	static String dbUrl;
-	static String dbUsername;
-	static String dbPassword;
-	static int keepLogDays;
-	static int delay;
-	static int defaultDist;
-	static int defaultTime;
-	static int toolID;
-	static int toolblockID;
-	static boolean toolblockRemove;
-	static boolean logSignTexts;
-	static boolean logExplosions;
-	static boolean logFire;
-	static boolean logLeavesDecay;
-	static boolean logChestAccess;
-	static String logTNTExplosionsAs;
-	static String logCreeperExplosionsAs;
-	static String logFireAs;
-	static String logLeavesDecayAs;
-	static boolean usePermissions;
-	
-	static boolean Load(Configuration config) {
+	List<String> worldNames;
+	List<String> worldTables;
+	String dbDriver;
+	String dbUrl;
+	String dbUsername;
+	String dbPassword;
+	int keepLogDays;
+	int delay;
+	int defaultDist;
+	int defaultTime;
+	int toolID;
+	int toolblockID;
+	boolean toolblockRemove;
+	boolean logSignTexts;
+	boolean logExplosions;
+	boolean logFire;
+	boolean logLeavesDecay;
+	boolean logChestAccess;
+	String logTNTExplosionsAs;
+	String logCreeperExplosionsAs;
+	String logFireAs;
+	String logLeavesDecayAs;
+	boolean usePermissions;
+
+	Config (Configuration config) {
 		config.load();
 		List<String> keys = config.getKeys(null);
 		if (!keys.contains("worldNames"))
@@ -79,10 +79,8 @@ public class Config {
 			config.setProperty("logLeavesDecayAs", "LeavesDecay");
 		if (!keys.contains("usePermissions"))
 			config.setProperty("usePermissions", false);
-		if (!config.save()){
+		if (!config.save())
 			LogBlock.log.severe("[LogBlock] Error while writing to config.yml");
-			return false;
-		}
 		worldNames = config.getStringList("worldNames", null);
 		worldTables = config.getStringList("worldTables", null);
 		dbDriver = config.getString("driver");
@@ -106,6 +104,5 @@ public class Config {
 		logFireAs = config.getString("logFireAs");
 		logLeavesDecayAs = config.getString("logLeavesDecayAs");
 		usePermissions = config.getBoolean("usePermissions", false);
-		return true;
 	}
 }

@@ -20,8 +20,8 @@ public class ClearLog implements Runnable
 		Statement state = null;
 		try {
 			state = conn.createStatement();
-			for (String table : Config.worldTables) {
-				int deleted = state.executeUpdate("DELETE FROM `" + table + "` WHERE date < date_sub(now(), INTERVAL " + Config.keepLogDays + " DAY)");
+			for (String table : LogBlock.config.worldTables) {
+				int deleted = state.executeUpdate("DELETE FROM `" + table + "` WHERE date < date_sub(now(), INTERVAL " + LogBlock.config.keepLogDays + " DAY)");
 				if (deleted > 0)
 					LogBlock.log.info("[LogBlock] Cleared out table " + table + ". Deleted " + deleted + " entries.");
 				deleted = state.executeUpdate("DELETE `" + table + "-sign` FROM `" + table + "-sign` LEFT JOIN `" + table + "` ON (`" + table + "-sign`.`id` = `" + table + "`.`id`) WHERE `" + table + "`.`id` IS NULL;");
