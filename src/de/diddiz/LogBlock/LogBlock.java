@@ -285,7 +285,7 @@ public class LogBlock extends JavaPlugin
 			DatabaseMetaData dbm = conn.getMetaData();
 			state = conn.createStatement();
 			if (!dbm.getTables(null, null, "lb-players", null).next())	{
-				log.log(Level.INFO, "[LogBlock] Crating table players.");
+				log.log(Level.INFO, "[LogBlock] Crating table lb-players.");
 				state.execute("CREATE TABLE `lb-players` (`playerid` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, `playername` varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (`playerid`), UNIQUE (`playername`))");
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
