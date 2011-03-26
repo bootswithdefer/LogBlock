@@ -49,7 +49,7 @@ public class LogBlock extends JavaPlugin
 	static Logger log;
 	private Consumer consumer = null;
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
-	
+
 	@Override
 	public void onEnable() {
 		log = getServer().getLogger();
@@ -113,7 +113,7 @@ public class LogBlock extends JavaPlugin
 		}
 		log.info("LogBlock disabled.");
 	}
-	
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)	{
 		if (!cmd.getName().equalsIgnoreCase("lb"))
@@ -274,7 +274,7 @@ public class LogBlock extends JavaPlugin
 			return null;
 		}
 	}
-	
+
 	private boolean checkTables() {
 		Connection conn = getConnection();
 		Statement state = null;
@@ -326,15 +326,15 @@ public class LogBlock extends JavaPlugin
 		}
 		return false;
 	}
-	
+
 	private String getTable (Player player) {
 		return getTable(player.getWorld().getName());
 	}
-	
+
 	private String getTable (Block block) {
 		return getTable(block.getWorld().getName());
 	}
-	
+
 	private String getTable (String worldName) {
 		int idx = Config.worldNames.indexOf(worldName);
 		if (idx == -1)
@@ -345,15 +345,15 @@ public class LogBlock extends JavaPlugin
 	private void queueBlock(Player player, Block block, int typeAfter) {
 		queueBlock(player.getName(), block, 0, typeAfter, (byte)0, null, null);
 	}
-	
+
 	private void queueBlock(String playerName, Block block, int typeBefore, int typeAfter, byte data) {
 		queueBlock(playerName, block, typeBefore, typeAfter, data, null, null);
 	}
-	
+
 	private void queueBlock(Player player, Block block, short inType, byte inAmount, short outType, byte outAmount) {
 		queueBlock(player.getName(), block, 54, 54, (byte)0, null, new ChestAccess(inType, inAmount, outType, outAmount));
 	}
-	
+
 	private void queueBlock(String playerName, Block block, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
 		if (block == null || typeBefore < 0 || typeAfter < 0)
 			return;
@@ -370,23 +370,23 @@ public class LogBlock extends JavaPlugin
 		if (!bqueue.offer(row))
 			log.info("[LogBlock] Failed to queue block for " + playerName);
 	}
-	
-private boolean CheckPermission(Player player, String permission) {
-	if (Config.usePermissions)
-		return Permissions.Security.permission(player, permission);
-	else {
-		if (permission.equals("logblock.lookup"))
-			return true;
-		else if (permission.equals("logblock.me"))
-			return true;
-		else if (permission.equals("logblock.area"))
-			return player.isOp();
-		else if (permission.equals("logblock.rollback"))
-			return player.isOp();
+
+	private boolean CheckPermission(Player player, String permission) {
+		if (Config.usePermissions)
+			return Permissions.Security.permission(player, permission);
+		else {
+			if (permission.equals("logblock.lookup"))
+				return true;
+			else if (permission.equals("logblock.me"))
+				return true;
+			else if (permission.equals("logblock.area"))
+				return player.isOp();
+			else if (permission.equals("logblock.rollback"))
+				return player.isOp();
+		}
+		return false;
 	}
-	return false;
-}
-	
+
 	static int parseTimeSpec(String timespec) {
 		String[] split = timespec.split(" ");
 		if (split.length != 2)
@@ -614,12 +614,12 @@ private boolean CheckPermission(Player player, String permission) {
 			}
 		}
 	}
-	
+
 	private class ChestAccess
 	{
 		public short inType, outType;
 		public byte inAmount, outAmount;
-		
+
 		ChestAccess(short inType, byte inAmount, short outType, byte outAmount) {
 			this.inType = inType;
 			this.inAmount = inAmount;
@@ -627,7 +627,7 @@ private boolean CheckPermission(Player player, String permission) {
 			this.outAmount = outAmount;
 		}
 	}
-	
+
 	private class BlockRow
 	{
 		public String table;
