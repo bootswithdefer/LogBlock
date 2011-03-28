@@ -29,7 +29,7 @@ public class AreaStats implements Runnable
 		ResultSet rs = null;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT `playername`, SUM(`created`) AS `created`, SUM(`destroyed`) AS `destroyed` FROM ((SELECT `playerid`, count(`type`) AS `created`, 0 AS `destroyed` FROM `" + table + "` WHERE `type` > 0 AND x > ? AND x < ? AND z > ? AND z < ?	AND `type` != `replaced` GROUP BY `playerid`) UNION (SELECT `playerid`, 0 AS `created`, count(`replaced`) AS `destroyed` FROM `" + table + "` INNER JOIN `lb-players`	USING (`playerid`) WHERE `replaced` > 0 AND x > ? AND x < ? AND z > ? AND z < ? AND `type` != `replaced` GROUP BY `playerid`)) AS t INNER JOIN `lb-players` USING (`playerid`) GROUP BY `playerid` ORDER BY SUM(`created`) + SUM(`destroyed`) DESC LIMIT 15", Statement.NO_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT `playername`, SUM(`created`) AS `created`, SUM(`destroyed`) AS `destroyed` FROM ((SELECT `playerid`, count(`type`) AS `created`, 0 AS `destroyed` FROM `" + table + "` WHERE `type` > 0 AND x > ? AND x < ? AND z > ? AND z < ?	AND `type` != `replaced` GROUP BY `playerid`) UNION (SELECT `playerid`, 0 AS `created`, count(`replaced`) AS `destroyed` FROM `" + table + "` WHERE `replaced` > 0 AND x > ? AND x < ? AND z > ? AND z < ? AND `type` != `replaced` GROUP BY `playerid`)) AS t INNER JOIN `lb-players` USING (`playerid`) GROUP BY `playerid` ORDER BY SUM(`created`) + SUM(`destroyed`) DESC LIMIT 15");
 			ps.setInt(1, player.getLocation().getBlockX()-size);
 			ps.setInt(2, player.getLocation().getBlockX()+size);
 			ps.setInt(3, player.getLocation().getBlockZ()-size);
