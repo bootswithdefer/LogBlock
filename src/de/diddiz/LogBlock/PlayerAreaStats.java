@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
@@ -32,7 +31,7 @@ public class PlayerAreaStats implements Runnable
 		ResultSet rs = null;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT `type`, SUM(`created`) AS `created`, SUM(`destroyed`) AS `destroyed` FROM ((SELECT `type`, count(`type`) AS `created`, 0 AS `destroyed` FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE `playername` = ? AND x > ? AND x < ? AND z > ? AND z < ? AND `type` > 0 AND `type` != `replaced` GROUP BY `type`) UNION (SELECT `replaced` AS `type`, 0 AS `created`, count(`replaced`) AS `destroyed` FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE `playername` = ? AND x > ? AND x < ? AND z > ? AND z < ? AND `replaced` > 0 AND `type` != `replaced` GROUP BY `replaced`)) AS t GROUP BY `type` ORDER BY SUM(`created`) + SUM(`destroyed`) DESC LIMIT 15", Statement.NO_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT `type`, SUM(`created`) AS `created`, SUM(`destroyed`) AS `destroyed` FROM ((SELECT `type`, count(`type`) AS `created`, 0 AS `destroyed` FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE `playername` = ? AND x > ? AND x < ? AND z > ? AND z < ? AND `type` > 0 AND `type` != `replaced` GROUP BY `type`) UNION (SELECT `replaced` AS `type`, 0 AS `created`, count(`replaced`) AS `destroyed` FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE `playername` = ? AND x > ? AND x < ? AND z > ? AND z < ? AND `replaced` > 0 AND `type` != `replaced` GROUP BY `replaced`)) AS t GROUP BY `type` ORDER BY SUM(`created`) + SUM(`destroyed`) DESC LIMIT 15");
 			ps.setString(1, name);
 			ps.setInt(2, player.getLocation().getBlockX()-size);
 			ps.setInt(3, player.getLocation().getBlockX()+size);

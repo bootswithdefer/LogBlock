@@ -26,7 +26,7 @@ public class Rollback implements Runnable
 		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE playername = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE playername = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC");
 			ps.setString(1, name);
 			ps.setInt(2, minutes);
 		} catch (SQLException ex) {
@@ -41,7 +41,7 @@ public class Rollback implements Runnable
 		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE playername = ? AND x > ? AND x < ? AND z > ? AND z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE playername = ? AND x > ? AND x < ? AND z > ? AND z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC");
 			ps.setString(1, name);
 			ps.setInt(2, player.getLocation().getBlockX()-radius);
 			ps.setInt(3, player.getLocation().getBlockX()+radius);
@@ -60,7 +60,7 @@ public class Rollback implements Runnable
 		this.conn = conn;
 		try {
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE x > ? AND x < ? AND z > ? AND z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
+			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE x > ? AND x < ? AND z > ? AND z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC");
 			ps.setInt(1, player.getLocation().getBlockX()-radius);
 			ps.setInt(2, player.getLocation().getBlockX()+radius);
 			ps.setInt(3, player.getLocation().getBlockZ()-radius);
