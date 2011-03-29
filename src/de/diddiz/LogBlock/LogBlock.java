@@ -1,5 +1,7 @@
 package de.diddiz.LogBlock;
 
+import java.io.File;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -44,6 +46,8 @@ import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
 import com.sk89q.worldedit.bukkit.selections.Selection;
 
+import de.diddiz.util.Download;
+
 public class LogBlock extends JavaPlugin
 {
 	static Logger log;
@@ -63,6 +67,11 @@ public class LogBlock extends JavaPlugin
 					config.usePermissions = false;
 					log.warning("[LogBlock] Permissions plugin not found. Using default permissions.");
 				}
+			}
+			File file = new File("lib/mysql-connector-java-bin.jar");
+			if (!file.exists()) {
+				log.info("[LogBlock] Downloading mysql-connector-java-bin.jar ...");
+				Download.download(new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
 			}
 			new JDCConnectionDriver(config.dbDriver, config.dbUrl, config.dbUsername, config.dbPassword);
 			Connection conn = getConnection();
