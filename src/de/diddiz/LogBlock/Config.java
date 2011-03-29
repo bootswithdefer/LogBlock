@@ -30,9 +30,12 @@ public class Config {
 	String logLeavesDecayAs;
 	boolean usePermissions;
 
-	Config (Configuration config) {
+	Config (LogBlock logblock) {
+		Configuration config = logblock.getConfiguration();
 		config.load();
 		List<String> keys = config.getKeys(null);
+		if (!keys.contains("version"))
+			config.setProperty("version", logblock.getDescription().getVersion());
 		if (!keys.contains("worldNames"))
 			config.setProperty("worldNames", Arrays.asList(new String[]{"world"}));
 		if (!keys.contains("worldTables"))

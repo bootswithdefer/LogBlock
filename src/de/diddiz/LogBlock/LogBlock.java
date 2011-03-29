@@ -59,7 +59,7 @@ public class LogBlock extends JavaPlugin
 	public void onEnable() {
 		log = getServer().getLogger();
 		try	{
-			config = new Config(getConfiguration());
+			config = new Config(this);
 			if (config.usePermissions)	{
 				if (getServer().getPluginManager().getPlugin("Permissions") != null) 
 					log.info("[LogBlock] Permissions enabled");
