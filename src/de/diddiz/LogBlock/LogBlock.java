@@ -20,20 +20,22 @@ import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Type;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockInteractEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.block.BlockRightClickEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityListener;
-import org.bukkit.event.player.PlayerEvent;
-import org.bukkit.event.player.PlayerItemEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -96,18 +98,19 @@ public class LogBlock extends JavaPlugin
 		LBBlockListener lbBlockListener = new LBBlockListener();
 		LBPlayerListener lbPlayerListener = new LBPlayerListener();
 		PluginManager pm = getServer().getPluginManager();
-		pm.registerEvent(Type.PLAYER_ITEM, lbPlayerListener, Event.Priority.Monitor, this);
+		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(), Event.Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Event.Priority.Monitor, this);
+		pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Event.Priority.Monitor, this);
+		pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Event.Priority.Normal, this);
-		pm.registerEvent(Type.BLOCK_RIGHTCLICKED, lbBlockListener, Event.Priority.Monitor, this);
-		pm.registerEvent(Type.BLOCK_PLACED, lbBlockListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Event.Priority.Monitor, this);
-		pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Event.Priority.Monitor, this);
+		pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Event.Priority.Monitor, this);
+		if (config.logSignTexts)
+			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Event.Priority.Monitor, this);
 		if (config.logFire)
 			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Event.Priority.Monitor, this);
 		if (config.logExplosions) 
 			pm.registerEvent(Type.ENTITY_EXPLODE, new LBEntityListener(), Event.Priority.Monitor, this);
-		if (config.logChestAccess)
-			pm.registerEvent(Type.BLOCK_INTERACT, lbBlockListener, Event.Priority.Monitor, this);
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Event.Priority.Monitor, this);
 		consumer = new Consumer();
@@ -417,103 +420,27 @@ public class LogBlock extends JavaPlugin
 		return min;
 	}
 
-	private class LBPlayerListener extends PlayerListener
-	{
-		public void onPlayerItem(PlayerItemEvent event) {
-			if (!event.isCancelled() && event.getBlockClicked() != null) {
-				switch (event.getMaterial()) {
-					case BUCKET:
-						queueBlock(event.getPlayer().getName(), event.getBlockClicked(), event.getBlockClicked().getTypeId(), 0, event.getBlockClicked().getData());
-						break;
-					case WATER_BUCKET:
-						queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.STATIONARY_WATER.getId());
-						break;
-					case LAVA_BUCKET:
-						queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.STATIONARY_LAVA.getId());
-						break;
-					case FLINT_AND_STEEL:
-						queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.FIRE.getId());
-						break;
-					case SEEDS:
-						queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.CROPS.getId());
-						break;
-					case WOOD_HOE:
-					case STONE_HOE:
-					case IRON_HOE:
-					case DIAMOND_HOE:
-					case GOLD_HOE:
-						queueBlock(event.getPlayer().getName(), event.getBlockClicked(), event.getBlockClicked().getTypeId(), Material.SOIL.getId(), (byte)0);
-						break;
-				}
-			}
-		}
-
-		public void onPlayerJoin(PlayerEvent event) {
-			Connection conn = getConnection();
-			Statement state = null;
-			if (conn == null)
-				return;
-			try {
-				state = conn.createStatement();
-				state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + event.getPlayer().getName() + "');");
-			} catch (SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
-			} finally {
-				try {
-					if (state != null)
-						state.close();
-					if (conn != null)
-						conn.close();
-				} catch (SQLException ex) {
-					log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
-				}
-			}
-		}
-	}
-
 	private class LBBlockListener extends BlockListener
 	{
-		public void onBlockRightClick(BlockRightClickEvent event) {
-			if (event.getItemInHand().getTypeId()== config.toolID && CheckPermission(event.getPlayer(), "logblock.lookup"))
-				new Thread(new BlockStats(getConnection(), event.getPlayer(), event.getBlock(), getTable(event.getBlock()))).start();
-		}
-		
 		public void onBlockPlace(BlockPlaceEvent event) {
-			if (!event.isCancelled()) {
-				if (event.getItemInHand().getTypeId() == config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
-					new Thread(new BlockStats(getConnection(), event.getPlayer(), event.getBlock(), getTable(event.getBlock()))).start();
-					if (config.toolblockRemove)
-						event.setCancelled(true);
-				} else
+			if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST))) {
 					queueBlock(event.getPlayer().getName(), event.getBlockPlaced(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
 			}
 		}
-	
+
 		public void onBlockBreak(BlockBreakEvent event) {
 			if (!event.isCancelled())
 				queueBlock(event.getPlayer().getName(), event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 		}
-	
+
 		public void onSignChange(SignChangeEvent event) {
 			if (!event.isCancelled())
-				if (config.logSignTexts)
-					queueBlock(event.getPlayer().getName(), event.getBlock(), 0, event.getBlock().getTypeId(), event.getBlock().getData(), "sign [" + event.getLine(0) + "] [" + event.getLine(1) + "] [" + event.getLine(2) + "] [" + event.getLine(3) + "]", null);
-				else
-					queueBlock(event.getPlayer().getName(), event.getBlock(), 0, event.getBlock().getTypeId(), event.getBlock().getData());
+				queueBlock(event.getPlayer().getName(), event.getBlock(), 0, event.getBlock().getTypeId(), event.getBlock().getData(), "sign [" + event.getLine(0) + "] [" + event.getLine(1) + "] [" + event.getLine(2) + "] [" + event.getLine(3) + "]", null);
 		}
-	
+
 		public void onBlockBurn(BlockBurnEvent event) {
 			if (!event.isCancelled())
 				queueBlock(config.logFireAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
-		}
-		
-		public void onBlockInteract(BlockInteractEvent event) {
-			if (!event.isCancelled() && event.isPlayer() && event.getBlock().getType() == Material.CHEST)  {
-				if (((Player)event.getEntity()).getItemInHand().getTypeId() == config.toolID)
-					event.setCancelled(true);
-				else
-					queueBlock((Player)event.getEntity(), event.getBlock(), (short)0, (byte)0, (short)0, (byte)0);
-			}
 		}
 
 		public void onLeavesDecay(LeavesDecayEvent event) {
@@ -527,12 +454,74 @@ public class LogBlock extends JavaPlugin
 		public void onEntityExplode(EntityExplodeEvent event) {
 		if (!event.isCancelled()) {	
 			String name;
-			if (event.getEntity() == null) 
+			if (event.getEntity() instanceof TNTPrimed)
 				name = config.logTNTExplosionsAs;
 			else
 				name = config.logCreeperExplosionsAs;
 			for (Block block : event.blockList())
 				queueBlock(name, block, block.getTypeId(), 0, block.getData());
+			}
+		}
+	}
+
+	public class LBPlayerListener extends PlayerListener
+	{
+		public void onPlayerInteract(PlayerInteractEvent event) {
+			if (!event.isCancelled()) {
+				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && (event.getClickedBlock().getType() == Material.CHEST)) {
+					queueBlock(event.getPlayer(), event.getClickedBlock(), (short)0, (byte)0, (short)0, (byte)0);
+				}
+			}
+		}	
+
+		public void onPlayerBucketFill(PlayerBucketFillEvent event) {
+			if (!event.isCancelled()) {
+				queueBlock(event.getPlayer().getName(), event.getBlockClicked(), event.getBlockClicked().getTypeId(), 0, event.getBlockClicked().getData());
+			}
+		}
+
+		public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
+			if (event.getBucket() == Material.WATER_BUCKET)
+				queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.STATIONARY_WATER.getId());
+			else if (event.getBucket() == Material.LAVA_BUCKET)
+				queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.STATIONARY_LAVA.getId());
+		}
+
+		public void onPlayerJoin(PlayerJoinEvent event) {
+			Connection conn = getConnection();
+			Statement state = null;
+			if (conn == null)
+				return;
+			try {
+				state = conn.createStatement();
+				state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + event.getPlayer().getName() + "');");
+			} catch (SQLException ex) {
+				LogBlock.log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
+			} finally {
+				try {
+					if (state != null)
+						state.close();
+					if (conn != null)
+						conn.close();
+				} catch (SQLException ex) {
+					LogBlock.log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
+				}
+			}
+		}
+	}
+
+	private class LBToolPlayerListener extends PlayerListener
+	{
+		public void onPlayerInteract(PlayerInteractEvent event) {
+			if (!event.isCancelled()) {
+				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
+					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(getConnection(), event.getPlayer(), event.getClickedBlock(), getTable(event.getClickedBlock())));
+					event.setCancelled(true);
+				} else if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
+					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(getConnection(), event.getPlayer(), event.getClickedBlock().getFace(event.getBlockFace()), getTable(event.getClickedBlock())));
+					if (config.toolblockRemove) 
+						event.setCancelled(true);
+				}
 			}
 		}
 	}
