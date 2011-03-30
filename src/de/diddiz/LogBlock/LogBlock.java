@@ -19,6 +19,8 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.Event;
@@ -301,7 +303,7 @@ public class LogBlock extends JavaPlugin
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
 			}
-			state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + config.logTNTExplosionsAs + "'), ('" + config.logCreeperExplosionsAs + "'), ('" + config.logFireAs + "'), ('" + config.logLeavesDecayAs + "')");
+			state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + config.logTNTExplosionsAs + "'), ('" + config.logCreeperExplosionsAs + "'), ('" + config.logFireAs + "'), ('" + config.logLeavesDecayAs + "'), ('" + config.logFireballExplosionsAs + "'), ('Environment')");
 			for (int i = 0; i < config.worldNames.size(); i++) {
 				String table = config.worldTables.get(i);
 				if (!dbm.getTables(null, null, table, null).next())	{
@@ -456,8 +458,12 @@ public class LogBlock extends JavaPlugin
 			String name;
 			if (event.getEntity() instanceof TNTPrimed)
 				name = config.logTNTExplosionsAs;
-			else
+			else if (event.getEntity() instanceof Creeper)
 				name = config.logCreeperExplosionsAs;
+			else if (event.getEntity() instanceof Fireball)
+				name = config.logFireballExplosionsAs;
+			else
+				name = "Environment";
 			for (Block block : event.blockList())
 				queueBlock(name, block, block.getTypeId(), 0, block.getData());
 			}
