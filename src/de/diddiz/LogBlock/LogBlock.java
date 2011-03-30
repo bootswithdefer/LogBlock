@@ -365,7 +365,7 @@ public class LogBlock extends JavaPlugin
 	}
 
 	private void queueBlock(Player player, Block block, short inType, byte inAmount, short outType, byte outAmount) {
-		queueBlock(player.getName(), block, 54, 54, (byte)0, null, new ChestAccess(inType, inAmount, outType, outAmount));
+		queueBlock(player.getName(), block, block.getTypeId(), block.getTypeId(), (byte)0, null, new ChestAccess(inType, inAmount, outType, outAmount));
 	}
 
 	private void queueBlock(String playerName, Block block, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
@@ -474,7 +474,7 @@ public class LogBlock extends JavaPlugin
 	{
 		public void onPlayerInteract(PlayerInteractEvent event) {
 			if (!event.isCancelled()) {
-				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && (event.getClickedBlock().getType() == Material.CHEST)) {
+				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && (event.getClickedBlock().getType() == Material.CHEST || event.getClickedBlock().getType() == Material.FURNACE ||event.getClickedBlock().getType() == Material.DISPENSER)) {
 					queueBlock(event.getPlayer(), event.getClickedBlock(), (short)0, (byte)0, (short)0, (byte)0);
 				}
 			}
