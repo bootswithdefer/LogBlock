@@ -46,16 +46,19 @@ public class WriteLogFile implements Runnable
 			player.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
 			while (rs.next()) {
 				msg = formatter.format(rs.getTimestamp("date")) + " " + rs.getString("playername") + " ";
-				if ((rs.getInt("type") == 63 || rs.getInt("type") == 68) && rs.getString("signtext") != null)
+				int type = rs.getInt("type");
+				int replaced = rs.getInt("replaced");
+				if ((type == 63 || type == 68) && rs.getString("signtext") != null)
 					msg += "created " + rs.getString("signtext");
-				else if (rs.getInt("type") == 54 && rs.getInt("replaced") == 54)
-					msg += "looked inside";
-				else if (rs.getInt("type") == 0)
-					msg += "destroyed " + getMaterialName(rs.getInt("replaced"));
-				else if (rs.getInt("replaced") == 0)
-					msg += "created " + getMaterialName(rs.getInt("type"));
+				else if (type == replaced) {
+					if (type == 23 || type == 54 || type == 61)
+						msg += "looked inside " + getMaterialName(type);
+				} else if (type == 0)
+					msg += "destroyed " + getMaterialName(replaced);
+				else if (replaced == 0)
+					msg += "created " + getMaterialName(type);
 				else
-					msg += "replaced " + getMaterialName(rs.getInt("replaced")) + " with " + getMaterialName(rs.getInt("type"));
+					msg += "replaced " + getMaterialName(replaced) + " with " + getMaterialName(type);
 				writer.write(msg + newline);
 			}
 			writer.close();
