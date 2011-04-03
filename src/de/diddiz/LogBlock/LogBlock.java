@@ -189,7 +189,7 @@ public class LogBlock extends JavaPlugin
 					player.sendMessage(ChatColor.RED + "Usage: /lb block [type] <radius>");
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
-		} else if (args[0].equalsIgnoreCase("rollback")) {
+		} else if (args[0].equalsIgnoreCase("rollback") || args[0].equalsIgnoreCase("undo")) {
 			if (CheckPermission(player,"logblock.rollback")) {
 				if (args.length >= 2) {
 					int minutes = config.defaultTime;
@@ -198,7 +198,7 @@ public class LogBlock extends JavaPlugin
 							if (args.length == 5)
 								minutes = parseTimeSpec(args[3], args[4]);
 							player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " by " + minutes + " minutes.");
-							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], minutes, table));
+							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], -1, null, minutes, table, false));
 						} else 
 							player.sendMessage(ChatColor.RED + "Usage: /lb rollback player [name] <time> <minutes|hours|days>");
 					} else if (args[1].equalsIgnoreCase("area")) {
@@ -207,7 +207,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[3], args[4]);
 							if (isInt(args[2])) {
 								player.sendMessage(ChatColor.GREEN + "Rolling back area within " + args[2] + " blocks of you by " + minutes + " minutes.");
-								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, Integer.parseInt(args[2]), minutes, table));
+								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, null, Integer.parseInt(args[2]), null, minutes, table, false));
 							} else
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[2]);
 						} else
@@ -218,7 +218,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[4], args[5]);
 							if (isInt(args[3])) {
 								player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " within " + args[3] + " blocks by " + minutes + " minutes.");
-								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], Integer.parseInt(args[3]), minutes, table));
+								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], Integer.parseInt(args[3]), null, minutes, table, false));
 							} else
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[3]);
 						} else
@@ -233,7 +233,7 @@ public class LogBlock extends JavaPlugin
 								if (sel != null) {
 									if (sel instanceof CuboidSelection) {
 										player.sendMessage(ChatColor.GREEN + "Rolling back selection by " + minutes + " minutes.");
-										getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, sel.getMinimumPoint(), sel.getMaximumPoint(), minutes, table));
+										getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, null, -1, sel, minutes, table, false));
 									} else
 										player.sendMessage(ChatColor.RED + "You have to define a cuboid selection");
 								} else
@@ -250,6 +250,70 @@ public class LogBlock extends JavaPlugin
 					player.sendMessage(ChatColor.RED + "/lb rollback area [radius] <time> <minutes|hours|days>");
 					player.sendMessage(ChatColor.RED + "/lb rollback playerarea [name] [radius] <time> <minutes|hours|days>");
 					player.sendMessage(ChatColor.RED + "/lb rollback selection <time> <minutes|hours|days>");
+				}
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+		} else if (args[0].equalsIgnoreCase("redo")) {
+			if (CheckPermission(player,"logblock.rollback")) {
+				if (args.length >= 2) {
+					int minutes = config.defaultTime;
+					if (args[1].equalsIgnoreCase("player")) {
+						if (args.length == 3 || args.length == 5) {
+							if (args.length == 5)
+								minutes = parseTimeSpec(args[3], args[4]);
+							player.sendMessage(ChatColor.GREEN + "Redoing " + args[2] + " for " + minutes + " minutes.");
+							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], -1, null, minutes, table, true));
+						} else 
+							player.sendMessage(ChatColor.RED + "Usage: /lb redo player [name] <time> <minutes|hours|days>");
+					} else if (args[1].equalsIgnoreCase("area")) {
+						if (args.length == 3 || args.length == 5) {
+							if (args.length == 5)
+								minutes = parseTimeSpec(args[3], args[4]);
+							if (isInt(args[2])) {
+								player.sendMessage(ChatColor.GREEN + "Redoing area within " + args[2] + " blocks of you for " + minutes + " minutes.");
+								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, null, Integer.parseInt(args[2]), null, minutes, table, true));
+							} else
+								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[2]);
+						} else
+							player.sendMessage(ChatColor.RED + "Usage /lb redo area [radius] <time> <minutes|hours|days>");
+					} else if (args[1].equalsIgnoreCase("playerarea")) {
+						if (args.length == 4 || args.length == 6) {
+							if (args.length == 6)
+								minutes = parseTimeSpec(args[4], args[5]);
+							if (isInt(args[3])) {
+								player.sendMessage(ChatColor.GREEN + "Redoing " + args[2] + " within " + args[3] + " blocks for " + minutes + " minutes.");
+								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], Integer.parseInt(args[3]), null, minutes, table, true));
+							} else
+								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[3]);
+						} else
+							player.sendMessage(ChatColor.RED + "Usage: /lb redo playerarea [player] [radius] <time> <minutes|hours|days>");
+					} else if (args[1].equalsIgnoreCase("selection")) {
+						if (args.length == 2 || args.length == 4) {
+							if (args.length == 4)
+								minutes = parseTimeSpec(args[2], args[3]);
+							Plugin we = getServer().getPluginManager().getPlugin("WorldEdit");
+							if (we != null) {
+								Selection sel = ((WorldEditPlugin)we).getSelection(player);
+								if (sel != null) {
+									if (sel instanceof CuboidSelection) {
+										player.sendMessage(ChatColor.GREEN + "Redoing selection for " + minutes + " minutes.");
+										getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, null, -1, sel, minutes, table, true));
+									} else
+										player.sendMessage(ChatColor.RED + "You have to define a cuboid selection");
+								} else
+									player.sendMessage(ChatColor.RED + "No selection defined");
+							} else
+								player.sendMessage(ChatColor.RED + "WorldEdit plugin not found");
+						} else 
+							player.sendMessage(ChatColor.RED + "Usage: /lb redo selection <time> <minutes|hours|days>");
+					} else
+						player.sendMessage(ChatColor.RED + "Wrong redo mode");
+				} else {
+					player.sendMessage(ChatColor.RED + "Usage:");
+					player.sendMessage(ChatColor.RED + "/lb redo player [name] <time> <minutes|hours|days>");
+					player.sendMessage(ChatColor.RED + "/lb redo area [radius] <time> <minutes|hours|days>");
+					player.sendMessage(ChatColor.RED + "/lb redo playerarea [name] [radius] <time> <minutes|hours|days>");
+					player.sendMessage(ChatColor.RED + "/lb redo selection <time> <minutes|hours|days>");
 				}
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");

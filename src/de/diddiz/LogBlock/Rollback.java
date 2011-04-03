@@ -1,101 +1,56 @@
 package de.diddiz.LogBlock;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
+import com.sk89q.worldedit.bukkit.selections.Selection;
+
 public class Rollback implements Runnable
 {
-
-	PreparedStatement ps = null;
 	private Player player;
 	private Connection conn;
 	private LogBlock logblock;
+	private String query;
+	private boolean redo;
 
-	Rollback(Player player, Connection conn, LogBlock logblock, String name, int minutes, String table) {
+	Rollback(Player player, Connection conn, LogBlock logblock, String name, int radius, Selection sel, int minutes, String table, boolean redo) {
 		this.player = player;
 		this.conn = conn;
 		this.logblock = logblock;
-		try {
-			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE playername = ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC");
-			ps.setString(1, name);
-			ps.setInt(2, minutes);
-		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
-			player.sendMessage(ChatColor.RED + "Error, check server logs.");
-			return;
-		}
-	}
-
-	Rollback(Player player, Connection conn, LogBlock logblock, String name, int radius, int minutes, String table) {
-		this.player = player;
-		this.conn = conn;
-		this.logblock = logblock;
-		try {
-			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (`playerid`) WHERE playername = ? AND x > ? AND x < ? AND z > ? AND z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC");
-			ps.setString(1, name);
-			ps.setInt(2, player.getLocation().getBlockX()-radius);
-			ps.setInt(3, player.getLocation().getBlockX()+radius);
-			ps.setInt(4, player.getLocation().getBlockZ()-radius);
-			ps.setInt(5, player.getLocation().getBlockZ()+radius);
-			ps.setInt(6, minutes);
-		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
-			player.sendMessage(ChatColor.RED + "Error, check server logs.");
-			return;
-		}
-	}
-
-	Rollback(Player player, Connection conn, LogBlock logblock, int radius, int minutes, String table) {
-		this.player = player;
-		this.conn = conn;
-		this.logblock = logblock;
-		try {
-			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE x > ? AND x < ? AND z > ? AND z < ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC");
-			ps.setInt(1, player.getLocation().getBlockX()-radius);
-			ps.setInt(2, player.getLocation().getBlockX()+radius);
-			ps.setInt(3, player.getLocation().getBlockZ()-radius);
-			ps.setInt(4, player.getLocation().getBlockZ()+radius);
-			ps.setInt(5, minutes);
-		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
-			player.sendMessage(ChatColor.RED + "Error, check server logs.");
-			return;
-		}
-	}
-
-	Rollback(Player player, Connection conn, LogBlock logblock, Location loc1, Location loc2, int minutes, String table) {
-		this.player = player;
-		this.conn = conn;
-		this.logblock = logblock;
-		try {
-			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT type, data, replaced, x, y, z FROM `" + table + "` WHERE x >= ? AND x <= ? AND y >= ? AND y <= ? AND z >= ? AND z <= ? AND date > date_sub(now(), INTERVAL ? MINUTE) ORDER BY date DESC", Statement.RETURN_GENERATED_KEYS);
-			ps.setInt(1, Math.min(loc1.getBlockX(), loc2.getBlockX()));
-			ps.setInt(2, Math.max(loc1.getBlockX(), loc2.getBlockX()));
-			ps.setInt(3, Math.min(loc1.getBlockY(), loc2.getBlockY()));
-			ps.setInt(4, Math.max(loc1.getBlockY(), loc2.getBlockY()));
-			ps.setInt(5, Math.min(loc1.getBlockZ(), loc2.getBlockZ()));
-			ps.setInt(6, Math.max(loc1.getBlockZ(), loc2.getBlockZ()));
-			ps.setInt(7, minutes);
-		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
-			player.sendMessage(ChatColor.RED + "Error, check server logs.");
-			return;
-		}
+		this.redo = redo;
+		if (!redo)
+			query = "SELECT replaced, type, data, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (playerid) WHERE ";
+		else
+			query = "SELECT type AS replaced, replaced AS type, data, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (playerid) WHERE ";
+		if (name != null)
+			query += "playername = '" + name + "' AND ";
+		if (radius != -1)
+			query += "x > '" + (player.getLocation().getBlockX() - radius)
+				+ "' AND x < '" + (player.getLocation().getBlockX() + radius)
+				+ "' AND z > '" + (player.getLocation().getBlockZ() - radius)
+				+ "' AND z < '" + (player.getLocation().getBlockZ() + radius) + "' AND ";
+		if (sel != null)
+			query += "x >= '"+ Math.min(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX())
+				+ "' AND x <= '" + Math.max(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX())
+				+ "' AND y >= '" + Math.min(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY())
+				+ "' AND y <= '" + Math.max(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY())
+				+ "' AND z >= '" + Math.min(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ())
+				+ "' AND z <= '" + Math.max(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()) + "' AND ";
+		if (minutes >= 0)
+			query += "date > date_sub(now(), INTERVAL " + minutes + " MINUTE) AND ";
+		query = query.substring(0, query.length() - 4);
+		if (!redo)
+			query += "ORDER BY date DESC, id DESC";
+		else
+			query += "ORDER BY date ASC, id ASC";
 	}
 
 	public void run() {
@@ -103,25 +58,23 @@ public class Rollback implements Runnable
 		LinkedBlockingQueue<Edit> edits = new LinkedBlockingQueue<Edit>();
 		edits.clear();
 		try {
-			rs = ps.executeQuery();
+			rs = conn.createStatement().executeQuery(query);
 			while (rs.next()) {
 				Edit e = new Edit(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), player.getWorld());
 				edits.offer(e);
 			}
 		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception", ex);
-			player.sendMessage(ChatColor.RED + "§cError, check server logs.");
+			LogBlock.log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
+			player.sendMessage(ChatColor.RED + "Error, check server logs.");
 			return;
 		} finally {
 			try {
 				if (rs != null)
 					rs.close();
-				if (ps != null)
-					ps.close();
 				if (conn != null)
 					conn.close();
 			} catch (SQLException ex) {
-				LogBlock.log.log(Level.SEVERE, this.getClass().getName() + " SQL exception on close", ex);
+				LogBlock.log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception on close", ex);
 				player.sendMessage(ChatColor.RED + "Error, check server logs.");
 				return;
 			}
@@ -143,8 +96,13 @@ public class Rollback implements Runnable
 			}
 		}
 		logblock.getServer().getScheduler().cancelTask(taskID);
-		player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
-		player.sendMessage(ChatColor.GREEN + "Undid " + perform.rolledBack + " of " + changes + " changes");
+		if (!redo) {
+			player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
+			player.sendMessage(ChatColor.GREEN + "Undid " + perform.rolledBack + " of " + changes + " changes");
+		} else {
+			player.sendMessage(ChatColor.GREEN + "Redo finished successfully");
+			player.sendMessage(ChatColor.GREEN + "Redid " + perform.rolledBack + " of " + changes + " changes");
+		}
 		player.sendMessage(ChatColor.GREEN + "Took:  " + (System.currentTimeMillis() - start) + "ms");
 	}
 
@@ -182,7 +140,7 @@ public class Rollback implements Runnable
 		int x, y, z;
 		byte data;
 		World world;
-		
+
 		Edit(int type, int replaced, byte data, int x, int y, int z, World world) {
 			this.type = type;
 			this.replaced = replaced;
