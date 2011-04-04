@@ -8,11 +8,11 @@ import java.util.logging.Level;
 public class ClearLog implements Runnable
 {
 	private Connection conn;
-	
+
 	public ClearLog(Connection conn) {
 		this.conn = conn;
 	}
-	
+
 	@Override
 	public void run() {
 		if (conn == null)

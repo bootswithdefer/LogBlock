@@ -342,7 +342,7 @@ public class LogBlock extends JavaPlugin
 		try {
 			return DriverManager.getConnection("jdbc:jdc:jdcpool");
 		} catch (SQLException ex) {
-			log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
+			log.log(Level.SEVERE, "[LogBlock] Can't get a connection", ex);
 			return null;
 		}
 	}

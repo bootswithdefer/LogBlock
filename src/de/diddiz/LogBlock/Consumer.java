@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 public class Consumer implements Runnable
 {
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
+	private Connection conn = null;
 
 	public void queueBlock(Player player, Block block, int typeAfter) {
 		queueBlock(player.getName(), block, 0, typeAfter, (byte)0, null, null);
@@ -47,20 +48,26 @@ public class Consumer implements Runnable
 	public int getQueueSize() {
 		return bqueue.size();
 	}
-	
+
 	public void run() {
-		Connection conn = null;
+		if (conn == null)
+			try {
+				conn = DriverManager.getConnection("jdbc:jdc:jdcpool");
+			} catch (SQLException ex) {
+				LogBlock.log.severe("[LogBlock Consumer] Can't get a connection");
+			}
+		if (conn == null)
+			return;
 		Statement state = null;
 		BlockRow b;
 		int count = 0;
 		if (bqueue.size() > 100)
 			LogBlock.log.info("[LogBlock Consumer] Queue overloaded. Size: " + bqueue.size());				
 		try {
-			conn = DriverManager.getConnection("jdbc:jdc:jdcpool");
 			conn.setAutoCommit(false);
 			state = conn.createStatement();
 			long start = System.currentTimeMillis();
-			while (count < 1000 && !bqueue.isEmpty() && System.currentTimeMillis() - start < 100) {
+			while (count < 1000 && !bqueue.isEmpty() && (System.currentTimeMillis() - start < 100 || count < 100)) {
 				b = bqueue.poll();
 				if (b == null)
 					continue;
@@ -83,8 +90,6 @@ public class Consumer implements Runnable
 			try {
 				if (state != null)
 					state.close();
-				if (conn != null)
-					conn.close();
 			} catch (SQLException ex) {
 				LogBlock.log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
 			}
