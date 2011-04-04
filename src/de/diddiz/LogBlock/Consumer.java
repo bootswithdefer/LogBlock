@@ -77,7 +77,6 @@ public class Consumer implements Runnable
 				count++;
 			}
 			conn.commit();
-			LogBlock.log.info("[LogBlock Consumer] Took: " + (System.currentTimeMillis() - start) + "ms for " + count + " blocks");
 		} catch (SQLException ex) {
 			LogBlock.log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
 		} finally {

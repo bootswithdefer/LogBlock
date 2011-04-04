@@ -27,23 +27,16 @@ public class Rollback implements Runnable
 		this.logblock = logblock;
 		this.redo = redo;
 		if (!redo)
-			query = "SELECT replaced, type, data, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (playerid) WHERE ";
+			query = "SELECT replaced, type, data, x, y, z ";
 		else
-			query = "SELECT type AS replaced, replaced AS type, data, x, y, z FROM `" + table + "` INNER JOIN `lb-players` USING (playerid) WHERE ";
+			query = "SELECT type AS replaced, replaced AS type, data, x, y, z ";
+		query += "FROM `" + table + "` INNER JOIN `lb-players` USING (playerid) WHERE (type <> replaced OR (type = 0 AND replaced = 0)) AND ";
 		if (name != null)
 			query += "playername = '" + name + "' AND ";
 		if (radius != -1)
-			query += "x > '" + (player.getLocation().getBlockX() - radius)
-				+ "' AND x < '" + (player.getLocation().getBlockX() + radius)
-				+ "' AND z > '" + (player.getLocation().getBlockZ() - radius)
-				+ "' AND z < '" + (player.getLocation().getBlockZ() + radius) + "' AND ";
+			query += "x > '" + (player.getLocation().getBlockX() - radius) + "' AND x < '" + (player.getLocation().getBlockX() + radius) + "' AND z > '" + (player.getLocation().getBlockZ() - radius) + "' AND z < '" + (player.getLocation().getBlockZ() + radius) + "' AND ";
 		if (sel != null)
-			query += "x >= '"+ Math.min(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX())
-				+ "' AND x <= '" + Math.max(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX())
-				+ "' AND y >= '" + Math.min(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY())
-				+ "' AND y <= '" + Math.max(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY())
-				+ "' AND z >= '" + Math.min(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ())
-				+ "' AND z <= '" + Math.max(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()) + "' AND ";
+			query += "x >= '"+ Math.min(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX()) + "' AND x <= '" + Math.max(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX()) + "' AND y >= '" + Math.min(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY()) + "' AND y <= '" + Math.max(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY()) + "' AND z >= '" + Math.min(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()) + "' AND z <= '" + Math.max(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()) + "' AND ";
 		if (minutes >= 0)
 			query += "date > date_sub(now(), INTERVAL " + minutes + " MINUTE) AND ";
 		query = query.substring(0, query.length() - 4);
@@ -98,10 +91,10 @@ public class Rollback implements Runnable
 		logblock.getServer().getScheduler().cancelTask(taskID);
 		if (!redo) {
 			player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
-			player.sendMessage(ChatColor.GREEN + "Undid " + perform.rolledBack + " of " + changes + " changes");
+			player.sendMessage(ChatColor.GREEN + "Undid " + perform.successes + " of " + changes + " changes (" + perform.errors + " errors, " + perform.blacklisteds + " blacklist collusions)");
 		} else {
 			player.sendMessage(ChatColor.GREEN + "Redo finished successfully");
-			player.sendMessage(ChatColor.GREEN + "Redid " + perform.rolledBack + " of " + changes + " changes");
+			player.sendMessage(ChatColor.GREEN + "Redid " + perform.successes + " of " + changes + " changes (" + perform.errors + " errors, " + perform.blacklisteds + " blacklist collusions)");
 		}
 		player.sendMessage(ChatColor.GREEN + "Took:  " + (System.currentTimeMillis() - start) + "ms");
 	}
@@ -110,7 +103,9 @@ public class Rollback implements Runnable
 	{
 		private LinkedBlockingQueue<Edit> edits;
 		private Rollback rollback;
-		int rolledBack = 0;
+		int successes = 0;
+		int errors = 0;
+		int blacklisteds = 0;
 
 		PerformRollback(LinkedBlockingQueue<Edit> edits, Rollback rollback) {
 			this.edits = edits;
@@ -122,8 +117,17 @@ public class Rollback implements Runnable
 			int counter = 0;
 			while (!edits.isEmpty() && counter < 1000)
 			{
-				if (edits.poll().perform())
-					rolledBack++;
+				switch (edits.poll().perform()) {
+					case SUCCESS:
+						successes++;
+						break;
+					case ERROR:
+						errors++;
+						break;
+					case BLACKLISTED:
+						blacklisteds++;
+						break;
+				}
 				counter++;
 			}
 			if (edits.isEmpty()) {
@@ -133,7 +137,11 @@ public class Rollback implements Runnable
 			}
 		}
 	}
-
+	
+	private enum PerformResult {
+		ERROR, SUCCESS, BLACKLISTED, NO_ACTION
+	}
+	
 	private class Edit
 	{
 		int type, replaced;
@@ -151,18 +159,31 @@ public class Rollback implements Runnable
 			this.world = world;
 		}
 
-		public boolean perform() {
-			if (type > 0 && type == replaced)
-				return false;
+		private PerformResult perform() {
+			if (LogBlock.config.dontRollback.contains(replaced))
+				return PerformResult.BLACKLISTED;
 			try {
 				Block block = world.getBlockAt(x, y, z);
 				if (!world.isChunkLoaded(block.getChunk()))
 					world.loadChunk(block.getChunk());
-				if (block.getTypeId() == type || (block.getTypeId() >= 8 && block.getTypeId() <= 11) || block.getTypeId() == 51 || (type == 0 && replaced == 0))
-					return block.setTypeIdAndData(replaced, data, false);
+				if (equalsType(block.getTypeId(), type) || LogBlock.config.replaceAtRollback.contains(block.getTypeId()) || (type == 0 && replaced == 0)) {
+					if (block.setTypeIdAndData(replaced, data, false))
+						return PerformResult.SUCCESS;
+					else
+						return PerformResult.ERROR;
+				} else
+					return PerformResult.NO_ACTION;
 			} catch (Exception ex) {
-					LogBlock.log.severe("[LogBlock Rollback] " + ex.toString());
+				LogBlock.log.severe("[LogBlock Rollback] " + ex.toString());
+				return PerformResult.ERROR;
 			}
+		}
+		
+		private boolean equalsType(int type1, int type2) {
+			if ((type1 == 2 || type1 == 3) && (type2 == 2 || type2 == 3))
+				return true;
+			if (type1 == type2)
+				return true;
 			return false;
 		}
 	}

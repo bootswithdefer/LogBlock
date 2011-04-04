@@ -8,6 +8,8 @@ import org.bukkit.util.config.Configuration;
 
 public class Config {
 	HashMap<Integer, String> tables;
+	List<Integer> dontRollback;
+	List<Integer> replaceAtRollback;
 	String dbDriver;
 	String dbUrl;
 	String dbUsername;
@@ -41,6 +43,10 @@ public class Config {
 			config.setProperty("worldNames", Arrays.asList(new String[]{"world"}));
 		if (!keys.contains("worldTables"))
 			config.setProperty("worldTables", Arrays.asList(new String[]{"lb-main"}));
+		if (!keys.contains("dontRollback"))
+			config.setProperty("dontRollback", Arrays.asList(new Integer[]{46, 51}));
+		if (!keys.contains("replaceAtRollback"))
+			config.setProperty("replaceAtRollback", Arrays.asList(new Integer[]{8, 9, 10, 11, 51}));
 		if (!keys.contains("driver"))
 			config.setProperty("driver", "com.mysql.jdbc.Driver");
 		if (!keys.contains("url"))
@@ -109,6 +115,8 @@ public class Config {
 		logFireAs = config.getString("logFireAs");
 		logLeavesDecayAs = config.getString("logLeavesDecayAs");
 		usePermissions = config.getBoolean("usePermissions", false);
+		dontRollback = config.getIntList("dontRollback", null);
+		replaceAtRollback = config.getIntList("replaceAtRollback", null);
 		List<String> worldNames = config.getStringList("worldNames", null);
 		List<String> worldTables = config.getStringList("worldTables", null);
 		tables = new HashMap<Integer, String>();
