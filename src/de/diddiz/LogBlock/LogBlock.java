@@ -357,27 +357,27 @@ public class LogBlock extends JavaPlugin
 			state = conn.createStatement();
 			if (!dbm.getTables(null, null, "lb-players", null).next())	{
 				log.log(Level.INFO, "[LogBlock] Crating table lb-players.");
-				state.execute("CREATE TABLE `lb-players` (`playerid` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, `playername` varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (`playerid`), UNIQUE (`playername`))");
+				state.execute("CREATE TABLE `lb-players` (playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (playerid), UNIQUE (playername))");
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
 			}
-			state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + config.logTNTExplosionsAs + "'), ('" + config.logCreeperExplosionsAs + "'), ('" + config.logFireAs + "'), ('" + config.logLeavesDecayAs + "'), ('" + config.logFireballExplosionsAs + "'), ('Environment')");
+			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + config.logTNTExplosionsAs + "'), ('" + config.logCreeperExplosionsAs + "'), ('" + config.logFireAs + "'), ('" + config.logLeavesDecayAs + "'), ('" + config.logFireballExplosionsAs + "'), ('Environment')");
 			for (String table : config.tables.values()) {
 				if (!dbm.getTables(null, null, table, null).next())	{
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
-					state.execute("CREATE TABLE `" + table + "` (`id` INT NOT NULL AUTO_INCREMENT, `date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00', `playerid` SMALLINT UNSIGNED NOT NULL DEFAULT '0', `replaced` TINYINT UNSIGNED NOT NULL DEFAULT '0', `type` TINYINT UNSIGNED NOT NULL DEFAULT '0', `data` TINYINT UNSIGNED NOT NULL DEFAULT '0', `x` SMALLINT NOT NULL DEFAULT '0', `y` TINYINT UNSIGNED NOT NULL DEFAULT '0',`z` SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (`id`), KEY `coords` (`y`,`x`,`z`), KEY `type` (`type`), KEY `data` (`data`), KEY `replaced` (`replaced`));");
+					state.execute("CREATE TABLE `" + table + "` (id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', playerid SMALLINT UNSIGNED NOT NULL DEFAULT '0', replaced TINYINT UNSIGNED NOT NULL DEFAULT '0', type TINYINT UNSIGNED NOT NULL DEFAULT '0', data TINYINT UNSIGNED NOT NULL DEFAULT '0', x SMALLINT NOT NULL DEFAULT '0', y TINYINT UNSIGNED NOT NULL DEFAULT '0', z SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (id), KEY coords (y, x, z), KEY date (date));");
 					if (!dbm.getTables(null, null, table, null).next())
 						return false;
 				}
 				if (!dbm.getTables(null, null, table + "-sign", null).next()) {
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + "-sign.");
-					state.execute("CREATE TABLE `" + table + "-sign` (`id` INT NOT NULL, `signtext` TEXT, PRIMARY KEY (`id`));");
+					state.execute("CREATE TABLE `" + table + "-sign` (id INT NOT NULL, signtext TEXT, PRIMARY KEY (id));");
 					if (!dbm.getTables(null, null, table + "-sign", null).next())
 						return false;
 				}
 				if (!dbm.getTables(null, null, table + "-chest", null).next()) {
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + "-chest.");
-					state.execute("CREATE TABLE `" + table + "-chest` (`id` INT NOT NULL, `intype` SMALLINT UNSIGNED NOT NULL DEFAULT '0', `inamount` TINYINT UNSIGNED NOT NULL DEFAULT '0', `outtype` SMALLINT UNSIGNED NOT NULL DEFAULT '0', `outamount` TINYINT UNSIGNED NOT NULL DEFAULT '0', PRIMARY KEY (`id`));");
+					state.execute("CREATE TABLE `" + table + "-chest` (id INT NOT NULL, intype SMALLINT UNSIGNED NOT NULL DEFAULT '0', inamount TINYINT UNSIGNED NOT NULL DEFAULT '0', outtype SMALLINT UNSIGNED NOT NULL DEFAULT '0', outamount TINYINT UNSIGNED NOT NULL DEFAULT '0', PRIMARY KEY (id));");
 					if (!dbm.getTables(null, null, table + "-chest", null).next())
 						return false;
 				}
