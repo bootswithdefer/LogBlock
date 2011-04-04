@@ -80,11 +80,6 @@ public class LogBlock extends JavaPlugin
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
-		if (config.worldNames == null || config.worldTables == null || config.worldNames.size() == 0 || config.worldNames.size() != config.worldTables.size()) {
-			log.log(Level.SEVERE, "[LogBlock] worldNames or worldTables not set porperly");
-			getServer().getPluginManager().disablePlugin(this);
-			return;
-		}
 		if (!checkTables()) {
 			log.log(Level.SEVERE, "[LogBlock] Errors while checking tables. They may not exist.");
 			getServer().getPluginManager().disablePlugin(this);
@@ -138,7 +133,7 @@ public class LogBlock extends JavaPlugin
 		}
 		Player player = (Player)sender;
 		Connection conn = getConnection();
-		String table = getTable(player);
+		String table = config.tables.get(player.getWorld().getName().hashCode());
 		if (conn == null) {
 			player.sendMessage(ChatColor.RED + "Can't create SQL connection.");
 			return true;
@@ -367,8 +362,7 @@ public class LogBlock extends JavaPlugin
 					return false;
 			}
 			state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + config.logTNTExplosionsAs + "'), ('" + config.logCreeperExplosionsAs + "'), ('" + config.logFireAs + "'), ('" + config.logLeavesDecayAs + "'), ('" + config.logFireballExplosionsAs + "'), ('Environment')");
-			for (int i = 0; i < config.worldNames.size(); i++) {
-				String table = config.worldTables.get(i);
+			for (String table : config.tables.values()) {
 				if (!dbm.getTables(null, null, table, null).next())	{
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
 					state.execute("CREATE TABLE `" + table + "` (`id` INT NOT NULL AUTO_INCREMENT, `date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00', `playerid` SMALLINT UNSIGNED NOT NULL DEFAULT '0', `replaced` TINYINT UNSIGNED NOT NULL DEFAULT '0', `type` TINYINT UNSIGNED NOT NULL DEFAULT '0', `data` TINYINT UNSIGNED NOT NULL DEFAULT '0', `x` SMALLINT NOT NULL DEFAULT '0', `y` TINYINT UNSIGNED NOT NULL DEFAULT '0',`z` SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (`id`), KEY `coords` (`y`,`x`,`z`), KEY `type` (`type`), KEY `data` (`data`), KEY `replaced` (`replaced`));");
@@ -402,21 +396,6 @@ public class LogBlock extends JavaPlugin
 			}
 		}
 		return false;
-	}
-
-	private String getTable (Player player) {
-		return getTable(player.getWorld().getName());
-	}
-
-	private String getTable (Block block) {
-		return getTable(block.getWorld().getName());
-	}
-
-	private String getTable (String worldName) {
-		int idx = config.worldNames.indexOf(worldName);
-		if (idx == -1)
-			return null;
-		return config.worldTables.get(idx);
 	}
 
 	private boolean CheckPermission(Player player, String permission) {
@@ -555,10 +534,10 @@ public class LogBlock extends JavaPlugin
 		public void onPlayerInteract(PlayerInteractEvent event) {
 			if (!event.isCancelled()) {
 				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
-					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(getConnection(), event.getPlayer(), event.getClickedBlock(), getTable(event.getClickedBlock())));
+					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(getConnection(), event.getPlayer(), event.getClickedBlock(), config.tables.get(event.getPlayer().getWorld().getName().hashCode())));
 					event.setCancelled(true);
 				} else if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
-					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(getConnection(), event.getPlayer(), event.getClickedBlock().getFace(event.getBlockFace()), getTable(event.getClickedBlock())));
+					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(getConnection(), event.getPlayer(), event.getClickedBlock().getFace(event.getBlockFace()), config.tables.get(event.getPlayer().getWorld().getName().hashCode())));
 					if (config.toolblockRemove) 
 						event.setCancelled(true);
 				}

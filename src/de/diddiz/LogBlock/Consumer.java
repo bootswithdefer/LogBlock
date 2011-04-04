@@ -30,7 +30,7 @@ public class Consumer implements Runnable
 	public void queueBlock(String playerName, Block block, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
 		if (block == null || typeBefore < 0 || typeAfter < 0)
 			return;
-		String table = LogBlock.config.worldTables.get(LogBlock.config.worldNames.indexOf(block.getWorld().getName()));
+		String table = LogBlock.config.tables.get(block.getWorld().getName().hashCode());
 		if (table == null)
 			return;
 		if (playerName.length() > 32)

@@ -1,13 +1,13 @@
 package de.diddiz.LogBlock;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.bukkit.util.config.Configuration;
 
 public class Config {
-	List<String> worldNames;
-	List<String> worldTables;
+	HashMap<Integer, String> tables;
 	String dbDriver;
 	String dbUrl;
 	String dbUsername;
@@ -31,7 +31,7 @@ public class Config {
 	String logLeavesDecayAs;
 	boolean usePermissions;
 
-	Config (LogBlock logblock) {
+	Config (LogBlock logblock) throws Exception {
 		Configuration config = logblock.getConfiguration();
 		config.load();
 		List<String> keys = config.getKeys(null);
@@ -87,8 +87,6 @@ public class Config {
 			config.setProperty("usePermissions", false);
 		if (!config.save())
 			LogBlock.log.severe("[LogBlock] Error while writing to config.yml");
-		worldNames = config.getStringList("worldNames", null);
-		worldTables = config.getStringList("worldTables", null);
 		dbDriver = config.getString("driver");
 		dbUrl = config.getString("url");
 		dbUsername = config.getString("username");
@@ -111,5 +109,13 @@ public class Config {
 		logFireAs = config.getString("logFireAs");
 		logLeavesDecayAs = config.getString("logLeavesDecayAs");
 		usePermissions = config.getBoolean("usePermissions", false);
+		List<String> worldNames = config.getStringList("worldNames", null);
+		List<String> worldTables = config.getStringList("worldTables", null);
+		tables = new HashMap<Integer, String>();
+		if (worldNames == null || worldTables == null || worldNames.size() == 0 || worldNames.size() != worldTables.size())
+			throw new Exception("worldNames or worldTables not set porperly");
+		for (int i = 0; i < worldNames.size(); i++) {
+			tables.put(worldNames.get(i).hashCode(), worldTables.get(i));
+		}
 	}
 }
