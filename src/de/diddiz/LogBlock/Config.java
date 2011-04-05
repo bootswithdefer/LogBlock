@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import org.bukkit.Material;
 import org.bukkit.util.config.Configuration;
 
 public class Config {
@@ -102,7 +103,11 @@ public class Config {
 		defaultDist = config.getInt("defaultDist", 20);
 		defaultTime = LogBlock.parseTimeSpec(config.getString("defaultTime"));
 		toolID = config.getInt("toolID", 270);
+		if (Material.getMaterial(toolID) == null || Material.getMaterial(toolID).isBlock())
+			throw new Exception("toolID doesn't appear to be a valid item id");
 		toolblockID = config.getInt("toolblockID", 7);
+		if (Material.getMaterial(toolblockID) == null || !Material.getMaterial(toolblockID).isBlock() || toolblockID == 0)
+			throw new Exception("toolblockID doesn't appear to be a valid block id");
 		toolblockRemove = config.getBoolean("toolblockRemove", true);
 		logSignTexts = config.getBoolean("logSignTexts", false);
 		logExplosions = config.getBoolean("logExplosions", false);
