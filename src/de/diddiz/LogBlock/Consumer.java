@@ -50,12 +50,12 @@ public class Consumer implements Runnable
 	}
 
 	public void run() {
-		if (conn == null)
-			try {
-				conn = DriverManager.getConnection("jdbc:jdc:jdcpool");
-			} catch (SQLException ex) {
-				LogBlock.log.severe("[LogBlock Consumer] Can't get a connection");
-			}
+		try {
+			if (conn == null || conn.isClosed())
+			conn = DriverManager.getConnection("jdbc:jdc:jdcpool");
+		} catch (SQLException ex) {
+			LogBlock.log.severe("[LogBlock Consumer] Can't get a connection");
+		}
 		if (conn == null)
 			return;
 		Statement state = null;
