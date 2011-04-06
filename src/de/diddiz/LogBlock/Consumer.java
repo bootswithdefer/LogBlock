@@ -38,7 +38,7 @@ public class Consumer implements Runnable
 			playerName = playerName.substring(0, 32);
 		BlockRow row = new BlockRow(table, playerName, typeBefore, typeAfter, data, block.getX(), block.getY(), block.getZ());
 		if (signtext != null)
-			row.signtext = signtext;
+			row.signtext = signtext.replace("'", "\\'");
 		if (ca != null)
 			row.ca = ca;
 		if (!bqueue.offer(row))
