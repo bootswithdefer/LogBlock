@@ -91,10 +91,10 @@ public class Rollback implements Runnable
 		logblock.getServer().getScheduler().cancelTask(taskID);
 		if (!redo) {
 			player.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
-			player.sendMessage(ChatColor.GREEN + "Undid " + perform.successes + " of " + changes + " changes (" + perform.errors + " errors, " + perform.blacklisteds + " blacklist collusions)");
+			player.sendMessage(ChatColor.GREEN + "Undid " + perform.successes + " of " + changes + " changes (" + perform.errors + " errors, " + perform.blacklisteds + " blacklist collisions)");
 		} else {
 			player.sendMessage(ChatColor.GREEN + "Redo finished successfully");
-			player.sendMessage(ChatColor.GREEN + "Redid " + perform.successes + " of " + changes + " changes (" + perform.errors + " errors, " + perform.blacklisteds + " blacklist collusions)");
+			player.sendMessage(ChatColor.GREEN + "Redid " + perform.successes + " of " + changes + " changes (" + perform.errors + " errors, " + perform.blacklisteds + " blacklist collisions)");
 		}
 		player.sendMessage(ChatColor.GREEN + "Took:  " + (System.currentTimeMillis() - start) + "ms");
 	}
