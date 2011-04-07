@@ -16,6 +16,7 @@ public class Config {
 	String dbUsername;
 	String dbPassword;
 	int keepLogDays;
+	boolean dumpDroppedLog;
 	int delay;
 	int defaultDist;
 	int defaultTime;
@@ -58,6 +59,8 @@ public class Config {
 			config.setProperty("password", "pass");
 		if (!keys.contains("keepLogDays"))
 			config.setProperty("keepLogDays", -1);
+		if (!keys.contains("dumpDroppedLog"))
+			config.setProperty("dumpDroppedLog", true);
 		if (!keys.contains("delay"))
 			config.setProperty("delay", 6);
 		if (!keys.contains("defaultDist"))
@@ -99,6 +102,7 @@ public class Config {
 		dbUsername = config.getString("username");
 		dbPassword = config.getString("password");
 		keepLogDays = config.getInt("keepLogDays", -1);
+		dumpDroppedLog =  config.getBoolean("dumpDroppedLog", true);
 		delay = config.getInt("delay", 6);
 		defaultDist = config.getInt("defaultDist", 20);
 		defaultTime = LogBlock.parseTimeSpec(config.getString("defaultTime"));

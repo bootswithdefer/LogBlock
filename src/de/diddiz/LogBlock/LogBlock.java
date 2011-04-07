@@ -86,7 +86,7 @@ public class LogBlock extends JavaPlugin
 			return;
 		}
 		if (config.keepLogDays >= 0)
-			new Thread(new ClearLog(getConnection())).start();
+			new Thread(new ClearLog(getConnection(), getDataFolder())).start();
 		LBBlockListener lbBlockListener = new LBBlockListener();
 		LBPlayerListener lbPlayerListener = new LBPlayerListener();
 		PluginManager pm = getServer().getPluginManager();
