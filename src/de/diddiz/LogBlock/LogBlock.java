@@ -35,6 +35,7 @@ import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -144,6 +145,36 @@ public class LogBlock extends JavaPlugin
 		if (args.length == 0) {
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + getDescription().getVersion() + " by DiddiZ");
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
+		} else if (args[0].equalsIgnoreCase("tool")) {
+			if (CheckPermission(player, "logblock.tool")) {
+				if (player.getInventory().contains(config.toolID))
+					player.sendMessage(ChatColor.RED + "You have alredy a tool"); 
+				else {
+					int free = player.getInventory().firstEmpty();
+					if (free >= 0) {
+						player.getInventory().setItem(free, player.getItemInHand());
+						player.setItemInHand(new ItemStack(config.toolID, 1));
+						player.sendMessage(ChatColor.GREEN + "Here is your tool."); 
+					} else
+						player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory"); 
+				}
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+		} else if (args[0].equalsIgnoreCase("toolblock")) {
+			if (CheckPermission(player, "logblock.toolblock")) {
+				if (player.getInventory().contains(config.toolblockID))
+					player.sendMessage(ChatColor.RED + "You have alredy a tool"); 
+				else {
+					int free = player.getInventory().firstEmpty();
+					if (free >= 0) {
+						player.getInventory().setItem(free, player.getItemInHand());
+						player.setItemInHand(new ItemStack(config.toolblockID, 1));
+						player.sendMessage(ChatColor.GREEN + "Here is your tool."); 
+					} else
+						player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory"); 
+				}
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("area")) {
 			if (CheckPermission(player,"logblock.area")) {
 				int radius = config.defaultDist;
@@ -405,6 +436,10 @@ public class LogBlock extends JavaPlugin
 			if (permission.equals("logblock.lookup"))
 				return true;
 			else if (permission.equals("logblock.me"))
+				return true;
+			else if (permission.equals("logblock.tool"))
+				return true;
+			else if (permission.equals("logblock.toolblock"))
 				return true;
 			else if (permission.equals("logblock.area"))
 				return player.isOp();
