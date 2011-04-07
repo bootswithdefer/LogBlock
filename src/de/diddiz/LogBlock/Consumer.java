@@ -74,12 +74,16 @@ public class Consumer implements Runnable
 				state.execute("INSERT INTO `" + b.table + "` (date, playerid, replaced, type, data, x, y, z) SELECT now(), playerid, " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.x + "', " + b.y + ", '" + b.z + "' FROM `lb-players` WHERE playername = '" + b.name + "'", Statement.RETURN_GENERATED_KEYS);
 				if (b.signtext != null) {
 					ResultSet keys = state.getGeneratedKeys();
-					keys.next();
-					state.execute("INSERT INTO `" + b.table + "-sign` (id, signtext) values (" + keys.getInt(1) + ", '" + b.signtext + "')");
+					if (keys.next())
+						state.execute("INSERT INTO `" + b.table + "-sign` (id, signtext) values (" + keys.getInt(1) + ", '" + b.signtext + "')");
+					else
+						LogBlock.log.severe("[LogBlock Consumer] Failed to get generated keys");
 				} else if (b.ca != null) {
 					ResultSet keys = state.getGeneratedKeys();
-					keys.next();
-					state.execute("INSERT INTO `" + b.table + "-chest` (id, intype, inamount, outtype, outamount) values (" + keys.getInt(1) + ", " + b.ca.inType + ", " + b.ca.inAmount + ", " + b.ca.outType + ", " + b.ca.outAmount + ")");
+					if (keys.next())
+						state.execute("INSERT INTO `" + b.table + "-chest` (id, intype, inamount, outtype, outamount) values (" + keys.getInt(1) + ", " + b.ca.inType + ", " + b.ca.inAmount + ", " + b.ca.outType + ", " + b.ca.outAmount + ")");
+					else
+						LogBlock.log.severe("[LogBlock Consumer] Failed to get generated keys");
 				}
 				count++;
 			}
