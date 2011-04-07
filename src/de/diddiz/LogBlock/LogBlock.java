@@ -184,10 +184,18 @@ public class LogBlock extends JavaPlugin
 					if (free >= 0) {
 						player.getInventory().setItem(free, player.getItemInHand());
 						player.setItemInHand(new ItemStack(config.toolblockID, 1));
-						player.sendMessage(ChatColor.GREEN + "Here is your tool."); 
+						player.sendMessage(ChatColor.GREEN + "Here's your tool."); 
 					} else
 						player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory"); 
 				}
+			} else
+				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+		} else if (args[0].equalsIgnoreCase("hide")) {
+			if (CheckPermission(player, "logblock.hide")) {
+				if (consumer.hide(player))
+					player.sendMessage(ChatColor.GREEN + "You are now hided and won't appear in any log. Type '/lb hide' again to unhide"); 
+				else
+					player.sendMessage(ChatColor.GREEN + "You aren't hided anylonger."); 
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("area")) {
@@ -457,6 +465,8 @@ public class LogBlock extends JavaPlugin
 			else if (permission.equals("logblock.toolblock"))
 				return true;
 			else if (permission.equals("logblock.area"))
+				return player.isOp();
+			else if (permission.equals("logblock.hide"))
 				return player.isOp();
 			else if (permission.equals("logblock.rollback"))
 				return player.isOp();

@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
@@ -14,6 +15,7 @@ import org.bukkit.entity.Player;
 public class Consumer implements Runnable
 {
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
+	private HashSet<Integer> hiddenplayers = new HashSet<Integer>();
 	private Connection conn = null;
 
 	public void queueBlock(Player player, Block block, int typeAfter) {
@@ -30,6 +32,8 @@ public class Consumer implements Runnable
 
 	public void queueBlock(String playerName, Block block, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
 		if (block == null || typeBefore < 0 || typeAfter < 0)
+			return;
+		if (hiddenplayers.contains(playerName.hashCode()))
 			return;
 		String table = LogBlock.config.tables.get(block.getWorld().getName().hashCode());
 		if (table == null)
@@ -49,6 +53,17 @@ public class Consumer implements Runnable
 		return bqueue.size();
 	}
 
+	public boolean hide(Player player) {
+		int hash = player.getName().hashCode();
+		if (hiddenplayers.contains(hash)) {
+			hiddenplayers.remove(hash);
+			return false;
+		} else {
+			hiddenplayers.add(hash);
+			return true;
+		}
+	}
+	
 	public void run() {
 		try {
 			if (conn == null || conn.isClosed())
