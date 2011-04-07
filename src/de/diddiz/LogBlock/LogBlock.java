@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -60,24 +61,38 @@ public class LogBlock extends JavaPlugin
 		log = getServer().getLogger();
 		try	{
 			config = new Config(this);
-			if (config.usePermissions)	{
-				if (getServer().getPluginManager().getPlugin("Permissions") != null) 
-					log.info("[LogBlock] Permissions enabled");
-				else {
-					config.usePermissions = false;
-					log.warning("[LogBlock] Permissions plugin not found. Using default permissions.");
-				}
+		} catch (Exception ex) {
+			log.log(Level.SEVERE, "[LogBlock] Exception while reading config", ex);
+			getServer().getPluginManager().disablePlugin(this);
+			return;
+		}	
+		if (config.usePermissions)	{
+			if (getServer().getPluginManager().getPlugin("Permissions") != null) 
+				log.info("[LogBlock] Permissions enabled");
+			else {
+				config.usePermissions = false;
+				log.warning("[LogBlock] Permissions plugin not found. Using default permissions.");
 			}
-			File file = new File("lib/mysql-connector-java-bin.jar");
-			if (!file.exists()) {
-				log.info("[LogBlock] Downloading mysql-connector-java-bin.jar ...");
+		}
+		File file = new File("lib/mysql-connector-java-bin.jar");
+		try {
+			if (!file.exists() || file.length() == 0) {
+				log.info("[LogBlock] Downloading " + file.getName() + "...");
 				Download.download(new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
 			}
+			if (!file.exists() || file.length() == 0)
+				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "[LogBlock] Error while downloading " + file.getName() + ".");
+			getServer().getPluginManager().disablePlugin(this);
+			return;
+		}
+		try {
 			new JDCConnectionDriver(config.dbDriver, config.dbUrl, config.dbUsername, config.dbPassword);
 			Connection conn = getConnection();
 			conn.close();
 		} catch (Exception ex) {
-			log.log(Level.SEVERE, "[LogBlock] Exception while enabling", ex);
+			log.log(Level.SEVERE, "[LogBlock] Exception while cheching database connection", ex);
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
