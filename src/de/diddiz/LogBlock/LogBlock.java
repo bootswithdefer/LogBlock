@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
@@ -41,19 +40,19 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import bootswithdefer.JDCBPool.JDCConnectionDriver;
-
 import com.nijikokun.bukkit.Permissions.Permissions;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
 import com.sk89q.worldedit.bukkit.selections.Selection;
 
+import de.diddiz.util.ConnectionPool;
 import de.diddiz.util.Download;
 
 public class LogBlock extends JavaPlugin
 {
 	static Logger log;
 	static Config config;
+	ConnectionPool pool;
 	private Consumer consumer = null;
 
 	@Override
@@ -88,11 +87,11 @@ public class LogBlock extends JavaPlugin
 			return;
 		}
 		try {
-			new JDCConnectionDriver(config.dbDriver, config.dbUrl, config.dbUsername, config.dbPassword);
-			Connection conn = getConnection();
+			pool = new ConnectionPool(config.dbDriver, config.dbUrl, config.dbUsername, config.dbPassword);
+			Connection conn = pool.getConnection();
 			conn.close();
 		} catch (Exception ex) {
-			log.log(Level.SEVERE, "[LogBlock] Exception while cheching database connection", ex);
+			log.log(Level.SEVERE, "[LogBlock] Exception while checking database connection", ex);
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
@@ -102,7 +101,7 @@ public class LogBlock extends JavaPlugin
 			return;
 		}
 		if (config.keepLogDays >= 0)
-			new Thread(new ClearLog(getConnection(), getDataFolder())).start();
+			new Thread(new ClearLog(this)).start();
 		LBBlockListener lbBlockListener = new LBBlockListener();
 		LBPlayerListener lbPlayerListener = new LBPlayerListener();
 		PluginManager pm = getServer().getPluginManager();
@@ -121,7 +120,7 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.ENTITY_EXPLODE, new LBEntityListener(), Event.Priority.Monitor, this);
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Event.Priority.Monitor, this);
-		consumer = new Consumer();
+		consumer = new Consumer(this);
 		getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20);
 		log.info("Logblock v" + getDescription().getVersion() + " enabled.");
 	}
@@ -148,7 +147,7 @@ public class LogBlock extends JavaPlugin
 			return true;
 		}
 		Player player = (Player)sender;
-		Connection conn = getConnection();
+		Connection conn = pool.getConnection();
 		String table = config.tables.get(player.getWorld().getName().hashCode());
 		if (conn == null) {
 			player.sendMessage(ChatColor.RED + "Can't create SQL connection.");
@@ -391,18 +390,8 @@ public class LogBlock extends JavaPlugin
 		return true;
 	}
 
-	private Connection getConnection()
-	{
-		try {
-			return DriverManager.getConnection("jdbc:jdc:jdcpool");
-		} catch (SQLException ex) {
-			log.log(Level.SEVERE, "[LogBlock] Can't get a connection", ex);
-			return null;
-		}
-	}
-
 	private boolean checkTables() {
-		Connection conn = getConnection();
+		Connection conn = pool.getConnection();
 		Statement state = null;
 		if (conn == null)
 			return false;
@@ -567,13 +556,13 @@ public class LogBlock extends JavaPlugin
 		}
 
 		public void onPlayerJoin(PlayerJoinEvent event) {
-			Connection conn = getConnection();
+			Connection conn = pool.getConnection();
 			Statement state = null;
 			if (conn == null)
 				return;
 			try {
 				state = conn.createStatement();
-				state.execute("INSERT IGNORE INTO `lb-players` (`playername`) VALUES ('" + event.getPlayer().getName() + "');");
+				state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + event.getPlayer().getName() + "');");
 			} catch (SQLException ex) {
 				LogBlock.log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
 			} finally {
@@ -594,10 +583,10 @@ public class LogBlock extends JavaPlugin
 		public void onPlayerInteract(PlayerInteractEvent event) {
 			if (!event.isCancelled()) {
 				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
-					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(getConnection(), event.getPlayer(), event.getClickedBlock(), config.tables.get(event.getPlayer().getWorld().getName().hashCode())));
+					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(pool.getConnection(), event.getPlayer(), event.getClickedBlock()));
 					event.setCancelled(true);
 				} else if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
-					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(getConnection(), event.getPlayer(), event.getClickedBlock().getFace(event.getBlockFace()), config.tables.get(event.getPlayer().getWorld().getName().hashCode())));
+					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(pool.getConnection(), event.getPlayer(), event.getClickedBlock().getFace(event.getBlockFace())));
 					if (config.toolblockRemove) 
 						event.setCancelled(true);
 				}

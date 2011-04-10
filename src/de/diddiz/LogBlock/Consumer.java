@@ -1,7 +1,6 @@
 package de.diddiz.LogBlock;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -17,6 +16,11 @@ public class Consumer implements Runnable
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	private HashSet<Integer> hiddenplayers = new HashSet<Integer>();
 	private Connection conn = null;
+	private LogBlock logblock;
+
+	Consumer (LogBlock logblock) {
+		this.logblock = logblock;
+	}
 
 	public void queueBlock(Player player, Block block, int typeAfter) {
 		queueBlock(player.getName(), block, 0, typeAfter, (byte)0, null, null);
@@ -67,7 +71,7 @@ public class Consumer implements Runnable
 	public void run() {
 		try {
 			if (conn == null || conn.isClosed())
-			conn = DriverManager.getConnection("jdbc:jdc:jdcpool");
+			conn = logblock.pool.getConnection();
 		} catch (SQLException ex) {
 			LogBlock.log.severe("[LogBlock Consumer] Can't get a connection");
 		}

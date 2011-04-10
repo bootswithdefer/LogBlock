@@ -17,13 +17,11 @@ public class BlockStats implements Runnable
 	private Player player;
 	private Block block;
 	private Connection conn;
-	private String table;
 
-	BlockStats(Connection conn, Player player, Block block, String table) {
+	BlockStats(Connection conn, Player player, Block block) {
 		this.player = player;
 		this.conn = conn;
 		this.block = block;
-		this.table = table;
 	}
 
 	@Override
@@ -32,6 +30,7 @@ public class BlockStats implements Runnable
 			player.sendMessage(ChatColor.RED + "Failed to create database connection");
 			return;
 		}
+		String table = LogBlock.config.tables.get(block.getWorld().getName().hashCode());
 		if (table == null) {
 			player.sendMessage(ChatColor.RED + "This world isn't logged");
 			return;

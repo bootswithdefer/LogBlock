@@ -13,9 +13,11 @@ public class ClearLog implements Runnable
 	private Connection conn;
 	private File dumbFolder;
 
-	public ClearLog(Connection conn, File dataFolder) {
-		this.conn = conn;
-		dumbFolder = new File(dataFolder, "dumb");
+	public ClearLog(LogBlock logblock) {
+		conn = logblock.pool.getConnection();
+		if (conn == null)
+			return;
+		dumbFolder = new File(logblock.getDataFolder(), "dumb");
 		dumbFolder.mkdirs();
 	}
 
