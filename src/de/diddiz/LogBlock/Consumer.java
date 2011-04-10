@@ -15,7 +15,6 @@ public class Consumer implements Runnable
 {
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	private HashSet<Integer> hiddenplayers = new HashSet<Integer>();
-	private Connection conn = null;
 	private LogBlock logblock;
 
 	Consumer (LogBlock logblock) {
@@ -68,13 +67,8 @@ public class Consumer implements Runnable
 		}
 	}
 	
-	public void run() {
-		try {
-			if (conn == null || conn.isClosed())
-			conn = logblock.pool.getConnection();
-		} catch (SQLException ex) {
-			LogBlock.log.severe("[LogBlock Consumer] Can't get a connection");
-		}
+	public synchronized void run() {
+		Connection conn = logblock.pool.getConnection();
 		if (conn == null)
 			return;
 		Statement state = null;

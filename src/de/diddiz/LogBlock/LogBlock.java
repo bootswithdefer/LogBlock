@@ -50,9 +50,9 @@ import de.diddiz.util.Download;
 
 public class LogBlock extends JavaPlugin
 {
-	static Logger log;
-	static Config config;
-	ConnectionPool pool;
+	public static Logger log;
+	public static Config config;
+	public ConnectionPool pool;
 	private Consumer consumer = null;
 
 	@Override

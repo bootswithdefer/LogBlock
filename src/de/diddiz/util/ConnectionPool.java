@@ -36,6 +36,9 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
+import java.util.logging.Level;
+
+import de.diddiz.LogBlock.LogBlock;
 
 public class ConnectionPool implements Driver {
 	public static final String URL_PREFIX = "jdbc:jdc:";
@@ -58,7 +61,8 @@ public class ConnectionPool implements Driver {
 	public Connection getConnection() {
 		try {
 			return pool.getConnection();
-		} catch (SQLException e) {
+		} catch (SQLException ex) {
+			LogBlock.log.log(Level.SEVERE, "[LogBlock ConnectionPool] Error while fetching connection", ex);
 			return null;
 		}
 	}
@@ -83,7 +87,8 @@ public class ConnectionPool implements Driver {
 		return false;
 	}
 
-	private class JDCConnection implements Connection {
+	private class JDCConnection implements Connection
+	{
 		private ConnectionService pool;
 		private Connection conn;
 		private boolean inuse;
@@ -355,7 +360,8 @@ public class ConnectionPool implements Driver {
 		}
 	}
 
-	public class ConnectionService {
+	public class ConnectionService
+	{
 		private Vector<JDCConnection> connections;
 		private String url, user, password;
 		final private long timeout = 60000;
@@ -397,11 +403,14 @@ public class ConnectionPool implements Driver {
 			JDCConnection c;
 			for (int i = 0; i < connections.size(); i++) {
 				c = connections.elementAt(i);
-				if (c.lease())
-					return c;
+				if (c.lease()) {
+					if (c.validate())
+						return c.getConnection();
+					else
+						removeConnection(c);
+				}
 			}
-			Connection conn = DriverManager.getConnection(url, user, password);
-			c = new JDCConnection(conn, this);
+			c = new JDCConnection(DriverManager.getConnection(url, user, password), this);
 			c.lease();
 			connections.addElement(c);
 			return c.getConnection();
@@ -412,7 +421,8 @@ public class ConnectionPool implements Driver {
 		}
 	}
 
-	class ConnectionReaper extends Thread {
+	class ConnectionReaper extends Thread
+	{
 		private ConnectionService pool;
 		private final long delay = 300000;
 
