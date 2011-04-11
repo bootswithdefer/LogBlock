@@ -96,7 +96,7 @@ public class Config {
 		if (!keys.contains("usePermissions"))
 			config.setProperty("usePermissions", false);
 		if (!config.save())
-			LogBlock.log.severe("[LogBlock] Error while writing to config.yml");
+			throw new Exception("Error while writing to config.yml");
 		dbDriver = config.getString("driver");
 		dbUrl = config.getString("url");
 		dbUsername = config.getString("username");
