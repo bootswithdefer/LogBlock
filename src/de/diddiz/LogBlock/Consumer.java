@@ -105,6 +105,8 @@ public class Consumer implements Runnable
 			LogBlock.log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
 		} finally {
 			try {
+				if (conn != null)
+					conn.close();
 				if (state != null)
 					state.close();
 			} catch (SQLException ex) {
