@@ -5,13 +5,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
+import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-public class Consumer implements Runnable
+public class Consumer extends TimerTask implements Runnable
 {
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	private HashSet<Integer> hiddenplayers = new HashSet<Integer>();

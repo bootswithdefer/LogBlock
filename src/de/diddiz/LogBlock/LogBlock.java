@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,6 +55,7 @@ public class LogBlock extends JavaPlugin
 	public static Config config;
 	public ConnectionPool pool;
 	private Consumer consumer = null;
+	private Timer timer = null;
 
 	@Override
 	public void onEnable() {
@@ -123,13 +125,18 @@ public class LogBlock extends JavaPlugin
 		consumer = new Consumer(this);
 		if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20) > 0)
 			log.info("[LogBlock] Started consumer");
-		else
-			log.severe("[LogBlock] Failed to start consumer");
+		else {
+			log.warning("[LogBlock] Failed to schedule consumer with bukkit scheduler. Now trying timer scheduler.");
+			timer = new Timer();
+			timer.scheduleAtFixedRate(consumer, config.delay*1000, config.delay*1000);
+		}
 		log.info("Logblock v" + getDescription().getVersion() + " enabled.");
 	}
 
 	@Override
 	public void onDisable() {
+		if (timer != null)
+			timer.cancel();
 		if (consumer != null && consumer.getQueueSize() > 0) {
 			log.info("[LogBlock] Waiting for consumer ...");
 			Thread thread = new Thread(consumer);
