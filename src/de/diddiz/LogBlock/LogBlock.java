@@ -604,7 +604,8 @@ public class LogBlock extends JavaPlugin
 			if (!event.isCancelled()) {
 				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
 					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(pool.getConnection(), event.getPlayer(), event.getClickedBlock()));
-					event.setCancelled(true);
+					if (event.getClickedBlock().getType() != Material.BED_BLOCK)
+						event.setCancelled(true);
 				} else if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
 					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(pool.getConnection(), event.getPlayer(), event.getClickedBlock().getFace(event.getBlockFace())));
 					if (config.toolblockRemove) 
