@@ -197,7 +197,6 @@ public class LogBlock extends JavaPlugin
 					player.sendMessage(ChatColor.GREEN + "You aren't hided anylonger."); 
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-		// TODO Auto-generated method stub
 		} else if (args[0].equalsIgnoreCase("savequeue")) {
 			if (CheckPermission(player, "logblock.rollback")) {
 				player.sendMessage(ChatColor.DARK_AQUA + "Current queue size: " + consumer.getQueueSize());
@@ -208,8 +207,6 @@ public class LogBlock extends JavaPlugin
 				player.sendMessage(ChatColor.GREEN + "Queue saved successfully");
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-		
-		
 		} else if (args[0].equalsIgnoreCase("area")) {
 			if (CheckPermission(player,"logblock.area")) {
 				int radius = config.defaultDist;
