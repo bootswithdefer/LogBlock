@@ -121,7 +121,10 @@ public class LogBlock extends JavaPlugin
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Event.Priority.Monitor, this);
 		consumer = new Consumer(this);
-		getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20);
+		if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20) > 0)
+			log.info("[LogBlock] Started consumer");
+		else
+			log.severe("[LogBlock] Failed to start consumer");
 		log.info("Logblock v" + getDescription().getVersion() + " enabled.");
 	}
 
