@@ -108,11 +108,15 @@ public class LogBlock extends JavaPlugin
 		LBPlayerListener lbPlayerListener = new LBPlayerListener();
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(), Event.Priority.Normal, this);
-		pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Event.Priority.Monitor, this);
-		pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Event.Priority.Normal, this);
-		pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Event.Priority.Monitor, this);
-		pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Event.Priority.Monitor, this);
+		if (config.logBlockCreations) {
+			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Event.Priority.Monitor, this);
+		}
+		if (config.logBlockDestroyings) {
+			pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Event.Priority.Monitor, this);
+		}
 		if (config.logSignTexts)
 			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Event.Priority.Monitor, this);
 		if (config.logFire)

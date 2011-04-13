@@ -23,6 +23,8 @@ public class Config {
 	final int toolID;
 	final int toolblockID;
 	final boolean toolblockRemove;
+	final boolean logBlockCreations;
+	final boolean logBlockDestroyings;
 	final boolean logSignTexts;
 	final boolean logExplosions;
 	final boolean logFire;
@@ -73,6 +75,10 @@ public class Config {
 			config.setProperty("toolblockID", 7);
 		if (!keys.contains("toolblockRemove"))
 			config.setProperty("toolblockRemove", true);
+		if (!keys.contains("logBlockCreations"))
+			config.setProperty("logBlockCreations", true);
+		if (!keys.contains("logBlockDestroyings"))
+			config.setProperty("logBlockDestroyings", true);
 		if (!keys.contains("logSignTexts"))
 			config.setProperty("logSignTexts", false);
 		if (!keys.contains("logExplosions"))
@@ -113,6 +119,8 @@ public class Config {
 		if (Material.getMaterial(toolblockID) == null || !Material.getMaterial(toolblockID).isBlock() || toolblockID == 0)
 			throw new Exception("toolblockID doesn't appear to be a valid block id");
 		toolblockRemove = config.getBoolean("toolblockRemove", true);
+		logBlockCreations = config.getBoolean("logBlockCreations", true);
+		logBlockDestroyings = config.getBoolean("logBlockDestroyings", true);
 		logSignTexts = config.getBoolean("logSignTexts", false);
 		logExplosions = config.getBoolean("logExplosions", false);
 		logFire = config.getBoolean("logFire", false);
