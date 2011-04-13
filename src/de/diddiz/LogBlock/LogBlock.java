@@ -108,7 +108,6 @@ public class LogBlock extends JavaPlugin
 		LBPlayerListener lbPlayerListener = new LBPlayerListener();
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(), Event.Priority.Normal, this);
-		pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Event.Priority.Monitor, this);
 		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Event.Priority.Normal, this);
@@ -122,6 +121,8 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.ENTITY_EXPLODE, new LBEntityListener(), Event.Priority.Monitor, this);
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Event.Priority.Monitor, this);
+		if (config.logChestAccess)
+			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Event.Priority.Monitor, this);
 		consumer = new Consumer(this);
 		if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20) > 0)
 			log.info("[LogBlock] Started consumer");
