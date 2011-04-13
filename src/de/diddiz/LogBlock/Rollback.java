@@ -166,7 +166,7 @@ public class Rollback implements Runnable
 				Block block = world.getBlockAt(x, y, z);
 				if (!world.isChunkLoaded(block.getChunk()))
 					world.loadChunk(block.getChunk());
-				if (equalsType(block.getTypeId(), type) || LogBlock.config.replaceAtRollback.contains(block.getTypeId()) || (type == 0 && replaced == 0)) {
+				if (equalsType(block.getTypeId(), type) || LogBlock.config.replaceAnyway.contains(block.getTypeId()) || (type == 0 && replaced == 0)) {
 					if (block.setTypeIdAndData(replaced, data, false))
 						return PerformResult.SUCCESS;
 					else

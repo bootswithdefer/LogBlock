@@ -41,6 +41,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
@@ -56,6 +57,7 @@ public class LogBlock extends JavaPlugin
 	public ConnectionPool pool;
 	private Consumer consumer = null;
 	private Timer timer = null;
+	private PermissionHandler permissions = null;
 
 	@Override
 	public void onEnable() {
@@ -66,15 +68,12 @@ public class LogBlock extends JavaPlugin
 			log.log(Level.SEVERE, "[LogBlock] Exception while reading config", ex);
 			getServer().getPluginManager().disablePlugin(this);
 			return;
-		}	
-		if (config.usePermissions)	{
-			if (getServer().getPluginManager().getPlugin("Permissions") != null) 
-				log.info("[LogBlock] Permissions enabled");
-			else {
-				config.usePermissions = false;
-				log.warning("[LogBlock] Permissions plugin not found. Using default permissions.");
-			}
 		}
+		if (getServer().getPluginManager().getPlugin("Permissions") != null) {
+			permissions = ((Permissions)getServer().getPluginManager().getPlugin("Permissions")).getHandler();
+			log.info("[LogBlock] Permissions enabled");
+		} else
+			log.info("[LogBlock] Permissions plugin not found. Using default permissions.");
 		File file = new File("lib/mysql-connector-java-bin.jar");
 		try {
 			if (!file.exists() || file.length() == 0) {
@@ -89,7 +88,7 @@ public class LogBlock extends JavaPlugin
 			return;
 		}
 		try {
-			pool = new ConnectionPool(config.dbDriver, config.dbUrl, config.dbUsername, config.dbPassword);
+			pool = new ConnectionPool("com.mysql.jdbc.Driver", config.url, config.user, config.password);
 			Connection conn = pool.getConnection();
 			conn.close();
 		} catch (Exception ex) {
@@ -429,7 +428,7 @@ public class LogBlock extends JavaPlugin
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
 			}
-			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + config.logTNTExplosionsAs + "'), ('" + config.logCreeperExplosionsAs + "'), ('" + config.logFireAs + "'), ('" + config.logLeavesDecayAs + "'), ('" + config.logFireballExplosionsAs + "'), ('Environment')");
+			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('Environment')");
 			for (String table : config.tables.values()) {
 				if (!dbm.getTables(null, null, table, null).next())	{
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
@@ -467,8 +466,8 @@ public class LogBlock extends JavaPlugin
 	}
 
 	private boolean CheckPermission(Player player, String permission) {
-		if (config.usePermissions)
-			return Permissions.Security.permission(player, permission);
+		if (permissions != null)
+			return permissions.permission(player, permission);
 		else {
 			if (permission.equals("logblock.area"))
 				return player.isOp();
@@ -521,12 +520,12 @@ public class LogBlock extends JavaPlugin
 
 		public void onBlockBurn(BlockBurnEvent event) {
 			if (!event.isCancelled())
-				consumer.queueBlock(config.logFireAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+				consumer.queueBlock("Fire", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 		}
 
 		public void onLeavesDecay(LeavesDecayEvent event) {
 			if (!event.isCancelled())
-				consumer.queueBlock(config.logLeavesDecayAs, event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+				consumer.queueBlock("LeavesDecay", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 		}
 	}
 
@@ -536,11 +535,11 @@ public class LogBlock extends JavaPlugin
 		if (!event.isCancelled()) {	
 			String name;
 			if (event.getEntity() instanceof TNTPrimed)
-				name = config.logTNTExplosionsAs;
+				name = "TNT";
 			else if (event.getEntity() instanceof Creeper)
-				name = config.logCreeperExplosionsAs;
+				name = "Creeper";
 			else if (event.getEntity() instanceof Fireball)
-				name = config.logFireballExplosionsAs;
+				name = "Ghast";
 			else
 				name = "Environment";
 			for (Block block : event.blockList())
@@ -605,8 +604,7 @@ public class LogBlock extends JavaPlugin
 						event.setCancelled(true);
 				} else if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
 					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(pool.getConnection(), event.getPlayer(), event.getClickedBlock().getFace(event.getBlockFace())));
-					if (config.toolblockRemove) 
-						event.setCancelled(true);
+					event.setCancelled(true);
 				}
 			}
 		}
