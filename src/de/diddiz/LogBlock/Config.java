@@ -80,7 +80,7 @@ public class Config {
 			config.setProperty("logging.logSignTexts", false);
 		if (!subkeys.contains("logExplosions"))
 			config.setProperty("logging.logExplosions", false);
-		if (!subkeys.contains("llogFire"))
+		if (!subkeys.contains("logFire"))
 			config.setProperty("logging.logFire", false);
 		if (!subkeys.contains("logChestAccess"))
 			config.setProperty("logging.logChestAccess", false);
