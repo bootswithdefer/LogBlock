@@ -127,12 +127,18 @@ public class LogBlock extends JavaPlugin
 		if (config.logChestAccess)
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Event.Priority.Monitor, this);
 		consumer = new Consumer(this);
-		if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20) > 0)
-			log.info("[LogBlock] Started consumer");
-		else {
-			log.warning("[LogBlock] Failed to schedule consumer with bukkit scheduler. Now trying timer scheduler.");
+		if (config.useBukkitScheduler) {
+			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20) > 0)
+				log.info("[LogBlock] Scheduled consumer with bukkit scheduler.");
+			else {
+				log.warning("[LogBlock] Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
+				timer = new Timer();
+				timer.scheduleAtFixedRate(consumer, config.delay*1000, config.delay*1000);
+			}
+		} else {
 			timer = new Timer();
 			timer.scheduleAtFixedRate(consumer, config.delay*1000, config.delay*1000);
+			log.info("[LogBlock] Scheduled consumer with timer.");
 		}
 		log.info("Logblock v" + getDescription().getVersion() + " enabled.");
 	}
