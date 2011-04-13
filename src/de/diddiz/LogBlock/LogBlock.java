@@ -470,22 +470,14 @@ public class LogBlock extends JavaPlugin
 		if (config.usePermissions)
 			return Permissions.Security.permission(player, permission);
 		else {
-			if (permission.equals("logblock.lookup"))
-				return true;
-			else if (permission.equals("logblock.me"))
-				return true;
-			else if (permission.equals("logblock.tool"))
-				return true;
-			else if (permission.equals("logblock.toolblock"))
-				return true;
-			else if (permission.equals("logblock.area"))
+			if (permission.equals("logblock.area"))
 				return player.isOp();
 			else if (permission.equals("logblock.hide"))
 				return player.isOp();
 			else if (permission.equals("logblock.rollback"))
 				return player.isOp();
+			return true;
 		}
-		return false;
 	}
 
 	static int parseTimeSpec(String timespec) {
