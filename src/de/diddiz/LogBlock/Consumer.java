@@ -46,7 +46,7 @@ public class Consumer extends TimerTask implements Runnable
 			playerName = playerName.substring(0, 32);
 		BlockRow row = new BlockRow(table, playerName, typeBefore, typeAfter, data, block.getX(), block.getY(), block.getZ());
 		if (signtext != null)
-			row.signtext = signtext.replace("'", "\\'");
+			row.signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
 		if (ca != null)
 			row.ca = ca;
 		if (!bqueue.offer(row))
