@@ -31,7 +31,7 @@ public class ClearLog implements Runnable
 			String time = new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis() - LogBlock.config.keepLogDays*86400000);
 			ResultSet rs;
 			for (String table : LogBlock.config.tables.values()) {
-				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` WHERE date < now()");
+				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` WHERE date < '" + time + "'");
 				rs.next();
 				int deleted = rs.getInt(1); 
 				if (deleted > 0) {
