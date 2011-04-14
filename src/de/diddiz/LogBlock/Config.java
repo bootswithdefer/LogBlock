@@ -24,6 +24,7 @@ public class Config {
 	final boolean logFire;
 	final boolean logLeavesDecay;
 	final boolean logChestAccess;
+	final boolean logKills;
 	final List<Integer> dontRollback;
 	final List<Integer> replaceAnyway;
 	final int defaultDist;
@@ -86,6 +87,8 @@ public class Config {
 			config.setProperty("logging.logChestAccess", false);
 		if (!subkeys.contains("logLeavesDecay"))
 			config.setProperty("logging.logLeavesDecay", false);
+		if (!subkeys.contains("logKills"))
+			config.setProperty("logging.logKills", false);
 		subkeys = config.getKeys("rollback");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
@@ -120,6 +123,7 @@ public class Config {
 		logFire = config.getBoolean("logging.logFire", false);
 		logChestAccess = config.getBoolean("logging.logChestAccess", false);
 		logLeavesDecay = config.getBoolean("logging.logLeavesDecay", false);
+		logKills = config.getBoolean("logging.logKills", false);
 		dontRollback = config.getIntList("rollback.dontRollback", null);
 		replaceAnyway = config.getIntList("rollback.replaceAnyway", null);
 		defaultDist = config.getInt("lookup.defaultDist", 20);

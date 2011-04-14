@@ -4,19 +4,33 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 import org.bukkit.block.Block;
+import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Ghast;
+import org.bukkit.entity.Giant;
+import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.Slime;
+import org.bukkit.entity.Spider;
+import org.bukkit.entity.Wolf;
+import org.bukkit.entity.Zombie;
 
 public class Consumer extends TimerTask implements Runnable
 {
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
+	private LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
 	private HashSet<Integer> hiddenplayers = new HashSet<Integer>();
-	private LogBlock logblock;
+	private HashMap<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
+	private HashMap<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
+ 	private LogBlock logblock;
 
 	Consumer (LogBlock logblock) {
 		this.logblock = logblock;
@@ -53,8 +67,26 @@ public class Consumer extends TimerTask implements Runnable
 			LogBlock.log.info("[LogBlock] Failed to queue block for " + playerName);
 	}
 
+	public void queueKill(Entity attacker, Entity defender) {
+		if (lastAttackedEntity.containsKey(attacker.getEntityId()) && lastAttackedEntity.get(attacker.getEntityId()) == defender.getEntityId() && System.currentTimeMillis() - lastAttackTime.get(attacker.getEntityId()) < 3000)
+			return;
+		String table = LogBlock.config.tables.get(defender.getWorld().getName().hashCode());
+		if (table == null)
+			return;
+		int weapon = 0;
+		if (attacker instanceof Player && ((Player)attacker).getItemInHand() != null)
+			weapon = ((Player)attacker).getItemInHand().getTypeId();
+		String attackerName = getEntityName(attacker);
+		String defenderName = getEntityName(defender);
+		if (attackerName == null || defenderName == null)
+			return;
+		lastAttackedEntity.put(attacker.getEntityId(), defender.getEntityId());
+		lastAttackTime.put(attacker.getEntityId(), System.currentTimeMillis());
+		kqueue.add(new KillRow(table, getEntityName(attacker), getEntityName(defender), weapon));
+	}
+
 	public int getQueueSize() {
-		return bqueue.size();
+		return bqueue.size() + kqueue.size();
 	}
 
 	public boolean hide(Player player) {
@@ -67,13 +99,13 @@ public class Consumer extends TimerTask implements Runnable
 			return true;
 		}
 	}
-	
+
 	public synchronized void run() {
 		Connection conn = logblock.pool.getConnection();
 		if (conn == null)
 			return;
 		Statement state = null;
-		BlockRow b;
+		BlockRow b; KillRow k;
 		int count = 0;
 		if (bqueue.size() > 100)
 			LogBlock.log.info("[LogBlock Consumer] Queue overloaded. Size: " + bqueue.size());				
@@ -102,6 +134,13 @@ public class Consumer extends TimerTask implements Runnable
 				count++;
 			}
 			conn.commit();
+			while (!kqueue.isEmpty() && count < 1000 && (System.currentTimeMillis() - start < 100 || count < 100)) {
+				k = kqueue.poll();
+				if (k == null)
+					continue;
+				state.execute("INSERT INTO `" + k.table + "-kills` (date, killer, victim, weapon) SELECT now(), playerid, (SELECT playerid FROM `lb-players` WHERE playername = '" + k.victim + "'), " + k.weapon + " FROM `lb-players` WHERE playername = '" + k.killer + "'");
+			}
+			conn.commit();
 		} catch (SQLException ex) {
 			LogBlock.log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
 		} finally {
@@ -114,6 +153,30 @@ public class Consumer extends TimerTask implements Runnable
 				LogBlock.log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
 			}
 		}
+	}
+
+	private String getEntityName(Entity entity) {
+		if (entity instanceof Player)
+			return ((Player)entity).getName();
+		if (entity instanceof Creeper)
+			return "Creeper";
+		if (entity instanceof Ghast)
+			return "Ghast";
+		if (entity instanceof Giant)
+			return "Giant";
+		if (entity instanceof PigZombie)
+			return "PigZombie";
+		if (entity instanceof Skeleton)
+			return "Skeleton";
+		if (entity instanceof Slime)
+			return "Slime";
+		if (entity instanceof Spider)
+			return "Spider";
+		if (entity instanceof Wolf)
+			return "Wolf";
+		if (entity instanceof Zombie)
+			return "Zombie";
+		return null;
 	}
 
 	private class ChestAccess
@@ -150,6 +213,40 @@ public class Consumer extends TimerTask implements Runnable
 			this.z = z;
 			this.signtext = null;
 			this.ca = null;
+		}
+	}
+
+	private class KillRow
+	{
+		public String table;
+		public String killer;
+		public String victim;
+		public int weapon;
+
+		KillRow(String table, String attacker, String defender, int weapon) {
+			this.table = table;
+			this.killer = attacker;
+			this.victim = defender;
+			this.weapon = weapon;
+		}
+
+		@Override
+		public int hashCode() {
+			return killer.hashCode() * 31 + victim.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			KillRow k = (KillRow)obj;
+			if (!killer.equals(k.killer))
+				return false;
+			if (!victim.equals(k.victim))
+				return false;
+			return true;
 		}
 	}
 }

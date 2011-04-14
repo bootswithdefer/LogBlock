@@ -17,7 +17,9 @@ import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.Event;
@@ -29,6 +31,8 @@ import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
@@ -105,6 +109,7 @@ public class LogBlock extends JavaPlugin
 			new Thread(new ClearLog(this)).start();
 		LBBlockListener lbBlockListener = new LBBlockListener();
 		LBPlayerListener lbPlayerListener = new LBPlayerListener();
+		LBEntityListener lbEntityListener = new LBEntityListener();
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(), Event.Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Event.Priority.Normal, this);
@@ -121,11 +126,13 @@ public class LogBlock extends JavaPlugin
 		if (config.logFire)
 			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Event.Priority.Monitor, this);
 		if (config.logExplosions) 
-			pm.registerEvent(Type.ENTITY_EXPLODE, new LBEntityListener(), Event.Priority.Monitor, this);
+			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Event.Priority.Monitor, this);
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Event.Priority.Monitor, this);
 		if (config.logChestAccess)
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Event.Priority.Monitor, this);
+		if (config.logKills)
+			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Event.Priority.Monitor, this);
 		consumer = new Consumer(this);
 		if (config.useBukkitScheduler) {
 			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20) > 0)
@@ -551,6 +558,25 @@ public class LogBlock extends JavaPlugin
 			for (Block block : event.blockList())
 				consumer.queueBlock(name, block, block.getTypeId(), 0, block.getData());
 			}
+		}
+
+		@Override
+		public void onEntityDamage(EntityDamageEvent event) {
+			if (event.isCancelled())
+				return;
+			if (!(event instanceof EntityDamageByEntityEvent))
+				return;
+			if (!(event.getEntity() instanceof LivingEntity))
+				return;
+			LivingEntity victim = (LivingEntity)event.getEntity();
+			Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
+			if (!(victim instanceof Player) && !(killer instanceof Player))
+				return;
+			if (victim.getHealth() - event.getDamage() > 0)
+				return;
+			if (victim.getHealth() <= 0 )
+				return;
+			consumer.queueKill(killer, victim);
 		}
 	}
 
