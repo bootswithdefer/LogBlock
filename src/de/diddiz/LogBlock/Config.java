@@ -66,7 +66,7 @@ public class Config {
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
 		if (!subkeys.contains("dumpDeletedLog"))
-			config.setProperty("clearlog.dumpDeletedLog", false);
+			config.setProperty("clearlog.dumpDeletedLog", true);
 		if (!subkeys.contains("keepLogDays"))
 			config.setProperty("clearlog.keepLogDays", -1);
 		subkeys = config.getKeys("logging");
@@ -112,7 +112,7 @@ public class Config {
 		delay = config.getInt("consumer.delay", 6);
 		useBukkitScheduler = config.getBoolean("consumer.useBukkitScheduler", true);
 		keepLogDays = config.getInt("clearlog.keepLogDays", -1);
-		dumpDeletedLog =  config.getBoolean("clearlog.dumpDeletedLog", false);
+		dumpDeletedLog =  config.getBoolean("clearlog.dumpDeletedLog", true);
 		logBlockCreations = config.getBoolean("logging.logBlockCreations", true);
 		logBlockDestroyings = config.getBoolean("logging.logBlockDestroyings", true);
 		logSignTexts = config.getBoolean("logging.logSignTexts", false);
