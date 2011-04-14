@@ -28,7 +28,8 @@ public class ClearLog implements Runnable
 		Statement state = null;
 		try {
 			state = conn.createStatement();
-			String time = new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis() - LogBlock.config.keepLogDays*86400000);
+			String time = new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis() - LogBlock.config.keepLogDays*86400000L);
+			LogBlock.log.info("Deleting log older than " + time);
 			ResultSet rs;
 			for (String table : LogBlock.config.tables.values()) {
 				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` WHERE date < '" + time + "'");
