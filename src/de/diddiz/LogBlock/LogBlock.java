@@ -418,11 +418,21 @@ public class LogBlock extends JavaPlugin
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("help")) {
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock Commands:");
-			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb area <radius>");
-			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb world");
-			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb player [name] <radius>");
-			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb block [type] <radius>");
-			player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb rollback [rollback mode]");
+			if (CheckPermission(player, "logblock.me"))
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb me");
+			if (CheckPermission(player, "logblock.area")) {
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb area <radius>");
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb world");
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb player [name] <radius>");
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb block [type] <radius>");
+			}
+			if (CheckPermission(player, "logblock.rollback")) {
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb rollback [rollback mode]");
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb redo [redo mode]");
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb writelogfile [player]");
+			}
+			if (CheckPermission(player, "logblock.hide"))
+				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb hide");
 		} else
 			player.sendMessage(ChatColor.RED + "Wrong argument. Type /lb help for help");
 		return true;
