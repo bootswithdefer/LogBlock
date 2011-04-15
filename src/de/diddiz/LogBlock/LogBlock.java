@@ -13,34 +13,11 @@ import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Creeper;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Fireball;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Type;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockListener;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.block.LeavesDecayEvent;
-import org.bukkit.event.block.SignChangeEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntityListener;
-import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerListener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -60,7 +37,7 @@ public class LogBlock extends JavaPlugin
 	public static Logger log;
 	public static Config config;
 	public ConnectionPool pool;
-	private Consumer consumer = null;
+	public Consumer consumer = null;
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
 
@@ -108,11 +85,11 @@ public class LogBlock extends JavaPlugin
 		}
 		if (config.keepLogDays >= 0)
 			new Thread(new ClearLog(this)).start();
-		LBBlockListener lbBlockListener = new LBBlockListener();
-		LBPlayerListener lbPlayerListener = new LBPlayerListener();
-		LBEntityListener lbEntityListener = new LBEntityListener();
+		LBBlockListener lbBlockListener = new LBBlockListener(this);
+		LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
+		LBEntityListener lbEntityListener = new LBEntityListener(this);
 		PluginManager pm = getServer().getPluginManager();
-		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(), Event.Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(this), Event.Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Event.Priority.Normal, this);
 		if (config.logBlockCreations) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Event.Priority.Monitor, this);
@@ -188,7 +165,7 @@ public class LogBlock extends JavaPlugin
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + getDescription().getVersion() + " by DiddiZ");
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
 		} else if (args[0].equalsIgnoreCase("tool")) {
-			if (CheckPermission(player, "logblock.tool")) {
+			if (checkPermission(player, "logblock.tool")) {
 				if (player.getInventory().contains(config.toolID))
 					player.sendMessage(ChatColor.RED + "You have alredy a tool"); 
 				else {
@@ -203,7 +180,7 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("toolblock")) {
-			if (CheckPermission(player, "logblock.toolblock")) {
+			if (checkPermission(player, "logblock.toolblock")) {
 				if (player.getInventory().contains(config.toolblockID))
 					player.sendMessage(ChatColor.RED + "You have alredy a tool"); 
 				else {
@@ -218,7 +195,7 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("hide")) {
-			if (CheckPermission(player, "logblock.hide")) {
+			if (checkPermission(player, "logblock.hide")) {
 				if (consumer.hide(player))
 					player.sendMessage(ChatColor.GREEN + "You are now hided and won't appear in any log. Type '/lb hide' again to unhide"); 
 				else
@@ -226,7 +203,7 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("savequeue")) {
-			if (CheckPermission(player, "logblock.rollback")) {
+			if (checkPermission(player, "logblock.rollback")) {
 				player.sendMessage(ChatColor.DARK_AQUA + "Current queue size: " + consumer.getQueueSize());
 				Thread thread = new Thread(consumer);
 				while (consumer.getQueueSize() > 0) {
@@ -236,7 +213,7 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("area")) {
-			if (CheckPermission(player,"logblock.area")) {
+			if (checkPermission(player,"logblock.area")) {
 				int radius = config.defaultDist;
 				if (args.length == 2 && isInt(args[1]))
 					radius = Integer.parseInt(args[1]);
@@ -244,12 +221,12 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("world")) {
-			if (CheckPermission(player,"logblock.area")) {
+			if (checkPermission(player,"logblock.area")) {
 				new Thread(new AreaStats(conn, player, Short.MAX_VALUE, table)).start();
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("player")) {
-			if (CheckPermission(player,"logblock.area")) {
+			if (checkPermission(player,"logblock.area")) {
 				if (args.length == 2 || args.length == 3) {
 					int radius = config.defaultDist;
 					if (args.length == 3 && isInt(args[2]))
@@ -260,7 +237,7 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("block")) {
-			if (CheckPermission(player,"logblock.area")) {
+			if (checkPermission(player,"logblock.area")) {
 				if (args.length == 2 || args.length == 3) {
 					Material mat = Material.matchMaterial(args[1]);
 					int radius = config.defaultDist;
@@ -275,7 +252,7 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("rollback") || args[0].equalsIgnoreCase("undo")) {
-			if (CheckPermission(player,"logblock.rollback")) {
+			if (checkPermission(player,"logblock.rollback")) {
 				if (args.length >= 2) {
 					int minutes = config.defaultTime;
 					if (args[1].equalsIgnoreCase("player")) {
@@ -339,7 +316,7 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("redo")) {
-			if (CheckPermission(player,"logblock.rollback")) {
+			if (checkPermission(player,"logblock.rollback")) {
 				if (args.length >= 2) {
 					int minutes = config.defaultTime;
 					if (args[1].equalsIgnoreCase("player")) {
@@ -403,7 +380,7 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("writelogfile")) {
-			if (CheckPermission(player,"logblock.rollback")) {
+			if (checkPermission(player,"logblock.rollback")) {
 				if (args.length == 2) {
 					new Thread(new WriteLogFile(conn, player, args[1], table)).start();
 				}
@@ -412,26 +389,26 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("me")) {
-			if (CheckPermission(player,"logblock.me")) {
+			if (checkPermission(player,"logblock.me")) {
 				new Thread(new PlayerAreaStats(conn, player, player.getName(), Short.MAX_VALUE, table)).start();
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("help")) {
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock Commands:");
-			if (CheckPermission(player, "logblock.me"))
+			if (checkPermission(player, "logblock.me"))
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb me");
-			if (CheckPermission(player, "logblock.area")) {
+			if (checkPermission(player, "logblock.area")) {
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb area <radius>");
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb world");
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb player [name] <radius>");
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb block [type] <radius>");
 			}
-			if (CheckPermission(player, "logblock.rollback")) {
+			if (checkPermission(player, "logblock.rollback")) {
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb rollback [rollback mode]");
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb redo [redo mode]");
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb writelogfile [player]");
 			}
-			if (CheckPermission(player, "logblock.hide"))
+			if (checkPermission(player, "logblock.hide"))
 				player.sendMessage(ChatColor.LIGHT_PURPLE + "/lb hide");
 		} else
 			player.sendMessage(ChatColor.RED + "Wrong argument. Type /lb help for help");
@@ -496,7 +473,7 @@ public class LogBlock extends JavaPlugin
 		return false;
 	}
 
-	private boolean CheckPermission(Player player, String permission) {
+	boolean checkPermission(Player player, String permission) {
 		if (permissions != null)
 			return permissions.permission(player, permission);
 		else {
@@ -529,131 +506,6 @@ public class LogBlock extends JavaPlugin
 		else if (unit.startsWith("day"))
 			min *= (60*24);
 		return min;
-	}
-
-	private class LBBlockListener extends BlockListener
-	{
-		public void onBlockPlace(BlockPlaceEvent event) {
-			if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST))) {
-				consumer.queueBlock(event.getPlayer().getName(), event.getBlockPlaced(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
-			}
-		}
-
-		public void onBlockBreak(BlockBreakEvent event) {
-			if (!event.isCancelled())
-				consumer.queueBlock(event.getPlayer().getName(), event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
-		}
-
-		public void onSignChange(SignChangeEvent event) {
-			if (!event.isCancelled())
-				consumer.queueBlock(event.getPlayer().getName(), event.getBlock(), 0, event.getBlock().getTypeId(), event.getBlock().getData(), "sign [" + event.getLine(0) + "] [" + event.getLine(1) + "] [" + event.getLine(2) + "] [" + event.getLine(3) + "]", null);
-		}
-
-		public void onBlockBurn(BlockBurnEvent event) {
-			if (!event.isCancelled())
-				consumer.queueBlock("Fire", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
-		}
-
-		public void onLeavesDecay(LeavesDecayEvent event) {
-			if (!event.isCancelled())
-				consumer.queueBlock("LeavesDecay", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
-		}
-	}
-
-	private class LBEntityListener extends EntityListener
-	{
-		public void onEntityExplode(EntityExplodeEvent event) {
-		if (!event.isCancelled()) {	
-			String name;
-			if (event.getEntity() instanceof TNTPrimed)
-				name = "TNT";
-			else if (event.getEntity() instanceof Creeper)
-				name = "Creeper";
-			else if (event.getEntity() instanceof Fireball)
-				name = "Ghast";
-			else
-				name = "Environment";
-			for (Block block : event.blockList())
-				consumer.queueBlock(name, block, block.getTypeId(), 0, block.getData());
-			}
-		}
-
-		@Override
-		public void onEntityDamage(EntityDamageEvent event) {
-			if (event.isCancelled() || !(event instanceof EntityDamageByEntityEvent) || !(event.getEntity() instanceof LivingEntity))
-				return;
-			LivingEntity victim = (LivingEntity)event.getEntity();
-			Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
-			if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0 )
-				return;
-			if (config.logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
-				return;
-			else if (config.logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
-				return;
-			consumer.queueKill(killer, victim);
-		}
-	}
-
-	public class LBPlayerListener extends PlayerListener
-	{
-		public void onPlayerInteract(PlayerInteractEvent event) {
-			if (!event.isCancelled()) {
-				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && (event.getClickedBlock().getType() == Material.CHEST || event.getClickedBlock().getType() == Material.FURNACE ||event.getClickedBlock().getType() == Material.DISPENSER)) {
-					consumer.queueBlock(event.getPlayer(), event.getClickedBlock(), (short)0, (byte)0, (short)0, (byte)0);
-				}
-			}
-		}	
-
-		public void onPlayerBucketFill(PlayerBucketFillEvent event) {
-			if (!event.isCancelled()) {
-				consumer.queueBlock(event.getPlayer().getName(), event.getBlockClicked(), event.getBlockClicked().getTypeId(), 0, event.getBlockClicked().getData());
-			}
-		}
-
-		public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
-			if (event.getBucket() == Material.WATER_BUCKET)
-				consumer.queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.STATIONARY_WATER.getId());
-			else if (event.getBucket() == Material.LAVA_BUCKET)
-				consumer.queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.STATIONARY_LAVA.getId());
-		}
-
-		public void onPlayerJoin(PlayerJoinEvent event) {
-			Connection conn = pool.getConnection();
-			Statement state = null;
-			if (conn == null)
-				return;
-			try {
-				state = conn.createStatement();
-				state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + event.getPlayer().getName() + "');");
-			} catch (SQLException ex) {
-				LogBlock.log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
-			} finally {
-				try {
-					if (state != null)
-						state.close();
-					if (conn != null)
-						conn.close();
-				} catch (SQLException ex) {
-					LogBlock.log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
-				}
-			}
-		}
-	}
-
-	private class LBToolPlayerListener extends PlayerListener
-	{
-		public void onPlayerInteract(PlayerInteractEvent event) {
-			if (!event.isCancelled()) {
-				if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
-					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(pool.getConnection(), event.getPlayer(), event.getClickedBlock()));
-					if (event.getClickedBlock().getType() != Material.BED_BLOCK)
-						event.setCancelled(true);
-				} else if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == LogBlock.config.toolblockID && CheckPermission(event.getPlayer(), "logblock.lookup")) {
-					getServer().getScheduler().scheduleAsyncDelayedTask(LogBlock.this, new BlockStats(pool.getConnection(), event.getPlayer(), event.getClickedBlock().getFace(event.getBlockFace())));
-					event.setCancelled(true);
-				}
-			}
-		}
 	}
 
 	private boolean isInt(String str) {
