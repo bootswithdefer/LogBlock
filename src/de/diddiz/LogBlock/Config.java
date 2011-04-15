@@ -25,12 +25,17 @@ public class Config {
 	final boolean logLeavesDecay;
 	final boolean logChestAccess;
 	final boolean logKills;
+	final LogKillsLevel logKillsLevel;
 	final List<Integer> dontRollback;
 	final List<Integer> replaceAnyway;
 	final int defaultDist;
 	final int defaultTime;
 	final int toolID;
 	final int toolblockID;
+
+	enum LogKillsLevel {
+		PLAYERS, MONSTERS, ANIMALS
+	}
 
 	Config (LogBlock logblock) throws Exception {
 		Configuration config = logblock.getConfiguration();
@@ -89,6 +94,8 @@ public class Config {
 			config.setProperty("logging.logLeavesDecay", false);
 		if (!subkeys.contains("logKills"))
 			config.setProperty("logging.logKills", false);
+		if (!subkeys.contains("logKillsLevel"))
+			config.setProperty("logging.logKillsLevel", "PLAYERS");
 		subkeys = config.getKeys("rollback");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
@@ -124,6 +131,11 @@ public class Config {
 		logChestAccess = config.getBoolean("logging.logChestAccess", false);
 		logLeavesDecay = config.getBoolean("logging.logLeavesDecay", false);
 		logKills = config.getBoolean("logging.logKills", false);
+		try {
+			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel"));
+		} catch (IllegalArgumentException ex) {
+			throw new Exception("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
+		}
 		dontRollback = config.getIntList("rollback.dontRollback", null);
 		replaceAnyway = config.getIntList("rollback.replaceAnyway", null);
 		defaultDist = config.getInt("lookup.defaultDist", 20);

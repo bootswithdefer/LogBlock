@@ -11,17 +11,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 import org.bukkit.block.Block;
-import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Ghast;
-import org.bukkit.entity.Giant;
-import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Skeleton;
-import org.bukkit.entity.Slime;
-import org.bukkit.entity.Spider;
-import org.bukkit.entity.Wolf;
-import org.bukkit.entity.Zombie;
 
 public class Consumer extends TimerTask implements Runnable
 {
@@ -80,6 +71,7 @@ public class Consumer extends TimerTask implements Runnable
 		String defenderName = getEntityName(defender);
 		if (attackerName == null || defenderName == null)
 			return;
+		LogBlock.log.info(attackerName + " killed " + defenderName + " with " + weapon);
 		lastAttackedEntity.put(attacker.getEntityId(), defender.getEntityId());
 		lastAttackTime.put(attacker.getEntityId(), System.currentTimeMillis());
 		kqueue.add(new KillRow(table, getEntityName(attacker), getEntityName(defender), weapon));
@@ -158,25 +150,7 @@ public class Consumer extends TimerTask implements Runnable
 	private String getEntityName(Entity entity) {
 		if (entity instanceof Player)
 			return ((Player)entity).getName();
-		if (entity instanceof Creeper)
-			return "Creeper";
-		if (entity instanceof Ghast)
-			return "Ghast";
-		if (entity instanceof Giant)
-			return "Giant";
-		if (entity instanceof PigZombie)
-			return "PigZombie";
-		if (entity instanceof Skeleton)
-			return "Skeleton";
-		if (entity instanceof Slime)
-			return "Slime";
-		if (entity instanceof Spider)
-			return "Spider";
-		if (entity instanceof Wolf)
-			return "Wolf";
-		if (entity instanceof Zombie)
-			return "Zombie";
-		return null;
+		return entity.getClass().getSimpleName().substring(5);
 	}
 
 	private class ChestAccess

@@ -20,6 +20,7 @@ import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.Event;
@@ -440,8 +441,8 @@ public class LogBlock extends JavaPlugin
 				state.execute("CREATE TABLE `lb-players` (playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (playerid), UNIQUE (playername))");
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
+				state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('Environment')");
 			}
-			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('Environment')");
 			for (String table : config.tables.values()) {
 				if (!dbm.getTables(null, null, table, null).next())	{
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
@@ -461,6 +462,13 @@ public class LogBlock extends JavaPlugin
 					if (!dbm.getTables(null, null, table + "-chest", null).next())
 						return false;
 				}
+				if (config.logKills && !dbm.getTables(null, null, table + "-kills", null).next()) {
+					log.log(Level.INFO, "[LogBlock] Crating table " + table + "-kills.");
+					state.execute("CREATE TABLE `" + table + "-kills` (id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer SMALLINT UNSIGNED, victim SMALLINT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, PRIMARY KEY (id));");
+					if (!dbm.getTables(null, null, table + "-kills", null).next())
+						return false;
+					state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('Chicken'), ('Cow'), ('Creeper'), ('Ghast'), ('Giant'), ('Pig'), ('PigZombie'), ('Sheep'), ('Skeleton'), ('Slime'), ('Spider'), ('Squid'), ('Wolf'), ('Zombie')");
+					}
 			}
 			return true;
 		} catch (SQLException ex) {
@@ -562,19 +570,15 @@ public class LogBlock extends JavaPlugin
 
 		@Override
 		public void onEntityDamage(EntityDamageEvent event) {
-			if (event.isCancelled())
-				return;
-			if (!(event instanceof EntityDamageByEntityEvent))
-				return;
-			if (!(event.getEntity() instanceof LivingEntity))
+			if (event.isCancelled() || !(event instanceof EntityDamageByEntityEvent) || !(event.getEntity() instanceof LivingEntity))
 				return;
 			LivingEntity victim = (LivingEntity)event.getEntity();
 			Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
-			if (!(victim instanceof Player) && !(killer instanceof Player))
+			if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0 )
 				return;
-			if (victim.getHealth() - event.getDamage() > 0)
+			if (config.logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
 				return;
-			if (victim.getHealth() <= 0 )
+			else if (config.logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
 				return;
 			consumer.queueKill(killer, victim);
 		}
