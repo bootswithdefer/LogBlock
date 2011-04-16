@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.TNTPrimed;
 
 public class Consumer extends TimerTask implements Runnable
 {
@@ -44,7 +45,7 @@ public class Consumer extends TimerTask implements Runnable
 			return;
 		if (hiddenplayers.contains(playerName.hashCode()))
 			return;
-		String table = LogBlock.config.tables.get(block.getWorld().getName().hashCode());
+		String table = logblock.config.tables.get(block.getWorld().getName().hashCode());
 		if (table == null)
 			return;
 		if (playerName.length() > 32)
@@ -61,7 +62,7 @@ public class Consumer extends TimerTask implements Runnable
 	public void queueKill(Entity attacker, Entity defender) {
 		if (lastAttackedEntity.containsKey(attacker.getEntityId()) && lastAttackedEntity.get(attacker.getEntityId()) == defender.getEntityId() && System.currentTimeMillis() - lastAttackTime.get(attacker.getEntityId()) < 3000)
 			return;
-		String table = LogBlock.config.tables.get(defender.getWorld().getName().hashCode());
+		String table = logblock.config.tables.get(defender.getWorld().getName().hashCode());
 		if (table == null)
 			return;
 		int weapon = 0;
@@ -71,7 +72,6 @@ public class Consumer extends TimerTask implements Runnable
 		String defenderName = getEntityName(defender);
 		if (attackerName == null || defenderName == null)
 			return;
-		LogBlock.log.info(attackerName + " killed " + defenderName + " with " + weapon);
 		lastAttackedEntity.put(attacker.getEntityId(), defender.getEntityId());
 		lastAttackTime.put(attacker.getEntityId(), System.currentTimeMillis());
 		kqueue.add(new KillRow(table, getEntityName(attacker), getEntityName(defender), weapon));
@@ -150,6 +150,8 @@ public class Consumer extends TimerTask implements Runnable
 	private String getEntityName(Entity entity) {
 		if (entity instanceof Player)
 			return ((Player)entity).getName();
+		if (entity instanceof TNTPrimed)
+			return "TNT";
 		return entity.getClass().getSimpleName().substring(5);
 	}
 

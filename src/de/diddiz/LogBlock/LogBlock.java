@@ -35,7 +35,7 @@ import de.diddiz.util.Download;
 public class LogBlock extends JavaPlugin
 {
 	public static Logger log;
-	public static Config config;
+	public Config config;
 	public ConnectionPool pool;
 	public Consumer consumer = null;
 	private Timer timer = null;

@@ -14,23 +14,24 @@ import org.bukkit.entity.Player;
 
 public class BlockStats implements Runnable
 {
+	private final LogBlock logblock;
 	private Player player;
 	private Block block;
-	private Connection conn;
 
-	BlockStats(Connection conn, Player player, Block block) {
+	BlockStats(LogBlock logblock, Player player, Block block) {
+		this.logblock = logblock;
 		this.player = player;
-		this.conn = conn;
 		this.block = block;
 	}
 
 	@Override
 	public void run() {
+		Connection conn = logblock.pool.getConnection();
 		if (conn == null) {
 			player.sendMessage(ChatColor.RED + "Failed to create database connection");
 			return;
 		}
-		String table = LogBlock.config.tables.get(block.getWorld().getName().hashCode());
+		String table = logblock.config.tables.get(block.getWorld().getName().hashCode());
 		if (table == null) {
 			player.sendMessage(ChatColor.RED + "This world isn't logged");
 			return;

@@ -15,7 +15,7 @@ import org.bukkit.event.entity.EntityListener;
 
 public class LBEntityListener extends EntityListener
 {
-	private LogBlock logblock;
+	private final LogBlock logblock;
 
 	LBEntityListener(LogBlock logblock) {
 		this.logblock = logblock;
@@ -44,9 +44,9 @@ public class LBEntityListener extends EntityListener
 		Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
 		if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0 )
 			return;
-		if (LogBlock.config.logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
+		if (logblock.config.logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
 			return;
-		else if (LogBlock.config.logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
+		else if (logblock.config.logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
 			return;
 		logblock.consumer.queueKill(killer, victim);
 	}

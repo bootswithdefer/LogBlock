@@ -15,7 +15,7 @@ import org.bukkit.event.player.PlayerListener;
 
 public class LBPlayerListener extends PlayerListener
 {
-	private LogBlock logblock;
+	private final LogBlock logblock;
 
 	LBPlayerListener(LogBlock logblock) {
 		this.logblock = logblock;

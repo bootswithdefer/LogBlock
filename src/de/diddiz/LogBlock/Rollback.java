@@ -160,13 +160,13 @@ public class Rollback implements Runnable
 		}
 
 		private PerformResult perform() {
-			if (LogBlock.config.dontRollback.contains(replaced))
+			if (logblock.config.dontRollback.contains(replaced))
 				return PerformResult.BLACKLISTED;
 			try {
 				Block block = world.getBlockAt(x, y, z);
 				if (!world.isChunkLoaded(block.getChunk()))
 					world.loadChunk(block.getChunk());
-				if (equalsType(block.getTypeId(), type) || LogBlock.config.replaceAnyway.contains(block.getTypeId()) || (type == 0 && replaced == 0)) {
+				if (equalsType(block.getTypeId(), type) || logblock.config.replaceAnyway.contains(block.getTypeId()) || (type == 0 && replaced == 0)) {
 					if (block.setTypeIdAndData(replaced, data, false))
 						return PerformResult.SUCCESS;
 					else

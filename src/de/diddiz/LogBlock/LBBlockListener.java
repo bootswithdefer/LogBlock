@@ -10,14 +10,14 @@ import org.bukkit.event.block.SignChangeEvent;
 
 public class LBBlockListener extends BlockListener
 {
-	private LogBlock logblock;
+	private final LogBlock logblock;
 
 	LBBlockListener(LogBlock logblock) {
 		this.logblock = logblock;
 	}
 
 	public void onBlockPlace(BlockPlaceEvent event) {
-		if (!event.isCancelled() && !(LogBlock.config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST))) {
+		if (!event.isCancelled() && !(logblock.config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST))) {
 			logblock.consumer.queueBlock(event.getPlayer().getName(), event.getBlockPlaced(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
 		}
 	}

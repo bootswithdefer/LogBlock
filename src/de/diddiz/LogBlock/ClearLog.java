@@ -10,33 +10,31 @@ import java.util.logging.Level;
 
 public class ClearLog implements Runnable
 {
-	private Connection conn;
-	private File dumbFolder;
+	private final LogBlock logblock;
 
 	public ClearLog(LogBlock logblock) {
-		conn = logblock.pool.getConnection();
-		if (conn == null)
-			return;
-		dumbFolder = new File(logblock.getDataFolder(), "dumb");
-		dumbFolder.mkdirs();
+		this.logblock = logblock;
 	}
 
 	@Override
 	public void run() {
+		File dumpFolder = new File(logblock.getDataFolder(), "dumb");
+		dumpFolder.mkdirs();
+		Connection conn = logblock.pool.getConnection();
 		if (conn == null)
 			return;
 		Statement state = null;
 		try {
 			state = conn.createStatement();
-			String time = new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis() - LogBlock.config.keepLogDays*86400000L);
+			String time = new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis() - logblock.config.keepLogDays*86400000L);
 			ResultSet rs;
-			for (String table : LogBlock.config.tables.values()) {
+			for (String table : logblock.config.tables.values()) {
 				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` WHERE date < '" + time + "'");
 				rs.next();
 				int deleted = rs.getInt(1); 
 				if (deleted > 0) {
-					if (LogBlock.config.dumpDeletedLog)
-						state.execute("SELECT * FROM `" + table + "` WHERE date < '" + time + "' INTO OUTFILE '" + new File(dumbFolder, table + "-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+					if (logblock.config.dumpDeletedLog)
+						state.execute("SELECT * FROM `" + table + "` WHERE date < '" + time + "' INTO OUTFILE '" + new File(dumpFolder, table + "-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 					state.execute("DELETE FROM `" + table + "` WHERE date < '" + time + "'");
 					LogBlock.log.info("[LogBlock] Cleared out table " + table + ". Deleted " + deleted + " entries.");
 				}
@@ -44,8 +42,8 @@ public class ClearLog implements Runnable
 				rs.next();
 				deleted = rs.getInt(1); 
 				if (deleted > 0) {
-					if (LogBlock.config.dumpDeletedLog)
-						state.execute("SELECT id, signtext FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumbFolder, table + "-sign-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+					if (logblock.config.dumpDeletedLog)
+						state.execute("SELECT id, signtext FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, table + "-sign-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 					state.execute("DELETE `" + table + "-sign` FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
 					LogBlock.log.info("[LogBlock] Cleared out table " + table + "-sign. Deleted " + deleted + " entries.");
 				}
@@ -53,8 +51,8 @@ public class ClearLog implements Runnable
 				rs.next();
 				deleted = rs.getInt(1); 
 				if (deleted > 0) {
-					if (LogBlock.config.dumpDeletedLog)
-						state.execute("SELECT id, intype, inamount, outtype, outamount FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumbFolder, table + "-chest-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+					if (logblock.config.dumpDeletedLog)
+						state.execute("SELECT id, intype, inamount, outtype, outamount FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, table + "-chest-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 					state.execute("DELETE `" + table + "-chest` FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
 					LogBlock.log.info("[LogBlock] Cleared out table " + table + "-chest. Deleted " + deleted + " entries.");
 				}
