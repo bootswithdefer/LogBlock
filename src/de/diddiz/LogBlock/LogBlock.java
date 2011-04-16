@@ -16,7 +16,7 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
+import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -89,28 +89,30 @@ public class LogBlock extends JavaPlugin
 		LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
 		LBEntityListener lbEntityListener = new LBEntityListener(this);
 		PluginManager pm = getServer().getPluginManager();
-		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(this), Event.Priority.Normal, this);
-		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Event.Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(this), Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Normal, this);
 		if (config.logBlockCreations) {
-			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Event.Priority.Monitor, this);
-			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Priority.Monitor, this);
 		}
 		if (config.logBlockDestroyings) {
-			pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Event.Priority.Monitor, this);
-			pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Priority.Monitor, this);
 		}
+		if (config.logBlockInstaBreak)
+			pm.registerEvent(Type.BLOCK_DAMAGE, lbBlockListener, Priority.Monitor, this);
 		if (config.logSignTexts)
-			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Priority.Monitor, this);
 		if (config.logFire)
-			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Priority.Monitor, this);
 		if (config.logExplosions) 
-			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Priority.Monitor, this);
 		if (config.logLeavesDecay)
-			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
 		if (config.logChestAccess)
-			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
 		if (config.logKills)
-			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Event.Priority.Monitor, this);
+			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Priority.Monitor, this);
 		consumer = new Consumer(this);
 		if (config.useBukkitScheduler) {
 			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20) > 0)
