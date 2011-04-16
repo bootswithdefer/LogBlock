@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -15,35 +16,41 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 
 public class Rollback implements Runnable
 {
-	private Player player;
-	private Connection conn;
-	private LogBlock logblock;
-	private String query;
-	private boolean redo;
+	private final Logger log;
+	private final LogBlock logblock;
+	private final Config config;
+	private final Player player;
+	private final Connection conn;
+	private final String query;
+	private final boolean redo;
 
-	Rollback(Player player, Connection conn, LogBlock logblock, String name, int radius, Selection sel, int minutes, String table, boolean redo) {
-		this.player = player;
-		this.conn = conn;
+	Rollback(LogBlock logblock, Player player, String name, int radius, Selection sel, int minutes, boolean redo) {
 		this.logblock = logblock;
+		this.player = player;
 		this.redo = redo;
+		log = logblock.getServer().getLogger();
+		conn = logblock.getConnection();
+		config = logblock.getConfig();
+		StringBuffer sql = new StringBuffer();
 		if (!redo)
-			query = "SELECT replaced, type, data, x, y, z ";
+			sql.append("SELECT replaced, type, data, x, y, z ");
 		else
-			query = "SELECT type AS replaced, replaced AS type, data, x, y, z ";
-		query += "FROM `" + table + "` INNER JOIN `lb-players` USING (playerid) WHERE (type <> replaced OR (type = 0 AND replaced = 0)) AND ";
+			sql.append("SELECT type AS replaced, replaced AS type, data, x, y, z ");
+			sql.append("FROM `" + logblock.getConfig().tables.get(player.getWorld().getName().hashCode()) + "` INNER JOIN `lb-players` USING (playerid) WHERE (type <> replaced OR (type = 0 AND replaced = 0)) AND ");
 		if (name != null)
-			query += "playername = '" + name + "' AND ";
+			sql.append("playername = '" + name + "' AND ");
 		if (radius != -1)
-			query += "x > '" + (player.getLocation().getBlockX() - radius) + "' AND x < '" + (player.getLocation().getBlockX() + radius) + "' AND z > '" + (player.getLocation().getBlockZ() - radius) + "' AND z < '" + (player.getLocation().getBlockZ() + radius) + "' AND ";
+			sql.append("x > '" + (player.getLocation().getBlockX() - radius) + "' AND x < '" + (player.getLocation().getBlockX() + radius) + "' AND z > '" + (player.getLocation().getBlockZ() - radius) + "' AND z < '" + (player.getLocation().getBlockZ() + radius) + "' AND ");
 		if (sel != null)
-			query += "x >= '"+ Math.min(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX()) + "' AND x <= '" + Math.max(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX()) + "' AND y >= '" + Math.min(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY()) + "' AND y <= '" + Math.max(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY()) + "' AND z >= '" + Math.min(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()) + "' AND z <= '" + Math.max(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()) + "' AND ";
+			sql.append("x >= '"+ Math.min(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX()) + "' AND x <= '" + Math.max(sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX()) + "' AND y >= '" + Math.min(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY()) + "' AND y <= '" + Math.max(sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY()) + "' AND z >= '" + Math.min(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()) + "' AND z <= '" + Math.max(sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()) + "' AND ");
 		if (minutes >= 0)
-			query += "date > date_sub(now(), INTERVAL " + minutes + " MINUTE) AND ";
-		query = query.substring(0, query.length() - 4);
+			sql.append("date > date_sub(now(), INTERVAL " + minutes + " MINUTE) AND ");
+		sql.delete(sql.length() - 5, sql.length() - 1);
 		if (!redo)
-			query += "ORDER BY date DESC, id DESC";
+			sql.append("ORDER BY date DESC, id DESC");
 		else
-			query += "ORDER BY date ASC, id ASC";
+			sql.append("ORDER BY date ASC, id ASC");
+		query = sql.toString();
 	}
 
 	public void run() {
@@ -51,13 +58,17 @@ public class Rollback implements Runnable
 		LinkedBlockingQueue<Edit> edits = new LinkedBlockingQueue<Edit>();
 		edits.clear();
 		try {
+			if (!config.tables.containsKey(player.getWorld().getName().hashCode())) {
+				player.sendMessage(ChatColor.RED +  "This world isn't logged!");
+				return;
+			}
 			rs = conn.createStatement().executeQuery(query);
 			while (rs.next()) {
 				Edit e = new Edit(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), player.getWorld());
 				edits.offer(e);
 			}
 		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
+			log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
 			player.sendMessage(ChatColor.RED + "Error, check server logs.");
 			return;
 		} finally {
@@ -67,7 +78,7 @@ public class Rollback implements Runnable
 				if (conn != null)
 					conn.close();
 			} catch (SQLException ex) {
-				LogBlock.log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception on close", ex);
+				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception on close", ex);
 				player.sendMessage(ChatColor.RED + "Error, check server logs.");
 				return;
 			}
@@ -85,7 +96,7 @@ public class Rollback implements Runnable
 			try {
 				this.wait();
 			} catch (InterruptedException e) {
-				LogBlock.log.severe("[LogBlock Rollback] Interrupted");
+				log.severe("[LogBlock Rollback] Interrupted");
 			}
 		}
 		logblock.getServer().getScheduler().cancelTask(taskID);
@@ -160,13 +171,13 @@ public class Rollback implements Runnable
 		}
 
 		private PerformResult perform() {
-			if (logblock.config.dontRollback.contains(replaced))
+			if (config.dontRollback.contains(replaced))
 				return PerformResult.BLACKLISTED;
 			try {
 				Block block = world.getBlockAt(x, y, z);
 				if (!world.isChunkLoaded(block.getChunk()))
 					world.loadChunk(block.getChunk());
-				if (equalsType(block.getTypeId(), type) || logblock.config.replaceAnyway.contains(block.getTypeId()) || (type == 0 && replaced == 0)) {
+				if (equalsType(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId()) || (type == 0 && replaced == 0)) {
 					if (block.setTypeIdAndData(replaced, data, false))
 						return PerformResult.SUCCESS;
 					else
@@ -174,7 +185,7 @@ public class Rollback implements Runnable
 				} else
 					return PerformResult.NO_ACTION;
 			} catch (Exception ex) {
-				LogBlock.log.severe("[LogBlock Rollback] " + ex.toString());
+				log.severe("[LogBlock Rollback] " + ex.toString());
 				return PerformResult.ERROR;
 			}
 		}

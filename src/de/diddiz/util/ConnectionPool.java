@@ -36,9 +36,6 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
-import java.util.logging.Level;
-
-import de.diddiz.LogBlock.LogBlock;
 
 public class ConnectionPool implements Driver {
 	public static final String URL_PREFIX = "jdbc:jdc:";
@@ -56,15 +53,6 @@ public class ConnectionPool implements Driver {
 		if (!url.startsWith(URL_PREFIX))
 			return null;
 		return pool.getConnection();
-	}
-
-	public Connection getConnection() {
-		try {
-			return pool.getConnection();
-		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, "[LogBlock ConnectionPool] Error while fetching connection", ex);
-			return null;
-		}
 	}
 
 	public boolean acceptsURL(String url) {

@@ -34,12 +34,20 @@ import de.diddiz.util.Download;
 
 public class LogBlock extends JavaPlugin
 {
-	public static Logger log;
-	public Config config;
-	public ConnectionPool pool;
-	public Consumer consumer = null;
+	private Logger log;
+	private Config config;
+	private ConnectionPool pool;
+	private Consumer consumer = null;
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
+
+	public Config getConfig() {
+		return config;
+	}
+
+	public Consumer getConsumer() {
+		return consumer;
+	}
 
 	@Override
 	public void onEnable() {
@@ -71,7 +79,7 @@ public class LogBlock extends JavaPlugin
 		}
 		try {
 			pool = new ConnectionPool("com.mysql.jdbc.Driver", config.url, config.user, config.password);
-			Connection conn = pool.getConnection();
+			Connection conn = getConnection();
 			conn.close();
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Exception while checking database connection", ex);
@@ -85,6 +93,7 @@ public class LogBlock extends JavaPlugin
 		}
 		if (config.keepLogDays >= 0)
 			new Thread(new ClearLog(this)).start();
+		consumer = new Consumer(this);
 		LBBlockListener lbBlockListener = new LBBlockListener(this);
 		LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
 		LBEntityListener lbEntityListener = new LBEntityListener(this);
@@ -111,7 +120,6 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
 		if (config.logKills)
 			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Priority.Monitor, this);
-		consumer = new Consumer(this);
 		if (config.useBukkitScheduler) {
 			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delay * 20, config.delay * 20) > 0)
 				log.info("[LogBlock] Scheduled consumer with bukkit scheduler.");
@@ -152,15 +160,6 @@ public class LogBlock extends JavaPlugin
 			return true;
 		}
 		Player player = (Player)sender;
-		Connection conn = pool.getConnection();
-		String table = config.tables.get(player.getWorld().getName().hashCode());
-		if (conn == null) {
-			player.sendMessage(ChatColor.RED + "Can't create SQL connection.");
-			return true;
-		} else if (table == null) {
-			player.sendMessage(ChatColor.RED + "This world isn't logged");
-			return true;
-		}
 		if (args.length == 0) {
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + getDescription().getVersion() + " by DiddiZ");
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
@@ -217,12 +216,12 @@ public class LogBlock extends JavaPlugin
 				int radius = config.defaultDist;
 				if (args.length == 2 && isInt(args[1]))
 					radius = Integer.parseInt(args[1]);
-				new Thread(new AreaStats(conn, player, radius, table)).start();
+				new Thread(new AreaStats(this, player, radius)).start();
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("world")) {
 			if (checkPermission(player,"logblock.area")) {
-				new Thread(new AreaStats(conn, player, Short.MAX_VALUE, table)).start();
+				new Thread(new AreaStats(this, player, Short.MAX_VALUE)).start();
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("player")) {
@@ -231,7 +230,7 @@ public class LogBlock extends JavaPlugin
 					int radius = config.defaultDist;
 					if (args.length == 3 && isInt(args[2]))
 						radius = Integer.parseInt(args[2]);
-					new Thread(new PlayerAreaStats(conn, player, args[1], radius, table)).start();
+					new Thread(new PlayerAreaStats(this, player, args[1], radius)).start();
 					} else
 						player.sendMessage(ChatColor.RED + "Usage: /lb player [name] <radius>"); 
 			} else
@@ -244,7 +243,7 @@ public class LogBlock extends JavaPlugin
 					if (args.length == 3 && isInt(args[2]))
 						radius = Integer.parseInt(args[2]);
 					if (mat != null)
-						new Thread(new AreaBlockSearch(conn, player, mat.getId(), radius, table)).start();
+						new Thread(new AreaBlockSearch(this, player, mat.getId(), radius)).start();
 					else
 						player.sendMessage(ChatColor.RED + "Can't find any item like '" + args[1] + "'");
 				} else
@@ -260,7 +259,7 @@ public class LogBlock extends JavaPlugin
 							if (args.length == 5)
 								minutes = parseTimeSpec(args[3], args[4]);
 							player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " by " + minutes + " minutes.");
-							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], -1, null, minutes, table, false));
+							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, args[2], -1, null, minutes, false));
 						} else 
 							player.sendMessage(ChatColor.RED + "Usage: /lb rollback player [name] <time> <minutes|hours|days>");
 					} else if (args[1].equalsIgnoreCase("area")) {
@@ -269,7 +268,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[3], args[4]);
 							if (isInt(args[2])) {
 								player.sendMessage(ChatColor.GREEN + "Rolling back area within " + args[2] + " blocks of you by " + minutes + " minutes.");
-								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, null, Integer.parseInt(args[2]), null, minutes, table, false));
+								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, null, Integer.parseInt(args[2]), null, minutes, false));
 							} else
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[2]);
 						} else
@@ -280,7 +279,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[4], args[5]);
 							if (isInt(args[3])) {
 								player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " within " + args[3] + " blocks by " + minutes + " minutes.");
-								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], Integer.parseInt(args[3]), null, minutes, table, false));
+								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, args[2], Integer.parseInt(args[3]), null, minutes, false));
 							} else
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[3]);
 						} else
@@ -295,7 +294,7 @@ public class LogBlock extends JavaPlugin
 								if (sel != null) {
 									if (sel instanceof CuboidSelection) {
 										player.sendMessage(ChatColor.GREEN + "Rolling back selection by " + minutes + " minutes.");
-										getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, null, -1, sel, minutes, table, false));
+										getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, null, -1, sel, minutes, false));
 									} else
 										player.sendMessage(ChatColor.RED + "You have to define a cuboid selection");
 								} else
@@ -324,7 +323,7 @@ public class LogBlock extends JavaPlugin
 							if (args.length == 5)
 								minutes = parseTimeSpec(args[3], args[4]);
 							player.sendMessage(ChatColor.GREEN + "Redoing " + args[2] + " for " + minutes + " minutes.");
-							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], -1, null, minutes, table, true));
+							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, args[2], -1, null, minutes, true));
 						} else 
 							player.sendMessage(ChatColor.RED + "Usage: /lb redo player [name] <time> <minutes|hours|days>");
 					} else if (args[1].equalsIgnoreCase("area")) {
@@ -333,7 +332,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[3], args[4]);
 							if (isInt(args[2])) {
 								player.sendMessage(ChatColor.GREEN + "Redoing area within " + args[2] + " blocks of you for " + minutes + " minutes.");
-								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, null, Integer.parseInt(args[2]), null, minutes, table, true));
+								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, null, Integer.parseInt(args[2]), null, minutes, true));
 							} else
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[2]);
 						} else
@@ -344,7 +343,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[4], args[5]);
 							if (isInt(args[3])) {
 								player.sendMessage(ChatColor.GREEN + "Redoing " + args[2] + " within " + args[3] + " blocks for " + minutes + " minutes.");
-								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, args[2], Integer.parseInt(args[3]), null, minutes, table, true));
+								getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, args[2], Integer.parseInt(args[3]), null, minutes, true));
 							} else
 								player.sendMessage(ChatColor.RED + "Can't parse to an int: " + args[3]);
 						} else
@@ -359,7 +358,7 @@ public class LogBlock extends JavaPlugin
 								if (sel != null) {
 									if (sel instanceof CuboidSelection) {
 										player.sendMessage(ChatColor.GREEN + "Redoing selection for " + minutes + " minutes.");
-										getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(player, conn, this, null, -1, sel, minutes, table, true));
+										getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, null, -1, sel, minutes, true));
 									} else
 										player.sendMessage(ChatColor.RED + "You have to define a cuboid selection");
 								} else
@@ -382,7 +381,7 @@ public class LogBlock extends JavaPlugin
 		} else if (args[0].equalsIgnoreCase("writelogfile")) {
 			if (checkPermission(player,"logblock.rollback")) {
 				if (args.length == 2) {
-					new Thread(new WriteLogFile(conn, player, args[1], table)).start();
+					new Thread(new WriteLogFile(this, player, args[1])).start();
 				}
 				else
 					player.sendMessage(ChatColor.RED + "Usage: /lb writelogfile [name]");
@@ -390,7 +389,7 @@ public class LogBlock extends JavaPlugin
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("me")) {
 			if (checkPermission(player,"logblock.me")) {
-				new Thread(new PlayerAreaStats(conn, player, player.getName(), Short.MAX_VALUE, table)).start();
+				new Thread(new PlayerAreaStats(this, player, player.getName(), Short.MAX_VALUE)).start();
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("help")) {
@@ -416,7 +415,7 @@ public class LogBlock extends JavaPlugin
 	}
 
 	private boolean checkTables() {
-		Connection conn = pool.getConnection();
+		Connection conn = getConnection();
 		Statement state = null;
 		if (conn == null)
 			return false;
@@ -514,6 +513,15 @@ public class LogBlock extends JavaPlugin
 			return true;
 		} catch (NumberFormatException ex) {
 			return false;
+		}
+	}
+	
+	public Connection getConnection() {
+		try {
+			return pool.connect(ConnectionPool.URL_PREFIX, null);
+		} catch (SQLException ex) {
+			log.log(Level.SEVERE, "[LogBlock] Error while fetching connection", ex);
+			return null;
 		}
 	}
 }

@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -17,15 +18,20 @@ import org.bukkit.entity.TNTPrimed;
 
 public class Consumer extends TimerTask implements Runnable
 {
+	private final LogBlock logblock;
+	private final Logger log;
+	private final Config config;
 	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	private LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
 	private HashSet<Integer> hiddenplayers = new HashSet<Integer>();
 	private HashMap<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
 	private HashMap<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
- 	private LogBlock logblock;
+ 	
 
 	Consumer (LogBlock logblock) {
 		this.logblock = logblock;
+		log = logblock.getServer().getLogger();
+		config = logblock.getConfig();
 	}
 
 	public void queueBlock(Player player, Block block, int typeAfter) {
@@ -45,7 +51,7 @@ public class Consumer extends TimerTask implements Runnable
 			return;
 		if (hiddenplayers.contains(playerName.hashCode()))
 			return;
-		String table = logblock.config.tables.get(block.getWorld().getName().hashCode());
+		String table = config.tables.get(block.getWorld().getName().hashCode());
 		if (table == null)
 			return;
 		if (playerName.length() > 32)
@@ -56,13 +62,13 @@ public class Consumer extends TimerTask implements Runnable
 		if (ca != null)
 			row.ca = ca;
 		if (!bqueue.offer(row))
-			LogBlock.log.info("[LogBlock] Failed to queue block for " + playerName);
+			log.info("[LogBlock] Failed to queue block for " + playerName);
 	}
 
 	public void queueKill(Entity attacker, Entity defender) {
 		if (lastAttackedEntity.containsKey(attacker.getEntityId()) && lastAttackedEntity.get(attacker.getEntityId()) == defender.getEntityId() && System.currentTimeMillis() - lastAttackTime.get(attacker.getEntityId()) < 3000)
 			return;
-		String table = logblock.config.tables.get(defender.getWorld().getName().hashCode());
+		String table = config.tables.get(defender.getWorld().getName().hashCode());
 		if (table == null)
 			return;
 		int weapon = 0;
@@ -93,14 +99,14 @@ public class Consumer extends TimerTask implements Runnable
 	}
 
 	public synchronized void run() {
-		Connection conn = logblock.pool.getConnection();
+		Connection conn = logblock.getConnection();
 		if (conn == null)
 			return;
 		Statement state = null;
 		BlockRow b; KillRow k;
 		int count = 0;
 		if (bqueue.size() > 100)
-			LogBlock.log.info("[LogBlock Consumer] Queue overloaded. Size: " + bqueue.size());				
+			log.info("[LogBlock Consumer] Queue overloaded. Size: " + bqueue.size());				
 		try {
 			conn.setAutoCommit(false);
 			state = conn.createStatement();
@@ -115,13 +121,13 @@ public class Consumer extends TimerTask implements Runnable
 					if (keys.next())
 						state.execute("INSERT INTO `" + b.table + "-sign` (id, signtext) values (" + keys.getInt(1) + ", '" + b.signtext + "')");
 					else
-						LogBlock.log.severe("[LogBlock Consumer] Failed to get generated keys");
+						log.severe("[LogBlock Consumer] Failed to get generated keys");
 				} else if (b.ca != null) {
 					ResultSet keys = state.getGeneratedKeys();
 					if (keys.next())
 						state.execute("INSERT INTO `" + b.table + "-chest` (id, intype, inamount, outtype, outamount) values (" + keys.getInt(1) + ", " + b.ca.inType + ", " + b.ca.inAmount + ", " + b.ca.outType + ", " + b.ca.outAmount + ")");
 					else
-						LogBlock.log.severe("[LogBlock Consumer] Failed to get generated keys");
+						log.severe("[LogBlock Consumer] Failed to get generated keys");
 				}
 				count++;
 			}
@@ -134,7 +140,7 @@ public class Consumer extends TimerTask implements Runnable
 			}
 			conn.commit();
 		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
+			log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
 		} finally {
 			try {
 				if (conn != null)
@@ -142,7 +148,7 @@ public class Consumer extends TimerTask implements Runnable
 				if (state != null)
 					state.close();
 			} catch (SQLException ex) {
-				LogBlock.log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
+				log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
 			}
 		}
 	}

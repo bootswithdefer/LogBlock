@@ -15,10 +15,12 @@ import org.bukkit.event.entity.EntityListener;
 
 public class LBEntityListener extends EntityListener
 {
-	private final LogBlock logblock;
+	private final Config config;
+	private final Consumer consumer;
 
 	LBEntityListener(LogBlock logblock) {
-		this.logblock = logblock;
+		config= logblock.getConfig();
+		consumer = logblock.getConsumer();
 	}
 
 	public void onEntityExplode(EntityExplodeEvent event) {
@@ -33,7 +35,7 @@ public class LBEntityListener extends EntityListener
 		else
 			name = "Environment";
 		for (Block block : event.blockList())
-			logblock.consumer.queueBlock(name, block, block.getTypeId(), 0, block.getData());
+			consumer.queueBlock(name, block, block.getTypeId(), 0, block.getData());
 		}
 	}
 
@@ -44,10 +46,10 @@ public class LBEntityListener extends EntityListener
 		Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
 		if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0 )
 			return;
-		if (logblock.config.logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
+		if (config.logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
 			return;
-		else if (logblock.config.logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
+		else if (config.logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
 			return;
-		logblock.consumer.queueKill(killer, victim);
+		consumer.queueKill(killer, victim);
 	}
 }

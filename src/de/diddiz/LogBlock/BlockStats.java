@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -14,33 +15,35 @@ import org.bukkit.entity.Player;
 
 public class BlockStats implements Runnable
 {
-	private final LogBlock logblock;
-	private Player player;
-	private Block block;
+	private final Logger log;
+	private final Connection conn;
+	private final String table;
+	private final Player player;
+	private final Block block;
 
 	BlockStats(LogBlock logblock, Player player, Block block) {
-		this.logblock = logblock;
+		log = logblock.getServer().getLogger();
+		conn = logblock.getConnection();
+		table = logblock.getConfig().tables.get(player.getWorld().getName().hashCode());
 		this.player = player;
 		this.block = block;
 	}
 
 	@Override
 	public void run() {
-		Connection conn = logblock.pool.getConnection();
-		if (conn == null) {
-			player.sendMessage(ChatColor.RED + "Failed to create database connection");
-			return;
-		}
-		String table = logblock.config.tables.get(block.getWorld().getName().hashCode());
-		if (table == null) {
-			player.sendMessage(ChatColor.RED + "This world isn't logged");
-			return;
-		}
 		boolean hist = false;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
 		try {
+			if (conn == null) {
+				player.sendMessage(ChatColor.RED + "Failed to create database connection");
+				return;
+			}
+			if (table == null) {
+				player.sendMessage(ChatColor.RED + "This world isn't logged");
+				return;
+			}
 			conn.setAutoCommit(false);
 			ps = conn.prepareStatement("SELECT date, replaced, type, signtext, playername FROM `" + table + "` LEFT JOIN `" + table + "-sign` USING (id) INNER JOIN `lb-players` USING (playerid) WHERE x = ? AND y = ? AND z = ? ORDER BY date DESC LIMIT 15");
 			ps.setInt(1, block.getX());
@@ -69,7 +72,7 @@ public class BlockStats implements Runnable
 			if (!hist)
 				player.sendMessage(ChatColor.DARK_AQUA + "None.");
 		} catch (SQLException ex) {
-			LogBlock.log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception", ex);
+			log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception", ex);
 		} finally {
 			try {
 				if (rs != null)
@@ -79,7 +82,7 @@ public class BlockStats implements Runnable
 				if (conn != null)
 					conn.close();
 			} catch (SQLException ex) {
-				LogBlock.log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception on close", ex);
+				log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception on close", ex);
 			}
 		}
 	}

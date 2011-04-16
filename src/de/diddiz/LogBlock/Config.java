@@ -9,29 +9,29 @@ import org.bukkit.Material;
 import org.bukkit.util.config.Configuration;
 
 public class Config {
-	final HashMap<Integer, String> tables;
-	final String url;
-	final String user;
-	final String password;
-	final int delay;
-	final boolean useBukkitScheduler;
-	final int keepLogDays;
-	final boolean dumpDeletedLog;
-	final boolean logBlockCreations;
-	final boolean logBlockDestroyings;
-	final boolean logSignTexts;
-	final boolean logExplosions;
-	final boolean logFire;
-	final boolean logLeavesDecay;
-	final boolean logChestAccess;
-	final boolean logKills;
-	final LogKillsLevel logKillsLevel;
-	final List<Integer> dontRollback;
-	final List<Integer> replaceAnyway;
-	final int defaultDist;
-	final int defaultTime;
-	final int toolID;
-	final int toolblockID;
+	public final HashMap<Integer, String> tables;
+	public final String url;
+	public final String user;
+	public final String password;
+	public final int delay;
+	public final boolean useBukkitScheduler;
+	public final int keepLogDays;
+	public final boolean dumpDeletedLog;
+	public final boolean logBlockCreations;
+	public final boolean logBlockDestroyings;
+	public final boolean logSignTexts;
+	public final boolean logExplosions;
+	public final boolean logFire;
+	public final boolean logLeavesDecay;
+	public final boolean logChestAccess;
+	public final boolean logKills;
+	public final LogKillsLevel logKillsLevel;
+	public final List<Integer> dontRollback;
+	public final List<Integer> replaceAnyway;
+	public final int defaultDist;
+	public final int defaultTime;
+	public final int toolID;
+	public final int toolblockID;
 
 	enum LogKillsLevel {
 		PLAYERS, MONSTERS, ANIMALS

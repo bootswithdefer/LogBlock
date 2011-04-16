@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -16,16 +17,18 @@ import org.bukkit.entity.Player;
 
 public class WriteLogFile implements Runnable
 {
-	private Connection conn;
-	private Player player;
-	private String name;
-	private String table;
+	private final Logger log;
+	private final Connection conn;
+	private final Player player;
+	private final String name;
+	private final String table;
 
-	WriteLogFile(Connection conn, Player player, String name, String table) {
-		this.conn = conn;
+	WriteLogFile(LogBlock logblock, Player player, String name) {
 		this.player = player;
 		this.name = name;
-		this.table = table;
+		log = logblock.getServer().getLogger();
+		conn = logblock.getConnection();
+		table = logblock.getConfig().tables.get(player.getWorld().getName().hashCode());
 	}
 
 	@Override
@@ -36,8 +39,16 @@ public class WriteLogFile implements Runnable
 		String newline = System.getProperty("line.separator");
 		String msg;
 		try {
+			if (conn == null) {
+				player.sendMessage(ChatColor.RED + "Failed to create database connection");
+				return;
+			}
+			if (table == null) {
+				player.sendMessage(ChatColor.RED + "This world isn't logged");
+				return;
+			}
 			conn.setAutoCommit(false);
-			ps = conn.prepareStatement("SELECT * FROM `" + table + "` LEFT JOIN `" + table + "-sign` USING (`id`) INNER JOIN `lb-players` USING (`playerid`) WHERE `playername` = ? ORDER BY `date` ASC");
+			ps = conn.prepareStatement("SELECT * FROM `" + table + "` LEFT JOIN `" + table + "-sign` USING (id) INNER JOIN `lb-players` USING (playerid) WHERE playername = ? ORDER BY date ASC");
 			ps.setString(1, name);
 			rs = ps.executeQuery();
 			File file = new File ("plugins/LogBlock/log/" + name + ".log");
@@ -65,10 +76,10 @@ public class WriteLogFile implements Runnable
 			player.sendMessage(ChatColor.GREEN + "Done");
 		} catch (SQLException ex) {
 			player.sendMessage(ChatColor.RED + "SQL exception");
-			LogBlock.log.log(Level.SEVERE, "[LogBlock WriteLogFile] SQL exception", ex);
+			log.log(Level.SEVERE, "[LogBlock WriteLogFile] SQL exception", ex);
 		} catch (IOException ex) {
 			player.sendMessage(ChatColor.RED + "IO exception");
-			LogBlock.log.log(Level.SEVERE, "[LogBlock WriteLogFile] IO exception", ex);
+			log.log(Level.SEVERE, "[LogBlock WriteLogFile] IO exception", ex);
 		} finally {
 			try {
 				if (rs != null)
@@ -78,7 +89,7 @@ public class WriteLogFile implements Runnable
 				if (conn != null)
 					conn.close();
 			} catch (SQLException ex) {
-				LogBlock.log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception on close", ex);
+				log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception on close", ex);
 			}
 		}
 	}
