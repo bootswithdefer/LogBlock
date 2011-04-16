@@ -3,7 +3,6 @@ package de.diddiz.LogBlock;
 import org.bukkit.Material;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
@@ -25,11 +24,6 @@ public class LBBlockListener extends BlockListener
 
 	public void onBlockBreak(BlockBreakEvent event) {
 		if (!event.isCancelled())
-			logblock.consumer.queueBlock(event.getPlayer().getName(), event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
-	}
-
-	public void onBlockDamage(BlockDamageEvent event) {
-		if (!event.isCancelled() && event.getInstaBreak())
 			logblock.consumer.queueBlock(event.getPlayer().getName(), event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
 	}
 

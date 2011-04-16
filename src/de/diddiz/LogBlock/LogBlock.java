@@ -99,8 +99,6 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Priority.Monitor, this);
 		}
-		if (config.logBlockInstaBreak)
-			pm.registerEvent(Type.BLOCK_DAMAGE, lbBlockListener, Priority.Monitor, this);
 		if (config.logSignTexts)
 			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Priority.Monitor, this);
 		if (config.logFire)

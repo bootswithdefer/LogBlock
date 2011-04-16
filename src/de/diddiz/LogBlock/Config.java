@@ -19,7 +19,6 @@ public class Config {
 	final boolean dumpDeletedLog;
 	final boolean logBlockCreations;
 	final boolean logBlockDestroyings;
-	final boolean logBlockInstaBreak;
 	final boolean logSignTexts;
 	final boolean logExplosions;
 	final boolean logFire;
@@ -83,8 +82,6 @@ public class Config {
 			config.setProperty("logging.logBlockCreations", true);
 		if (!subkeys.contains("logBlockDestroyings"))
 			config.setProperty("logging.logBlockDestroyings", true);
-		if (!subkeys.contains("logBlockInstaBreak"))
-			config.setProperty("logging.logBlockInstaBreak", true);
 		if (!subkeys.contains("logSignTexts"))
 			config.setProperty("logging.logSignTexts", false);
 		if (!subkeys.contains("logExplosions"))
@@ -128,7 +125,6 @@ public class Config {
 		dumpDeletedLog =  config.getBoolean("clearlog.dumpDeletedLog", true);
 		logBlockCreations = config.getBoolean("logging.logBlockCreations", true);
 		logBlockDestroyings = config.getBoolean("logging.logBlockDestroyings", true);
-		logBlockInstaBreak = config.getBoolean("logging.logBlockInstaBreak", true);
 		logSignTexts = config.getBoolean("logging.logSignTexts", false);
 		logExplosions = config.getBoolean("logging.logExplosions", false);
 		logFire = config.getBoolean("logging.logFire", false);
