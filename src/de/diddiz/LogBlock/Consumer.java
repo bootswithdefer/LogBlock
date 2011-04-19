@@ -91,11 +91,9 @@ public class Consumer extends TimerTask implements Runnable
 			return;
 		if (playerName.length() > 32)
 			playerName = playerName.substring(0, 32);
-		BlockRow row = new BlockRow(table, playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
 		if (signtext != null)
-			row.signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
-		if (ca != null)
-			row.ca = ca;
+			signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
+		BlockRow row = new BlockRow(table, playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), signtext, ca);
 		if (!bqueue.offer(row))
 			log.info("[LogBlock] Failed to queue block for " + playerName);
 	}
@@ -215,15 +213,15 @@ public class Consumer extends TimerTask implements Runnable
 
 	private class BlockRow
 	{
-		public String table;
-		public String name;
-		public int replaced, type;
-		public byte data;
-		public int x, y, z;
-		public String signtext;
-		public ChestAccess ca;
+		public final String table;
+		public final String name;
+		public final int replaced, type;
+		public final byte data;
+		public final int x, y, z;
+		public final String signtext;
+		public final ChestAccess ca;
 
-		BlockRow(String table, String name, int replaced, int type, byte data, int x, int y, int z)	{
+		BlockRow(String table, String name, int replaced, int type, byte data, int x, int y, int z, String signtext, ChestAccess ca)	{
 			this.table = table;
 			this.name = name;
 			this.replaced = replaced;
@@ -232,17 +230,17 @@ public class Consumer extends TimerTask implements Runnable
 			this.x = x;
 			this.y = y;
 			this.z = z;
-			this.signtext = null;
-			this.ca = null;
+			this.signtext = signtext;
+			this.ca = ca;
 		}
 	}
 
 	private class KillRow
 	{
-		public String table;
-		public String killer;
-		public String victim;
-		public int weapon;
+		public final String table;
+		public final String killer;
+		public final String victim;
+		public final int weapon;
 
 		KillRow(String table, String attacker, String defender, int weapon) {
 			this.table = table;
