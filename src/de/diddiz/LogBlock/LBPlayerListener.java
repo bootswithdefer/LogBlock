@@ -27,24 +27,20 @@ public class LBPlayerListener extends PlayerListener
 	}
 
 	public void onPlayerInteract(PlayerInteractEvent event) {
-		if (!event.isCancelled()) {
-			if (event.getAction() == Action.RIGHT_CLICK_BLOCK && (event.getClickedBlock().getType() == Material.CHEST || event.getClickedBlock().getType() == Material.FURNACE ||event.getClickedBlock().getType() == Material.DISPENSER)) {
-				consumer.queueBlock(event.getPlayer(), event.getClickedBlock(), (short)0, (byte)0, (short)0, (byte)0);
-			}
-		}
+		if (!event.isCancelled() && event.getAction() == Action.RIGHT_CLICK_BLOCK && (event.getClickedBlock().getType() == Material.CHEST || event.getClickedBlock().getType() == Material.FURNACE ||event.getClickedBlock().getType() == Material.DISPENSER))
+			consumer.queueChestAccess(event.getPlayer().getName(), event.getClickedBlock().getLocation(), event.getClickedBlock().getTypeId(),(short)0, (byte)0, (short)0, (byte)0);
 	}	
 
 	public void onPlayerBucketFill(PlayerBucketFillEvent event) {
-		if (!event.isCancelled()) {
-			consumer.queueBlock(event.getPlayer().getName(), event.getBlockClicked(), event.getBlockClicked().getTypeId(), 0, event.getBlockClicked().getData());
-		}
+		if (!event.isCancelled())
+			consumer.queueBlockDestroy(event.getPlayer(), event.getBlockClicked().getState());
 	}
 
 	public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
 		if (event.getBucket() == Material.WATER_BUCKET)
-			consumer.queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.STATIONARY_WATER.getId());
+			consumer.queueBlockPlace(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()).getLocation(), 9, (byte)0);
 		else if (event.getBucket() == Material.LAVA_BUCKET)
-			consumer.queueBlock(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()), Material.STATIONARY_LAVA.getId());
+			consumer.queueBlockPlace(event.getPlayer(), event.getBlockClicked().getFace(event.getBlockFace()).getLocation(), 11, (byte)0);
 	}
 
 	public void onPlayerJoin(PlayerJoinEvent event) {

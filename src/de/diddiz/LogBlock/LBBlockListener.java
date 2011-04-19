@@ -19,28 +19,27 @@ public class LBBlockListener extends BlockListener
 	}
 
 	public void onBlockPlace(BlockPlaceEvent event) {
-		if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST))) {
-			consumer.queueBlock(event.getPlayer().getName(), event.getBlockPlaced(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
-		}
+		if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST)))
+			consumer.queueBlock(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
 	}
 
 	public void onBlockBreak(BlockBreakEvent event) {
 		if (!event.isCancelled())
-			consumer.queueBlock(event.getPlayer().getName(), event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+			consumer.queueBlockDestroy(event.getPlayer(), event.getBlock().getState());
 	}
 
 	public void onSignChange(SignChangeEvent event) {
 		if (!event.isCancelled())
-			consumer.queueBlock(event.getPlayer().getName(), event.getBlock(), 0, event.getBlock().getTypeId(), event.getBlock().getData(), "sign [" + event.getLine(0) + "] [" + event.getLine(1) + "] [" + event.getLine(2) + "] [" + event.getLine(3) + "]", null);
+			consumer.queueSign(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), "sign [" + event.getLine(0) + "] [" + event.getLine(1) + "] [" + event.getLine(2) + "] [" + event.getLine(3) + "]");
 	}
 
 	public void onBlockBurn(BlockBurnEvent event) {
 		if (!event.isCancelled())
-			consumer.queueBlock("Fire", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+			consumer.queueBlockDestroy("Fire", event.getBlock().getState());
 	}
 
 	public void onLeavesDecay(LeavesDecayEvent event) {
 		if (!event.isCancelled())
-			consumer.queueBlock("LeavesDecay", event.getBlock(), event.getBlock().getTypeId(), 0, event.getBlock().getData());
+			consumer.queueBlockDestroy("LeavesDecay", event.getBlock().getState());
 	}
 }

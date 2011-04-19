@@ -11,7 +11,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bukkit.block.Block;
+import org.bukkit.Location;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Sign;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
@@ -34,29 +36,62 @@ public class Consumer extends TimerTask implements Runnable
 		config = logblock.getConfig();
 	}
 
-	public void queueBlock(Player player, Block block, int typeAfter) {
-		queueBlock(player.getName(), block, 0, typeAfter, (byte)0, null, null);
+	public void queueBlockDestroy(Player player, BlockState before) {
+		queueBlockDestroy(player.getName(), before);
 	}
 
-	public void queueBlock(String playerName, Block block, int typeBefore, int typeAfter, byte data) {
-		queueBlock(playerName, block, typeBefore, typeAfter, data, null, null);
+	public void queueBlockDestroy(String playerName, BlockState before) {
+		queueBlock(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), 0, before.getRawData());
 	}
 
-	public void queueBlock(Player player, Block block, short inType, byte inAmount, short outType, byte outAmount) {
-		queueBlock(player.getName(), block, block.getTypeId(), block.getTypeId(), (byte)0, null, new ChestAccess(inType, inAmount, outType, outAmount));
+	public void queueBlockPlace(Player player, Location loc, int type, byte data) {
+		queueBlockPlace(player.getName(), loc, type, data);
 	}
 
-	public void queueBlock(String playerName, Block block, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
-		if (block == null || typeBefore < 0 || typeAfter < 0)
+	public void queueBlockPlace(String playerName, Location loc, int type, byte data) {
+		queueBlock(playerName, loc, 0, type, data);
+	}
+
+	public void queueBlockReplace(Player player, BlockState before, int typeAfter, byte dataAfter) {
+		queueBlockReplace(player.getName(), before, typeAfter, dataAfter);
+	}
+
+	public void queueBlockReplace(String playerName, BlockState before, int typeAfter, byte dataAfter) {
+		queueBlockDestroy(playerName, before);
+		queueBlockPlace(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), typeAfter, dataAfter);
+	}
+
+	public void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data) {
+		queueBlock(playerName, loc, typeBefore, typeAfter, data, null, null);
+	}
+
+	public void queueChestAccess(Player player, BlockState block, short inType, byte inAmount, short outType, byte outAmount) {
+		queueChestAccess(player.getName(), new Location(block.getWorld(), block.getX(), block.getY(), block.getZ()), block.getTypeId(), inType, inAmount, outType, outAmount);
+	}
+
+	public void queueChestAccess(String playerName, Location loc, int type, short inType, byte inAmount, short outType, byte outAmount) {
+		queueBlock(playerName, loc, type, type, (byte)0, null, new ChestAccess(inType, inAmount, outType, outAmount));
+	}
+
+	public void queueSign(Player player, Sign sign) {
+		queueSign(player.getName(), new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), "sign [" + sign.getLine(0) + "] [" + sign.getLine(1) + "] [" + sign.getLine(2) + "] [" + sign.getLine(3) + "]");
+	}
+
+	public void queueSign(String playerName, Location loc, int type, byte data, String signtext) {
+		queueBlock(playerName, loc, 0, type, data, signtext, null);
+	}
+
+	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
+		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0)
 			return;
 		if (hiddenplayers.contains(playerName.hashCode()))
 			return;
-		String table = config.tables.get(block.getWorld().getName().hashCode());
+		String table = config.tables.get(loc.getWorld().getName().hashCode());
 		if (table == null)
 			return;
 		if (playerName.length() > 32)
 			playerName = playerName.substring(0, 32);
-		BlockRow row = new BlockRow(table, playerName, typeBefore, typeAfter, data, block.getX(), block.getY(), block.getZ());
+		BlockRow row = new BlockRow(table, playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
 		if (signtext != null)
 			row.signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
 		if (ca != null)
@@ -65,29 +100,33 @@ public class Consumer extends TimerTask implements Runnable
 			log.info("[LogBlock] Failed to queue block for " + playerName);
 	}
 
-	public void queueKill(Entity attacker, Entity defender) {
-		if (lastAttackedEntity.containsKey(attacker.getEntityId()) && lastAttackedEntity.get(attacker.getEntityId()) == defender.getEntityId() && System.currentTimeMillis() - lastAttackTime.get(attacker.getEntityId()) < 3000)
+	public void queueKill(Entity killer, Entity victim) {
+		if (killer  == null || victim  == null)
 			return;
-		String table = config.tables.get(defender.getWorld().getName().hashCode());
-		if (table == null)
+		if (lastAttackedEntity.containsKey(killer.getEntityId()) && lastAttackedEntity.get(killer.getEntityId()) == victim.getEntityId() && System.currentTimeMillis() - lastAttackTime.get(killer.getEntityId()) < 5000)
 			return;
 		int weapon = 0;
-		if (attacker instanceof Player && ((Player)attacker).getItemInHand() != null)
-			weapon = ((Player)attacker).getItemInHand().getTypeId();
-		String attackerName = getEntityName(attacker);
-		String defenderName = getEntityName(defender);
-		if (attackerName == null || defenderName == null)
-			return;
-		lastAttackedEntity.put(attacker.getEntityId(), defender.getEntityId());
-		lastAttackTime.put(attacker.getEntityId(), System.currentTimeMillis());
-		kqueue.add(new KillRow(table, getEntityName(attacker), getEntityName(defender), weapon));
+		if (killer instanceof Player && ((Player)killer).getItemInHand() != null)
+			weapon = ((Player)killer).getItemInHand().getTypeId();
+		lastAttackedEntity.put(killer.getEntityId(), victim.getEntityId());
+		lastAttackTime.put(killer.getEntityId(), System.currentTimeMillis());
+		queueKill(victim.getWorld().getName(), getEntityName(killer), getEntityName(victim), weapon);
 	}
 
-	public int getQueueSize() {
+	public void queueKill(String worldName, String killerName, String victimName, int weapon) {
+		if (victimName == null)
+			return;
+		String table = config.tables.get(worldName.hashCode());
+		if (table == null)
+			return;
+		kqueue.add(new KillRow(table, killerName, victimName, weapon));
+	}
+
+	int getQueueSize() {
 		return bqueue.size() + kqueue.size();
 	}
 
-	public boolean hide(Player player) {
+	boolean hide(Player player) {
 		int hash = player.getName().hashCode();
 		if (hiddenplayers.contains(hash)) {
 			hiddenplayers.remove(hash);
