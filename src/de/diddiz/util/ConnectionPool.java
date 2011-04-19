@@ -77,14 +77,12 @@ public class ConnectionPool implements Driver {
 
 	private class JDCConnection implements Connection
 	{
-		private ConnectionService pool;
 		private Connection conn;
 		private boolean inuse;
 		private long timestamp;
 
-		public JDCConnection(Connection conn, ConnectionService pool) {
+		public JDCConnection(Connection conn) {
 			this.conn = conn;
-			this.pool = pool;
 			this.inuse = false;
 			this.timestamp = 0;
 		}
@@ -116,16 +114,12 @@ public class ConnectionPool implements Driver {
 			return timestamp;
 		}
 
-		public void close() throws SQLException {
-			pool.returnConnection(this);
+		public void close() {
+			expireLease();
 		}
 
 		protected void expireLease() {
 			inuse = false;
-		}
-
-		protected Connection getConnection() {
-			return conn;
 		}
 
 		public PreparedStatement prepareStatement(String sql) throws SQLException {
@@ -393,15 +387,15 @@ public class ConnectionPool implements Driver {
 				c = connections.elementAt(i);
 				if (c.lease()) {
 					if (c.validate())
-						return c.getConnection();
+						return c;
 					else
 						removeConnection(c);
 				}
 			}
-			c = new JDCConnection(DriverManager.getConnection(url, user, password), this);
+			c = new JDCConnection(DriverManager.getConnection(url, user, password));
 			c.lease();
 			connections.addElement(c);
-			return c.getConnection();
+			return c;
 		}
 
 		public synchronized void returnConnection(JDCConnection conn) {
@@ -423,8 +417,7 @@ public class ConnectionPool implements Driver {
 			while (true) {
 				try {
 					Thread.sleep(delay);
-				} catch (InterruptedException e) {
-			}
+				} catch (InterruptedException e) {}
 			pool.reapConnections();
 			}
 		}
