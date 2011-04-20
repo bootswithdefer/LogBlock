@@ -40,6 +40,7 @@ public class LogBlock extends JavaPlugin
 	private Consumer consumer = null;
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
+	private boolean errorAtLoading = false;
 
 	public Config getConfig() {
 		return config;
@@ -50,20 +51,15 @@ public class LogBlock extends JavaPlugin
 	}
 
 	@Override
-	public void onEnable() {
+	public void onLoad() {
 		log = getServer().getLogger();
 		try	{
 			config = new Config(this);
 		} catch (Exception ex) {
-			log.log(Level.SEVERE, "[LogBlock] Exception while reading config", ex);
-			getServer().getPluginManager().disablePlugin(this);
+			log.log(Level.SEVERE, "[LogBlock] Exception while reading config:", ex);
+			errorAtLoading = true;
 			return;
 		}
-		if (getServer().getPluginManager().getPlugin("Permissions") != null) {
-			permissions = ((Permissions)getServer().getPluginManager().getPlugin("Permissions")).getHandler();
-			log.info("[LogBlock] Permissions enabled");
-		} else
-			log.info("[LogBlock] Permissions plugin not found. Using default permissions.");
 		File file = new File("lib/mysql-connector-java-bin.jar");
 		try {
 			if (!file.exists() || file.length() == 0) {
@@ -74,7 +70,7 @@ public class LogBlock extends JavaPlugin
 				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "[LogBlock] Error while downloading " + file.getName() + ".");
-			getServer().getPluginManager().disablePlugin(this);
+			errorAtLoading = true;
 			return;
 		}
 		try {
@@ -83,23 +79,36 @@ public class LogBlock extends JavaPlugin
 			conn.close();
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Exception while checking database connection", ex);
-			getServer().getPluginManager().disablePlugin(this);
+			errorAtLoading = true;
 			return;
 		}
 		if (!checkTables()) {
 			log.log(Level.SEVERE, "[LogBlock] Errors while checking tables. They may not exist.");
+			errorAtLoading = true;
+			return;
+		}
+		consumer = new Consumer(this);
+	}
+
+	@Override
+	public void onEnable() {
+		if (errorAtLoading) {
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
+		if (getServer().getPluginManager().getPlugin("Permissions") != null) {
+			permissions = ((Permissions)getServer().getPluginManager().getPlugin("Permissions")).getHandler();
+			log.info("[LogBlock] Permissions enabled");
+		} else
+			log.info("[LogBlock] Permissions plugin not found. Using default permissions.");
 		if (config.keepLogDays >= 0)
 			new Thread(new ClearLog(this)).start();
-		consumer = new Consumer(this);
 		LBBlockListener lbBlockListener = new LBBlockListener(this);
 		LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
 		LBEntityListener lbEntityListener = new LBEntityListener(this);
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(this), Priority.Normal, this);
-		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Monitor, this);
 		if (config.logBlockCreations) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Priority.Monitor, this);
