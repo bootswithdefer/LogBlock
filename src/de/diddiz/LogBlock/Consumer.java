@@ -23,11 +23,11 @@ public class Consumer extends TimerTask implements Runnable
 	private final LogBlock logblock;
 	private final Logger log;
 	private final Config config;
-	private LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
-	private LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
-	private HashSet<Integer> hiddenplayers = new HashSet<Integer>();
-	private HashMap<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
-	private HashMap<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
+	private final LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
+	private final LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
+	private final HashSet<Integer> hiddenplayers = new HashSet<Integer>();
+	private final HashMap<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
+	private final HashMap<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
  	
 
 	Consumer (LogBlock logblock) {

@@ -112,8 +112,8 @@ public class Rollback implements Runnable
 
 	private class PerformRollback implements Runnable
 	{
-		private LinkedBlockingQueue<Edit> edits;
-		private Rollback rollback;
+		private final LinkedBlockingQueue<Edit> edits;
+		private final Rollback rollback;
 		int successes = 0;
 		int errors = 0;
 		int blacklisteds = 0;
@@ -148,17 +148,17 @@ public class Rollback implements Runnable
 			}
 		}
 	}
-	
+
 	private enum PerformResult {
 		ERROR, SUCCESS, BLACKLISTED, NO_ACTION
 	}
 	
 	private class Edit
 	{
-		int type, replaced;
-		int x, y, z;
-		byte data;
-		World world;
+		final int type, replaced;
+		final int x, y, z;
+		final byte data;
+		final World world;
 
 		Edit(int type, int replaced, byte data, int x, int y, int z, World world) {
 			this.type = type;
