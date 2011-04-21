@@ -35,7 +35,7 @@ public class LBEntityListener extends EntityListener
 		else
 			name = "Environment";
 		for (Block block : event.blockList())
-			consumer.queueBlockDestroy(name, block.getState());
+			consumer.queueBlockBreak(name, block.getState());
 		}
 	}
 

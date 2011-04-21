@@ -12,7 +12,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Chest;
+import org.bukkit.block.Dispenser;
+import org.bukkit.block.Furnace;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -36,48 +40,105 @@ public class Consumer extends TimerTask implements Runnable
 		config = logblock.getConfig();
 	}
 
-	public void queueBlockDestroy(Player player, BlockState before) {
-		queueBlockDestroy(player.getName(), before);
+	/**
+	 * Logs a block break. The type afterwards is assumed to be o (air).
+	 * @param before Blockstate of the block before actually being destroyed.
+	 */
+	public void queueBlockBreak(String playerName, BlockState before) {
+		queueBlockBreak(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), before.getRawData());
 	}
 
-	public void queueBlockDestroy(String playerName, BlockState before) {
-		queueBlock(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), 0, before.getRawData());
+	/**
+	 * Logs a block break. The block type afterwards is assumed to be o (air).
+	 */
+	public void queueBlockBreak(String playerName, Location loc, int typeBefore, byte dataBefore) {
+		queueBlock(playerName, loc, typeBefore, 0, dataBefore);
 	}
 
-	public void queueBlockPlace(Player player, Location loc, int type, byte data) {
-		queueBlockPlace(player.getName(), loc, type, data);
+	
+	/**
+	 * Logs a block place. The block type before is assumed to be o (air).
+	 * @param after Blockstate of the block after actually being placed.
+	 */
+	public void queueBlockPlace(String playerName, BlockState after) {
+		queueBlockPlace(playerName, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), after.getTypeId(), after.getRawData());
 	}
 
+	/**
+	 * Logs a block place. The block type before is assumed to be o (air).
+	 */
 	public void queueBlockPlace(String playerName, Location loc, int type, byte data) {
 		queueBlock(playerName, loc, 0, type, data);
 	}
 
-	public void queueBlockReplace(Player player, BlockState before, int typeAfter, byte dataAfter) {
-		queueBlockReplace(player.getName(), before, typeAfter, dataAfter);
+	/**
+	 * @param before Blockstate of the block before actually being destroyed.
+	 * @param after Blockstate of the block after actually being placed.
+	 */
+	public void queueBlockReplace(String playerName, BlockState before, BlockState after) {
+		queueBlockBreak(playerName, before);
+		queueBlockPlace(playerName, after);
 	}
 
+	public void queueBlockReplace(String playerName, Location loc, int typeBefore, byte dataBefore, int typeAfter, byte dataAfter) {
+		queueBlockBreak(playerName, loc, typeBefore, dataBefore);
+		queueBlockPlace(playerName, loc, typeAfter, dataAfter);
+	}
+
+	/**
+	 * @param before Blockstate of the block before actually being destroyed.
+	 */
 	public void queueBlockReplace(String playerName, BlockState before, int typeAfter, byte dataAfter) {
-		queueBlockDestroy(playerName, before);
+		queueBlockBreak(playerName, before);
 		queueBlockPlace(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), typeAfter, dataAfter);
 	}
 
+	/**
+	 * @param after Blockstate of the block after actually being placed.
+	 */
+	public void queueBlockReplace(String playerName, int typeBefore, byte dataBefore, BlockState after) {
+		queueBlockBreak(playerName, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), typeBefore, dataBefore);
+		queueBlockPlace(playerName, after);
+	}
+
+	/**
+	 * Logs any block change. Don't try to combine broken and placed blocks. Queue two block changes or use the queueBLockReplace methods.
+	 */
 	public void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data) {
 		queueBlock(playerName, loc, typeBefore, typeAfter, data, null, null);
 	}
 
-	public void queueChestAccess(Player player, BlockState block, short inType, byte inAmount, short outType, byte outAmount) {
-		queueChestAccess(player.getName(), new Location(block.getWorld(), block.getX(), block.getY(), block.getZ()), block.getTypeId(), inType, inAmount, outType, outAmount);
+	/**
+	 * @param container The respective container. Must be an instance of Chest, Dispencer or Furnace.
+	 * @param inType Type id of the item traded in. May be 0 to indicate nothing traded in.
+	 * @param outType Type id of the item traded out. May be 0 to indicate nothing traded out.
+	 */
+	public void queueChestAccess(String playerName, BlockState container, short inType, byte inAmount, short outType, byte outAmount) {
+		if (!(container instanceof Chest) && !(container instanceof Furnace) && !(container instanceof Dispenser))
+			return;
+		queueChestAccess(playerName, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getTypeId(), inType, inAmount, outType, outAmount);
 	}
 
+	/**
+	 * @param type Type id of the container. Must be 63 or 68.
+	 * @param inType Type id of the item traded in. May be 0 to indicate nothing traded in.
+	 * @param outType Type id of the item traded out. May be 0 to indicate nothing traded out.
+	 */
 	public void queueChestAccess(String playerName, Location loc, int type, short inType, byte inAmount, short outType, byte outAmount) {
 		queueBlock(playerName, loc, type, type, (byte)0, null, new ChestAccess(inType, inAmount, outType, outAmount));
 	}
 
-	public void queueSign(Player player, Sign sign) {
-		queueSign(player.getName(), new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), "sign [" + sign.getLine(0) + "] [" + sign.getLine(1) + "] [" + sign.getLine(2) + "] [" + sign.getLine(3) + "]");
+	public void queueSign(String playerName, Sign sign) {
+		queueSign(playerName, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), "sign [" + sign.getLine(0) + "] [" + sign.getLine(1) + "] [" + sign.getLine(2) + "] [" + sign.getLine(3) + "]");
 	}
 
+	/**
+	 * @param type Type of the sign. Must be 63 or 68.
+	 * @param signtext The whole text on the sign in a format like: sign [] [] [] []
+	 */
 	public void queueSign(String playerName, Location loc, int type, byte data, String signtext) {
+		if (type != 63 && type != 68)
+			return;
 		queueBlock(playerName, loc, 0, type, data, signtext, null);
 	}
 
@@ -97,6 +158,10 @@ public class Consumer extends TimerTask implements Runnable
 			log.info("[LogBlock] Failed to queue block for " + playerName);
 	}
 
+	/**
+	 * @param killer Can' be null
+	 * @param victim Can' be null
+	 */
 	public void queueKill(Entity killer, Entity victim) {
 		if (killer  == null || victim  == null)
 			return;
@@ -107,13 +172,19 @@ public class Consumer extends TimerTask implements Runnable
 			weapon = ((Player)killer).getItemInHand().getTypeId();
 		lastAttackedEntity.put(killer.getEntityId(), victim.getEntityId());
 		lastAttackTime.put(killer.getEntityId(), System.currentTimeMillis());
-		queueKill(victim.getWorld().getName(), getEntityName(killer), getEntityName(victim), weapon);
+		queueKill(victim.getWorld(), getEntityName(killer), getEntityName(victim), weapon);
 	}
 
-	public void queueKill(String worldName, String killerName, String victimName, int weapon) {
-		if (victimName == null || !config.tables.containsKey(worldName.hashCode()))
+	/**
+	 * @param world World the victim was inside.
+	 * @param killerName Name of the killer. Can be null.
+	 * @param victimName Name of the victim. Can't be null.
+	 * @param weapon Item id of the weapon. 0 for no weapon.
+	 */
+	public void queueKill(World world, String killerName, String victimName, int weapon) {
+		if (victimName == null || !config.tables.containsKey(world.getName().hashCode()))
 			return;
-		kqueue.add(new KillRow(worldName.hashCode(), killerName, victimName, weapon));
+		kqueue.add(new KillRow(world.getName().hashCode(), killerName, victimName, weapon));
 	}
 
 	int getQueueSize() {

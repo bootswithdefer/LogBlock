@@ -25,7 +25,7 @@ public class LBBlockListener extends BlockListener
 
 	public void onBlockBreak(BlockBreakEvent event) {
 		if (!event.isCancelled())
-			consumer.queueBlockDestroy(event.getPlayer(), event.getBlock().getState());
+			consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlock().getState());
 	}
 
 	public void onSignChange(SignChangeEvent event) {
@@ -35,11 +35,11 @@ public class LBBlockListener extends BlockListener
 
 	public void onBlockBurn(BlockBurnEvent event) {
 		if (!event.isCancelled())
-			consumer.queueBlockDestroy("Fire", event.getBlock().getState());
+			consumer.queueBlockBreak("Fire", event.getBlock().getState());
 	}
 
 	public void onLeavesDecay(LeavesDecayEvent event) {
 		if (!event.isCancelled())
-			consumer.queueBlockDestroy("LeavesDecay", event.getBlock().getState());
+			consumer.queueBlockBreak("LeavesDecay", event.getBlock().getState());
 	}
 }
