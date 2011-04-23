@@ -481,16 +481,16 @@ public class LogBlock extends JavaPlugin
 		return false;
 	}
 
-	boolean checkPermission(Player player, String permission) {
-		if (permissions != null)
-			return permissions.permission(player, permission);
+	boolean checkPermission(CommandSender sender, String permission) {
+		if (permissions != null && sender instanceof Player)
+			return permissions.permission((Player)sender, permission);
 		else {
 			if (permission.equals("logblock.area"))
-				return player.isOp();
+				return sender.isOp();
 			else if (permission.equals("logblock.hide"))
-				return player.isOp();
+				return sender.isOp();
 			else if (permission.equals("logblock.rollback"))
-				return player.isOp();
+				return sender.isOp();
 			return true;
 		}
 	}
