@@ -31,12 +31,12 @@ public class Rollback implements Runnable
 		log = logblock.getServer().getLogger();
 		conn = logblock.getConnection();
 		config = logblock.getConfig();
-		StringBuffer sql = new StringBuffer();
+		final StringBuffer sql = new StringBuffer();
 		if (!redo)
 			sql.append("SELECT replaced, type, data, x, y, z ");
 		else
 			sql.append("SELECT type AS replaced, replaced AS type, data, x, y, z ");
-			sql.append("FROM `" + logblock.getConfig().tables.get(player.getWorld().getName().hashCode()) + "` INNER JOIN `lb-players` USING (playerid) WHERE (type <> replaced OR (type = 0 AND replaced = 0)) AND ");
+		sql.append("FROM `" + logblock.getConfig().tables.get(player.getWorld().getName().hashCode()) + "` INNER JOIN `lb-players` USING (playerid) WHERE (type <> replaced OR (type = 0 AND replaced = 0)) AND ");
 		if (name != null)
 			sql.append("playername = '" + name + "' AND ");
 		if (radius != -1)
@@ -53,9 +53,10 @@ public class Rollback implements Runnable
 		query = sql.toString();
 	}
 
+	@Override
 	public void run() {
 		ResultSet rs = null;
-		LinkedBlockingQueue<Edit> edits = new LinkedBlockingQueue<Edit>();
+		final LinkedBlockingQueue<Edit> edits = new LinkedBlockingQueue<Edit>();
 		edits.clear();
 		try {
 			if (!config.tables.containsKey(player.getWorld().getName().hashCode())) {
@@ -64,10 +65,10 @@ public class Rollback implements Runnable
 			}
 			rs = conn.createStatement().executeQuery(query);
 			while (rs.next()) {
-				Edit e = new Edit(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), player.getWorld());
+				final Edit e = new Edit(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), player.getWorld());
 				edits.offer(e);
 			}
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
 			player.sendMessage(ChatColor.RED + "Error, check server logs.");
 			return;
@@ -77,17 +78,17 @@ public class Rollback implements Runnable
 					rs.close();
 				if (conn != null)
 					conn.close();
-			} catch (SQLException ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception on close", ex);
 				player.sendMessage(ChatColor.RED + "Error, check server logs.");
 				return;
 			}
 		}
-		int changes = edits.size();
+		final int changes = edits.size();
 		player.sendMessage(ChatColor.GREEN + "" + changes + " Changes found.");
-		PerformRollback perform = new PerformRollback(edits, this);
-		long start = System.currentTimeMillis();
-		int taskID = logblock.getServer().getScheduler().scheduleSyncRepeatingTask(logblock, perform, 0, 1);
+		final PerformRollback perform = new PerformRollback(edits, this);
+		final long start = System.currentTimeMillis();
+		final int taskID = logblock.getServer().getScheduler().scheduleSyncRepeatingTask(logblock, perform, 0, 1);
 		if (taskID == -1) {
 			player.sendMessage(ChatColor.RED + "Failed to schedule rollback task");
 			return;
@@ -95,7 +96,7 @@ public class Rollback implements Runnable
 		synchronized (this) {
 			try {
 				this.wait();
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				log.severe("[LogBlock Rollback] Interrupted");
 			}
 		}
@@ -129,15 +130,15 @@ public class Rollback implements Runnable
 			while (!edits.isEmpty() && counter < 1000)
 			{
 				switch (edits.poll().perform()) {
-					case SUCCESS:
-						successes++;
-						break;
-					case ERROR:
-						errors++;
-						break;
-					case BLACKLISTED:
-						blacklisteds++;
-						break;
+				case SUCCESS:
+					successes++;
+					break;
+				case ERROR:
+					errors++;
+					break;
+				case BLACKLISTED:
+					blacklisteds++;
+					break;
 				}
 				counter++;
 			}
@@ -152,7 +153,7 @@ public class Rollback implements Runnable
 	private enum PerformResult {
 		ERROR, SUCCESS, BLACKLISTED, NO_ACTION
 	}
-	
+
 	private class Edit
 	{
 		final int type, replaced;
@@ -174,22 +175,22 @@ public class Rollback implements Runnable
 			if (config.dontRollback.contains(replaced))
 				return PerformResult.BLACKLISTED;
 			try {
-				Block block = world.getBlockAt(x, y, z);
+				final Block block = world.getBlockAt(x, y, z);
 				if (!world.isChunkLoaded(block.getChunk()))
 					world.loadChunk(block.getChunk());
-				if (equalsType(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId()) || (type == 0 && replaced == 0)) {
+				if (equalsType(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId()) || type == 0 && replaced == 0) {
 					if (block.setTypeIdAndData(replaced, data, false))
 						return PerformResult.SUCCESS;
 					else
 						return PerformResult.ERROR;
 				} else
 					return PerformResult.NO_ACTION;
-			} catch (Exception ex) {
+			} catch (final Exception ex) {
 				log.severe("[LogBlock Rollback] " + ex.toString());
 				return PerformResult.ERROR;
 			}
 		}
-		
+
 		private boolean equalsType(int type1, int type2) {
 			if ((type1 == 2 || type1 == 3) && (type2 == 2 || type2 == 3))
 				return true;

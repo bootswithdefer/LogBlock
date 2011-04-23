@@ -34,7 +34,7 @@ public class BlockStats implements Runnable
 		boolean hist = false;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
+		final SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
 		try {
 			if (conn == null) {
 				player.sendMessage(ChatColor.RED + "Failed to create database connection");
@@ -53,8 +53,8 @@ public class BlockStats implements Runnable
 			player.sendMessage(ChatColor.DARK_AQUA + "Block history (" + block.getX() + ", " + block.getY() + ", " + block.getZ() + "): ");
 			while (rs.next()) {
 				String msg = formatter.format(rs.getTimestamp("date")) + " " + rs.getString("playername") + " ";
-				int type = rs.getInt("type");
-				int replaced = rs.getInt("replaced");
+				final int type = rs.getInt("type");
+				final int replaced = rs.getInt("replaced");
 				if ((type == 63 || type == 68) && rs.getString("signtext") != null)
 					msg += "created " + rs.getString("signtext");
 				else if (type == replaced) {
@@ -71,7 +71,7 @@ public class BlockStats implements Runnable
 			}
 			if (!hist)
 				player.sendMessage(ChatColor.DARK_AQUA + "None.");
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception", ex);
 		} finally {
 			try {
@@ -81,7 +81,7 @@ public class BlockStats implements Runnable
 					ps.close();
 				if (conn != null)
 					conn.close();
-			} catch (SQLException ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception on close", ex);
 			}
 		}

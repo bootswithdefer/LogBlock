@@ -18,26 +18,31 @@ public class LBBlockListener extends BlockListener
 		consumer = logblock.getConsumer();
 	}
 
+	@Override
 	public void onBlockPlace(BlockPlaceEvent event) {
 		if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST)))
 			consumer.queueBlock(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
 	}
 
+	@Override
 	public void onBlockBreak(BlockBreakEvent event) {
 		if (!event.isCancelled())
 			consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlock().getState());
 	}
 
+	@Override
 	public void onSignChange(SignChangeEvent event) {
 		if (!event.isCancelled())
 			consumer.queueSign(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), "sign [" + event.getLine(0) + "] [" + event.getLine(1) + "] [" + event.getLine(2) + "] [" + event.getLine(3) + "]");
 	}
 
+	@Override
 	public void onBlockBurn(BlockBurnEvent event) {
 		if (!event.isCancelled())
 			consumer.queueBlockBreak("Fire", event.getBlock().getState());
 	}
 
+	@Override
 	public void onLeavesDecay(LeavesDecayEvent event) {
 		if (!event.isCancelled())
 			consumer.queueBlockBreak("LeavesDecay", event.getBlock().getState());

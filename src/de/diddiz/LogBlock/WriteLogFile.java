@@ -35,8 +35,8 @@ public class WriteLogFile implements Runnable
 	public void run() {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
-		String newline = System.getProperty("line.separator");
+		final SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
+		final String newline = System.getProperty("line.separator");
 		String msg;
 		try {
 			if (conn == null) {
@@ -51,14 +51,14 @@ public class WriteLogFile implements Runnable
 			ps = conn.prepareStatement("SELECT * FROM `" + table + "` LEFT JOIN `" + table + "-sign` USING (id) INNER JOIN `lb-players` USING (playerid) WHERE playername = ? ORDER BY date ASC");
 			ps.setString(1, name);
 			rs = ps.executeQuery();
-			File file = new File ("plugins/LogBlock/log/" + name + ".log");
+			final File file = new File ("plugins/LogBlock/log/" + name + ".log");
 			file.getParentFile().mkdirs();
-			FileWriter writer = new FileWriter(file);
+			final FileWriter writer = new FileWriter(file);
 			player.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
 			while (rs.next()) {
 				msg = formatter.format(rs.getTimestamp("date")) + " " + rs.getString("playername") + " ";
-				int type = rs.getInt("type");
-				int replaced = rs.getInt("replaced");
+				final int type = rs.getInt("type");
+				final int replaced = rs.getInt("replaced");
 				if ((type == 63 || type == 68) && rs.getString("signtext") != null)
 					msg += "created " + rs.getString("signtext");
 				else if (type == replaced) {
@@ -74,10 +74,10 @@ public class WriteLogFile implements Runnable
 			}
 			writer.close();
 			player.sendMessage(ChatColor.GREEN + "Done");
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			player.sendMessage(ChatColor.RED + "SQL exception");
 			log.log(Level.SEVERE, "[LogBlock WriteLogFile] SQL exception", ex);
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			player.sendMessage(ChatColor.RED + "IO exception");
 			log.log(Level.SEVERE, "[LogBlock WriteLogFile] IO exception", ex);
 		} finally {
@@ -88,7 +88,7 @@ public class WriteLogFile implements Runnable
 					ps.close();
 				if (conn != null)
 					conn.close();
-			} catch (SQLException ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock BlockStats] SQL exception on close", ex);
 			}
 		}

@@ -25,7 +25,7 @@ public class AreaBlockSearch implements Runnable
 
 	AreaBlockSearch(LogBlock logblock, Player player, int type, int size) {
 		this.player = player;
-		this.location = player.getLocation();
+		location = player.getLocation();
 		this.type = type;
 		this.size = size;
 		log = logblock.getServer().getLogger();
@@ -33,11 +33,12 @@ public class AreaBlockSearch implements Runnable
 		table = logblock.getConfig().tables.get(player.getWorld().getName().hashCode());
 	}
 
+	@Override
 	public void run() {
 		boolean hist = false;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
+		final SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
 		try {
 			if (conn == null) {
 				player.sendMessage(ChatColor.RED + "Failed to create database connection");
@@ -72,7 +73,7 @@ public class AreaBlockSearch implements Runnable
 			}
 			if (!hist)
 				player.sendMessage(ChatColor.DARK_AQUA + "None.");
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock AreaBlockSearch] SQL exception", ex);
 		} finally {
 			try {
@@ -82,7 +83,7 @@ public class AreaBlockSearch implements Runnable
 					ps.close();
 				if (conn != null)
 					conn.close();
-			} catch (SQLException ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock AreaBlockSearch] SQL exception on close", ex);
 			}
 		}

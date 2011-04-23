@@ -15,6 +15,7 @@ public class LBToolPlayerListener extends PlayerListener
 		config = logblock.getConfig();
 	}
 
+	@Override
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		if (!event.isCancelled()) {
 			if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == config.toolID && logblock.checkPermission(event.getPlayer(), "logblock.lookup")) {

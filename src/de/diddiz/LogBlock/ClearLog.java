@@ -31,12 +31,12 @@ public class ClearLog implements Runnable
 				return;
 			dumpFolder.mkdirs();
 			state = conn.createStatement();
-			String time = new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis() - config.keepLogDays*86400000L);
+			final String time = new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis() - config.keepLogDays*86400000L);
 			ResultSet rs;
-			for (String table : config.tables.values()) {
+			for (final String table : config.tables.values()) {
 				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` WHERE date < '" + time + "'");
 				rs.next();
-				int deleted = rs.getInt(1); 
+				int deleted = rs.getInt(1);
 				if (deleted > 0) {
 					if (config.dumpDeletedLog)
 						state.execute("SELECT * FROM `" + table + "` WHERE date < '" + time + "' INTO OUTFILE '" + new File(dumpFolder, table + "-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
@@ -45,7 +45,7 @@ public class ClearLog implements Runnable
 				}
 				rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL");
 				rs.next();
-				deleted = rs.getInt(1); 
+				deleted = rs.getInt(1);
 				if (deleted > 0) {
 					if (config.dumpDeletedLog)
 						state.execute("SELECT id, signtext FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, table + "-sign-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
@@ -54,7 +54,7 @@ public class ClearLog implements Runnable
 				}
 				rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL");
 				rs.next();
-				deleted = rs.getInt(1); 
+				deleted = rs.getInt(1);
 				if (deleted > 0) {
 					if (config.dumpDeletedLog)
 						state.execute("SELECT id, intype, inamount, outtype, outamount FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, table + "-chest-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
@@ -62,7 +62,7 @@ public class ClearLog implements Runnable
 					log.info("[LogBlock] Cleared out table " + table + "-chest. Deleted " + deleted + " entries.");
 				}
 			}
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
 		} finally {
 			try {
@@ -70,7 +70,7 @@ public class ClearLog implements Runnable
 					state.close();
 				if (conn != null)
 					conn.close();
-			} catch (SQLException ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
 			}
 		}

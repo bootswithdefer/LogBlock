@@ -26,16 +26,19 @@ public class LBPlayerListener extends PlayerListener
 		consumer = logblock.getConsumer();
 	}
 
+	@Override
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		if (!event.isCancelled() && event.getAction() == Action.RIGHT_CLICK_BLOCK && (event.getClickedBlock().getType() == Material.CHEST || event.getClickedBlock().getType() == Material.FURNACE ||event.getClickedBlock().getType() == Material.DISPENSER))
 			consumer.queueChestAccess(event.getPlayer().getName(), event.getClickedBlock().getLocation(), event.getClickedBlock().getTypeId(),(short)0, (byte)0, (short)0, (byte)0);
-	}	
+	}
 
+	@Override
 	public void onPlayerBucketFill(PlayerBucketFillEvent event) {
 		if (!event.isCancelled())
 			consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlockClicked().getState());
 	}
 
+	@Override
 	public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
 		if (event.getBucket() == Material.WATER_BUCKET)
 			consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()).getLocation(), 9, (byte)0);
@@ -43,15 +46,16 @@ public class LBPlayerListener extends PlayerListener
 			consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()).getLocation(), 11, (byte)0);
 	}
 
+	@Override
 	public void onPlayerJoin(PlayerJoinEvent event) {
-		Connection conn = logblock.getConnection();
+		final Connection conn = logblock.getConnection();
 		if (conn == null)
 			return;
 		Statement state = null;
 		try {
 			state = conn.createStatement();
 			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + event.getPlayer().getName() + "');");
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
 		} finally {
 			try {
@@ -59,7 +63,7 @@ public class LBPlayerListener extends PlayerListener
 					state.close();
 				if (conn != null)
 					conn.close();
-			} catch (SQLException ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
 			}
 		}

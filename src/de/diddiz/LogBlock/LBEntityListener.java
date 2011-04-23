@@ -23,27 +23,29 @@ public class LBEntityListener extends EntityListener
 		consumer = logblock.getConsumer();
 	}
 
+	@Override
 	public void onEntityExplode(EntityExplodeEvent event) {
-	if (!event.isCancelled()) {	
-		String name;
-		if (event.getEntity() instanceof TNTPrimed)
-			name = "TNT";
-		else if (event.getEntity() instanceof Creeper)
-			name = "Creeper";
-		else if (event.getEntity() instanceof Fireball)
-			name = "Ghast";
-		else
-			name = "Environment";
-		for (Block block : event.blockList())
-			consumer.queueBlockBreak(name, block.getState());
+		if (!event.isCancelled()) {
+			String name;
+			if (event.getEntity() instanceof TNTPrimed)
+				name = "TNT";
+			else if (event.getEntity() instanceof Creeper)
+				name = "Creeper";
+			else if (event.getEntity() instanceof Fireball)
+				name = "Ghast";
+			else
+				name = "Environment";
+			for (final Block block : event.blockList())
+				consumer.queueBlockBreak(name, block.getState());
 		}
 	}
 
+	@Override
 	public void onEntityDamage(EntityDamageEvent event) {
 		if (event.isCancelled() || !(event instanceof EntityDamageByEntityEvent) || !(event.getEntity() instanceof LivingEntity))
 			return;
-		LivingEntity victim = (LivingEntity)event.getEntity();
-		Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
+		final LivingEntity victim = (LivingEntity)event.getEntity();
+		final Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
 		if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0 )
 			return;
 		if (config.logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))

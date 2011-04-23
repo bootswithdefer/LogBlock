@@ -38,9 +38,9 @@ public class Config {
 	}
 
 	Config (LogBlock logblock) throws Exception {
-		Configuration config = logblock.getConfiguration();
+		final Configuration config = logblock.getConfiguration();
 		config.load();
-		List<String> keys = config.getKeys(null);
+		final List<String> keys = config.getKeys(null);
 		List<String> subkeys;
 		if (!keys.contains("version"))
 			config.setProperty("version", logblock.getDescription().getVersion());
@@ -133,7 +133,7 @@ public class Config {
 		logKills = config.getBoolean("logging.logKills", false);
 		try {
 			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel"));
-		} catch (IllegalArgumentException ex) {
+		} catch (final IllegalArgumentException ex) {
 			throw new Exception("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
 		dontRollback = config.getIntList("rollback.dontRollback", null);
@@ -146,8 +146,8 @@ public class Config {
 		toolblockID = config.getInt("lookup.toolblockID", 7);
 		if (Material.getMaterial(toolblockID) == null || !Material.getMaterial(toolblockID).isBlock() || toolblockID == 0)
 			throw new Exception("lookup.toolblockID doesn't appear to be a valid block id");
-		List<String> worldNames = config.getStringList("loggedWorlds", null);
-		List<String> worldTables = config.getStringList("tables", null);
+		final List<String> worldNames = config.getStringList("loggedWorlds", null);
+		final List<String> worldTables = config.getStringList("tables", null);
 		tables = new HashMap<Integer, String>();
 		if (worldNames == null || worldTables == null || worldNames.size() == 0 || worldNames.size() != worldTables.size())
 			throw new Exception("worldNames or worldTables not set porperly");

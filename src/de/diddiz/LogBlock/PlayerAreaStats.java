@@ -29,6 +29,7 @@ public class PlayerAreaStats implements Runnable
 		table = logblock.getConfig().tables.get(player.getWorld().getName().hashCode());
 	}
 
+	@Override
 	public void run() {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -64,7 +65,7 @@ public class PlayerAreaStats implements Runnable
 					player.sendMessage(ChatColor.GOLD + String.format("%-6d %-6d %s", rs.getInt("created"), rs.getInt("destroyed"), Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' ')));
 				}
 			}
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock PlayerAreaStats] SQL exception", ex);
 		} finally {
 			try {
@@ -74,7 +75,7 @@ public class PlayerAreaStats implements Runnable
 					ps.close();
 				if (conn != null)
 					conn.close();
-			} catch (SQLException ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock PlayerAreaStats] SQL exception on close", ex);
 			}
 		}

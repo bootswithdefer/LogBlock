@@ -55,12 +55,12 @@ public class LogBlock extends JavaPlugin
 		log = getServer().getLogger();
 		try	{
 			config = new Config(this);
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Exception while reading config:", ex);
 			errorAtLoading = true;
 			return;
 		}
-		File file = new File("lib/mysql-connector-java-bin.jar");
+		final File file = new File("lib/mysql-connector-java-bin.jar");
 		try {
 			if (!file.exists() || file.length() == 0) {
 				log.info("[LogBlock] Downloading " + file.getName() + "...");
@@ -68,16 +68,16 @@ public class LogBlock extends JavaPlugin
 			}
 			if (!file.exists() || file.length() == 0)
 				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			log.log(Level.SEVERE, "[LogBlock] Error while downloading " + file.getName() + ".");
 			errorAtLoading = true;
 			return;
 		}
 		try {
 			pool = new ConnectionPool("com.mysql.jdbc.Driver", config.url, config.user, config.password);
-			Connection conn = getConnection();
+			final Connection conn = getConnection();
 			conn.close();
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Exception while checking database connection", ex);
 			errorAtLoading = true;
 			return;
@@ -103,10 +103,10 @@ public class LogBlock extends JavaPlugin
 			log.info("[LogBlock] Permissions plugin not found. Using default permissions.");
 		if (config.keepLogDays >= 0)
 			new Thread(new ClearLog(this)).start();
-		LBBlockListener lbBlockListener = new LBBlockListener(this);
-		LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
-		LBEntityListener lbEntityListener = new LBEntityListener(this);
-		PluginManager pm = getServer().getPluginManager();
+		final LBBlockListener lbBlockListener = new LBBlockListener(this);
+		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
+		final LBEntityListener lbEntityListener = new LBEntityListener(this);
+		final PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(this), Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Monitor, this);
 		if (config.logBlockCreations) {
@@ -121,7 +121,7 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Priority.Monitor, this);
 		if (config.logFire)
 			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Priority.Monitor, this);
-		if (config.logExplosions) 
+		if (config.logExplosions)
 			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Priority.Monitor, this);
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
@@ -151,7 +151,7 @@ public class LogBlock extends JavaPlugin
 			timer.cancel();
 		if (consumer != null && consumer.getQueueSize() > 0) {
 			log.info("[LogBlock] Waiting for consumer ...");
-			Thread thread = new Thread(consumer);
+			final Thread thread = new Thread(consumer);
 			while (consumer.getQueueSize() > 0) {
 				log.info("[LogBlock] Remaining queue size: " + consumer.getQueueSize());
 				thread.run();
@@ -168,52 +168,52 @@ public class LogBlock extends JavaPlugin
 			sender.sendMessage("You aren't a player");
 			return true;
 		}
-		Player player = (Player)sender;
+		final Player player = (Player)sender;
 		if (args.length == 0) {
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + getDescription().getVersion() + " by DiddiZ");
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
 		} else if (args[0].equalsIgnoreCase("tool")) {
 			if (checkPermission(player, "logblock.tool")) {
 				if (player.getInventory().contains(config.toolID))
-					player.sendMessage(ChatColor.RED + "You have alredy a tool"); 
+					player.sendMessage(ChatColor.RED + "You have alredy a tool");
 				else {
-					int free = player.getInventory().firstEmpty();
+					final int free = player.getInventory().firstEmpty();
 					if (free >= 0) {
 						player.getInventory().setItem(free, player.getItemInHand());
 						player.setItemInHand(new ItemStack(config.toolID, 1));
-						player.sendMessage(ChatColor.GREEN + "Here is your tool."); 
+						player.sendMessage(ChatColor.GREEN + "Here is your tool.");
 					} else
-						player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory"); 
+						player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory");
 				}
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("toolblock")) {
 			if (checkPermission(player, "logblock.toolblock")) {
 				if (player.getInventory().contains(config.toolblockID))
-					player.sendMessage(ChatColor.RED + "You have alredy a tool"); 
+					player.sendMessage(ChatColor.RED + "You have alredy a tool");
 				else {
-					int free = player.getInventory().firstEmpty();
+					final int free = player.getInventory().firstEmpty();
 					if (free >= 0) {
 						player.getInventory().setItem(free, player.getItemInHand());
 						player.setItemInHand(new ItemStack(config.toolblockID, 1));
-						player.sendMessage(ChatColor.GREEN + "Here's your tool."); 
+						player.sendMessage(ChatColor.GREEN + "Here's your tool.");
 					} else
-						player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory"); 
+						player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory");
 				}
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("hide")) {
 			if (checkPermission(player, "logblock.hide")) {
 				if (consumer.hide(player))
-					player.sendMessage(ChatColor.GREEN + "You are now hided and won't appear in any log. Type '/lb hide' again to unhide"); 
+					player.sendMessage(ChatColor.GREEN + "You are now hided and won't appear in any log. Type '/lb hide' again to unhide");
 				else
-					player.sendMessage(ChatColor.GREEN + "You aren't hided anylonger."); 
+					player.sendMessage(ChatColor.GREEN + "You aren't hided anylonger.");
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 		} else if (args[0].equalsIgnoreCase("savequeue")) {
 			if (checkPermission(player, "logblock.rollback")) {
 				player.sendMessage(ChatColor.DARK_AQUA + "Current queue size: " + consumer.getQueueSize());
-				Thread thread = new Thread(consumer);
+				final Thread thread = new Thread(consumer);
 				while (consumer.getQueueSize() > 0) {
 					thread.run();
 				}
@@ -240,14 +240,14 @@ public class LogBlock extends JavaPlugin
 					if (args.length == 3 && isInt(args[2]))
 						radius = Integer.parseInt(args[2]);
 					new Thread(new PlayerAreaStats(this, player, args[1], radius)).start();
-					} else
-						player.sendMessage(ChatColor.RED + "Usage: /lb player [name] <radius>"); 
+				} else
+					player.sendMessage(ChatColor.RED + "Usage: /lb player [name] <radius>");
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("block")) {
 			if (checkPermission(player,"logblock.area")) {
 				if (args.length == 2 || args.length == 3) {
-					Material mat = Material.matchMaterial(args[1]);
+					final Material mat = Material.matchMaterial(args[1]);
 					int radius = config.defaultDist;
 					if (args.length == 3 && isInt(args[2]))
 						radius = Integer.parseInt(args[2]);
@@ -269,7 +269,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[3], args[4]);
 							player.sendMessage(ChatColor.GREEN + "Rolling back " + args[2] + " by " + minutes + " minutes.");
 							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, args[2], -1, null, minutes, false));
-						} else 
+						} else
 							player.sendMessage(ChatColor.RED + "Usage: /lb rollback player [name] <time> <minutes|hours|days>");
 					} else if (args[1].equalsIgnoreCase("area")) {
 						if (args.length == 3 || args.length == 5) {
@@ -297,9 +297,9 @@ public class LogBlock extends JavaPlugin
 						if (args.length == 2 || args.length == 4) {
 							if (args.length == 4)
 								minutes = parseTimeSpec(args[2], args[3]);
-							Plugin we = getServer().getPluginManager().getPlugin("WorldEdit");
+							final Plugin we = getServer().getPluginManager().getPlugin("WorldEdit");
 							if (we != null) {
-								Selection sel = ((WorldEditPlugin)we).getSelection(player);
+								final Selection sel = ((WorldEditPlugin)we).getSelection(player);
 								if (sel != null) {
 									if (sel instanceof CuboidSelection) {
 										player.sendMessage(ChatColor.GREEN + "Rolling back selection by " + minutes + " minutes.");
@@ -310,7 +310,7 @@ public class LogBlock extends JavaPlugin
 									player.sendMessage(ChatColor.RED + "No selection defined");
 							} else
 								player.sendMessage(ChatColor.RED + "WorldEdit plugin not found");
-						} else 
+						} else
 							player.sendMessage(ChatColor.RED + "Usage: /lb rollback selection <time> <minutes|hours|days>");
 					} else
 						player.sendMessage(ChatColor.RED + "Wrong rollback mode");
@@ -333,7 +333,7 @@ public class LogBlock extends JavaPlugin
 								minutes = parseTimeSpec(args[3], args[4]);
 							player.sendMessage(ChatColor.GREEN + "Redoing " + args[2] + " for " + minutes + " minutes.");
 							getServer().getScheduler().scheduleAsyncDelayedTask(this, new Rollback(this, player, args[2], -1, null, minutes, true));
-						} else 
+						} else
 							player.sendMessage(ChatColor.RED + "Usage: /lb redo player [name] <time> <minutes|hours|days>");
 					} else if (args[1].equalsIgnoreCase("area")) {
 						if (args.length == 3 || args.length == 5) {
@@ -361,9 +361,9 @@ public class LogBlock extends JavaPlugin
 						if (args.length == 2 || args.length == 4) {
 							if (args.length == 4)
 								minutes = parseTimeSpec(args[2], args[3]);
-							Plugin we = getServer().getPluginManager().getPlugin("WorldEdit");
+							final Plugin we = getServer().getPluginManager().getPlugin("WorldEdit");
 							if (we != null) {
-								Selection sel = ((WorldEditPlugin)we).getSelection(player);
+								final Selection sel = ((WorldEditPlugin)we).getSelection(player);
 								if (sel != null) {
 									if (sel instanceof CuboidSelection) {
 										player.sendMessage(ChatColor.GREEN + "Redoing selection for " + minutes + " minutes.");
@@ -374,7 +374,7 @@ public class LogBlock extends JavaPlugin
 									player.sendMessage(ChatColor.RED + "No selection defined");
 							} else
 								player.sendMessage(ChatColor.RED + "WorldEdit plugin not found");
-						} else 
+						} else
 							player.sendMessage(ChatColor.RED + "Usage: /lb redo selection <time> <minutes|hours|days>");
 					} else
 						player.sendMessage(ChatColor.RED + "Wrong redo mode");
@@ -424,12 +424,12 @@ public class LogBlock extends JavaPlugin
 	}
 
 	private boolean checkTables() {
-		Connection conn = getConnection();
+		final Connection conn = getConnection();
 		Statement state = null;
 		if (conn == null)
 			return false;
 		try {
-			DatabaseMetaData dbm = conn.getMetaData();
+			final DatabaseMetaData dbm = conn.getMetaData();
 			state = conn.createStatement();
 			if (!dbm.getTables(null, null, "lb-players", null).next())	{
 				log.log(Level.INFO, "[LogBlock] Crating table lb-players.");
@@ -438,7 +438,7 @@ public class LogBlock extends JavaPlugin
 					return false;
 				state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('Environment')");
 			}
-			for (String table : config.tables.values()) {
+			for (final String table : config.tables.values()) {
 				if (!dbm.getTables(null, null, table, null).next())	{
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
 					state.execute("CREATE TABLE `" + table + "` (id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', playerid SMALLINT UNSIGNED NOT NULL DEFAULT '0', replaced TINYINT UNSIGNED NOT NULL DEFAULT '0', type TINYINT UNSIGNED NOT NULL DEFAULT '0', data TINYINT UNSIGNED NOT NULL DEFAULT '0', x SMALLINT NOT NULL DEFAULT '0', y TINYINT UNSIGNED NOT NULL DEFAULT '0', z SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (id), KEY coords (y, x, z), KEY date (date));");
@@ -463,10 +463,10 @@ public class LogBlock extends JavaPlugin
 					if (!dbm.getTables(null, null, table + "-kills", null).next())
 						return false;
 					state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('Chicken'), ('Cow'), ('Creeper'), ('Ghast'), ('Giant'), ('Pig'), ('PigZombie'), ('Sheep'), ('Skeleton'), ('Slime'), ('Spider'), ('Squid'), ('Wolf'), ('Zombie')");
-					}
+				}
 			}
 			return true;
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock] SQL exception while checking tables", ex);
 		} finally {
 			try {
@@ -474,7 +474,7 @@ public class LogBlock extends JavaPlugin
 					state.close();
 				if (conn != null)
 					conn.close();
-			} catch (SQLException ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
 			}
 		}
@@ -496,7 +496,7 @@ public class LogBlock extends JavaPlugin
 	}
 
 	static int parseTimeSpec(String timespec) {
-		String[] split = timespec.split(" ");
+		final String[] split = timespec.split(" ");
 		if (split.length != 2)
 			return 0;
 		return parseTimeSpec(split[0], split[1]);
@@ -506,13 +506,13 @@ public class LogBlock extends JavaPlugin
 		int min;
 		try {
 			min = Integer.parseInt(time);
-		} catch (NumberFormatException ex) {
+		} catch (final NumberFormatException ex) {
 			return 0;
 		}
 		if (unit.startsWith("hour"))
 			min *= 60;
 		else if (unit.startsWith("day"))
-			min *= (60*24);
+			min *= 60*24;
 		return min;
 	}
 
@@ -520,15 +520,15 @@ public class LogBlock extends JavaPlugin
 		try {
 			Integer.parseInt(str);
 			return true;
-		} catch (NumberFormatException ex) {
+		} catch (final NumberFormatException ex) {
 			return false;
 		}
 	}
-	
+
 	public Connection getConnection() {
 		try {
 			return pool.connect(ConnectionPool.URL_PREFIX, null);
-		} catch (SQLException ex) {
+		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock] Error while fetching connection", ex);
 			return null;
 		}
