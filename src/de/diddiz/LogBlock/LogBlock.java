@@ -229,9 +229,9 @@ public class LogBlock extends JavaPlugin
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("world")) {
-			if (checkPermission(player,"logblock.area")) {
+			if (checkPermission(player,"logblock.area"))
 				new Thread(new AreaStats(this, player, Short.MAX_VALUE)).start();
-			} else
+			else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("player")) {
 			if (checkPermission(player,"logblock.area")) {
@@ -389,17 +389,16 @@ public class LogBlock extends JavaPlugin
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("writelogfile")) {
 			if (checkPermission(player,"logblock.rollback")) {
-				if (args.length == 2) {
+				if (args.length == 2)
 					new Thread(new WriteLogFile(this, player, args[1])).start();
-				}
 				else
 					player.sendMessage(ChatColor.RED + "Usage: /lb writelogfile [name]");
 			} else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("me")) {
-			if (checkPermission(player,"logblock.me")) {
+			if (checkPermission(player,"logblock.me"))
 				new Thread(new PlayerAreaStats(this, player, player.getName(), Short.MAX_VALUE)).start();
-			} else
+			else
 				player.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 		} else if (args[0].equalsIgnoreCase("help")) {
 			player.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock Commands:");

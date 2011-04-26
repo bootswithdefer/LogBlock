@@ -192,9 +192,9 @@ public class Rollback implements Runnable
 		}
 
 		private boolean equalsType(int type1, int type2) {
-			if ((type1 == 2 || type1 == 3) && (type2 == 2 || type2 == 3))
-				return true;
 			if (type1 == type2)
+				return true;
+			if ((type1 == 2 || type1 == 3) && (type2 == 2 || type2 == 3))
 				return true;
 			return false;
 		}

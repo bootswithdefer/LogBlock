@@ -26,7 +26,7 @@ public class LBBlockListener extends BlockListener
 			final BlockState after = event.getBlockPlaced().getState();
 			if (before.getTypeId() == 0)
 				consumer.queueBlockPlace(event.getPlayer().getName(), after);
-			else if (before.getTypeId() >= 8 && before.getTypeId() <= 11 && before.getRawData() == 0)
+			else if (before.getRawData() == 0)
 				consumer.queueBlock(event.getPlayer().getName(), event.getBlock().getLocation(), before.getTypeId(), after.getTypeId(), after.getRawData());
 			else
 				consumer.queueBlockReplace(event.getPlayer().getName(), before, after);
