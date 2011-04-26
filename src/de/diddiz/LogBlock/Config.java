@@ -152,7 +152,7 @@ public class Config {
 		final List<String> worldTables = config.getStringList("tables", null);
 		tables = new HashMap<Integer, String>();
 		if (worldNames == null || worldTables == null || worldNames.size() == 0 || worldNames.size() != worldTables.size())
-			throw new Exception("worldNames or worldTables not set porperly");
+			throw new Exception("worldNames or worldTables not set properly");
 		for (int i = 0; i < worldNames.size(); i++) {
 			tables.put(worldNames.get(i).hashCode(), worldTables.get(i));
 		}

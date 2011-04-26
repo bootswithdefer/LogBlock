@@ -41,7 +41,7 @@ public class ConnectionPool implements Driver {
 	public static final String URL_PREFIX = "jdbc:jdc:";
 	private static final int MAJOR_VERSION = 1;
 	private static final int MINOR_VERSION = 0;
-	private ConnectionService pool;
+	private final ConnectionService pool;
 
 	public ConnectionPool(String driver, String url, String user, String password) throws ClassNotFoundException, InstantiationException, IllegalAccessException, SQLException {
 		DriverManager.registerDriver(this);
@@ -49,42 +49,48 @@ public class ConnectionPool implements Driver {
 		pool = new ConnectionService(url, user, password);
 	}
 
+	@Override
 	public Connection connect(String url, Properties props) throws SQLException {
 		if (!url.startsWith(URL_PREFIX))
 			return null;
 		return pool.getConnection();
 	}
 
+	@Override
 	public boolean acceptsURL(String url) {
 		return url.startsWith(URL_PREFIX);
 	}
 
+	@Override
 	public int getMajorVersion() {
 		return MAJOR_VERSION;
 	}
 
+	@Override
 	public int getMinorVersion() {
 		return MINOR_VERSION;
 	}
 
+	@Override
 	public DriverPropertyInfo[] getPropertyInfo(String str, Properties props) {
 		return new DriverPropertyInfo[0];
 	}
 
+	@Override
 	public boolean jdbcCompliant() {
 		return false;
 	}
 
 	private class JDCConnection implements Connection
 	{
-		private Connection conn;
+		private final Connection conn;
 		private boolean inuse;
 		private long timestamp;
 
 		public JDCConnection(Connection conn) {
 			this.conn = conn;
-			this.inuse = false;
-			this.timestamp = 0;
+			inuse = false;
+			timestamp = 0;
 		}
 
 		public synchronized boolean lease() {
@@ -100,7 +106,7 @@ public class ConnectionPool implements Driver {
 		public boolean validate() {
 			try {
 				conn.getMetaData();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				return false;
 			}
 			return true;
@@ -114,6 +120,7 @@ public class ConnectionPool implements Driver {
 			return timestamp;
 		}
 
+		@Override
 		public void close() {
 			expireLease();
 		}
@@ -122,74 +129,92 @@ public class ConnectionPool implements Driver {
 			inuse = false;
 		}
 
+		@Override
 		public PreparedStatement prepareStatement(String sql) throws SQLException {
 			return conn.prepareStatement(sql);
 		}
 
+		@Override
 		public CallableStatement prepareCall(String sql) throws SQLException {
 			return conn.prepareCall(sql);
 		}
 
+		@Override
 		public Statement createStatement() throws SQLException {
 			return conn.createStatement();
 		}
 
+		@Override
 		public String nativeSQL(String sql) throws SQLException {
 			return conn.nativeSQL(sql);
 		}
 
+		@Override
 		public void setAutoCommit(boolean autoCommit) throws SQLException {
 			conn.setAutoCommit(autoCommit);
 		}
 
+		@Override
 		public boolean getAutoCommit() throws SQLException {
 			return conn.getAutoCommit();
 		}
 
+		@Override
 		public void commit() throws SQLException {
 			conn.commit();
 		}
 
+		@Override
 		public void rollback() throws SQLException {
 			conn.rollback();
 		}
 
+		@Override
 		public boolean isClosed() throws SQLException {
 			return conn.isClosed();
 		}
 
+		@Override
 		public DatabaseMetaData getMetaData() throws SQLException {
 			return conn.getMetaData();
 		}
 
+		@Override
 		public void setReadOnly(boolean readOnly) throws SQLException {
 			conn.setReadOnly(readOnly);
 		}
 
+		@Override
 		public boolean isReadOnly() throws SQLException {
 			return conn.isReadOnly();
 		}
 
+		@Override
 		public void setCatalog(String catalog) throws SQLException {
 			conn.setCatalog(catalog);
 		}
 
+		@Override
 		public String getCatalog() throws SQLException {
 			return conn.getCatalog();
 		}
 
+		@Override
 		public void setTransactionIsolation(int level) throws SQLException {
 			conn.setTransactionIsolation(level);
 		}
 
+		@Override
 		public int getTransactionIsolation() throws SQLException {
 			return conn.getTransactionIsolation();
 		}
 
+		@Override
 		public SQLWarning getWarnings() throws SQLException {
 			return conn.getWarnings();
 		}
 
+		@Override
 		public void clearWarnings() throws SQLException {
 			conn.clearWarnings();
 		}
@@ -220,16 +245,13 @@ public class ConnectionPool implements Driver {
 		}
 
 		@Override
-		public Statement createStatement(int resultSetType, int resultSetConcurrency)
-			throws SQLException {
+		public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
 			return conn.createStatement(resultSetType, resultSetConcurrency);
 		}
 
 		@Override
-		public Statement createStatement(int resultSetType, int resultSetConcurrency,
-			int resultSetHoldability) throws SQLException {
-			return conn
-				.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+		public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+			return conn.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
 		}
 
 		@Override
@@ -344,10 +366,10 @@ public class ConnectionPool implements Driver {
 
 	public class ConnectionService
 	{
-		private Vector<JDCConnection> connections;
-		private String url, user, password;
+		private final Vector<JDCConnection> connections;
+		private final String url, user, password;
 		final private long timeout = 60000;
-		private ConnectionReaper reaper;
+		private final ConnectionReaper reaper;
 		final private int poolsize = 10;
 
 		public ConnectionService(String url, String user, String password) {
@@ -360,19 +382,19 @@ public class ConnectionPool implements Driver {
 		}
 
 		public synchronized void reapConnections() {
-			long stale = System.currentTimeMillis() - timeout;
-			Enumeration<JDCConnection> connlist = connections.elements();
-			while ((connlist != null) && (connlist.hasMoreElements())) {
-				JDCConnection conn = connlist.nextElement();
-				if ((conn.inUse()) && (stale > conn.getLastUse()) && (!conn.validate()))
+			final long stale = System.currentTimeMillis() - timeout;
+			final Enumeration<JDCConnection> connlist = connections.elements();
+			while (connlist != null && connlist.hasMoreElements()) {
+				final JDCConnection conn = connlist.nextElement();
+				if (conn.inUse() && stale > conn.getLastUse() && !conn.validate())
 					removeConnection(conn);
 			}
 		}
 
 		public synchronized void closeConnections() {
-			Enumeration<JDCConnection> connlist = connections.elements();
-			while ((connlist != null) && (connlist.hasMoreElements())) {
-				JDCConnection conn = connlist.nextElement();
+			final Enumeration<JDCConnection> connlist = connections.elements();
+			while (connlist != null && connlist.hasMoreElements()) {
+				final JDCConnection conn = connlist.nextElement();
 				removeConnection(conn);
 			}
 		}
@@ -405,7 +427,7 @@ public class ConnectionPool implements Driver {
 
 	class ConnectionReaper extends Thread
 	{
-		private ConnectionService pool;
+		private final ConnectionService pool;
 		private final long delay = 300000;
 
 		ConnectionReaper(ConnectionService pool) {
@@ -417,8 +439,8 @@ public class ConnectionPool implements Driver {
 			while (true) {
 				try {
 					Thread.sleep(delay);
-				} catch (InterruptedException e) {}
-			pool.reapConnections();
+				} catch (final InterruptedException e) {}
+				pool.reapConnections();
 			}
 		}
 	}

@@ -15,9 +15,9 @@ public class Download
 		if (file.exists())
 			file.delete();
 		file.createNewFile();
-		InputStream in = u.openStream();
-		OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-		byte[] buffer = new byte[1024];
+		final InputStream in = u.openStream();
+		final OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+		final byte[] buffer = new byte[1024];
 		int len;
 		while ((len = in.read(buffer)) >= 0) {
 			out.write(buffer, 0, len);
