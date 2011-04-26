@@ -122,6 +122,8 @@ public class Config {
 		delay = config.getInt("consumer.delay", 6);
 		useBukkitScheduler = config.getBoolean("consumer.useBukkitScheduler", true);
 		keepLogDays = config.getInt("clearlog.keepLogDays", -1);
+		if (keepLogDays*86400000L > System.currentTimeMillis())
+			throw new Exception("Too large timespan for keepLogDays. Must be shorter than " + (int)(System.currentTimeMillis()/86400000L) + " days.");
 		dumpDeletedLog =  config.getBoolean("clearlog.dumpDeletedLog", true);
 		logBlockCreations = config.getBoolean("logging.logBlockCreations", true);
 		logBlockDestroyings = config.getBoolean("logging.logBlockDestroyings", true);
