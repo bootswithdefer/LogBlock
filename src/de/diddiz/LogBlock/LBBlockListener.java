@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import org.bukkit.Material;
+import org.bukkit.block.BlockState;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockListener;
@@ -20,8 +21,16 @@ public class LBBlockListener extends BlockListener
 
 	@Override
 	public void onBlockPlace(BlockPlaceEvent event) {
-		if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST)))
-			consumer.queueBlock(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlockReplacedState().getTypeId(), event.getBlockPlaced().getTypeId(), event.getBlockPlaced().getData());
+		if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST))) {
+			final BlockState before = event.getBlockReplacedState();
+			final BlockState after = event.getBlockPlaced().getState();
+			if (before.getTypeId() == 0)
+				consumer.queueBlockPlace(event.getPlayer().getName(), after);
+			else if (before.getTypeId() >= 8 && before.getTypeId() <= 11 && before.getRawData() == 0)
+				consumer.queueBlock(event.getPlayer().getName(), event.getBlock().getLocation(), before.getTypeId(), after.getTypeId(), after.getRawData());
+			else
+				consumer.queueBlockReplace(event.getPlayer().getName(), before, after);
+		}
 	}
 
 	@Override
