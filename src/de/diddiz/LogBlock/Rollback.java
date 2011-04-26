@@ -196,6 +196,16 @@ public class Rollback implements Runnable
 				return true;
 			if ((type1 == 2 || type1 == 3) && (type2 == 2 || type2 == 3))
 				return true;
+			if ((type1 == 8 || type1 == 9) && (type2 == 8 || type2 == 9))
+				return true;
+			if ((type1 == 10 || type1 == 11) && (type2 == 10 || type2 == 11))
+				return true;
+			if ((type1 == 73 || type1 == 74) && (type2 == 73 || type2 == 74))
+				return true;
+			if ((type1 == 75 || type1 == 76) && (type2 == 75 || type2 == 76))
+				return true;
+			if ((type1 == 93 || type1 == 94) && (type2 == 93 || type2 == 94))
+				return true;
 			return false;
 		}
 	}
