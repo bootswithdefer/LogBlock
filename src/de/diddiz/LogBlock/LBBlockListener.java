@@ -19,6 +19,8 @@ public class LBBlockListener extends BlockListener
 		consumer = logblock.getConsumer();
 	}
 
+	//TODO Flow listener
+
 	@Override
 	public void onBlockPlace(BlockPlaceEvent event) {
 		if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST))) {
@@ -26,8 +28,6 @@ public class LBBlockListener extends BlockListener
 			final BlockState after = event.getBlockPlaced().getState();
 			if (before.getTypeId() == 0)
 				consumer.queueBlockPlace(event.getPlayer().getName(), after);
-			else if (before.getRawData() == 0)
-				consumer.queueBlock(event.getPlayer().getName(), event.getBlock().getLocation(), before.getTypeId(), after.getTypeId(), after.getRawData());
 			else
 				consumer.queueBlockReplace(event.getPlayer().getName(), before, after);
 		}

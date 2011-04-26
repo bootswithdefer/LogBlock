@@ -74,13 +74,21 @@ public class Consumer extends TimerTask implements Runnable
 	 * @param after Blockstate of the block after actually being placed.
 	 */
 	public void queueBlockReplace(String playerName, BlockState before, BlockState after) {
-		queueBlockBreak(playerName, before);
-		queueBlockPlace(playerName, after);
+		if (before.getRawData() == 0) {
+			queueBlock(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), after.getTypeId(), after.getRawData());
+		} else {
+			queueBlockBreak(playerName, before);
+			queueBlockPlace(playerName, after);
+		}
 	}
 
 	public void queueBlockReplace(String playerName, Location loc, int typeBefore, byte dataBefore, int typeAfter, byte dataAfter) {
-		queueBlockBreak(playerName, loc, typeBefore, dataBefore);
-		queueBlockPlace(playerName, loc, typeAfter, dataAfter);
+		if (dataBefore == 0) {
+			queueBlock(playerName, loc, typeBefore, typeAfter, dataAfter);
+		} else {
+			queueBlockBreak(playerName, loc, typeBefore, dataBefore);
+			queueBlockPlace(playerName, loc, typeAfter, dataAfter);
+		}
 	}
 
 	/**
