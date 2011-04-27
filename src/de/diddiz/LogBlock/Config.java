@@ -23,6 +23,7 @@ public class Config {
 	public final boolean logExplosions;
 	public final boolean logFire;
 	public final boolean logLeavesDecay;
+	public final boolean logLavaFlow;
 	public final boolean logChestAccess;
 	public final boolean logKills;
 	public final LogKillsLevel logKillsLevel;
@@ -88,10 +89,12 @@ public class Config {
 			config.setProperty("logging.logExplosions", false);
 		if (!subkeys.contains("logFire"))
 			config.setProperty("logging.logFire", false);
-		if (!subkeys.contains("logChestAccess"))
-			config.setProperty("logging.logChestAccess", false);
 		if (!subkeys.contains("logLeavesDecay"))
 			config.setProperty("logging.logLeavesDecay", false);
+		if (!subkeys.contains("logLavaFlow"))
+			config.setProperty("logging.logLavaFlow", false);
+		if (!subkeys.contains("logChestAccess"))
+			config.setProperty("logging.logChestAccess", false);
 		if (!subkeys.contains("logKills"))
 			config.setProperty("logging.logKills", false);
 		if (!subkeys.contains("logKillsLevel"))
@@ -132,6 +135,7 @@ public class Config {
 		logFire = config.getBoolean("logging.logFire", false);
 		logChestAccess = config.getBoolean("logging.logChestAccess", false);
 		logLeavesDecay = config.getBoolean("logging.logLeavesDecay", false);
+		logLavaFlow = config.getBoolean("logging.logLavaFlow", false);
 		logKills = config.getBoolean("logging.logKills", false);
 		try {
 			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel"));

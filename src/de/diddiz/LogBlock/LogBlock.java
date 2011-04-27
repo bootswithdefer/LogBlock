@@ -127,6 +127,8 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
 		if (config.logChestAccess)
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
+		if (config.logLavaFlow)
+			pm.registerEvent(Type.BLOCK_FROMTO, lbBlockListener, Priority.Monitor, this);
 		if (config.logKills)
 			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Priority.Monitor, this);
 		if (config.useBukkitScheduler) {
@@ -435,8 +437,8 @@ public class LogBlock extends JavaPlugin
 				state.execute("CREATE TABLE `lb-players` (playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (playerid), UNIQUE (playername))");
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
-				state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('Environment')");
 			}
+			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('LavaFlow'), ('Environment'), ('Chicken'), ('Cow'), ('Giant'), ('Pig'), ('PigZombie'), ('Sheep'), ('Skeleton'), ('Slime'), ('Spider'), ('Squid'), ('Wolf'), ('Zombie')");
 			for (final String table : config.tables.values()) {
 				if (!dbm.getTables(null, null, table, null).next())	{
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
@@ -461,7 +463,6 @@ public class LogBlock extends JavaPlugin
 					state.execute("CREATE TABLE `" + table + "-kills` (id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer SMALLINT UNSIGNED, victim SMALLINT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, PRIMARY KEY (id));");
 					if (!dbm.getTables(null, null, table + "-kills", null).next())
 						return false;
-					state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('Chicken'), ('Cow'), ('Creeper'), ('Ghast'), ('Giant'), ('Pig'), ('PigZombie'), ('Sheep'), ('Skeleton'), ('Slime'), ('Spider'), ('Squid'), ('Wolf'), ('Zombie')");
 				}
 			}
 			return true;

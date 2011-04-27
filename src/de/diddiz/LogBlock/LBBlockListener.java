@@ -1,9 +1,11 @@
 package de.diddiz.LogBlock;
 
 import org.bukkit.Material;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
@@ -19,7 +21,23 @@ public class LBBlockListener extends BlockListener
 		consumer = logblock.getConsumer();
 	}
 
-	//TODO Flow listener
+	@Override
+	public void onBlockFromTo(BlockFromToEvent event) {
+		if (!event.isCancelled()) {
+			final int typeFrom = event.getBlock().getTypeId();
+			final int typeTo = event.getToBlock().getTypeId();
+			if (typeFrom == 10 || typeFrom == 11) {
+				if (typeTo == 0 || typeTo == 78)
+					consumer.queueBlockReplace("LavaFlow", event.getToBlock().getState(), 10, (byte)(event.getBlock().getData() + 1));
+				else if (typeTo == 8 || typeTo == 9) {
+					if (event.getFace() == BlockFace.DOWN)
+						consumer.queueBlockReplace("LavaFlow", event.getToBlock().getState(), 10, (byte)0);
+					else
+						consumer.queueBlockReplace("LavaFlow", event.getToBlock().getState(), 4, (byte)0);
+				}
+			}
+		}
+	}
 
 	@Override
 	public void onBlockPlace(BlockPlaceEvent event) {
