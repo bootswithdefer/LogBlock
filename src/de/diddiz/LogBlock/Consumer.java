@@ -152,9 +152,7 @@ public class Consumer extends TimerTask implements Runnable
 			playerName = playerName.substring(0, 32);
 		if (signtext != null)
 			signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
-		final BlockRow row = new BlockRow(loc.getWorld().getName().hashCode(), playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), signtext, ca);
-		if (!bqueue.offer(row))
-			log.info("[LogBlock] Failed to queue block for " + playerName);
+		bqueue.add(new BlockRow(loc.getWorld().getName().hashCode(), playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), signtext, ca));
 	}
 
 	/**
@@ -209,8 +207,8 @@ public class Consumer extends TimerTask implements Runnable
 		Statement state = null;
 		BlockRow b; KillRow k; String table;
 		int count = 0;
-		if (bqueue.size() > 100)
-			log.info("[LogBlock Consumer] Queue overloaded. Size: " + bqueue.size());
+		if (getQueueSize() > 1000)
+			log.info("[LogBlock Consumer] Queue overloaded. Size: " + getQueueSize());
 		try {
 			conn.setAutoCommit(false);
 			state = conn.createStatement();
