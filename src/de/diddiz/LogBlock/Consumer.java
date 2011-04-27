@@ -74,12 +74,21 @@ public class Consumer extends TimerTask implements Runnable
 	 * @param after Blockstate of the block after actually being placed.
 	 */
 	public void queueBlockReplace(String playerName, BlockState before, BlockState after) {
-		if (before.getRawData() == 0) {
-			queueBlock(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), after.getTypeId(), after.getRawData());
-		} else {
-			queueBlockBreak(playerName, before);
-			queueBlockPlace(playerName, after);
-		}
+		queueBlockReplace(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), before.getRawData(), after.getTypeId(), after.getRawData());
+	}
+
+	/**
+	 * @param before Blockstate of the block before actually being destroyed.
+	 */
+	public void queueBlockReplace(String playerName, BlockState before, int typeAfter, byte dataAfter) {
+		queueBlockReplace(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), before.getRawData(), typeAfter, dataAfter);
+	}
+
+	/**
+	 * @param after Blockstate of the block after actually being placed.
+	 */
+	public void queueBlockReplace(String playerName, int typeBefore, byte dataBefore, BlockState after) {
+		queueBlockReplace(playerName, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), typeBefore, dataBefore, after.getTypeId(), after.getRawData());
 	}
 
 	public void queueBlockReplace(String playerName, Location loc, int typeBefore, byte dataBefore, int typeAfter, byte dataAfter) {
@@ -89,22 +98,6 @@ public class Consumer extends TimerTask implements Runnable
 			queueBlockBreak(playerName, loc, typeBefore, dataBefore);
 			queueBlockPlace(playerName, loc, typeAfter, dataAfter);
 		}
-	}
-
-	/**
-	 * @param before Blockstate of the block before actually being destroyed.
-	 */
-	public void queueBlockReplace(String playerName, BlockState before, int typeAfter, byte dataAfter) {
-		queueBlockBreak(playerName, before);
-		queueBlockPlace(playerName, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), typeAfter, dataAfter);
-	}
-
-	/**
-	 * @param after Blockstate of the block after actually being placed.
-	 */
-	public void queueBlockReplace(String playerName, int typeBefore, byte dataBefore, BlockState after) {
-		queueBlockBreak(playerName, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), typeBefore, dataBefore);
-		queueBlockPlace(playerName, after);
 	}
 
 	/**
