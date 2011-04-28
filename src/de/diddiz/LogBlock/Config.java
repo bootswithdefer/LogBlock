@@ -13,7 +13,10 @@ public class Config {
 	public final String url;
 	public final String user;
 	public final String password;
-	public final int delay;
+	public final int delayBetweenRuns;
+	public final int minCountPerRun;
+	public final int maxCountPerRun;
+	public final int maxTimePerRun;
 	public final boolean useBukkitScheduler;
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
@@ -65,8 +68,19 @@ public class Config {
 		subkeys = config.getKeys("consumer");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("delay"))
-			config.setProperty("consumer.delay", 6);
+		if (!subkeys.contains("delayBetweenRuns")) {
+			if (subkeys.contains("delay")) {
+				config.setProperty("consumer.delayBetweenRuns", config.getInt("consumer.delay", 6));
+				config.removeProperty("consumer.delay");
+			} else
+				config.setProperty("consumer.delayBetweenRuns", 6);
+		}
+		if (!subkeys.contains("minCountPerRun"))
+			config.setProperty("consumer.minCountPerRun", 100);
+		if (!subkeys.contains("maxCountPerRun"))
+			config.setProperty("consumer.maxCountPerRun", 1000);
+		if (!subkeys.contains("maxTimePerRun"))
+			config.setProperty("maxTimePerRun", 100);
 		if (!subkeys.contains("useBukkitScheduler"))
 			config.setProperty("consumer.useBukkitScheduler", true);
 		subkeys = config.getKeys("clearlog");
@@ -122,7 +136,10 @@ public class Config {
 		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getString("mysql.port") + "/" + config.getString("mysql.database");
 		user = config.getString("mysql.user");
 		password = config.getString("mysql.password");
-		delay = config.getInt("consumer.delay", 6);
+		delayBetweenRuns = config.getInt("consumer.delayBetweenRuns", 6);
+		minCountPerRun = config.getInt("consumer.minCountPerRun", 100);
+		maxCountPerRun = config.getInt("consumer.maxCountPerRun", 1000);
+		maxTimePerRun = config.getInt("consumer.maxTimePerRun", 100);
 		useBukkitScheduler = config.getBoolean("consumer.useBukkitScheduler", true);
 		keepLogDays = config.getInt("clearlog.keepLogDays", -1);
 		if (keepLogDays*86400000L > System.currentTimeMillis())

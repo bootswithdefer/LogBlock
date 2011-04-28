@@ -206,42 +206,51 @@ public class Consumer extends TimerTask implements Runnable
 			return;
 		Statement state = null;
 		BlockRow b; KillRow k; String table;
-		int count = 0;
 		if (getQueueSize() > 1000)
 			log.info("[LogBlock Consumer] Queue overloaded. Size: " + getQueueSize());
 		try {
 			conn.setAutoCommit(false);
 			state = conn.createStatement();
 			final long start = System.currentTimeMillis();
-			while (count < 1000 && !bqueue.isEmpty() && (System.currentTimeMillis() - start < 100 || count < 100)) {
-				b = bqueue.poll();
-				if (b == null)
-					continue;
-				table = config.tables.get(b.worldHash);
-				state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) SELECT now(), playerid, " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.x + "', " + b.y + ", '" + b.z + "' FROM `lb-players` WHERE playername = '" + b.name + "'", Statement.RETURN_GENERATED_KEYS);
-				if (b.signtext != null) {
-					final ResultSet keys = state.getGeneratedKeys();
-					if (keys.next())
-						state.execute("INSERT INTO `" + table + "-sign` (id, signtext) values (" + keys.getInt(1) + ", '" + b.signtext + "')");
-					else
-						log.severe("[LogBlock Consumer] Failed to get generated keys");
-				} else if (b.ca != null) {
-					final ResultSet keys = state.getGeneratedKeys();
-					if (keys.next())
-						state.execute("INSERT INTO `" + table + "-chest` (id, intype, inamount, outtype, outamount) values (" + keys.getInt(1) + ", " + b.ca.inType + ", " + b.ca.inAmount + ", " + b.ca.outType + ", " + b.ca.outAmount + ")");
-					else
-						log.severe("[LogBlock Consumer] Failed to get generated keys");
+			int count = 0;
+			if (!bqueue.isEmpty()) {
+				while (count < config.maxCountPerRun && !bqueue.isEmpty() && (System.currentTimeMillis() - start < config.maxTimePerRun || count < config.minCountPerRun)) {
+					b = bqueue.poll();
+					if (b == null)
+						continue;
+					table = config.tables.get(b.worldHash);
+					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) SELECT now(), playerid, " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.x + "', " + b.y + ", '" + b.z + "' FROM `lb-players` WHERE playername = '" + b.name + "'", Statement.RETURN_GENERATED_KEYS);
+					if (b.signtext != null) {
+						final ResultSet keys = state.getGeneratedKeys();
+						if (keys.next())
+							state.execute("INSERT INTO `" + table + "-sign` (id, signtext) values (" + keys.getInt(1) + ", '" + b.signtext + "')");
+						else
+							log.severe("[LogBlock Consumer] Failed to get generated keys");
+					} else if (b.ca != null) {
+						final ResultSet keys = state.getGeneratedKeys();
+						if (keys.next())
+							state.execute("INSERT INTO `" + table + "-chest` (id, intype, inamount, outtype, outamount) values (" + keys.getInt(1) + ", " + b.ca.inType + ", " + b.ca.inAmount + ", " + b.ca.outType + ", " + b.ca.outAmount + ")");
+						else
+							log.severe("[LogBlock Consumer] Failed to get generated keys");
+					}
+					count++;
+					if (count % 100 == 0)
+						conn.commit();
 				}
-				count++;
+				conn.commit();
 			}
-			conn.commit();
-			while (!kqueue.isEmpty() && count < 1000 && (System.currentTimeMillis() - start < 100 || count < 100)) {
-				k = kqueue.poll();
-				if (k == null)
-					continue;
-				state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) SELECT now(), playerid, (SELECT playerid FROM `lb-players` WHERE playername = '" + k.victim + "'), " + k.weapon + " FROM `lb-players` WHERE playername = '" + k.killer + "'");
+			if (!kqueue.isEmpty()) {
+				while (count < config.maxCountPerRun && !kqueue.isEmpty() && (System.currentTimeMillis() - start < config.maxTimePerRun || count < config.minCountPerRun)) {
+					k = kqueue.poll();
+					if (k == null)
+						continue;
+					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) SELECT now(), playerid, (SELECT playerid FROM `lb-players` WHERE playername = '" + k.victim + "'), " + k.weapon + " FROM `lb-players` WHERE playername = '" + k.killer + "'");
+					count++;
+					if (count % 100 == 0)
+						conn.commit();
+				}
+				conn.commit();
 			}
-			conn.commit();
 		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
 		} finally {
