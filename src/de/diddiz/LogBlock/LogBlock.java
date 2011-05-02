@@ -74,7 +74,7 @@ public class LogBlock extends JavaPlugin
 			return;
 		}
 		try {
-			pool = new ConnectionPool("com.mysql.jdbc.Driver", config.url, config.user, config.password);
+			pool = new ConnectionPool(config.url, config.user, config.password);
 			final Connection conn = getConnection();
 			conn.close();
 		} catch (final Exception ex) {
@@ -159,6 +159,8 @@ public class LogBlock extends JavaPlugin
 				thread.run();
 			}
 		}
+		if (pool != null)
+			pool.closeConnections();
 		log.info("LogBlock disabled.");
 	}
 
@@ -527,7 +529,7 @@ public class LogBlock extends JavaPlugin
 
 	public Connection getConnection() {
 		try {
-			return pool.connect(ConnectionPool.URL_PREFIX, null);
+			return pool.getConnection();
 		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock] Error while fetching connection", ex);
 			return null;
