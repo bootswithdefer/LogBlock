@@ -80,7 +80,7 @@ public class Config {
 		if (!subkeys.contains("maxCountPerRun"))
 			config.setProperty("consumer.maxCountPerRun", 1000);
 		if (!subkeys.contains("maxTimePerRun"))
-			config.setProperty("maxTimePerRun", 100);
+			config.setProperty("consumer.maxTimePerRun", 100);
 		if (!subkeys.contains("useBukkitScheduler"))
 			config.setProperty("consumer.useBukkitScheduler", true);
 		subkeys = config.getKeys("clearlog");
