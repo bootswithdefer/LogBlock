@@ -16,7 +16,6 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
@@ -39,49 +38,40 @@ public class ConnectionPool {
 	}
 
 	public synchronized Connection getConnection() throws SQLException {
-		JDCConnection c;
+		JDCConnection conn;
 		for (int i = 0; i < connections.size(); i++) {
-			c = connections.elementAt(i);
-			if (c.lease()) {
-				if (c.isValid())
-					return c;
+			conn = connections.get(i);
+			if (conn.lease()) {
+				if (conn.isValid())
+					return conn;
 				else {
-					c.terminate();
-					removeConnection(c);
+					conn.terminate();
+					connections.remove(conn);
 				}
 			}
 		}
-		c = new JDCConnection(DriverManager.getConnection(url, user, password));
-		c.lease();
-		if (!c.isValid()) {
-			c.terminate();
+		conn = new JDCConnection(DriverManager.getConnection(url, user, password));
+		conn.lease();
+		if (!conn.isValid()) {
+			conn.terminate();
 			throw new SQLException("Failed to validate a brand new connection");
 		}
-		connections.addElement(c);
-		return c;
+		connections.add(conn);
+		return conn;
 	}
 
 	private synchronized void reapConnections() {
 		final long stale = System.currentTimeMillis() - timeout;
-		final Enumeration<JDCConnection> connlist = connections.elements();
-		while (connlist != null && connlist.hasMoreElements()) {
-			final JDCConnection conn = connlist.nextElement();
+		for (final JDCConnection conn : connections)
 			if (conn.inUse() && stale > conn.getLastUse() && !conn.isValid())
-				removeConnection(conn);
-		}
+				connections.remove(conn);
 	}
 
 	public synchronized void closeConnections() {
-		final Enumeration<JDCConnection> connlist = connections.elements();
-		while (connlist != null && connlist.hasMoreElements()) {
-			final JDCConnection conn = connlist.nextElement();
+		for (final JDCConnection conn : connections) {
 			conn.terminate();
-			removeConnection(conn);
+			connections.remove(conn);
 		}
-	}
-
-	private synchronized void removeConnection(JDCConnection conn) {
-		connections.removeElement(conn);
 	}
 
 	private class ConnectionReaper extends Thread
@@ -116,9 +106,9 @@ public class ConnectionPool {
 		}
 
 		public synchronized boolean lease() {
-			if (inuse) {
+			if (inuse)
 				return false;
-			} else {
+			else {
 				inuse = true;
 				timestamp = System.currentTimeMillis();
 				return true;
