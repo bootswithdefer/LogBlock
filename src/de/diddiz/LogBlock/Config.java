@@ -3,7 +3,9 @@ package de.diddiz.LogBlock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.bukkit.Material;
 import org.bukkit.util.config.Configuration;
@@ -30,8 +32,8 @@ public class Config {
 	public final boolean logChestAccess;
 	public final boolean logKills;
 	public final LogKillsLevel logKillsLevel;
-	public final List<Integer> dontRollback;
-	public final List<Integer> replaceAnyway;
+	public final Set<Integer> dontRollback;
+	public final Set<Integer> replaceAnyway;
 	public final int defaultDist;
 	public final int defaultTime;
 	public final int toolID;
@@ -159,8 +161,8 @@ public class Config {
 		} catch (final IllegalArgumentException ex) {
 			throw new Exception("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
-		dontRollback = config.getIntList("rollback.dontRollback", null);
-		replaceAnyway = config.getIntList("rollback.replaceAnyway", null);
+		dontRollback = new HashSet<Integer>(config.getIntList("rollback.dontRollback", null));
+		replaceAnyway = new HashSet<Integer>(config.getIntList("rollback.replaceAnyway", null));
 		defaultDist = config.getInt("lookup.defaultDist", 20);
 		defaultTime = LogBlock.parseTimeSpec(config.getString("lookup.defaultTime"));
 		toolID = config.getInt("lookup.toolID", 270);
