@@ -74,6 +74,7 @@ public class LogBlock extends JavaPlugin
 			return;
 		}
 		try {
+			log.info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new ConnectionPool(config.url, config.user, config.password);
 			final Connection conn = getConnection();
 			conn.close();
