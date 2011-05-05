@@ -45,8 +45,8 @@ public class ConnectionPool {
 				if (conn.isValid())
 					return conn;
 				else {
-					conn.terminate();
 					connections.remove(conn);
+					conn.terminate();
 				}
 			}
 		}
@@ -69,8 +69,8 @@ public class ConnectionPool {
 
 	public synchronized void closeConnections() {
 		for (final JDCConnection conn : connections) {
-			conn.terminate();
 			connections.remove(conn);
+			conn.terminate();
 		}
 	}
 
@@ -130,7 +130,7 @@ public class ConnectionPool {
 				if (!conn.getAutoCommit())
 				conn.setAutoCommit(true);
 			} catch (SQLException ex) {
-				removeConnection(this);
+				connections.remove(conn);
 				terminate();
 			}
 		}
