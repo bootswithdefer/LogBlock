@@ -7,6 +7,8 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,6 +43,7 @@ public class LogBlock extends JavaPlugin
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
 	private boolean errorAtLoading = false;
+	private Map<Integer, Session> sessions = new HashMap<Integer, Session>();
 
 	public Config getConfig() {
 		return config;
@@ -535,5 +538,14 @@ public class LogBlock extends JavaPlugin
 			log.log(Level.SEVERE, "[LogBlock] Error while fetching connection", ex);
 			return null;
 		}
+	}
+	
+	public Session getSession(String playerName) {
+		Session session = sessions.get(playerName.hashCode());
+		if (session == null) {
+			session = new Session();
+			sessions.put(playerName.hashCode(), session);
+		}
+		return session;
 	}
 }
