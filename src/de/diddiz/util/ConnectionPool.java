@@ -136,6 +136,13 @@ public class ConnectionPool {
 		@Override
 		public void close() {
 			inuse = false;
+			try {
+				if (!conn.getAutoCommit())
+				conn.setAutoCommit(true);
+			} catch (SQLException ex) {
+				removeConnection(this);
+				terminate();
+			}
 		}
 
 		@Override

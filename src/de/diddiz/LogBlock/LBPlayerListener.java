@@ -53,8 +53,10 @@ public class LBPlayerListener extends PlayerListener
 			return;
 		Statement state = null;
 		try {
+			conn.setAutoCommit(false);
 			state = conn.createStatement();
 			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + event.getPlayer().getName() + "');");
+			conn.commit();
 		} catch (final SQLException ex) {
 			log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
 		} finally {
