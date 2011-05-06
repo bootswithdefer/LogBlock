@@ -271,7 +271,7 @@ public class QueryParams
 				for (final int type: types) {
 					where.append("type = " + type + " OR replaced = " + type + " OR ");
 				}
-				where.delete(where.length() - 5, where.length() - 1);
+				where.delete(where.length() - 4, where.length() - 1);
 				where.append(") AND ");
 			}
 			break;
@@ -282,7 +282,7 @@ public class QueryParams
 				for (final int type: types) {
 					where.append("type = " + type + " OR replaced = " + type + " OR ");
 				}
-				where.delete(where.length() - 5, where.length() - 1);
+				where.delete(where.length() - 4, where.length());
 				where.append(") AND ");
 			}
 			break;
@@ -293,7 +293,7 @@ public class QueryParams
 				for (final int type: types) {
 					where.append("type = " + type + " OR ");
 				}
-				where.delete(where.length() - 5, where.length() - 1);
+				where.delete(where.length() - 4, where.length());
 				where.append(") AND ");
 			} else
 				where.append("type > 0 AND ");
@@ -305,7 +305,7 @@ public class QueryParams
 				for (final int type: types) {
 					where.append("replaced = " + type + " OR ");
 				}
-				where.delete(where.length() - 5, where.length() - 1);
+				where.delete(where.length() - 4, where.length());
 				where.append(") AND ");
 			} else
 				where.append("replaced > 0 AND ");
@@ -315,9 +315,12 @@ public class QueryParams
 			break;
 		}
 		if (!players.isEmpty() && sum != SummarizationMode.PLAYERS) {
+			where.append('(');
 			for (final String playerName: players) {
-				where.append("playername = '" + playerName + "' AND ");
+				where.append("playername = '" + playerName + "' OR ");
 			}
+			where.delete(where.length() - 4, where.length());
+			where.append(") AND ");
 		}
 		if (loc != null && radius >= 0)
 			where.append("x > '" + (loc.getBlockX() - radius) + "' AND x < '" + (loc.getBlockX() + radius) + "' AND z > '" + (loc.getBlockZ() - radius) + "' AND z < '" + (loc.getBlockZ() + radius) + "' AND ");
@@ -325,7 +328,7 @@ public class QueryParams
 			where.append("x >= '"+ sel.getMinimumPoint().getBlockX() + "' AND x <= '" + sel.getMaximumPoint().getBlockX() + "' AND y >= '" + sel.getMinimumPoint().getBlockY() + "' AND y <= '" + sel.getMaximumPoint().getBlockY() + "' AND z >= '" + sel.getMinimumPoint().getBlockZ() + "' AND z <= '" + sel.getMaximumPoint().getBlockZ() + "' AND ");
 		if (minutes >= 0)
 			where.append("date > date_sub(now(), INTERVAL " + minutes + " MINUTE) AND ");
-		where.delete(where.length() - 5, where.length() - 1);
+		where.delete(where.length() - 4, where.length());
 		if (sum == SummarizationMode.NONE) {
 			final StringBuffer sql = new StringBuffer("SELECT date, replaced, type, playername FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) ");
 			if (bct == BlockChangeType.ALL)

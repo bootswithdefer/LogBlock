@@ -200,6 +200,7 @@ public class CommandsHandler implements CommandExecutor
 				conn = logblock.getConnection();
 				conn.setAutoCommit(false);
 				state = conn.createStatement();
+				log.info("Query: " + params.getQuery());
 				rs = state.executeQuery(params.getQuery());
 			} catch (SQLException ex) {
 				close();
