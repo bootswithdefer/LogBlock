@@ -16,6 +16,7 @@ import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
@@ -45,8 +46,8 @@ public class ConnectionPool {
 				if (conn.isValid())
 					return conn;
 				else {
-					conn.terminate();
 					connections.remove(conn);
+					conn.terminate();
 				}
 			}
 		}
@@ -65,12 +66,14 @@ public class ConnectionPool {
 		for (final JDCConnection conn : connections)
 			if (conn.inUse() && stale > conn.getLastUse() && !conn.isValid())
 				connections.remove(conn);
-	}
+	} 
 
 	public synchronized void closeConnections() {
-		for (final JDCConnection conn : connections) {
-			conn.terminate();
+		final Enumeration<JDCConnection> conns = connections.elements();
+		while (conns.hasMoreElements()) {
+			final JDCConnection conn = conns.nextElement();
 			connections.remove(conn);
+			conn.terminate();
 		}
 	}
 
@@ -126,6 +129,13 @@ public class ConnectionPool {
 		@Override
 		public void close() {
 			inuse = false;
+			try {
+				if (!conn.getAutoCommit())
+				conn.setAutoCommit(true);
+			} catch (SQLException ex) {
+				connections.remove(conn);
+				terminate();
+			}
 		}
 
 		@Override
