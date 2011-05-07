@@ -38,8 +38,14 @@ public class ClearLog implements Runnable
 				rs.next();
 				int deleted = rs.getInt(1);
 				if (deleted > 0) {
-					if (config.dumpDeletedLog)
-						state.execute("SELECT * FROM `" + table + "` WHERE date < '" + time + "' INTO OUTFILE '" + new File(dumpFolder, table + "-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+					if (config.dumpDeletedLog) {
+						try {
+							state.execute("SELECT * FROM `" + table + "` WHERE date < '" + time + "' INTO OUTFILE '" + new File(dumpFolder, table + "-" + time + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+						} catch (final SQLException ex) {
+							log.log(Level.SEVERE, "[LogBlock ClearLog] Error while dumping log. Make sure your MySQL user has access to the LogBLock folder, or disable clearlog.dumpDeletedLog.", ex);
+							return;
+						}
+					}
 					state.execute("DELETE FROM `" + table + "` WHERE date < '" + time + "'");
 					log.info("[LogBlock] Cleared out table " + table + ". Deleted " + deleted + " entries.");
 				}
