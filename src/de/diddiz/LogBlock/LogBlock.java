@@ -12,19 +12,21 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
-
+import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.util.ConnectionPool;
-import de.diddiz.util.Download;
+import de.diddiz.util.Utils;
+
+// TODO Add painting logging
+// TODO Add Button, lever etc logging
 
 public class LogBlock extends JavaPlugin
 {
@@ -32,10 +34,11 @@ public class LogBlock extends JavaPlugin
 	private Config config;
 	private ConnectionPool pool;
 	private Consumer consumer = null;
+	private CommandsHandler commandsHandler;
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
 	private boolean errorAtLoading = false;
-	private Map<Integer, Session> sessions = new HashMap<Integer, Session>();
+	private final Map<Integer, Session> sessions = new HashMap<Integer, Session>();
 
 	public Config getConfig() {
 		return config;
@@ -45,10 +48,14 @@ public class LogBlock extends JavaPlugin
 		return consumer;
 	}
 
+	public CommandsHandler getCommandsHandler() {
+		return commandsHandler;
+	}
+
 	@Override
 	public void onLoad() {
 		log = getServer().getLogger();
-		try	{
+		try {
 			config = new Config(this);
 		} catch (final Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Exception while reading config:", ex);
@@ -59,7 +66,7 @@ public class LogBlock extends JavaPlugin
 		try {
 			if (!file.exists() || file.length() == 0) {
 				log.info("[LogBlock] Downloading " + file.getName() + "...");
-				Download.download(new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
+				Utils.download(new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
 			}
 			if (!file.exists() || file.length() == 0)
 				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
@@ -71,8 +78,7 @@ public class LogBlock extends JavaPlugin
 		try {
 			log.info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new ConnectionPool(config.url, config.user, config.password);
-			final Connection conn = getConnection();
-			conn.close();
+			getConnection().close();
 		} catch (final Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Exception while checking database connection", ex);
 			errorAtLoading = true;
@@ -92,19 +98,28 @@ public class LogBlock extends JavaPlugin
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
-		getCommand("lb").setExecutor(new CommandsHandler(this));
+		commandsHandler = new CommandsHandler(this);
+		getCommand("lb").setExecutor(commandsHandler);
 		if (getServer().getPluginManager().getPlugin("Permissions") != null) {
 			permissions = ((Permissions)getServer().getPluginManager().getPlugin("Permissions")).getHandler();
-			log.info("[LogBlock] Permissions enabled");
+			log.info("[LogBlock] Permissions found.");
 		} else
 			log.info("[LogBlock] Permissions plugin not found. Using default permissions.");
-		if (config.keepLogDays >= 0)
-			new Thread(new ClearLog(this)).start();
+		if (config.keepLogDays >= 0) {
+			final QueryParams params = new QueryParams(this);
+			params.minutes = config.keepLogDays * -1440;
+			params.bct = BlockChangeType.ALL;
+			try {
+				commandsHandler.new CommandClearLog(new ConsoleCommandSender(getServer()), params);
+			} catch (final Exception ex) {
+				log.severe("Failed to schedule ClearLog: " + ex.getMessage());
+			}
+		}
 		final LBBlockListener lbBlockListener = new LBBlockListener(this);
 		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
 		final LBEntityListener lbEntityListener = new LBEntityListener(this);
 		final PluginManager pm = getServer().getPluginManager();
-		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolPlayerListener(this), Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolListener(this), Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Monitor, this);
 		if (config.logBlockCreations) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
@@ -122,8 +137,11 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Priority.Monitor, this);
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
-		if (config.logChestAccess)
-			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
+		if (config.logChestAccess) {
+			final LBChestAccessListener chestAccessListener = new LBChestAccessListener(this);
+			pm.registerEvent(Type.PLAYER_INTERACT, chestAccessListener, Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_MOVE, chestAccessListener, Priority.Monitor, this);
+		}
 		if (config.logLavaFlow)
 			pm.registerEvent(Type.BLOCK_FROMTO, lbBlockListener, Priority.Monitor, this);
 		if (config.logKills)
@@ -157,7 +175,7 @@ public class LogBlock extends JavaPlugin
 			}
 		}
 		if (pool != null)
-			pool.closeConnections();
+			pool.close();
 		log.info("LogBlock disabled.");
 	}
 
@@ -169,17 +187,17 @@ public class LogBlock extends JavaPlugin
 		try {
 			final DatabaseMetaData dbm = conn.getMetaData();
 			state = conn.createStatement();
-			if (!dbm.getTables(null, null, "lb-players", null).next())	{
+			if (!dbm.getTables(null, null, "lb-players", null).next()) {
 				log.log(Level.INFO, "[LogBlock] Crating table lb-players.");
 				state.execute("CREATE TABLE `lb-players` (playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (playerid), UNIQUE (playername))");
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
 			}
-			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('LavaFlow'), ('Environment'), ('Chicken'), ('Cow'), ('Giant'), ('Pig'), ('PigZombie'), ('Sheep'), ('Skeleton'), ('Slime'), ('Spider'), ('Squid'), ('Wolf'), ('Zombie')");
+			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('-'), ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('LavaFlow'), ('Environment'), ('Chicken'), ('Cow'), ('Giant'), ('Pig'), ('PigZombie'), ('Sheep'), ('Skeleton'), ('Slime'), ('Spider'), ('Squid'), ('Wolf'), ('Zombie')");
 			for (final String table : config.tables.values()) {
-				if (!dbm.getTables(null, null, table, null).next())	{
+				if (!dbm.getTables(null, null, table, null).next()) {
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
-					state.execute("CREATE TABLE `" + table + "` (id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00', playerid SMALLINT UNSIGNED NOT NULL DEFAULT '0', replaced TINYINT UNSIGNED NOT NULL DEFAULT '0', type TINYINT UNSIGNED NOT NULL DEFAULT '0', data TINYINT UNSIGNED NOT NULL DEFAULT '0', x SMALLINT NOT NULL DEFAULT '0', y TINYINT UNSIGNED NOT NULL DEFAULT '0', z SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (id), KEY coords (y, x, z), KEY date (date));");
+					state.execute("CREATE TABLE `" + table + "` (id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (y, x, z), KEY date (date))");
 					if (!dbm.getTables(null, null, table, null).next())
 						return false;
 				}
@@ -191,7 +209,7 @@ public class LogBlock extends JavaPlugin
 				}
 				if (!dbm.getTables(null, null, table + "-chest", null).next()) {
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + "-chest.");
-					state.execute("CREATE TABLE `" + table + "-chest` (id INT NOT NULL, intype SMALLINT UNSIGNED NOT NULL DEFAULT '0', inamount TINYINT UNSIGNED NOT NULL DEFAULT '0', outtype SMALLINT UNSIGNED NOT NULL DEFAULT '0', outamount TINYINT UNSIGNED NOT NULL DEFAULT '0', PRIMARY KEY (id));");
+					state.execute("CREATE TABLE `" + table + "-chest` (id INT NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
 					if (!dbm.getTables(null, null, table + "-chest", null).next())
 						return false;
 				}
@@ -209,8 +227,7 @@ public class LogBlock extends JavaPlugin
 			try {
 				if (state != null)
 					state.close();
-				if (conn != null)
-					conn.close();
+				conn.close();
 			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
 			}
@@ -218,42 +235,15 @@ public class LogBlock extends JavaPlugin
 		return false;
 	}
 
-	boolean checkPermission(CommandSender sender, String permission) {
+	boolean hasPermission(CommandSender sender, String permission) {
 		if (permissions != null && sender instanceof Player)
 			return permissions.permission((Player)sender, permission);
-		else {
-			if (permission.equals("logblock.area"))
-				return sender.isOp();
-			else if (permission.equals("logblock.hide"))
-				return sender.isOp();
-			else if (permission.equals("logblock.rollback"))
-				return sender.isOp();
-			return true;
-		}
+		if (permission.equals("logblock.lookup") || permission.equals("logblock.hide") || permission.equals("logblock.rollback"))
+			return sender.isOp();
+		return true;
 	}
 
-	static int parseTimeSpec(String timespec) {
-		final String[] split = timespec.split(" ");
-		if (split.length != 2)
-			return 0;
-		return parseTimeSpec(split[0], split[1]);
-	}
-
-	static int parseTimeSpec(String time, String unit) {
-		int min;
-		try {
-			min = Integer.parseInt(time);
-		} catch (final NumberFormatException ex) {
-			return 0;
-		}
-		if (unit.startsWith("hour"))
-			min *= 60;
-		else if (unit.startsWith("day"))
-			min *= 60*24;
-		return min;
-	}
-
-	public Connection getConnection() {
+	Connection getConnection() {
 		try {
 			return pool.getConnection();
 		} catch (final SQLException ex) {
@@ -261,11 +251,11 @@ public class LogBlock extends JavaPlugin
 			return null;
 		}
 	}
-	
+
 	public Session getSession(String playerName) {
 		Session session = sessions.get(playerName.hashCode());
 		if (session == null) {
-			session = new Session();
+			session = new Session(this);
 			sessions.put(playerName.hashCode(), session);
 		}
 		return session;

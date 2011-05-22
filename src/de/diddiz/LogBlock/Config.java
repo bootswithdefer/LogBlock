@@ -6,19 +6,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.bukkit.Material;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.util.config.Configuration;
+import de.diddiz.util.Utils;
 
-public class Config {
+public class Config
+{
 	public final HashMap<Integer, String> tables;
 	public final String url;
 	public final String user;
 	public final String password;
 	public final int delayBetweenRuns;
-	public final int minCountPerRun;
-	public final int maxCountPerRun;
-	public final int maxTimePerRun;
+	public final int forceToProcessAtLeast;
+	public final int timePerRun;
 	public final boolean useBukkitScheduler;
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
@@ -26,6 +27,7 @@ public class Config {
 	public final boolean logBlockDestroyings;
 	public final boolean logSignTexts;
 	public final boolean logExplosions;
+	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final boolean logFire;
 	public final boolean logLeavesDecay;
 	public final boolean logLavaFlow;
@@ -34,16 +36,21 @@ public class Config {
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback;
 	public final Set<Integer> replaceAnyway;
+	public final QueryParams toolQuery;
+	public final QueryParams toolBlockQuery;
 	public final int defaultDist;
 	public final int defaultTime;
 	public final int toolID;
 	public final int toolblockID;
+	public final boolean askRollbacks;
+	public final boolean askRedos;
+	public final boolean askClearLogs;
 
-	enum LogKillsLevel {
+	public static enum LogKillsLevel {
 		PLAYERS, MONSTERS, ANIMALS
 	}
 
-	Config (LogBlock logblock) throws Exception {
+	Config(LogBlock logblock) throws Exception {
 		final Configuration config = logblock.getConfiguration();
 		config.load();
 		final List<String> keys = config.getKeys(null);
@@ -70,19 +77,12 @@ public class Config {
 		subkeys = config.getKeys("consumer");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("delayBetweenRuns")) {
-			if (subkeys.contains("delay")) {
-				config.setProperty("consumer.delayBetweenRuns", config.getInt("consumer.delay", 6));
-				config.removeProperty("consumer.delay");
-			} else
-				config.setProperty("consumer.delayBetweenRuns", 6);
-		}
-		if (!subkeys.contains("minCountPerRun"))
-			config.setProperty("consumer.minCountPerRun", 100);
-		if (!subkeys.contains("maxCountPerRun"))
-			config.setProperty("consumer.maxCountPerRun", 1000);
-		if (!subkeys.contains("maxTimePerRun"))
-			config.setProperty("consumer.maxTimePerRun", 100);
+		if (!subkeys.contains("delayBetweenRuns"))
+			config.setProperty("consumer.delayBetweenRuns", 6);
+		if (!subkeys.contains("forceToProcessAtLeast"))
+			config.setProperty("consumer.forceToProcessAtLeast", 0);
+		if (!subkeys.contains("timePerRun"))
+			config.setProperty("consumer.timePerRun", 100);
 		if (!subkeys.contains("useBukkitScheduler"))
 			config.setProperty("consumer.useBukkitScheduler", true);
 		subkeys = config.getKeys("clearlog");
@@ -103,6 +103,8 @@ public class Config {
 			config.setProperty("logging.logSignTexts", false);
 		if (!subkeys.contains("logExplosions"))
 			config.setProperty("logging.logExplosions", false);
+		if (!subkeys.contains("logCreeperExplosionsAsPlayerWhoTriggeredThese"))
+			config.setProperty("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		if (!subkeys.contains("logFire"))
 			config.setProperty("logging.logFire", false);
 		if (!subkeys.contains("logLeavesDecay"))
@@ -133,24 +135,37 @@ public class Config {
 			config.setProperty("lookup.toolID", 270);
 		if (!subkeys.contains("toolblockID"))
 			config.setProperty("lookup.toolblockID", 7);
+		if (!subkeys.contains("toolQuery"))
+			config.setProperty("lookup.toolQuery", "area 0 all sum none limit 15 desc");
+		if (!subkeys.contains("toolBlockQuery"))
+			config.setProperty("lookup.toolBlockQuery", "area 0 all sum none limit 15 desc");
+		subkeys = config.getKeys("questioner");
+		if (subkeys == null)
+			subkeys = new ArrayList<String>();
+		if (!subkeys.contains("askRollbacks"))
+			config.setProperty("questioner.askRollbacks", true);
+		if (!subkeys.contains("askRedos"))
+			config.setProperty("questioner.askRedos", true);
+		if (!subkeys.contains("askClearLogs"))
+			config.setProperty("questioner.askClearLogs", true);
 		if (!config.save())
 			throw new Exception("Error while writing to config.yml");
 		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getString("mysql.port") + "/" + config.getString("mysql.database");
 		user = config.getString("mysql.user");
 		password = config.getString("mysql.password");
 		delayBetweenRuns = config.getInt("consumer.delayBetweenRuns", 6);
-		minCountPerRun = config.getInt("consumer.minCountPerRun", 100);
-		maxCountPerRun = config.getInt("consumer.maxCountPerRun", 1000);
-		maxTimePerRun = config.getInt("consumer.maxTimePerRun", 100);
+		forceToProcessAtLeast = config.getInt("consumer.forceToProcessAtLeast", 0);
+		timePerRun = config.getInt("consumer.timePerRun", 100);
 		useBukkitScheduler = config.getBoolean("consumer.useBukkitScheduler", true);
 		keepLogDays = config.getInt("clearlog.keepLogDays", -1);
-		if (keepLogDays*86400000L > System.currentTimeMillis())
-			throw new Exception("Too large timespan for keepLogDays. Must be shorter than " + (int)(System.currentTimeMillis()/86400000L) + " days.");
-		dumpDeletedLog =  config.getBoolean("clearlog.dumpDeletedLog", true);
+		if (keepLogDays * 86400000L > System.currentTimeMillis())
+			throw new Exception("Too large timespan for keepLogDays. Must be shorter than " + (int)(System.currentTimeMillis() / 86400000L) + " days.");
+		dumpDeletedLog = config.getBoolean("clearlog.dumpDeletedLog", true);
 		logBlockCreations = config.getBoolean("logging.logBlockCreations", true);
 		logBlockDestroyings = config.getBoolean("logging.logBlockDestroyings", true);
 		logSignTexts = config.getBoolean("logging.logSignTexts", false);
 		logExplosions = config.getBoolean("logging.logExplosions", false);
+		logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		logFire = config.getBoolean("logging.logFire", false);
 		logChestAccess = config.getBoolean("logging.logChestAccess", false);
 		logLeavesDecay = config.getBoolean("logging.logLeavesDecay", false);
@@ -163,21 +178,37 @@ public class Config {
 		}
 		dontRollback = new HashSet<Integer>(config.getIntList("rollback.dontRollback", null));
 		replaceAnyway = new HashSet<Integer>(config.getIntList("rollback.replaceAnyway", null));
+		try {
+			toolQuery = new QueryParams(logblock);
+			toolQuery.prepareToolQuery = true;
+			toolQuery.parseArgs(new ConsoleCommandSender(logblock.getServer()), Arrays.asList(config.getString("lookup.toolQuery").split(" ")));
+		} catch (final IllegalArgumentException ex) {
+			throw new Exception("Error at lookup.toolQuery: " + ex.getMessage());
+		}
+		try {
+			toolBlockQuery = new QueryParams(logblock);
+			toolBlockQuery.prepareToolQuery = true;
+			toolBlockQuery.parseArgs(new ConsoleCommandSender(logblock.getServer()), Arrays.asList(config.getString("lookup.toolBlockQuery").split(" ")));
+		} catch (final IllegalArgumentException ex) {
+			throw new Exception("Error at lookup.toolBlockQuery: " + ex.getMessage());
+		}
 		defaultDist = config.getInt("lookup.defaultDist", 20);
-		defaultTime = LogBlock.parseTimeSpec(config.getString("lookup.defaultTime"));
+		defaultTime = Utils.parseTimeSpec(config.getString("lookup.defaultTime").split(" "));
 		toolID = config.getInt("lookup.toolID", 270);
 		if (Material.getMaterial(toolID) == null || Material.getMaterial(toolID).isBlock())
 			throw new Exception("lookup.toolID doesn't appear to be a valid item id");
 		toolblockID = config.getInt("lookup.toolblockID", 7);
 		if (Material.getMaterial(toolblockID) == null || !Material.getMaterial(toolblockID).isBlock() || toolblockID == 0)
 			throw new Exception("lookup.toolblockID doesn't appear to be a valid block id");
+		askRollbacks = config.getBoolean("questioner.askRollbacks", true);
+		askRedos = config.getBoolean("questioner.askRedos", true);
+		askClearLogs = config.getBoolean("questioner.askClearLogs", true);
 		final List<String> worldNames = config.getStringList("loggedWorlds", null);
 		final List<String> worldTables = config.getStringList("tables", null);
 		tables = new HashMap<Integer, String>();
 		if (worldNames == null || worldTables == null || worldNames.size() == 0 || worldNames.size() != worldTables.size())
 			throw new Exception("worldNames or worldTables not set properly");
-		for (int i = 0; i < worldNames.size(); i++) {
+		for (int i = 0; i < worldNames.size(); i++)
 			tables.put(worldNames.get(i).hashCode(), worldTables.get(i));
-		}
 	}
 }

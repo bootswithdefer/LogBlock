@@ -1,8 +1,8 @@
 package de.diddiz.LogBlock;
 
-import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Sign;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockFromToEvent;
@@ -11,14 +11,16 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
 
-public class LBBlockListener extends BlockListener
+class LBBlockListener extends BlockListener
 {
-	private final Config config;
 	private final Consumer consumer;
+	private final boolean logSignTexts;
+	private final boolean logChestAccess;
 
 	LBBlockListener(LogBlock logblock) {
-		config = logblock.getConfig();
 		consumer = logblock.getConsumer();
+		logSignTexts = logblock.getConfig().logSignTexts;
+		logChestAccess = logblock.getConfig().logChestAccess;
 	}
 
 	@Override
@@ -26,22 +28,23 @@ public class LBBlockListener extends BlockListener
 		if (!event.isCancelled()) {
 			final int typeFrom = event.getBlock().getTypeId();
 			final int typeTo = event.getToBlock().getTypeId();
-			if (typeFrom == 10 || typeFrom == 11) {
+			if (typeFrom == 10 || typeFrom == 11)
 				if (typeTo == 0 || typeTo == 78)
 					consumer.queueBlockReplace("LavaFlow", event.getToBlock().getState(), 10, (byte)(event.getBlock().getData() + 1));
-				else if (typeTo == 8 || typeTo == 9) {
+				else if (typeTo == 8 || typeTo == 9)
 					if (event.getFace() == BlockFace.DOWN)
 						consumer.queueBlockReplace("LavaFlow", event.getToBlock().getState(), 10, (byte)0);
 					else
 						consumer.queueBlockReplace("LavaFlow", event.getToBlock().getState(), 4, (byte)0);
-				}
-			}
 		}
 	}
 
 	@Override
 	public void onBlockPlace(BlockPlaceEvent event) {
-		if (!event.isCancelled() && !(config.logSignTexts && (event.getBlock().getType() == Material.WALL_SIGN || event.getBlock().getType() == Material.SIGN_POST))) {
+		if (!event.isCancelled()) {
+			final int type = event.getBlock().getTypeId();
+			if (logSignTexts && (type == 63 || type == 68))
+				return;
 			final BlockState before = event.getBlockReplacedState();
 			final BlockState after = event.getBlockPlaced().getState();
 			if (before.getTypeId() == 0)
@@ -53,14 +56,21 @@ public class LBBlockListener extends BlockListener
 
 	@Override
 	public void onBlockBreak(BlockBreakEvent event) {
-		if (!event.isCancelled())
-			consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlock().getState());
+		if (!event.isCancelled()) {
+			final int type = event.getBlock().getTypeId();
+			if (logSignTexts && (type == 63 || type == 68))
+				consumer.queueSignBreak(event.getPlayer().getName(), (Sign)event.getBlock().getState());
+			else if (logChestAccess && (type == 23 || type == 54 || type == 61))
+				consumer.queueContainerBreak(event.getPlayer().getName(), event.getBlock().getState());
+			else
+				consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlock().getState());
+		}
 	}
 
 	@Override
 	public void onSignChange(SignChangeEvent event) {
 		if (!event.isCancelled())
-			consumer.queueSign(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), "sign [" + event.getLine(0) + "] [" + event.getLine(1) + "] [" + event.getLine(2) + "] [" + event.getLine(3) + "]");
+			consumer.queueSignPlace(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), event.getLines());
 	}
 
 	@Override

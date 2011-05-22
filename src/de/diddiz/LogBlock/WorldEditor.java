@@ -2,16 +2,29 @@ package de.diddiz.LogBlock;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
-
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.ContainerBlock;
+import org.bukkit.block.Sign;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import de.diddiz.util.BukkitUtils;
 
 public class WorldEditor implements Runnable
 {
+	public static class WorldEditorException extends Exception
+	{
+		private static final long serialVersionUID = 7509084196124728986L;
+
+		public WorldEditorException(String msg) {
+			super(msg);
+		}
+	}
+
 	private final Logger log;
 	private final LogBlock logblock;
 	private final Config config;
-	private final Object caller;
 	private final LinkedBlockingQueue<Edit> edits = new LinkedBlockingQueue<Edit>();
 	private final World world;
 	private int taskID;
@@ -19,101 +32,91 @@ public class WorldEditor implements Runnable
 	private int errors = 0;
 	private int blacklistCollisions = 0;
 
-	WorldEditor(LogBlock logblock, Object caller, World world) {
+	WorldEditor(LogBlock logblock, World world) {
 		log = logblock.getServer().getLogger();
 		this.logblock = logblock;
 		config = logblock.getConfig();
-		this.caller = caller;
 		this.world = world;
 	}
 
-	public int getSize() {
+	int getSize() {
 		return edits.size();
 	}
 
-	public int getSuccesses() {
+	int getSuccesses() {
 		return successes;
 	}
 
-	public int getErrors() {
+	int getErrors() {
 		return errors;
 	}
 
-	public int getBlacklistCollisions() {
+	int getBlacklistCollisions() {
 		return blacklistCollisions;
 	}
 
-	public void queueBlockChange(int type, int replaced, byte data, int x, int y, int z) {
-		edits.add(new Edit(type, replaced, data, x, y, z));
+	void queueBlockChange(int type, int replaced, byte data, int x, int y, int z, String signtext, short itemType, short itemAmount, byte itemData) {
+		edits.add(new Edit(type, replaced, data, x, y, z, signtext, itemType, itemAmount, itemData));
 	}
 
-	public boolean start() {
+	synchronized void start() throws WorldEditorException {
 		taskID = logblock.getServer().getScheduler().scheduleSyncRepeatingTask(logblock, this, 0, 1);
 		if (taskID == -1)
-			return false;
-		return true;
+			throw new WorldEditorException("Failed to schedule task");
+		try {
+			this.wait();
+		} catch (final InterruptedException ex) {
+			throw new WorldEditorException("Interrupted");
+		}
 	}
 
 	@Override
-	public void run() {
+	public synchronized void run() {
 		int counter = 0;
 		while (!edits.isEmpty() && counter < 1000) {
 			switch (edits.poll().perform()) {
-			case SUCCESS:
-				successes++;
-				break;
-			case ERROR:
-				errors++;
-				break;
-			case BLACKLISTED:
-				blacklistCollisions++;
-				break;
+				case SUCCESS:
+					successes++;
+					break;
+				case ERROR:
+					errors++;
+					break;
+				case BLACKLISTED:
+					blacklistCollisions++;
+					break;
 			}
 			counter++;
 		}
 		if (edits.isEmpty()) {
 			logblock.getServer().getScheduler().cancelTask(taskID);
-			synchronized (caller) {
-				caller.notify();
-			}
+			notify();
 		}
 	}
 
-	private boolean equalsType(int type1, int type2) {
-		if (type1 == type2)
-			return true;
-		if ((type1 == 2 || type1 == 3) && (type2 == 2 || type2 == 3))
-			return true;
-		if ((type1 == 8 || type1 == 9) && (type2 == 8 || type2 == 9))
-			return true;
-		if ((type1 == 10 || type1 == 11) && (type2 == 10 || type2 == 11))
-			return true;
-		if ((type1 == 73 || type1 == 74) && (type2 == 73 || type2 == 74))
-			return true;
-		if ((type1 == 75 || type1 == 76) && (type2 == 75 || type2 == 76))
-			return true;
-		if ((type1 == 93 || type1 == 94) && (type2 == 93 || type2 == 94))
-			return true;
-		return false;
-	}
-
-	private enum PerformResult {
+	private static enum PerformResult {
 		ERROR, SUCCESS, BLACKLISTED, NO_ACTION
 	}
 
 	private class Edit
 	{
-		final int type, replaced;
-		final int x, y, z;
-		final byte data;
+		private final int type, replaced;
+		private final int x, y, z;
+		private final byte data;
+		private final String signtext;
+		public final short itemType, itemAmount;
+		public final byte itemData;
 
-		Edit(int type, int replaced, byte data, int x, int y, int z) {
+		Edit(int type, int replaced, byte data, int x, int y, int z, String signtext, short itemType, short itemAmount, byte itemData) {
 			this.type = type;
 			this.replaced = replaced;
 			this.data = data;
 			this.x = x;
 			this.y = y;
 			this.z = z;
+			this.signtext = signtext;
+			this.itemType = itemType;
+			this.itemAmount = itemAmount;
+			this.itemData = itemData;
 		}
 
 		private PerformResult perform() {
@@ -121,15 +124,46 @@ public class WorldEditor implements Runnable
 				return PerformResult.BLACKLISTED;
 			try {
 				final Block block = world.getBlockAt(x, y, z);
+				final BlockState state = block.getState();
 				if (!world.isChunkLoaded(block.getChunk()))
 					world.loadChunk(block.getChunk());
-				if (equalsType(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId()) || type == 0 && replaced == 0) {
-					if (block.setTypeIdAndData(replaced, data, false))
-						return PerformResult.SUCCESS;
-					else
+				if (type == replaced)
+					if (type == 0) {
+						if (block.setTypeId(0))
+							return PerformResult.SUCCESS;
 						return PerformResult.ERROR;
-				} else
+					} else if (type == 23 || type == 54 || type == 61) {
+						if (!(state instanceof ContainerBlock))
+							return PerformResult.NO_ACTION;
+						final Inventory inv = ((ContainerBlock)block.getState()).getInventory();
+						if (itemType != 0)
+							if (itemAmount > 0)
+								inv.removeItem(new ItemStack(itemType, itemAmount, (short)0, itemData));
+							else if (itemAmount < 0)
+								inv.addItem(new ItemStack(itemType, itemAmount * -1, (short)0, itemData));
+						if (!state.update())
+							return PerformResult.ERROR;
+						return PerformResult.SUCCESS;
+					} else
+						return PerformResult.NO_ACTION;
+				if (!(BukkitUtils.equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
 					return PerformResult.NO_ACTION;
+				if (state instanceof ContainerBlock) {
+					((ContainerBlock)state).getInventory().clear();
+					state.update();
+				}
+				if (!block.setTypeIdAndData(replaced, data, true))
+					return PerformResult.ERROR;
+				final int curtype = block.getTypeId();
+				if (signtext != null && (curtype == 63 || curtype == 68)) {
+					final Sign sign = (Sign)block.getState();
+					final String[] lines = signtext.split("\0");
+					for (int i = 0; i < 4; i++)
+						sign.setLine(i, lines[i]);
+					if (!sign.update())
+						return PerformResult.ERROR;
+				}
+				return PerformResult.SUCCESS;
 			} catch (final Exception ex) {
 				log.severe("[LogBlock Rollback] " + ex.toString());
 				return PerformResult.ERROR;

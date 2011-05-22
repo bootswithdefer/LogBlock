@@ -1,13 +1,15 @@
 package de.diddiz.LogBlock;
 
-public class Session {
-	private QueryParams last = null;
+public class Session
+{
+	public QueryParams lastQuery = null;
+	public QueryParams toolQuery;
+	public QueryParams toolBlockQuery;
+	public boolean toolEnabled = true;
+	public boolean toolBlockEnabled = true;
 
-	public QueryParams getLastQuery() {
-		return last;
-	}
-
-	public void setLast(QueryParams params) {
-		last = params;
+	Session(LogBlock logblock) {
+		toolQuery = logblock.getConfig().toolQuery.clone();
+		toolBlockQuery = logblock.getConfig().toolBlockQuery.clone();
 	}
 }

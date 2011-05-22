@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -8,184 +9,278 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-
+import org.bukkit.scheduler.BukkitScheduler;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
+import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
+import de.diddiz.LogBlock.WorldEditor.WorldEditorException;
+import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
+import de.diddiz.LogBlockQuestioner.QuestionerException;
+import de.diddiz.util.BukkitUtils;
 
 public class CommandsHandler implements CommandExecutor
 {
 	private final Logger log;
 	private final LogBlock logblock;
 	private final Config config;
+	private final BukkitScheduler scheduler;
+	private final LogBlockQuestioner questioner;
 
-	public CommandsHandler(LogBlock logblock) {
+	CommandsHandler(LogBlock logblock) {
 		this.logblock = logblock;
 		log = logblock.getServer().getLogger();
 		config = logblock.getConfig();
+		scheduler = logblock.getServer().getScheduler();
+		questioner = (LogBlockQuestioner)logblock.getServer().getPluginManager().getPlugin("LogBlockQuestioner");
 	}
 
 	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)	{
+	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		if (!cmd.getName().equalsIgnoreCase("lb"))
 			return false;
 		if (args.length == 0) {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + logblock.getDescription().getVersion() + " by DiddiZ");
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
-		} else if (args[0].equalsIgnoreCase("help")) {
-			sender.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock Commands:");
-			if (logblock.checkPermission(sender, "logblock.me"))
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb me");
-			if (logblock.checkPermission(sender, "logblock.area")) {
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb area <radius>");
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb world");
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb player [name] <radius>");
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb block [type] <radius>");
-			}
-			if (logblock.checkPermission(sender, "logblock.rollback")) {
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb rollback [rollback mode]");
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb redo [redo mode]");
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb writelogfile [player]");
-			}
-			if (logblock.checkPermission(sender, "logblock.hide"))
-				sender.sendMessage(ChatColor.LIGHT_PURPLE + "/lb hide");
-		} else if (args[0].equalsIgnoreCase("tool")) {
-			if (sender instanceof Player) {
-				if (logblock.checkPermission(sender, "logblock.tool"))
-					giveTool((Player)sender, config.toolID);
-				else
-					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-			} else
-				sender.sendMessage(ChatColor.RED + "You have to be a player.");
-		} else if (args[0].equalsIgnoreCase("toolblock")) {
-			if (sender instanceof Player) {
-				if (logblock.checkPermission(sender, "logblock.toolblockID"))
-					giveTool((Player)sender, config.toolblockID);
-				else
-					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-			} else
-				sender.sendMessage(ChatColor.RED + "You have to be a player.");
-		} else if (args[0].equalsIgnoreCase("hide")) {
-			if (sender instanceof Player) {
-				if (logblock.checkPermission(sender, "logblock.hide")) {
-					if (logblock.getConsumer().hide((Player)sender))
-						sender.sendMessage(ChatColor.GREEN + "You are now hided and won't appear in any log. Type '/lb hide' again to unhide");
+		} else {
+			final String command = args[0].toLowerCase();
+			if (command.equals("help")) {
+				sender.sendMessage(ChatColor.DARK_AQUA + "LogBlock Help:");
+				sender.sendMessage(ChatColor.GOLD + "For the commands list type '/lb commands'");
+				sender.sendMessage(ChatColor.GOLD + "For the parameters list type '/lb params'");
+				sender.sendMessage(ChatColor.GOLD + "For the list of permissions you got type '/lb permissions'");
+			} else if (command.equals("commands")) {
+				sender.sendMessage(ChatColor.DARK_AQUA + "LogBlock Commands:");
+				sender.sendMessage(ChatColor.GOLD + "/lb tool -- Gives you the lb tool");
+				sender.sendMessage(ChatColor.GOLD + "/lb tool [on|off] -- Enables/Disables tool");
+				sender.sendMessage(ChatColor.GOLD + "/lb tool [params] -- Sets the tool lookup query");
+				sender.sendMessage(ChatColor.GOLD + "/lb toolblock -- Analog to tool");
+				sender.sendMessage(ChatColor.GOLD + "/lb hide -- Hides you from log");
+				sender.sendMessage(ChatColor.GOLD + "/lb rollback [params] -- Rollback");
+				sender.sendMessage(ChatColor.GOLD + "/lb redo [params] -- Redo");
+				sender.sendMessage(ChatColor.GOLD + "/lb tp [params] -- Teleports you to the location of griefing");
+				sender.sendMessage(ChatColor.GOLD + "/lb writelogfile [params] -- Writes a log file");
+				sender.sendMessage(ChatColor.GOLD + "/lb lookup [params] -- Lookup");
+				sender.sendMessage(ChatColor.GOLD + "/lb me -- Displays your stats");
+				sender.sendMessage(ChatColor.GOLD + "Look at diddiz.insane-architects.net/logblock for the full commands reference");
+			} else if (command.equals("params")) {
+				sender.sendMessage(ChatColor.DARK_AQUA + "LogBlock Query Parameters:");
+				sender.sendMessage(ChatColor.GOLD + "Use doublequotes to escape a keyword: world \"world\"");
+				sender.sendMessage(ChatColor.GOLD + "player [name1] <name2> <name3> -- List of players");
+				sender.sendMessage(ChatColor.GOLD + "block [type1] <type2> <type3> -- List of block types");
+				sender.sendMessage(ChatColor.GOLD + "created, destroyed -- Show only created/destroyed blocks");
+				sender.sendMessage(ChatColor.GOLD + "chestaccess -- Show only chest accesses");
+				sender.sendMessage(ChatColor.GOLD + "area <radius> -- Area around you");
+				sender.sendMessage(ChatColor.GOLD + "selection, sel -- Inside current WorldEdit selection");
+				sender.sendMessage(ChatColor.GOLD + "world [worldname] -- Changes the world");
+				sender.sendMessage(ChatColor.GOLD + "time [number] [minutes|hours|days] -- Limits time");
+				sender.sendMessage(ChatColor.GOLD + "since <dd.MM.yyyy> <HH:mm:ss> -- Limits time to a fixed point");
+				sender.sendMessage(ChatColor.GOLD + "limit <row count> -- Limits the result to count of rows");
+				sender.sendMessage(ChatColor.GOLD + "sum [none|blocks|players] -- Sums the result");
+				sender.sendMessage(ChatColor.GOLD + "asc, desc -- Changes the order of the displayed log");
+			} else if (command.equals("permissions")) {
+				sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
+				if (logblock.hasPermission(sender, "logblock.tool"))
+					sender.sendMessage(ChatColor.GOLD + "logblock.tool");
+				if (logblock.hasPermission(sender, "logblock.toolblock"))
+					sender.sendMessage(ChatColor.GOLD + "logblock.toolblock");
+				if (logblock.hasPermission(sender, "logblock.me"))
+					sender.sendMessage(ChatColor.GOLD + "logblock.me");
+				if (logblock.hasPermission(sender, "logblock.tp"))
+					sender.sendMessage(ChatColor.GOLD + "logblock.tp");
+				if (logblock.hasPermission(sender, "logblock.rollback"))
+					sender.sendMessage(ChatColor.GOLD + "logblock.rollback");
+				if (logblock.hasPermission(sender, "logblock.hide"))
+					sender.sendMessage(ChatColor.GOLD + "logblock.hide");
+			} else if (command.equals("tool")) {
+				if (sender instanceof Player) {
+					final Player player = (Player)sender;
+					if (args.length == 1) {
+						if (logblock.hasPermission(player, "logblock.tool"))
+							BukkitUtils.giveTool(player, config.toolID);
+						else
+							sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+					} else if (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("on")) {
+						logblock.getSession(player.getName()).toolEnabled = true;
+						player.sendMessage(ChatColor.GREEN + "Tool enabled.");
+					} else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
+						logblock.getSession(player.getName()).toolEnabled = false;
+						player.sendMessage(ChatColor.GREEN + "Tool disabled.");
+					} else if (logblock.hasPermission(player, "logblock.lookup"))
+						try {
+							final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
+							logblock.getSession(player.getName()).toolQuery = params;
+							sender.sendMessage(ChatColor.GREEN + "Set tool query to: " + params.getTitle());
+						} catch (final Exception ex) {
+							sender.sendMessage(ChatColor.RED + ex.getMessage());
+						}
 					else
-						sender.sendMessage(ChatColor.GREEN + "You aren't hided anylonger.");
+						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else
-					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-			} else
-				sender.sendMessage(ChatColor.RED + "You have to be a player.");
-		} else if (args[0].equalsIgnoreCase("savequeue")) {
-			if (logblock.checkPermission(sender, "logblock.rollback"))
-				try {
-					new Thread(new CommandSaveQueue(sender, null)).run();
-				} catch (Exception ex) {
-					sender.sendMessage(ex.getMessage());
-				}
-			else
-				sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-		} else if (args[0].equalsIgnoreCase("rollback") || args[0].equalsIgnoreCase("undo")) {
-			if (logblock.checkPermission(sender, "logblock.rollback")) {
-				try {
-					final List<String> argsList = Arrays.asList(args);
-					argsList.remove(1);
-					final QueryParams params = new QueryParams(logblock);
-					params.parseArgs(sender, argsList);
-					params.setLimit(-1);
-					params.setOrder(QueryParams.Order.DESC);
-					params.setSummarizationMode(QueryParams.SummarizationMode.NONE);
-					new Thread(new CommandRollback(sender, params)).run();
-				} catch (final Exception ex) {
-					sender.sendMessage(ex.getMessage());
-				}
-			} else
-				sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-		} else if (args[0].equalsIgnoreCase("redo")) {
-			if (logblock.checkPermission(sender, "logblock.rollback")) {
-				try {
-					final List<String> argsList = Arrays.asList(args);
-					argsList.remove(1);
-					final QueryParams params = new QueryParams(logblock);
-					params.parseArgs(sender, argsList);
-					params.setLimit(-1);
-					params.setOrder(QueryParams.Order.ASC);
-					params.setSummarizationMode(QueryParams.SummarizationMode.NONE);
-					new Thread(new CommandRedo(sender, params)).run();
-				} catch (final Exception ex) {
-					sender.sendMessage(ex.getMessage());
-				}
-			} else
-				sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-		} else if (args[0].equalsIgnoreCase("me")) {
-			if (sender instanceof Player) {
-				if (logblock.checkPermission(sender, "logblock.rollback")) {
-					final QueryParams params = new QueryParams(logblock);
-					params.setPlayer(((Player)sender).getName());
-					params.setSummarizationMode(SummarizationMode.TYPES);
+					sender.sendMessage(ChatColor.RED + "You have to be a player.");
+			} else if (command.equals("toolblock")) {
+				if (sender instanceof Player) {
+					final Player player = (Player)sender;
+					if (args.length == 1) {
+						if (logblock.hasPermission(player, "logblock.toolblock"))
+							BukkitUtils.giveTool(player, config.toolblockID);
+						else
+							player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+					} else if (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("on")) {
+						logblock.getSession(player.getName()).toolBlockEnabled = true;
+						player.sendMessage(ChatColor.GREEN + "Tool block enabled.");
+					} else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
+						logblock.getSession(player.getName()).toolBlockEnabled = false;
+						player.sendMessage(ChatColor.GREEN + "Tool block disabled.");
+					} else if (logblock.hasPermission(player, "logblock.lookup"))
+						try {
+							final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
+							logblock.getSession(player.getName()).toolBlockQuery = params;
+							sender.sendMessage(ChatColor.GREEN + "Set tool block query to: " + params.getTitle());
+						} catch (final Exception ex) {
+							sender.sendMessage(ChatColor.RED + ex.getMessage());
+						}
+					else
+						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else
-					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-			} else
-				sender.sendMessage(ChatColor.RED + "You have to be a player.");
-		} else if (args[0].equalsIgnoreCase("writelogfile")) {
-			if (logblock.checkPermission(sender,"logblock.rollback")) {
-				try {
-					final List<String> argsList = Arrays.asList(args);
-					argsList.remove(1);
-					final QueryParams params = new QueryParams(logblock);
-					params.parseArgs(sender, argsList);
-					params.setLimit(-1);
-					params.setBlockChangeType(BlockChangeType.ALL);
-					params.setSummarizationMode(SummarizationMode.NONE);
-					new Thread(new CommandWriteLogFile(sender, params)).run();
-				} catch (final Exception ex) {
-					sender.sendMessage(ex.getMessage());
-				}
-			} else
-				sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
-		} else if (args[0].equalsIgnoreCase("tp")) {
-			if (sender instanceof Player) {
-				if (logblock.checkPermission(sender,"logblock.tp")) {
+					sender.sendMessage(ChatColor.RED + "You have to be a player.");
+			} else if (command.equals("hide")) {
+				if (sender instanceof Player) {
+					if (logblock.hasPermission(sender, "logblock.hide")) {
+						if (logblock.getConsumer().hide((Player)sender))
+							sender.sendMessage(ChatColor.GREEN + "You are now hided and won't appear in any log. Type '/lb hide' again to unhide");
+						else
+							sender.sendMessage(ChatColor.GREEN + "You aren't hided anylonger.");
+					} else
+						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+				} else
+					sender.sendMessage(ChatColor.RED + "You have to be a player.");
+			} else if (args[0].equalsIgnoreCase("savequeue")) {
+				if (logblock.hasPermission(sender, "logblock.rollback"))
 					try {
-						final List<String> argsList = Arrays.asList(args);
-						argsList.remove(1);
-						final QueryParams params = new QueryParams(logblock);
-						params.parseArgs(sender, argsList);
-						params.setLimit(1);
-						new Thread(new CommandTeleport(sender, null)).run();
+						new CommandSaveQueue(sender, null);
 					} catch (final Exception ex) {
-						sender.sendMessage(ex.getMessage());
+						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
+				else
+					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+			} else if (command.equals("rollback") || command.equals("undo") || command.equals("rb")) {
+				if (logblock.hasPermission(sender, "logblock.rollback"))
+					try {
+						final QueryParams params = new QueryParams(logblock);
+						params.minutes = logblock.getConfig().defaultTime;
+						params.parseArgs(sender, ArgsToList(args, 1));
+						params.limit = -1;
+						params.order = Order.DESC;
+						params.sum = SummarizationMode.NONE;
+						params.bct = BlockChangeType.ALL;
+						params.selectFullBlockData = true;
+						new CommandRollback(sender, params);
+					} catch (final Exception ex) {
+						sender.sendMessage(ChatColor.RED + ex.getMessage());
+					}
+				else
+					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+			} else if (command.equals("redo")) {
+				if (logblock.hasPermission(sender, "logblock.rollback"))
+					try {
+						final QueryParams params = new QueryParams(logblock);
+						params.minutes = logblock.getConfig().defaultTime;
+						params.parseArgs(sender, ArgsToList(args, 1));
+						params.limit = -1;
+						params.order = Order.ASC;
+						params.sum = SummarizationMode.NONE;
+						params.bct = BlockChangeType.ALL;
+						params.selectFullBlockData = true;
+						new CommandRedo(sender, params);
+					} catch (final Exception ex) {
+						sender.sendMessage(ChatColor.RED + ex.getMessage());
+					}
+				else
+					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+			} else if (command.equals("me")) {
+				if (sender instanceof Player) {
+					if (logblock.hasPermission(sender, "logblock.me"))
+						try {
+							final Player player = (Player)sender;
+							final QueryParams params = new QueryParams(logblock);
+							params.setPlayer(player.getName());
+							params.sum = SummarizationMode.TYPES;
+							params.world = player.getWorld();
+							new CommandLookup(sender, params);
+						} catch (final Exception ex) {
+							sender.sendMessage(ChatColor.RED + ex.getMessage());
+						}
+					else
+						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else
+					sender.sendMessage(ChatColor.RED + "You have to be a player.");
+			} else if (command.equals("writelogfile")) {
+				if (logblock.hasPermission(sender, "logblock.rollback"))
+					try {
+						final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
+						params.limit = -1;
+						params.bct = BlockChangeType.ALL;
+						params.sum = SummarizationMode.NONE;
+						new CommandWriteLogFile(sender, params);
+					} catch (final Exception ex) {
+						sender.sendMessage(ChatColor.RED + ex.getMessage());
+					}
+				else
+					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+			} else if (command.equals("clearlog")) {
+				if (logblock.hasPermission(sender, "logblock.clearlog"))
+					try {
+						final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
+						params.bct = BlockChangeType.ALL;
+						params.limit = -1;
+						new CommandClearLog(sender, params);
+					} catch (final Exception ex) {
+						sender.sendMessage(ChatColor.RED + ex.getMessage());
+					}
+				else
+					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+			} else if (command.equals("tp")) {
+				if (sender instanceof Player) {
+					if (logblock.hasPermission(sender, "logblock.tp"))
+						try {
+							new CommandTeleport(sender, new QueryParams(logblock, sender, ArgsToList(args, 1)));
+						} catch (final Exception ex) {
+							sender.sendMessage(ChatColor.RED + ex.getMessage());
+						}
+					else
+						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
+				} else
+					sender.sendMessage(ChatColor.RED + "You have to be a player.");
+			} else if (command.equals("lookup") || QueryParams.isKeyWord(args[0])) {
+				if (logblock.hasPermission(sender, "logblock.lookup"))
+					try {
+						final List<String> argsList = new ArrayList<String>(Arrays.asList(args));
+						if (command.equals("lookup"))
+							argsList.remove(0);
+						new CommandLookup(sender, new QueryParams(logblock, sender, argsList));
+					} catch (final Exception ex) {
+						sender.sendMessage(ChatColor.RED + ex.getMessage());
+					}
+				else
 					sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 			} else
-				sender.sendMessage(ChatColor.RED + "You have to be a player.");
-		} else if (QueryParams.isKeyWord(args[0])) {
-			try {
-				final QueryParams params = new QueryParams(logblock);
-				params.parseArgs(sender, Arrays.asList(args));
-				new Thread(new CommandLookup(sender, params)).run();
-			} catch (final Exception ex) {
-				log.log(Level.SEVERE, "Error at Command", ex);
-				sender.sendMessage(ex.getMessage());
-			}
+				sender.sendMessage(ChatColor.RED + "Unknown command '" + args[0] + "'");
 		}
 		return true;
 	}
 
-	private abstract class LBCommand implements Runnable
+	public abstract class LBCommand implements Runnable, Closeable
 	{
 		protected final CommandSender sender;
 		protected final QueryParams params;
@@ -196,20 +291,14 @@ public class CommandsHandler implements CommandExecutor
 		LBCommand(CommandSender sender, QueryParams params) throws Exception {
 			this.sender = sender;
 			this.params = params;
-			try {
-				conn = logblock.getConnection();
-				conn.setAutoCommit(false);
-				state = conn.createStatement();
-				log.info("Query: " + params.getQuery());
-				rs = state.executeQuery(params.getQuery());
-			} catch (SQLException ex) {
-				close();
-				log.log(Level.SEVERE, "[LogBlock CommandsHandler] Error while executing query", ex);
-				throw new Exception("Error while executing query");
-			}
+			conn = logblock.getConnection();
+			state = conn.createStatement();
+			if (scheduler.scheduleAsyncDelayedTask(logblock, this) == -1)
+				throw new Exception("Failed to schedule the command");
 		}
 
-		protected void close() {
+		@Override
+		public final void close() {
 			try {
 				if (conn != null)
 					conn.close();
@@ -223,7 +312,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	private class CommandLookup extends LBCommand
+	public class CommandLookup extends LBCommand
 	{
 		CommandLookup(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
@@ -232,15 +321,16 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				final SummarizationMode sum = params.getSummarizationMode();
-				final HistoryFormatter histformatter = new HistoryFormatter(sum);
+				rs = state.executeQuery(params.getQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle());
 				if (rs.next()) {
 					rs.beforeFirst();
+					final SummarizationMode sum = params.sum;
+					final HistoryFormatter histformatter = new HistoryFormatter(sum);
 					if (sum == SummarizationMode.TYPES)
 						sender.sendMessage(ChatColor.GOLD + String.format("%-6s %-6s %s", "Creat", "Destr", "Block"));
 					else if (sum == SummarizationMode.PLAYERS)
-						sender.sendMessage(ChatColor.GOLD + String.format("%-6d %-6d %s", rs.getInt("created"), rs.getInt("destroyed"), rs.getString("playername")));
+						sender.sendMessage(ChatColor.GOLD + String.format("%-6s %-6s %s", "Created", "Destroyed", "Playername"));
 					while (rs.next())
 						sender.sendMessage(ChatColor.GOLD + histformatter.format(rs));
 				} else
@@ -254,7 +344,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	private class CommandWriteLogFile extends LBCommand
+	public class CommandWriteLogFile extends LBCommand
 	{
 		CommandWriteLogFile(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
@@ -263,15 +353,16 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				final File file = new File ("plugins/LogBlock/log/" + params.getTitle() + ".log");
+				rs = state.executeQuery(params.getQuery());
+				final File file = new File("plugins/LogBlock/log/" + params.getTitle() + ".log");
+				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
 				final String newline = System.getProperty("line.separator");
-				final HistoryFormatter histformatter = new HistoryFormatter(params.getSummarizationMode());
+				final HistoryFormatter histformatter = new HistoryFormatter(params.sum);
 				file.getParentFile().mkdirs();
 				sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
-				while (rs.next()) {
+				while (rs.next())
 					writer.write(histformatter.format(rs) + newline);
-				}
 				writer.close();
 				sender.sendMessage(ChatColor.GREEN + "Done");
 			} catch (final SQLException ex) {
@@ -286,7 +377,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	private class CommandSaveQueue extends LBCommand
+	public class CommandSaveQueue extends LBCommand
 	{
 		CommandSaveQueue(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
@@ -296,14 +387,13 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			final Consumer consumer = logblock.getConsumer();
 			sender.sendMessage(ChatColor.DARK_AQUA + "Current queue size: " + consumer.getQueueSize());
-			while (consumer.getQueueSize() > 0) {
+			while (consumer.getQueueSize() > 0)
 				consumer.run();
-			}
 			sender.sendMessage(ChatColor.GREEN + "Queue saved successfully");
 		}
 	}
 
-	private class CommandTeleport extends LBCommand
+	public class CommandTeleport extends LBCommand
 	{
 		CommandTeleport(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
@@ -312,21 +402,24 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				rs = state.executeQuery("SELECT x, z FROM `" + params.getTable() + "` INNER JOIN `lb-players` USING (playerid) " + params.getWhere() + params.getOrderBy() + " LIMIT 1");
 				if (rs.next()) {
 					final Player player = (Player)sender;
-					player.teleport(new Location(params.getWorld(), rs.getInt("x"), rs.getInt("y"), rs.getInt("z")));
+					final int x = rs.getInt("x");
+					final int z = rs.getInt("z");
+					player.teleport(new Location(params.world, x + 0.5, player.getWorld().getHighestBlockYAt(x, z), z + 0.5, player.getLocation().getYaw(), 90));
 				} else
 					sender.sendMessage(ChatColor.RED + "Query returned no result");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
-				log.log(Level.SEVERE, "[LogBlock WriteLogFile] SQL exception", ex);
+				log.log(Level.SEVERE, "[LogBlock Teleport] SQL exception", ex);
 			} finally {
 				close();
 			}
 		}
 	}
 
-	private class CommandRollback extends LBCommand
+	public class CommandRollback extends LBCommand
 	{
 		CommandRollback(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
@@ -335,38 +428,38 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				final WorldEditor editor = new WorldEditor(logblock, this, params.getWorld());
-				while (rs.next()) {
-					editor.queueBlockChange(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
-				}
+				rs = state.executeQuery(params.getQuery());
+				sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
+				final WorldEditor editor = new WorldEditor(logblock, params.world);
+				while (rs.next())
+					editor.queueBlockChange(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
-				sender.sendMessage(ChatColor.GREEN + "" + changes + " Changes found.");
-				final long start = System.currentTimeMillis();
-				if (!editor.start()) {
-					sender.sendMessage(ChatColor.RED + "Failed to schedule rollback task");
+				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
+				if (config.askRollbacks && questioner != null && sender instanceof Player && !questioner.askQuestion((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+					sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
-				synchronized (this) {
-					try {
-						this.wait();
-					} catch (final InterruptedException e) {
-						sender.sendMessage(ChatColor.RED + "Rollback Interrupted");
-						log.severe("[LogBlock Rollback] Interrupted");
-					}
-				}
+				final long start = System.currentTimeMillis();
+				editor.start();
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
 				sender.sendMessage(ChatColor.GREEN + "Undid " + editor.getSuccesses() + " of " + changes + " changes (" + editor.getErrors() + " errors, " + editor.getBlacklistCollisions() + " blacklist collisions)");
 				sender.sendMessage(ChatColor.GREEN + "Took: " + (System.currentTimeMillis() - start) + "ms");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
+			} catch (final QuestionerException ex) {
+				sender.sendMessage(ChatColor.RED + "Questioner exception");
+				log.log(Level.SEVERE, "[LogBlock Rollback] Questioner exception", ex);
+			} catch (final WorldEditorException ex) {
+				sender.sendMessage(ChatColor.RED + "WorldEditor exception");
+				log.log(Level.SEVERE, "[LogBlock Rollback] WorldEditor exception", ex);
 			} finally {
 				close();
 			}
 		}
 	}
 
-	private class CommandRedo extends LBCommand
+	public class CommandRedo extends LBCommand
 	{
 		CommandRedo(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
@@ -375,39 +468,105 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				final WorldEditor editor = new WorldEditor(logblock, this, params.getWorld());
-				while (rs.next()) {
-					editor.queueBlockChange(rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"));
-				}
+				rs = state.executeQuery(params.getQuery());
+				sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
+				final WorldEditor editor = new WorldEditor(logblock, params.world);
+				while (rs.next())
+					editor.queueBlockChange(rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), (short)(rs.getShort("itemamount") * 1), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
-				sender.sendMessage(ChatColor.GREEN + "" + changes + " Changes found.");
-				final long start = System.currentTimeMillis();
-				if (!editor.start()) {
-					sender.sendMessage(ChatColor.RED + "Failed to schedule redo task");
+				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
+				if (config.askRedos && questioner != null && sender instanceof Player && !questioner.askQuestion((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+					sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
-				synchronized (this) {
-					try {
-						this.wait();
-					} catch (final InterruptedException e) {
-						sender.sendMessage(ChatColor.RED + "Redo Interrupted");
-						log.severe("[LogBlock Redo] Interrupted");
-					}
-				}
+				final long start = System.currentTimeMillis();
+				editor.start();
 				sender.sendMessage(ChatColor.GREEN + "Redo finished successfully");
 				sender.sendMessage(ChatColor.GREEN + "Redid " + editor.getSuccesses() + " of " + changes + " changes (" + editor.getErrors() + " errors, " + editor.getBlacklistCollisions() + " blacklist collisions)");
 				sender.sendMessage(ChatColor.GREEN + "Took: " + (System.currentTimeMillis() - start) + "ms");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Redo] SQL exception", ex);
+			} catch (final QuestionerException ex) {
+				sender.sendMessage(ChatColor.RED + "Questioner exception");
+				log.log(Level.SEVERE, "[LogBlock Redo] Questioner exception", ex);
+			} catch (final WorldEditorException ex) {
+				sender.sendMessage(ChatColor.RED + "WorldEditor exception");
+				log.log(Level.SEVERE, "[LogBlock Redo] WorldEditor exception", ex);
 			} finally {
 				close();
 			}
 		}
 	}
 
-	private String getMaterialName(int type) {
-		return Material.getMaterial(type).toString().toLowerCase().replace('_', ' ');
+	public class CommandClearLog extends LBCommand
+	{
+		CommandClearLog(CommandSender sender, QueryParams params) throws Exception {
+			super(sender, params);
+		}
+
+		@Override
+		public void run() {
+			try {
+				final File dumpFolder = new File(logblock.getDataFolder(), "dumb");
+				int deleted;
+				for (final String table : config.tables.values()) {
+					rs = state.executeQuery("SELECT count(*) FROM `" + table + "` " + params.getWhere());
+					rs.next();
+					if ((deleted = rs.getInt(1)) > 0) {
+						if (config.askClearLogs && sender instanceof Player && questioner != null) {
+							sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
+							sender.sendMessage(ChatColor.GREEN.toString() + deleted + " blocks found.");
+							if (!questioner.askQuestion((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+								sender.sendMessage(ChatColor.RED + "ClearLog aborted");
+								return;
+							}
+						}
+						if (config.dumpDeletedLog)
+							try {
+								state.execute("SELECT * FROM `" + table + "` " + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, table + " " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+							} catch (final SQLException ex) {
+								sender.sendMessage(ChatColor.RED + "Error while dumping log. Make sure your MySQL user has access to the LogBlock folder, or disable clearlog.dumpDeletedLog");
+								log.log(Level.SEVERE, "[LogBlock ClearLog] Exception while dumping", ex);
+								return;
+							}
+						state.execute("DELETE FROM `" + table + "` " + params.getWhere());
+						sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + ". Deleted " + deleted + " entries.");
+					}
+					rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL");
+					rs.next();
+					if ((deleted = rs.getInt(1)) > 0) {
+						if (config.dumpDeletedLog)
+							state.execute("SELECT id, signtext FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, table + "-sign " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+						state.execute("DELETE `" + table + "-sign` FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
+						sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-sign. Deleted " + deleted + " entries.");
+					}
+					rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL");
+					rs.next();
+					if ((deleted = rs.getInt(1)) > 0) {
+						if (config.dumpDeletedLog)
+							state.execute("SELECT id, itemtype, itemamount, itemdata, FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, table + "-chest " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+						state.execute("DELETE `" + table + "-chest` FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
+						sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-chest. Deleted " + deleted + " entries.");
+					}
+				}
+			} catch (final SQLException ex) {
+				sender.sendMessage(ChatColor.RED + "SQL exception");
+				log.log(Level.SEVERE, "[LogBlock ClearLog] SQL exception", ex);
+			} catch (final QuestionerException ex) {
+				sender.sendMessage(ChatColor.RED + "Questioner exception");
+				log.log(Level.SEVERE, "[LogBlock ClearLog] Questioner exception", ex);
+			} finally {
+				close();
+			}
+		}
+	}
+
+	private List<String> ArgsToList(String[] arr, int offset) {
+		final List<String> list = new ArrayList<String>(Arrays.asList(arr));
+		for (int i = 0; i < offset; i++)
+			list.remove(0);
+		return list;
 	}
 
 	private class HistoryFormatter
@@ -422,50 +581,56 @@ public class CommandsHandler implements CommandExecutor
 		String format(ResultSet rs) {
 			try {
 				if (sum == SummarizationMode.NONE) {
-					final StringBuffer msg = new StringBuffer(formatter.format(rs.getTimestamp("date")) + " " + rs.getString("playername") + " ");
+					final StringBuilder msg = new StringBuilder(formatter.format(rs.getTimestamp("date")) + " " + rs.getString("playername") + " ");
 					final int type = rs.getInt("type");
 					final int replaced = rs.getInt("replaced");
-					if ((type == 63 || type == 68) && rs.getString("signtext") != null)
-						msg.append("created " + rs.getString("signtext"));
-					else if (type == replaced) {
-						if (type == 23 || type == 54 || type == 61)
-							msg.append("looked inside " + getMaterialName(type));
+					final String signtext;
+					if ((type == 63 || type == 68 || replaced == 63 || replaced == 68) && (signtext = rs.getString("signtext")) != null) {
+						final String action;
+						if (type == 0)
+							action = "destroyed ";
+						else
+							action = "created ";
+						if (!signtext.contains("\0"))
+							msg.append(action + signtext);
+						else
+							msg.append(action + "sign [" + signtext.replace("\0", "] [") + "]");
+					} else if (type == replaced) {
+						if (type == 0)
+							msg.append("did a unspecified action");
+						else if (type == 23 || type == 54 || type == 61) {
+							final int itemType = rs.getInt("itemtype");
+							final int itemAmount = rs.getInt("itemamount");
+							if (itemType == 0 || itemAmount == 0)
+								msg.append("looked inside " + BukkitUtils.getMaterialName(type));
+							else if (itemAmount < 0)
+								msg.append("took " + itemAmount * -1 + "x " + BukkitUtils.getMaterialName(itemType));
+							else
+								msg.append("put in " + itemAmount + "x " + BukkitUtils.getMaterialName(itemType));
+						}
 					} else if (type == 0)
-						msg.append("destroyed " + getMaterialName(replaced));
+						msg.append("destroyed " + BukkitUtils.getMaterialName(replaced));
 					else if (replaced == 0)
-						msg.append("created " + getMaterialName(type));
+						msg.append("created " + BukkitUtils.getMaterialName(type));
 					else
-						msg.append("replaced " + getMaterialName(replaced) + " with " + getMaterialName(type));
+						msg.append("replaced " + BukkitUtils.getMaterialName(replaced) + " with " + BukkitUtils.getMaterialName(type));
 					return msg.toString();
 				} else if (sum == SummarizationMode.TYPES)
-					return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + Material.getMaterial(rs.getInt("type")).toString().toLowerCase().replace('_', ' ');
+					return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + BukkitUtils.getMaterialName(rs.getInt("type"));
 				else
 					return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + rs.getString("playername");
 			} catch (final Exception ex) {
+				log.log(Level.SEVERE, "[LogBlock HistoryFormatter] Error", ex);
 				return null;
 			}
 		}
 
 		private String fillWithSpaces(Integer number) {
-			final StringBuffer filled = new StringBuffer(number.toString());
+			final StringBuilder filled = new StringBuilder(number.toString());
 			final int neededSpaces = (36 - filled.length() * 6) / 4;
 			for (int i = 0; i < neededSpaces; i++)
-				filled.append(' ');;
-				return filled.toString();
-		}
-	}
-
-	private void giveTool(Player player, int tool) {
-		if (player.getInventory().contains(config.toolID))
-			player.sendMessage(ChatColor.RED + "You have alredy a tool");
-		else {
-			final int free = player.getInventory().firstEmpty();
-			if (free >= 0) {
-				player.getInventory().setItem(free, player.getItemInHand());
-				player.setItemInHand(new ItemStack(config.toolID, 1));
-				player.sendMessage(ChatColor.GREEN + "Here is your tool.");
-			} else
-				player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory");
+				filled.append(' ');
+			return filled.toString();
 		}
 	}
 }

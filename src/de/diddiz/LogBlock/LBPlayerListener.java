@@ -5,16 +5,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.bukkit.Material;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
 
-public class LBPlayerListener extends PlayerListener
+class LBPlayerListener extends PlayerListener
 {
 	private final Logger log;
 	private final LogBlock logblock;
@@ -24,12 +21,6 @@ public class LBPlayerListener extends PlayerListener
 		this.logblock = logblock;
 		log = logblock.getServer().getLogger();
 		consumer = logblock.getConsumer();
-	}
-
-	@Override
-	public void onPlayerInteract(PlayerInteractEvent event) {
-		if (!event.isCancelled() && event.getAction() == Action.RIGHT_CLICK_BLOCK && (event.getClickedBlock().getType() == Material.CHEST || event.getClickedBlock().getType() == Material.FURNACE ||event.getClickedBlock().getType() == Material.DISPENSER))
-			consumer.queueChestAccess(event.getPlayer().getName(), event.getClickedBlock().getLocation(), event.getClickedBlock().getTypeId(),(short)0, (byte)0, (short)0, (byte)0);
 	}
 
 	@Override
@@ -63,8 +54,7 @@ public class LBPlayerListener extends PlayerListener
 			try {
 				if (state != null)
 					state.close();
-				if (conn != null)
-					conn.close();
+				conn.close();
 			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
 			}

@@ -1,5 +1,6 @@
 package de.diddiz.util;
 
+import java.io.Closeable;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -21,12 +22,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
-public class ConnectionPool {
+public class ConnectionPool implements Closeable
+{
+	private final static int poolsize = 10;
+	private final static long timeToLive = 300000;
 	private final Vector<JDCConnection> connections;
-	private final String url, user, password;
-	private final long timeout = 60000;
 	private final ConnectionReaper reaper;
-	private final int poolsize = 10;
+	private final String url, user, password;
 
 	public ConnectionPool(String url, String user, String password) throws ClassNotFoundException {
 		Class.forName("com.mysql.jdbc.Driver");
@@ -45,10 +47,8 @@ public class ConnectionPool {
 			if (conn.lease()) {
 				if (conn.isValid())
 					return conn;
-				else {
-					connections.remove(conn);
-					conn.terminate();
-				}
+				connections.remove(conn);
+				conn.terminate();
 			}
 		}
 		conn = new JDCConnection(DriverManager.getConnection(url, user, password));
@@ -62,13 +62,14 @@ public class ConnectionPool {
 	}
 
 	private synchronized void reapConnections() {
-		final long stale = System.currentTimeMillis() - timeout;
+		final long stale = System.currentTimeMillis() - timeToLive;
 		for (final JDCConnection conn : connections)
 			if (conn.inUse() && stale > conn.getLastUse() && !conn.isValid())
 				connections.remove(conn);
-	} 
+	}
 
-	public synchronized void closeConnections() {
+	@Override
+	public synchronized void close() {
 		final Enumeration<JDCConnection> conns = connections.elements();
 		while (conns.hasMoreElements()) {
 			final JDCConnection conn = conns.nextElement();
@@ -102,28 +103,9 @@ public class ConnectionPool {
 			timestamp = 0;
 		}
 
-		public void terminate() {
-			try {
-				conn.close();
-			} catch (final SQLException ex) {}
-		}
-
-		public synchronized boolean lease() {
-			if (inuse)
-				return false;
-			else {
-				inuse = true;
-				timestamp = System.currentTimeMillis();
-				return true;
-			}
-		}
-
-		public boolean inUse() {
-			return inuse;
-		}
-
-		public long getLastUse() {
-			return timestamp;
+		@Override
+		public void clearWarnings() throws SQLException {
+			conn.clearWarnings();
 		}
 
 		@Override
@@ -131,101 +113,16 @@ public class ConnectionPool {
 			inuse = false;
 			try {
 				if (!conn.getAutoCommit())
-				conn.setAutoCommit(true);
-			} catch (SQLException ex) {
+					conn.setAutoCommit(true);
+			} catch (final SQLException ex) {
 				connections.remove(conn);
 				terminate();
 			}
 		}
 
 		@Override
-		public PreparedStatement prepareStatement(String sql) throws SQLException {
-			return conn.prepareStatement(sql);
-		}
-
-		@Override
-		public CallableStatement prepareCall(String sql) throws SQLException {
-			return conn.prepareCall(sql);
-		}
-
-		@Override
-		public Statement createStatement() throws SQLException {
-			return conn.createStatement();
-		}
-
-		@Override
-		public String nativeSQL(String sql) throws SQLException {
-			return conn.nativeSQL(sql);
-		}
-
-		@Override
-		public void setAutoCommit(boolean autoCommit) throws SQLException {
-			conn.setAutoCommit(autoCommit);
-		}
-
-		@Override
-		public boolean getAutoCommit() throws SQLException {
-			return conn.getAutoCommit();
-		}
-
-		@Override
 		public void commit() throws SQLException {
 			conn.commit();
-		}
-
-		@Override
-		public void rollback() throws SQLException {
-			conn.rollback();
-		}
-
-		@Override
-		public boolean isClosed() throws SQLException {
-			return conn.isClosed();
-		}
-
-		@Override
-		public DatabaseMetaData getMetaData() throws SQLException {
-			return conn.getMetaData();
-		}
-
-		@Override
-		public void setReadOnly(boolean readOnly) throws SQLException {
-			conn.setReadOnly(readOnly);
-		}
-
-		@Override
-		public boolean isReadOnly() throws SQLException {
-			return conn.isReadOnly();
-		}
-
-		@Override
-		public void setCatalog(String catalog) throws SQLException {
-			conn.setCatalog(catalog);
-		}
-
-		@Override
-		public String getCatalog() throws SQLException {
-			return conn.getCatalog();
-		}
-
-		@Override
-		public void setTransactionIsolation(int level) throws SQLException {
-			conn.setTransactionIsolation(level);
-		}
-
-		@Override
-		public int getTransactionIsolation() throws SQLException {
-			return conn.getTransactionIsolation();
-		}
-
-		@Override
-		public SQLWarning getWarnings() throws SQLException {
-			return conn.getWarnings();
-		}
-
-		@Override
-		public void clearWarnings() throws SQLException {
-			conn.clearWarnings();
 		}
 
 		@Override
@@ -254,6 +151,11 @@ public class ConnectionPool {
 		}
 
 		@Override
+		public Statement createStatement() throws SQLException {
+			return conn.createStatement();
+		}
+
+		@Override
 		public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
 			return conn.createStatement(resultSetType, resultSetConcurrency);
 		}
@@ -266,6 +168,16 @@ public class ConnectionPool {
 		@Override
 		public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
 			return conn.createStruct(typeName, attributes);
+		}
+
+		@Override
+		public boolean getAutoCommit() throws SQLException {
+			return conn.getAutoCommit();
+		}
+
+		@Override
+		public String getCatalog() throws SQLException {
+			return conn.getCatalog();
 		}
 
 		@Override
@@ -283,9 +195,42 @@ public class ConnectionPool {
 			return conn.getHoldability();
 		}
 
+		public long getLastUse() {
+			return timestamp;
+		}
+
+		@Override
+		public DatabaseMetaData getMetaData() throws SQLException {
+			return conn.getMetaData();
+		}
+
+		@Override
+		public int getTransactionIsolation() throws SQLException {
+			return conn.getTransactionIsolation();
+		}
+
 		@Override
 		public Map<String, Class<?>> getTypeMap() throws SQLException {
 			return conn.getTypeMap();
+		}
+
+		@Override
+		public SQLWarning getWarnings() throws SQLException {
+			return conn.getWarnings();
+		}
+
+		public boolean inUse() {
+			return inuse;
+		}
+
+		@Override
+		public boolean isClosed() throws SQLException {
+			return conn.isClosed();
+		}
+
+		@Override
+		public boolean isReadOnly() throws SQLException {
+			return conn.isReadOnly();
 		}
 
 		public boolean isValid() {
@@ -302,6 +247,29 @@ public class ConnectionPool {
 		}
 
 		@Override
+		public boolean isWrapperFor(Class<?> iface) throws SQLException {
+			return conn.isWrapperFor(iface);
+		}
+
+		public synchronized boolean lease() {
+			if (inuse)
+				return false;
+			inuse = true;
+			timestamp = System.currentTimeMillis();
+			return true;
+		}
+
+		@Override
+		public String nativeSQL(String sql) throws SQLException {
+			return conn.nativeSQL(sql);
+		}
+
+		@Override
+		public CallableStatement prepareCall(String sql) throws SQLException {
+			return conn.prepareCall(sql);
+		}
+
+		@Override
 		public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
 			return conn.prepareCall(sql, resultSetType, resultSetConcurrency);
 		}
@@ -312,18 +280,13 @@ public class ConnectionPool {
 		}
 
 		@Override
+		public PreparedStatement prepareStatement(String sql) throws SQLException {
+			return conn.prepareStatement(sql);
+		}
+
+		@Override
 		public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
 			return conn.prepareStatement(sql, autoGeneratedKeys);
-		}
-
-		@Override
-		public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
-			return conn.prepareStatement(sql, columnIndexes);
-		}
-
-		@Override
-		public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-			return conn.prepareStatement(sql, columnNames);
 		}
 
 		@Override
@@ -337,13 +300,38 @@ public class ConnectionPool {
 		}
 
 		@Override
+		public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+			return conn.prepareStatement(sql, columnIndexes);
+		}
+
+		@Override
+		public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+			return conn.prepareStatement(sql, columnNames);
+		}
+
+		@Override
 		public void releaseSavepoint(Savepoint savepoint) throws SQLException {
 			conn.releaseSavepoint(savepoint);
 		}
 
 		@Override
+		public void rollback() throws SQLException {
+			conn.rollback();
+		}
+
+		@Override
 		public void rollback(Savepoint savepoint) throws SQLException {
 			conn.rollback(savepoint);
+		}
+
+		@Override
+		public void setAutoCommit(boolean autoCommit) throws SQLException {
+			conn.setAutoCommit(autoCommit);
+		}
+
+		@Override
+		public void setCatalog(String catalog) throws SQLException {
+			conn.setCatalog(catalog);
 		}
 
 		@Override
@@ -362,6 +350,11 @@ public class ConnectionPool {
 		}
 
 		@Override
+		public void setReadOnly(boolean readOnly) throws SQLException {
+			conn.setReadOnly(readOnly);
+		}
+
+		@Override
 		public Savepoint setSavepoint() throws SQLException {
 			return conn.setSavepoint();
 		}
@@ -372,13 +365,19 @@ public class ConnectionPool {
 		}
 
 		@Override
+		public void setTransactionIsolation(int level) throws SQLException {
+			conn.setTransactionIsolation(level);
+		}
+
+		@Override
 		public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
 			conn.setTypeMap(map);
 		}
 
-		@Override
-		public boolean isWrapperFor(Class<?> iface) throws SQLException {
-			return conn.isWrapperFor(iface);
+		public void terminate() {
+			try {
+				conn.close();
+			} catch (final SQLException ex) {}
 		}
 
 		@Override
