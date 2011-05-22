@@ -321,7 +321,7 @@ public class Consumer extends TimerTask
 						if (!addPlayer(b.name)) {
 							log.warning("[LogBlock Consumer] Failed to add player " + b.name);
 							continue;
-						}	
+						}
 					table = config.tables.get(b.worldHash);
 					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) SELECT now(), playerid, " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.x + "', " + b.y + ", '" + b.z + "' FROM `lb-players` WHERE playername = '" + b.name + "'", Statement.RETURN_GENERATED_KEYS);
 					if (b.signtext != null) {
@@ -352,7 +352,7 @@ public class Consumer extends TimerTask
 						if (!addPlayer(k.killer)) {
 							log.warning("[LogBlock Consumer] Failed to add player " + k.killer);
 							continue;
-						}	
+						}
 					if (!players.contains(k.victim.hashCode()))
 						if (!addPlayer(k.victim)) {
 							log.warning("[LogBlock Consumer] Failed to add player " + k.victim);

@@ -66,7 +66,6 @@ public class BukkitUtils
 				continue;
 			}
 			final int comp = comperator.compare(items1[c1], items2[c2]);
-			System.out.print("Comparing: " + items1[c1] + " & " + items2[c2] + " = " + comp);
 			if (comp < 0) {
 				items1[c1].setAmount(items1[c1].getAmount() * -1);
 				diff.add(items1[c1]);
