@@ -120,7 +120,6 @@ public class LogBlock extends JavaPlugin
 		final LBEntityListener lbEntityListener = new LBEntityListener(this);
 		final PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolListener(this), Priority.Normal, this);
-		pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Monitor, this);
 		if (config.logBlockCreations) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Priority.Monitor, this);
@@ -193,7 +192,6 @@ public class LogBlock extends JavaPlugin
 				if (!dbm.getTables(null, null, "lb-players", null).next())
 					return false;
 			}
-			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('-'), ('TNT'), ('Creeper'), ('Fire'), ('LeavesDecay'), ('Ghast'), ('LavaFlow'), ('Environment'), ('Chicken'), ('Cow'), ('Giant'), ('Pig'), ('PigZombie'), ('Sheep'), ('Skeleton'), ('Slime'), ('Spider'), ('Squid'), ('Wolf'), ('Zombie')");
 			for (final String table : config.tables.values()) {
 				if (!dbm.getTables(null, null, table, null).next()) {
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");

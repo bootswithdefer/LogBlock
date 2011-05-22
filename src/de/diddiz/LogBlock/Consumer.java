@@ -28,6 +28,7 @@ public class Consumer extends TimerTask
 	private final Config config;
 	private final LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	private final LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
+	private final HashSet<Integer> players = new HashSet<Integer>();
 	private final HashSet<Integer> hiddenplayers = new HashSet<Integer>();
 	private final HashMap<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
 	private final HashMap<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
@@ -36,6 +37,7 @@ public class Consumer extends TimerTask
 		this.logblock = logblock;
 		log = logblock.getServer().getLogger();
 		config = logblock.getConfig();
+		readPlayers();
 	}
 
 	int getQueueSize() {
@@ -244,6 +246,56 @@ public class Consumer extends TimerTask
 		queueSignPlace(playerName, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), sign.getLines());
 	}
 
+	private boolean addPlayer(String playerName) {
+		final Connection conn = logblock.getConnection();
+		if (conn == null)
+			return false;
+		Statement state = null;
+		try {
+			state = conn.createStatement();
+			conn.setAutoCommit(true);
+			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "');");
+			readPlayers();
+			return players.contains(playerName.hashCode());
+		} catch (final SQLException ex) {
+			log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
+			return false;
+		} finally {
+			try {
+				if (state != null)
+					state.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
+			}
+		}
+	}
+
+	private void readPlayers() {
+		final Connection conn = logblock.getConnection();
+		if (conn == null)
+			return;
+		Statement state = null;
+		ResultSet rs = null;
+		try {
+			conn.setAutoCommit(false);
+			state = conn.createStatement();
+			rs = state.executeQuery("SELECT playername FROM `lb-players`");
+			while (rs.next())
+				players.add(rs.getString(1).hashCode());
+		} catch (final SQLException ex) {
+			log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
+		} finally {
+			try {
+				if (state != null)
+					state.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
+			}
+		}
+	}
+
 	@Override
 	public synchronized void run() {
 		final Connection conn = logblock.getConnection();
@@ -265,6 +317,11 @@ public class Consumer extends TimerTask
 					b = bqueue.poll();
 					if (b == null)
 						continue;
+					if (!players.contains(b.name.hashCode()))
+						if (!addPlayer(b.name)) {
+							log.warning("[LogBlock Consumer] Failed to add player " + b.name);
+							continue;
+						}	
 					table = config.tables.get(b.worldHash);
 					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) SELECT now(), playerid, " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.x + "', " + b.y + ", '" + b.z + "' FROM `lb-players` WHERE playername = '" + b.name + "'", Statement.RETURN_GENERATED_KEYS);
 					if (b.signtext != null) {
@@ -291,6 +348,16 @@ public class Consumer extends TimerTask
 					k = kqueue.poll();
 					if (k == null)
 						continue;
+					if (!players.contains(k.killer.hashCode()))
+						if (!addPlayer(k.killer)) {
+							log.warning("[LogBlock Consumer] Failed to add player " + k.killer);
+							continue;
+						}	
+					if (!players.contains(k.victim.hashCode()))
+						if (!addPlayer(k.victim)) {
+							log.warning("[LogBlock Consumer] Failed to add player " + k.victim);
+							continue;
+						}
 					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) SELECT now(), playerid, (SELECT playerid FROM `lb-players` WHERE playername = '" + k.victim + "'), " + k.weapon + " FROM `lb-players` WHERE playername = '" + k.killer + "'");
 					count++;
 					if (count % 100 == 0)
