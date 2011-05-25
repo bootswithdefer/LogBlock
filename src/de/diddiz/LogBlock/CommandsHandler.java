@@ -100,6 +100,8 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.GOLD + "logblock.tp");
 				if (logblock.hasPermission(sender, "logblock.rollback"))
 					sender.sendMessage(ChatColor.GOLD + "logblock.rollback");
+				if (logblock.hasPermission(sender, "logblock.clearlog"))
+					sender.sendMessage(ChatColor.GOLD + "logblock.clearlog");
 				if (logblock.hasPermission(sender, "logblock.hide"))
 					sender.sendMessage(ChatColor.GOLD + "logblock.hide");
 			} else if (command.equals("tool")) {
