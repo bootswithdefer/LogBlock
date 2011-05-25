@@ -1,9 +1,10 @@
 name: LogBlock
-version: '1.00rc2'
+version: '1.00rc3'
 author: DiddiZ, bootswithdefer
 website: http://www.diddiz.de/minecraft/
 main: de.diddiz.LogBlock.LogBlock
 description: Logs blocks.
+softdepend: [BukkitContrib, LogBlockQuestioner, Permissions, WorldEdit]
 commands:
   lb:
     description: 'LogBlock commands.'
