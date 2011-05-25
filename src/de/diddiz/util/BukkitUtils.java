@@ -74,7 +74,7 @@ public class BukkitUtils
 				diff.add(items2[c2]);
 				c2++;
 			} else {
-				final int amount = items1[c1].getAmount() - items2[c2].getAmount();
+				final int amount = items2[c2].getAmount() - items1[c1].getAmount();
 				if (amount != 0) {
 					items1[c1].setAmount(amount);
 					diff.add(items1[c1]);
