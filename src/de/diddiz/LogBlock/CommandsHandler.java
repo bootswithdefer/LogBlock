@@ -621,7 +621,7 @@ public class CommandsHandler implements CommandExecutor
 					return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + BukkitUtils.getMaterialName(rs.getInt("type"));
 				else
 					return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + rs.getString("playername");
-			} catch (final Exception ex) {
+			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock HistoryFormatter] Error", ex);
 				return null;
 			}

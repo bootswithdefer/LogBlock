@@ -40,6 +40,16 @@ public class ConnectionPool implements Closeable
 		reaper.start();
 	}
 
+	@Override
+	public synchronized void close() {
+		final Enumeration<JDCConnection> conns = connections.elements();
+		while (conns.hasMoreElements()) {
+			final JDCConnection conn = conns.nextElement();
+			connections.remove(conn);
+			conn.terminate();
+		}
+	}
+
 	public synchronized Connection getConnection() throws SQLException {
 		JDCConnection conn;
 		for (int i = 0; i < connections.size(); i++) {
@@ -66,16 +76,6 @@ public class ConnectionPool implements Closeable
 		for (final JDCConnection conn : connections)
 			if (conn.inUse() && stale > conn.getLastUse() && !conn.isValid())
 				connections.remove(conn);
-	}
-
-	@Override
-	public synchronized void close() {
-		final Enumeration<JDCConnection> conns = connections.elements();
-		while (conns.hasMoreElements()) {
-			final JDCConnection conn = conns.nextElement();
-			connections.remove(conn);
-			conn.terminate();
-		}
 	}
 
 	private class ConnectionReaper extends Thread

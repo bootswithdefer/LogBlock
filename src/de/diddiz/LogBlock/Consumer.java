@@ -23,15 +23,15 @@ import de.diddiz.util.BukkitUtils;
 
 public class Consumer extends TimerTask
 {
-	private final LogBlock logblock;
-	private final Logger log;
-	private final Config config;
 	private final LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
-	private final LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
-	private final HashSet<Integer> players = new HashSet<Integer>();
+	private final Config config;
 	private final HashSet<Integer> hiddenplayers = new HashSet<Integer>();
+	private final LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
 	private final HashMap<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
 	private final HashMap<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
+	private final Logger log;
+	private final LogBlock logblock;
+	private final HashSet<Integer> players = new HashSet<Integer>();
 
 	Consumer(LogBlock logblock) {
 		this.logblock = logblock;
@@ -40,35 +40,11 @@ public class Consumer extends TimerTask
 		readPlayers();
 	}
 
-	int getQueueSize() {
-		return bqueue.size() + kqueue.size();
-	}
-
-	boolean hide(Player player) {
-		final int hash = player.getName().hashCode();
-		if (hiddenplayers.contains(hash)) {
-			hiddenplayers.remove(hash);
-			return false;
-		}
-		hiddenplayers.add(hash);
-		return true;
-	}
-
 	/**
 	 * Logs any block change. Don't try to combine broken and placed blocks. Queue two block changes or use the queueBLockReplace methods.
 	 */
 	public void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data) {
 		queueBlock(playerName, loc, typeBefore, typeAfter, data, null, null);
-	}
-
-	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
-		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || hiddenplayers.contains(playerName.hashCode()) || !config.tables.containsKey(loc.getWorld().getName().hashCode()))
-			return;
-		if (playerName.length() > 32)
-			playerName = playerName.substring(0, 32);
-		if (signtext != null)
-			signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
-		bqueue.add(new BlockRow(loc.getWorld().getName().hashCode(), playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), signtext, ca));
 	}
 
 	/**
@@ -246,56 +222,6 @@ public class Consumer extends TimerTask
 		queueSignPlace(playerName, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), sign.getLines());
 	}
 
-	private boolean addPlayer(String playerName) {
-		final Connection conn = logblock.getConnection();
-		if (conn == null)
-			return false;
-		Statement state = null;
-		try {
-			state = conn.createStatement();
-			conn.setAutoCommit(true);
-			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "');");
-			readPlayers();
-			return players.contains(playerName.hashCode());
-		} catch (final SQLException ex) {
-			log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
-			return false;
-		} finally {
-			try {
-				if (state != null)
-					state.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
-			}
-		}
-	}
-
-	private void readPlayers() {
-		final Connection conn = logblock.getConnection();
-		if (conn == null)
-			return;
-		Statement state = null;
-		ResultSet rs = null;
-		try {
-			conn.setAutoCommit(false);
-			state = conn.createStatement();
-			rs = state.executeQuery("SELECT playername FROM `lb-players`");
-			while (rs.next())
-				players.add(rs.getString(1).hashCode());
-		} catch (final SQLException ex) {
-			log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
-		} finally {
-			try {
-				if (state != null)
-					state.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
-			}
-		}
-	}
-
 	@Override
 	public synchronized void run() {
 		final Connection conn = logblock.getConnection();
@@ -378,15 +304,89 @@ public class Consumer extends TimerTask
 		}
 	}
 
+	int getQueueSize() {
+		return bqueue.size() + kqueue.size();
+	}
+
+	boolean hide(Player player) {
+		final int hash = player.getName().hashCode();
+		if (hiddenplayers.contains(hash)) {
+			hiddenplayers.remove(hash);
+			return false;
+		}
+		hiddenplayers.add(hash);
+		return true;
+	}
+
+	private boolean addPlayer(String playerName) {
+		final Connection conn = logblock.getConnection();
+		if (conn == null)
+			return false;
+		Statement state = null;
+		try {
+			state = conn.createStatement();
+			conn.setAutoCommit(true);
+			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "');");
+			readPlayers();
+			return players.contains(playerName.hashCode());
+		} catch (final SQLException ex) {
+			log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
+			return false;
+		} finally {
+			try {
+				if (state != null)
+					state.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
+			}
+		}
+	}
+
+	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
+		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || hiddenplayers.contains(playerName.hashCode()) || !config.tables.containsKey(loc.getWorld().getName().hashCode()))
+			return;
+		if (playerName.length() > 32)
+			playerName = playerName.substring(0, 32);
+		if (signtext != null)
+			signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
+		bqueue.add(new BlockRow(loc.getWorld().getName().hashCode(), playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), signtext, ca));
+	}
+
+	private void readPlayers() {
+		final Connection conn = logblock.getConnection();
+		if (conn == null)
+			return;
+		Statement state = null;
+		ResultSet rs = null;
+		try {
+			conn.setAutoCommit(false);
+			state = conn.createStatement();
+			rs = state.executeQuery("SELECT playername FROM `lb-players`");
+			while (rs.next())
+				players.add(rs.getString(1).hashCode());
+		} catch (final SQLException ex) {
+			log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
+		} finally {
+			try {
+				if (state != null)
+					state.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
+			}
+		}
+	}
+
 	private static class BlockRow
 	{
-		public final int worldHash;
+		public final ChestAccess ca;
+		public final byte data;
 		public final String name;
 		public final int replaced, type;
-		public final byte data;
-		public final int x, y, z;
 		public final String signtext;
-		public final ChestAccess ca;
+		public final int worldHash;
+		public final int x, y, z;
 
 		BlockRow(int worldHash, String name, int replaced, int type, byte data, int x, int y, int z, String signtext, ChestAccess ca) {
 			this.worldHash = worldHash;
@@ -404,8 +404,8 @@ public class Consumer extends TimerTask
 
 	private static class ChestAccess
 	{
-		public final short itemType, itemAmount;
 		public final byte itemData;
+		public final short itemType, itemAmount;
 
 		ChestAccess(short itemType, short itemAmount, byte itemData) {
 			this.itemType = itemType;
@@ -416,10 +416,10 @@ public class Consumer extends TimerTask
 
 	private static class KillRow
 	{
-		public final int worldHash;
 		public final String killer;
 		public final String victim;
 		public final int weapon;
+		public final int worldHash;
 
 		KillRow(int worldHash, String attacker, String defender, int weapon) {
 			this.worldHash = worldHash;

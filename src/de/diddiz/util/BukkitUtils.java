@@ -18,24 +18,6 @@ import org.bukkit.inventory.ItemStack;
 
 public class BukkitUtils
 {
-	private static class ItemStackComparator implements Comparator<ItemStack>
-	{
-		@Override
-		public int compare(ItemStack a, ItemStack b) {
-			final int aType = a.getTypeId(), bType = b.getTypeId();
-			if (aType < bType)
-				return -1;
-			if (aType > bType)
-				return 1;
-			final byte aData = rawData(a), bData = rawData(b);
-			if (aData < bData)
-				return -1;
-			if (aData > bData)
-				return 1;
-			return 0;
-		}
-	}
-
 	private final static Set<Set<Integer>> blockEquivalents;
 
 	static {
@@ -158,5 +140,23 @@ public class BukkitUtils
 		if (item.getData() == null)
 			return 0;
 		return item.getData().getData();
+	}
+
+	private static class ItemStackComparator implements Comparator<ItemStack>
+	{
+		@Override
+		public int compare(ItemStack a, ItemStack b) {
+			final int aType = a.getTypeId(), bType = b.getTypeId();
+			if (aType < bType)
+				return -1;
+			if (aType > bType)
+				return 1;
+			final byte aData = rawData(a), bData = rawData(b);
+			if (aData < bData)
+				return -1;
+			if (aData > bData)
+				return 1;
+			return 0;
+		}
 	}
 }

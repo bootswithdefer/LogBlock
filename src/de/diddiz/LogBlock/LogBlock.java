@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -70,7 +71,7 @@ public class LogBlock extends JavaPlugin
 			}
 			if (!file.exists() || file.length() == 0)
 				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			log.log(Level.SEVERE, "[LogBlock] Error while downloading " + file.getName() + ".");
 			errorAtLoading = true;
 			return;
