@@ -3,6 +3,7 @@ package de.diddiz.util;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -11,7 +12,7 @@ import java.text.SimpleDateFormat;
 
 public class Utils
 {
-	public static void download(URL u, File file) throws Exception {
+	public static void download(URL u, File file) throws IOException {
 		if (!file.getParentFile().exists())
 			file.getParentFile().mkdir();
 		if (file.exists())

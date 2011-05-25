@@ -119,6 +119,7 @@ public class WorldEditor implements Runnable
 			this.itemData = itemData;
 		}
 
+		// TODO Fix doors and beds
 		private PerformResult perform() {
 			if (config.dontRollback.contains(replaced))
 				return PerformResult.BLACKLISTED;

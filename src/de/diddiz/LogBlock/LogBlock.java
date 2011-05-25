@@ -136,11 +136,11 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Priority.Monitor, this);
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
-		if (config.logChestAccess) {
-			final LBChestAccessListener chestAccessListener = new LBChestAccessListener(this);
-			pm.registerEvent(Type.PLAYER_INTERACT, chestAccessListener, Priority.Monitor, this);
-			pm.registerEvent(Type.PLAYER_MOVE, chestAccessListener, Priority.Monitor, this);
-		}
+		if (config.logChestAccess)
+			if (getServer().getPluginManager().getPlugin("BukkitContrib") != null)
+				getServer().getPluginManager().registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
+			else
+				log.warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");
 		if (config.logLavaFlow)
 			pm.registerEvent(Type.BLOCK_FROMTO, lbBlockListener, Priority.Monitor, this);
 		if (config.logKills)
