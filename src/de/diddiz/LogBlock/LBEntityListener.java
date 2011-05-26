@@ -17,10 +17,10 @@ import org.bukkit.event.entity.EntityListener;
 class LBEntityListener extends EntityListener
 {
 	private final Consumer consumer;
-	private final boolean logSignTexts;
 	private final boolean logChestAccess;
 	private final boolean logCreeperExplosionsAsPlayer;
 	private final Config.LogKillsLevel logKillsLevel;
+	private final boolean logSignTexts;
 
 	LBEntityListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
@@ -28,6 +28,21 @@ class LBEntityListener extends EntityListener
 		logChestAccess = logblock.getConfig().logChestAccess;
 		logCreeperExplosionsAsPlayer = logblock.getConfig().logCreeperExplosionsAsPlayerWhoTriggeredThese;
 		logKillsLevel = logblock.getConfig().logKillsLevel;
+	}
+
+	@Override
+	public void onEntityDamage(EntityDamageEvent event) {
+		if (event.isCancelled() || !(event instanceof EntityDamageByEntityEvent) || !(event.getEntity() instanceof LivingEntity))
+			return;
+		final LivingEntity victim = (LivingEntity)event.getEntity();
+		final Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
+		if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0)
+			return;
+		if (logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
+			return;
+		else if (logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
+			return;
+		consumer.queueKill(killer, victim);
 	}
 
 	@Override
@@ -59,20 +74,5 @@ class LBEntityListener extends EntityListener
 					consumer.queueBlockBreak(name, block.getState());
 			}
 		}
-	}
-
-	@Override
-	public void onEntityDamage(EntityDamageEvent event) {
-		if (event.isCancelled() || !(event instanceof EntityDamageByEntityEvent) || !(event.getEntity() instanceof LivingEntity))
-			return;
-		final LivingEntity victim = (LivingEntity)event.getEntity();
-		final Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
-		if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0)
-			return;
-		if (logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
-			return;
-		else if (logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
-			return;
-		consumer.queueKill(killer, victim);
 	}
 }

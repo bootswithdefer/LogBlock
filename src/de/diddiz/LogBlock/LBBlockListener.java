@@ -14,13 +14,32 @@ import org.bukkit.event.block.SignChangeEvent;
 class LBBlockListener extends BlockListener
 {
 	private final Consumer consumer;
-	private final boolean logSignTexts;
 	private final boolean logChestAccess;
+	private final boolean logSignTexts;
 
 	LBBlockListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
 		logSignTexts = logblock.getConfig().logSignTexts;
 		logChestAccess = logblock.getConfig().logChestAccess;
+	}
+
+	@Override
+	public void onBlockBreak(BlockBreakEvent event) {
+		if (!event.isCancelled()) {
+			final int type = event.getBlock().getTypeId();
+			if (logSignTexts && (type == 63 || type == 68))
+				consumer.queueSignBreak(event.getPlayer().getName(), (Sign)event.getBlock().getState());
+			else if (logChestAccess && (type == 23 || type == 54 || type == 61))
+				consumer.queueContainerBreak(event.getPlayer().getName(), event.getBlock().getState());
+			else
+				consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlock().getState());
+		}
+	}
+
+	@Override
+	public void onBlockBurn(BlockBurnEvent event) {
+		if (!event.isCancelled())
+			consumer.queueBlockBreak("Fire", event.getBlock().getState());
 	}
 
 	@Override
@@ -55,33 +74,14 @@ class LBBlockListener extends BlockListener
 	}
 
 	@Override
-	public void onBlockBreak(BlockBreakEvent event) {
-		if (!event.isCancelled()) {
-			final int type = event.getBlock().getTypeId();
-			if (logSignTexts && (type == 63 || type == 68))
-				consumer.queueSignBreak(event.getPlayer().getName(), (Sign)event.getBlock().getState());
-			else if (logChestAccess && (type == 23 || type == 54 || type == 61))
-				consumer.queueContainerBreak(event.getPlayer().getName(), event.getBlock().getState());
-			else
-				consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlock().getState());
-		}
+	public void onLeavesDecay(LeavesDecayEvent event) {
+		if (!event.isCancelled())
+			consumer.queueBlockBreak("LeavesDecay", event.getBlock().getState());
 	}
 
 	@Override
 	public void onSignChange(SignChangeEvent event) {
 		if (!event.isCancelled())
 			consumer.queueSignPlace(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), event.getLines());
-	}
-
-	@Override
-	public void onBlockBurn(BlockBurnEvent event) {
-		if (!event.isCancelled())
-			consumer.queueBlockBreak("Fire", event.getBlock().getState());
-	}
-
-	@Override
-	public void onLeavesDecay(LeavesDecayEvent event) {
-		if (!event.isCancelled())
-			consumer.queueBlockBreak("LeavesDecay", event.getBlock().getState());
 	}
 }

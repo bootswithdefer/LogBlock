@@ -4,11 +4,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ContainerBlock;
 import org.bukkit.block.Sign;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Bed;
 import de.diddiz.util.BukkitUtils;
 
 public class WorldEditor implements Runnable
@@ -162,6 +164,28 @@ public class WorldEditor implements Runnable
 					for (int i = 0; i < 4; i++)
 						sign.setLine(i, lines[i]);
 					if (!sign.update())
+						return PerformResult.ERROR;
+				} else if (curtype == 26) {
+					final Bed bed = (Bed)block.getState().getData();
+					final Block secBlock;
+					if (!bed.isHeadOfBed())
+						secBlock = block.getFace(bed.getFacing());
+					else
+						secBlock = block.getFace(bed.getFacing().getOppositeFace());
+					if (secBlock.getTypeId() != 0)
+						return PerformResult.SUCCESS;
+					if (!secBlock.setTypeIdAndData(26, (byte)(bed.getData() ^ 8), true))
+						return PerformResult.ERROR;
+				} else if (curtype == 64 || curtype == 71) {
+					final Block secBlock;
+					final byte blockData = block.getData();
+					if ((blockData & 8) == 8)
+						secBlock = block.getFace(BlockFace.DOWN);
+					else
+						secBlock = block.getFace(BlockFace.UP);
+					if (secBlock.getTypeId() != 0)
+						return PerformResult.SUCCESS;
+					if (!secBlock.setTypeIdAndData(curtype, (byte)(blockData ^ 8), true))
 						return PerformResult.ERROR;
 				}
 				return PerformResult.SUCCESS;

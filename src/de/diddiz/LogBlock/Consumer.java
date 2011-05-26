@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -25,7 +26,7 @@ public class Consumer extends TimerTask
 {
 	private final LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	private final Config config;
-	private final HashSet<Integer> hiddenplayers = new HashSet<Integer>();
+	private final Set<Integer> hiddenplayers;
 	private final LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
 	private final HashMap<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
 	private final HashMap<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
@@ -37,6 +38,7 @@ public class Consumer extends TimerTask
 		this.logblock = logblock;
 		log = logblock.getServer().getLogger();
 		config = logblock.getConfig();
+		hiddenplayers = config.hiddenPlayers;
 		readPlayers();
 	}
 

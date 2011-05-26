@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
@@ -110,11 +111,15 @@ public class LogBlock extends JavaPlugin
 			final QueryParams params = new QueryParams(this);
 			params.minutes = config.keepLogDays * -1440;
 			params.bct = BlockChangeType.ALL;
-			try {
-				commandsHandler.new CommandClearLog(new ConsoleCommandSender(getServer()), params);
-			} catch (final Exception ex) {
-				log.severe("Failed to schedule ClearLog: " + ex.getMessage());
-			}
+			for (final World world : getServer().getWorlds())
+				if (config.tables.containsKey(world.getName().hashCode())) {
+					params.world = world;
+					try {
+						commandsHandler.new CommandClearLog(new ConsoleCommandSender(getServer()), params);
+					} catch (final Exception ex) {
+						log.severe("Failed to schedule ClearLog: " + ex.getMessage());
+					}
+				}
 		}
 		final LBBlockListener lbBlockListener = new LBBlockListener(this);
 		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
@@ -186,6 +191,7 @@ public class LogBlock extends JavaPlugin
 			return false;
 		try {
 			final DatabaseMetaData dbm = conn.getMetaData();
+			conn.setAutoCommit(true);
 			state = conn.createStatement();
 			if (!dbm.getTables(null, null, "lb-players", null).next()) {
 				log.log(Level.INFO, "[LogBlock] Crating table lb-players.");
@@ -206,6 +212,8 @@ public class LogBlock extends JavaPlugin
 					if (!dbm.getTables(null, null, table + "-sign", null).next())
 						return false;
 				}
+				if (dbm.getTables(null, null, table + "-chest", null).next() && state.executeQuery("SELECT * FROM `" + table + "-chest` LIMIT 1").getMetaData().getColumnCount() != 4) // Chest table update
+					state.execute("DROP TABLE `" + table + "-chest`");
 				if (!dbm.getTables(null, null, table + "-chest", null).next()) {
 					log.log(Level.INFO, "[LogBlock] Crating table " + table + "-chest.");
 					state.execute("CREATE TABLE `" + table + "-chest` (id INT NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");

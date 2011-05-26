@@ -340,11 +340,17 @@ public class QueryParams implements Cloneable
 			session.lastQuery = clone();
 	}
 
+	public void setLocation(Location loc) {
+		this.loc = loc;
+		world = loc.getWorld();
+	}
+
 	public void setPlayer(String playerName) {
 		players.clear();
 		players.add(playerName);
 	}
 
+	@Override
 	protected QueryParams clone() {
 		try {
 			return (QueryParams)super.clone();

@@ -45,6 +45,7 @@ public class Config
 	public final boolean askRollbacks;
 	public final boolean askRedos;
 	public final boolean askClearLogs;
+	public final Set<Integer> hiddenPlayers;
 
 	public static enum LogKillsLevel {
 		PLAYERS, MONSTERS, ANIMALS
@@ -117,6 +118,8 @@ public class Config
 			config.setProperty("logging.logKills", false);
 		if (!subkeys.contains("logKillsLevel"))
 			config.setProperty("logging.logKillsLevel", "PLAYERS");
+		if (!subkeys.contains("hiddenPlayers"))
+			config.setProperty("logging.hiddenPlayers", Arrays.asList(new String[]{"Nessie", "Bigfoot", "Chewbacca"}));
 		subkeys = config.getKeys("rollback");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
@@ -176,6 +179,9 @@ public class Config
 		} catch (final IllegalArgumentException ex) {
 			throw new Exception("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
+		hiddenPlayers = new HashSet<Integer>();
+		for (final String playerName : config.getStringList("hiddenPlayers", new ArrayList<String>()))
+			hiddenPlayers.add(playerName.hashCode());
 		dontRollback = new HashSet<Integer>(config.getIntList("rollback.dontRollback", null));
 		replaceAnyway = new HashSet<Integer>(config.getIntList("rollback.replaceAnyway", null));
 		try {
