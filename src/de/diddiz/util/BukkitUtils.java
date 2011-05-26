@@ -97,6 +97,11 @@ public class BukkitUtils
 		return false;
 	}
 
+	public static String friendlyWorldname(String worldName) {
+		worldName = worldName.substring(worldName.lastIndexOf('/') + 1);
+		return worldName.substring(worldName.lastIndexOf('\\') + 1);
+	}
+
 	public static Set<Set<Integer>> getBlockEquivalents() {
 		return blockEquivalents;
 	}

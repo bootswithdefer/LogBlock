@@ -15,53 +15,48 @@ import de.diddiz.util.BukkitUtils;
 
 public class WorldEditor implements Runnable
 {
-	public static class WorldEditorException extends Exception
-	{
-		private static final long serialVersionUID = 7509084196124728986L;
-
-		public WorldEditorException(String msg) {
-			super(msg);
-		}
-	}
-
 	private final Logger log;
 	private final LogBlock logblock;
 	private final Config config;
 	private final LinkedBlockingQueue<Edit> edits = new LinkedBlockingQueue<Edit>();
 	private final World world;
 	private int taskID;
-	private int successes = 0;
-	private int errors = 0;
-	private int blacklistCollisions = 0;
+	private int successes = 0, errors = 0, blacklistCollisions = 0;
+	private long elapsedTime = 0;
 
-	WorldEditor(LogBlock logblock, World world) {
+	public WorldEditor(LogBlock logblock, World world) {
 		log = logblock.getServer().getLogger();
 		this.logblock = logblock;
 		config = logblock.getConfig();
 		this.world = world;
 	}
 
-	int getSize() {
+	public int getSize() {
 		return edits.size();
 	}
 
-	int getSuccesses() {
+	public int getSuccesses() {
 		return successes;
 	}
 
-	int getErrors() {
+	public int getErrors() {
 		return errors;
 	}
 
-	int getBlacklistCollisions() {
+	public int getBlacklistCollisions() {
 		return blacklistCollisions;
 	}
 
-	void queueBlockChange(int type, int replaced, byte data, int x, int y, int z, String signtext, short itemType, short itemAmount, byte itemData) {
+	public void queueBlockChange(int type, int replaced, byte data, int x, int y, int z, String signtext, short itemType, short itemAmount, byte itemData) {
 		edits.add(new Edit(type, replaced, data, x, y, z, signtext, itemType, itemAmount, itemData));
 	}
 
-	synchronized void start() throws WorldEditorException {
+	public long getElapsedTime() {
+		return elapsedTime;
+	}
+
+	synchronized public void start() throws WorldEditorException {
+		final long start = System.currentTimeMillis();
 		taskID = logblock.getServer().getScheduler().scheduleSyncRepeatingTask(logblock, this, 0, 1);
 		if (taskID == -1)
 			throw new WorldEditorException("Failed to schedule task");
@@ -70,6 +65,7 @@ public class WorldEditor implements Runnable
 		} catch (final InterruptedException ex) {
 			throw new WorldEditorException("Interrupted");
 		}
+		elapsedTime = System.currentTimeMillis() - start;
 	}
 
 	@Override
@@ -121,8 +117,7 @@ public class WorldEditor implements Runnable
 			this.itemData = itemData;
 		}
 
-		// TODO Fix doors and beds
-		private PerformResult perform() {
+		PerformResult perform() {
 			if (config.dontRollback.contains(replaced))
 				return PerformResult.BLACKLISTED;
 			try {
@@ -193,6 +188,15 @@ public class WorldEditor implements Runnable
 				log.severe("[LogBlock Rollback] " + ex.toString());
 				return PerformResult.ERROR;
 			}
+		}
+	}
+
+	public static class WorldEditorException extends Exception
+	{
+		private static final long serialVersionUID = 7509084196124728986L;
+
+		public WorldEditorException(String msg) {
+			super(msg);
 		}
 	}
 }

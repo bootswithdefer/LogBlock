@@ -20,19 +20,16 @@ import de.diddiz.util.Utils;
 public class QueryParams implements Cloneable
 {
 	private static final HashSet<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode()));
-	BlockChangeType bct = BlockChangeType.BOTH;
-	int limit = 15;
-	Location loc = null;
-	int minutes = 0;
-	Order order = Order.DESC;
-	List<String> players = new ArrayList<String>();
-	boolean prepareToolQuery = false;
-	int radius = -1;
-	Selection sel = null;
-	boolean selectFullBlockData = false;
-	SummarizationMode sum = SummarizationMode.NONE;
-	List<Integer> types = new ArrayList<Integer>();
-	World world = null;
+	public BlockChangeType bct = BlockChangeType.BOTH;
+	public int limit = 15, minutes = 0, radius = -1;
+	public Location loc = null;
+	public Order order = Order.DESC;
+	public List<String> players = new ArrayList<String>();
+	public boolean prepareToolQuery = false, selectFullBlockData = false;
+	public Selection sel = null;
+	public SummarizationMode sum = SummarizationMode.NONE;
+	public List<Integer> types = new ArrayList<Integer>();
+	public World world = null;
 	private final LogBlock logblock;
 
 	public QueryParams(LogBlock logblock) {
@@ -44,7 +41,7 @@ public class QueryParams implements Cloneable
 		parseArgs(sender, args);
 	}
 
-	static boolean isKeyWord(String param) {
+	public static boolean isKeyWord(String param) {
 		if (keywords.contains(param.toLowerCase().hashCode()))
 			return true;
 		return false;
@@ -119,7 +116,7 @@ public class QueryParams implements Cloneable
 			title.append("at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + " ");
 		else if (sel != null)
 			title.append("inside selection ");
-		title.append("in " + getfriendlyWorldname());
+		title.append("in " + BukkitUtils.friendlyWorldname(world.getName()));
 		title.setCharAt(0, String.valueOf(title.charAt(0)).toUpperCase().toCharArray()[0]);
 		return title.toString();
 	}
@@ -358,13 +355,7 @@ public class QueryParams implements Cloneable
 		return null;
 	}
 
-	private String getfriendlyWorldname() {
-		String worldName = world.getName();
-		worldName = worldName.substring(worldName.lastIndexOf('/') + 1);
-		return worldName.substring(worldName.lastIndexOf('\\') + 1);
-	}
-
-	private String[] getValues(List<String> args, int offset) {
+	private static String[] getValues(List<String> args, int offset) {
 		int i;
 		for (i = offset; i < args.size(); i++)
 			if (isKeyWord(args.get(i)))
@@ -377,7 +368,7 @@ public class QueryParams implements Cloneable
 		return values;
 	}
 
-	private void merge(QueryParams params) {
+	public void merge(QueryParams params) {
 		players = params.players;
 		types = params.types;
 		loc = params.loc;

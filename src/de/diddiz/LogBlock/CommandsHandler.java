@@ -316,7 +316,7 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandLookup extends LBCommand
 	{
-		CommandLookup(CommandSender sender, QueryParams params) throws Exception {
+		public CommandLookup(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
 		}
 
@@ -381,7 +381,7 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandSaveQueue extends LBCommand
 	{
-		CommandSaveQueue(CommandSender sender, QueryParams params) throws Exception {
+		public CommandSaveQueue(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
 		}
 
@@ -397,7 +397,7 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandTeleport extends LBCommand
 	{
-		CommandTeleport(CommandSender sender, QueryParams params) throws Exception {
+		public CommandTeleport(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
 		}
 
@@ -423,7 +423,7 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandRollback extends LBCommand
 	{
-		CommandRollback(CommandSender sender, QueryParams params) throws Exception {
+		public CommandRollback(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
 		}
 
@@ -441,11 +441,10 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
-				final long start = System.currentTimeMillis();
 				editor.start();
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
 				sender.sendMessage(ChatColor.GREEN + "Undid " + editor.getSuccesses() + " of " + changes + " changes (" + editor.getErrors() + " errors, " + editor.getBlacklistCollisions() + " blacklist collisions)");
-				sender.sendMessage(ChatColor.GREEN + "Took: " + (System.currentTimeMillis() - start) + "ms");
+				sender.sendMessage(ChatColor.GREEN + "Took: " + editor.getElapsedTime() + "ms");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
@@ -463,7 +462,7 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandRedo extends LBCommand
 	{
-		CommandRedo(CommandSender sender, QueryParams params) throws Exception {
+		public CommandRedo(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
 		}
 
@@ -481,11 +480,10 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
-				final long start = System.currentTimeMillis();
 				editor.start();
 				sender.sendMessage(ChatColor.GREEN + "Redo finished successfully");
 				sender.sendMessage(ChatColor.GREEN + "Redid " + editor.getSuccesses() + " of " + changes + " changes (" + editor.getErrors() + " errors, " + editor.getBlacklistCollisions() + " blacklist collisions)");
-				sender.sendMessage(ChatColor.GREEN + "Took: " + (System.currentTimeMillis() - start) + "ms");
+				sender.sendMessage(ChatColor.GREEN + "Took: " + editor.getElapsedTime() + "ms");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Redo] SQL exception", ex);
@@ -503,7 +501,7 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandClearLog extends LBCommand
 	{
-		CommandClearLog(CommandSender sender, QueryParams params) throws Exception {
+		public CommandClearLog(CommandSender sender, QueryParams params) throws Exception {
 			super(sender, params);
 		}
 

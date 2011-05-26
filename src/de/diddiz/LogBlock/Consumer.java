@@ -144,12 +144,21 @@ public class Consumer extends TimerTask
 		queueBlock(playerName, loc, type, type, (byte)0, null, new ChestAccess(itemType, itemAmount, itemData));
 	}
 
+	/**
+	 * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
+	 * 
+	 * @param container
+	 * Must be instanceof ContainerBlock
+	 */
 	public void queueContainerBreak(String playerName, BlockState container) {
 		if (!(container instanceof ContainerBlock))
 			return;
 		queueContainerBreak(playerName, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getTypeId(), container.getRawData(), ((ContainerBlock)container).getInventory());
 	}
 
+	/**
+	 * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
+	 */
 	public void queueContainerBreak(String playerName, Location loc, int type, byte data, Inventory inv) {
 		final ItemStack[] items = BukkitUtils.compressInventory(inv.getContents());
 		for (final ItemStack item : items)
@@ -382,13 +391,13 @@ public class Consumer extends TimerTask
 
 	private static class BlockRow
 	{
-		public final ChestAccess ca;
-		public final byte data;
-		public final String name;
-		public final int replaced, type;
-		public final String signtext;
-		public final int worldHash;
-		public final int x, y, z;
+		final ChestAccess ca;
+		final byte data;
+		final String name;
+		final int replaced, type;
+		final String signtext;
+		final int worldHash;
+		final int x, y, z;
 
 		BlockRow(int worldHash, String name, int replaced, int type, byte data, int x, int y, int z, String signtext, ChestAccess ca) {
 			this.worldHash = worldHash;
@@ -406,8 +415,8 @@ public class Consumer extends TimerTask
 
 	private static class ChestAccess
 	{
-		public final byte itemData;
-		public final short itemType, itemAmount;
+		final byte itemData;
+		final short itemType, itemAmount;
 
 		ChestAccess(short itemType, short itemAmount, byte itemData) {
 			this.itemType = itemType;
@@ -418,10 +427,10 @@ public class Consumer extends TimerTask
 
 	private static class KillRow
 	{
-		public final String killer;
-		public final String victim;
-		public final int weapon;
-		public final int worldHash;
+		final String killer;
+		final String victim;
+		final int weapon;
+		final int worldHash;
 
 		KillRow(int worldHash, String attacker, String defender, int weapon) {
 			this.worldHash = worldHash;

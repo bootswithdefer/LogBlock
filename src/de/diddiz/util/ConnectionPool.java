@@ -97,7 +97,7 @@ public class ConnectionPool implements Closeable
 		private boolean inuse;
 		private long timestamp;
 
-		public JDCConnection(Connection conn) {
+		JDCConnection(Connection conn) {
 			this.conn = conn;
 			inuse = false;
 			timestamp = 0;
@@ -195,10 +195,6 @@ public class ConnectionPool implements Closeable
 			return conn.getHoldability();
 		}
 
-		public long getLastUse() {
-			return timestamp;
-		}
-
 		@Override
 		public DatabaseMetaData getMetaData() throws SQLException {
 			return conn.getMetaData();
@@ -219,10 +215,6 @@ public class ConnectionPool implements Closeable
 			return conn.getWarnings();
 		}
 
-		public boolean inUse() {
-			return inuse;
-		}
-
 		@Override
 		public boolean isClosed() throws SQLException {
 			return conn.isClosed();
@@ -233,14 +225,6 @@ public class ConnectionPool implements Closeable
 			return conn.isReadOnly();
 		}
 
-		public boolean isValid() {
-			try {
-				return conn.isValid(1);
-			} catch (final SQLException ex) {
-				return false;
-			}
-		}
-
 		@Override
 		public boolean isValid(int timeout) throws SQLException {
 			return conn.isValid(timeout);
@@ -249,14 +233,6 @@ public class ConnectionPool implements Closeable
 		@Override
 		public boolean isWrapperFor(Class<?> iface) throws SQLException {
 			return conn.isWrapperFor(iface);
-		}
-
-		public synchronized boolean lease() {
-			if (inuse)
-				return false;
-			inuse = true;
-			timestamp = System.currentTimeMillis();
-			return true;
 		}
 
 		@Override
@@ -374,15 +350,39 @@ public class ConnectionPool implements Closeable
 			conn.setTypeMap(map);
 		}
 
-		public void terminate() {
-			try {
-				conn.close();
-			} catch (final SQLException ex) {}
-		}
-
 		@Override
 		public <T> T unwrap(Class<T> iface) throws SQLException {
 			return conn.unwrap(iface);
+		}
+
+		long getLastUse() {
+			return timestamp;
+		}
+
+		boolean inUse() {
+			return inuse;
+		}
+
+		boolean isValid() {
+			try {
+				return conn.isValid(1);
+			} catch (final SQLException ex) {
+				return false;
+			}
+		}
+
+		synchronized boolean lease() {
+			if (inuse)
+				return false;
+			inuse = true;
+			timestamp = System.currentTimeMillis();
+			return true;
+		}
+
+		void terminate() {
+			try {
+				conn.close();
+			} catch (final SQLException ex) {}
 		}
 	}
 }
