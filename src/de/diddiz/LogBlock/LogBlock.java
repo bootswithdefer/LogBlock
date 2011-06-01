@@ -1,13 +1,10 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.Utils.downloadIfNotExists;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -24,8 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
-import de.diddiz.util.ConnectionPool;
-import de.diddiz.util.Utils;
+import de.diddiz.util.MySQLConnectionPool;
 
 // TODO Add painting logging
 // TODO Add Button, lever etc logging
@@ -34,7 +30,7 @@ public class LogBlock extends JavaPlugin
 {
 	private Logger log;
 	private Config config;
-	private ConnectionPool pool;
+	private MySQLConnectionPool pool;
 	private Consumer consumer = null;
 	private CommandsHandler commandsHandler;
 	private Timer timer = null;
@@ -59,35 +55,13 @@ public class LogBlock extends JavaPlugin
 		log = getServer().getLogger();
 		try {
 			config = new Config(this);
-		} catch (final Exception ex) {
-			log.log(Level.SEVERE, "[LogBlock] Exception while reading config:", ex);
-			errorAtLoading = true;
-			return;
-		}
-		final File file = new File("lib/mysql-connector-java-bin.jar");
-		try {
-			if (!file.exists() || file.length() == 0) {
-				log.info("[LogBlock] Downloading " + file.getName() + "...");
-				Utils.download(new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
-			}
-			if (!file.exists() || file.length() == 0)
-				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
-		} catch (final IOException e) {
-			log.log(Level.SEVERE, "[LogBlock] Error while downloading " + file.getName() + ".");
-			errorAtLoading = true;
-			return;
-		}
-		try {
+			downloadIfNotExists(log, new File("lib/mysql-connector-java-bin.jar"), new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"));
 			log.info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
-			pool = new ConnectionPool(config.url, config.user, config.password);
+			pool = new MySQLConnectionPool(config.url, config.user, config.password);
 			getConnection().close();
+			new Updater(this).checkTables();
 		} catch (final Exception ex) {
-			log.log(Level.SEVERE, "[LogBlock] Exception while checking database connection", ex);
-			errorAtLoading = true;
-			return;
-		}
-		if (!checkTables()) {
-			log.log(Level.SEVERE, "[LogBlock] Errors while checking tables. They may not exist.");
+			log.log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
 			errorAtLoading = true;
 			return;
 		}
@@ -182,64 +156,6 @@ public class LogBlock extends JavaPlugin
 		if (pool != null)
 			pool.close();
 		log.info("LogBlock disabled.");
-	}
-
-	private boolean checkTables() {
-		final Connection conn = getConnection();
-		Statement state = null;
-		if (conn == null)
-			return false;
-		try {
-			final DatabaseMetaData dbm = conn.getMetaData();
-			conn.setAutoCommit(true);
-			state = conn.createStatement();
-			if (!dbm.getTables(null, null, "lb-players", null).next()) {
-				log.log(Level.INFO, "[LogBlock] Crating table lb-players.");
-				state.execute("CREATE TABLE `lb-players` (playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (playerid), UNIQUE (playername))");
-				if (!dbm.getTables(null, null, "lb-players", null).next())
-					return false;
-			}
-			for (final String table : config.tables.values()) {
-				if (!dbm.getTables(null, null, table, null).next()) {
-					log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
-					state.execute("CREATE TABLE `" + table + "` (id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (y, x, z), KEY date (date))");
-					if (!dbm.getTables(null, null, table, null).next())
-						return false;
-				}
-				if (!dbm.getTables(null, null, table + "-sign", null).next()) {
-					log.log(Level.INFO, "[LogBlock] Crating table " + table + "-sign.");
-					state.execute("CREATE TABLE `" + table + "-sign` (id INT NOT NULL, signtext TEXT, PRIMARY KEY (id));");
-					if (!dbm.getTables(null, null, table + "-sign", null).next())
-						return false;
-				}
-				if (dbm.getTables(null, null, table + "-chest", null).next() && state.executeQuery("SELECT * FROM `" + table + "-chest` LIMIT 1").getMetaData().getColumnCount() != 4) // Chest table update
-					state.execute("DROP TABLE `" + table + "-chest`");
-				if (!dbm.getTables(null, null, table + "-chest", null).next()) {
-					log.log(Level.INFO, "[LogBlock] Crating table " + table + "-chest.");
-					state.execute("CREATE TABLE `" + table + "-chest` (id INT NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
-					if (!dbm.getTables(null, null, table + "-chest", null).next())
-						return false;
-				}
-				if (config.logKills && !dbm.getTables(null, null, table + "-kills", null).next()) {
-					log.log(Level.INFO, "[LogBlock] Crating table " + table + "-kills.");
-					state.execute("CREATE TABLE `" + table + "-kills` (id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer SMALLINT UNSIGNED, victim SMALLINT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, PRIMARY KEY (id));");
-					if (!dbm.getTables(null, null, table + "-kills", null).next())
-						return false;
-				}
-			}
-			return true;
-		} catch (final SQLException ex) {
-			log.log(Level.SEVERE, "[LogBlock] SQL exception while checking tables", ex);
-		} finally {
-			try {
-				if (state != null)
-					state.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
-			}
-		}
-		return false;
 	}
 
 	boolean hasPermission(CommandSender sender, String permission) {

@@ -1,5 +1,8 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.BukkitUtils.compressInventory;
+import static de.diddiz.util.BukkitUtils.getEntityName;
+import static de.diddiz.util.BukkitUtils.rawData;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,7 +23,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import de.diddiz.util.BukkitUtils;
 
 public class Consumer extends TimerTask
 {
@@ -160,9 +162,9 @@ public class Consumer extends TimerTask
 	 * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
 	 */
 	public void queueContainerBreak(String playerName, Location loc, int type, byte data, Inventory inv) {
-		final ItemStack[] items = BukkitUtils.compressInventory(inv.getContents());
+		final ItemStack[] items = compressInventory(inv.getContents());
 		for (final ItemStack item : items)
-			queueChestAccess(playerName, loc, type, (short)item.getTypeId(), (short)(item.getAmount() * -1), BukkitUtils.rawData(item));
+			queueChestAccess(playerName, loc, type, (short)item.getTypeId(), (short)(item.getAmount() * -1), rawData(item));
 		queueBlockBreak(playerName, loc, type, data);
 	}
 
@@ -182,7 +184,7 @@ public class Consumer extends TimerTask
 			weapon = ((Player)killer).getItemInHand().getTypeId();
 		lastAttackedEntity.put(killer.getEntityId(), victim.getEntityId());
 		lastAttackTime.put(killer.getEntityId(), System.currentTimeMillis());
-		queueKill(victim.getWorld(), BukkitUtils.getEntityName(killer), BukkitUtils.getEntityName(victim), weapon);
+		queueKill(victim.getWorld(), getEntityName(killer), getEntityName(victim), weapon);
 	}
 
 	/**
@@ -421,7 +423,10 @@ public class Consumer extends TimerTask
 		ChestAccess(short itemType, short itemAmount, byte itemData) {
 			this.itemType = itemType;
 			this.itemAmount = itemAmount;
-			this.itemData = itemData;
+			if (itemData < 0)
+				this.itemData = 0;
+			else
+				this.itemData = itemData;
 		}
 	}
 

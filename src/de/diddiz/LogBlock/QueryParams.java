@@ -1,5 +1,11 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.BukkitUtils.friendlyWorldname;
+import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
+import static de.diddiz.util.BukkitUtils.getMaterialName;
+import static de.diddiz.util.BukkitUtils.getSenderName;
+import static de.diddiz.util.Utils.isInt;
+import static de.diddiz.util.Utils.parseTimeSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -14,8 +20,6 @@ import org.bukkit.plugin.Plugin;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
 import com.sk89q.worldedit.bukkit.selections.Selection;
-import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.Utils;
 
 public class QueryParams implements Cloneable
 {
@@ -90,7 +94,7 @@ public class QueryParams implements Cloneable
 		final StringBuilder title = new StringBuilder();
 		if (!types.isEmpty()) {
 			for (int i = 0; i < types.size(); i++)
-				title.append(BukkitUtils.getMaterialName(types.get(i)) + ", ");
+				title.append(getMaterialName(types.get(i)) + ", ");
 			title.deleteCharAt(title.length() - 2);
 		} else
 			title.append("Block ");
@@ -116,7 +120,7 @@ public class QueryParams implements Cloneable
 			title.append("at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + " ");
 		else if (sel != null)
 			title.append("inside selection ");
-		title.append("in " + BukkitUtils.friendlyWorldname(world.getName()));
+		title.append("in " + friendlyWorldname(world.getName()));
 		title.setCharAt(0, String.valueOf(title.charAt(0)).toUpperCase().toCharArray()[0]);
 		return title.toString();
 	}
@@ -204,10 +208,9 @@ public class QueryParams implements Cloneable
 		Player player = null;
 		if (sender instanceof Player)
 			player = (Player)sender;
-		final String name = BukkitUtils.getSenderName(sender);
 		final Session session;
 		if (!prepareToolQuery)
-			session = logblock.getSession(name);
+			session = logblock.getSession(getSenderName(sender));
 		else
 			session = null;
 		if (player != null && world == null)
@@ -224,7 +227,7 @@ public class QueryParams implements Cloneable
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
 				for (final String playerName : values)
 					if (playerName.length() > 0)
-						players.add(playerName);
+						players.add(playerName.replace("\\", "\\\\").replace("'", "\\'"));
 			} else if (param.equals("block") || param.equals("type")) {
 				if (values == null || values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
@@ -242,7 +245,7 @@ public class QueryParams implements Cloneable
 					if (!prepareToolQuery)
 						loc = player.getLocation();
 				} else {
-					if (!Utils.isInt(values[0]))
+					if (!isInt(values[0]))
 						throw new IllegalArgumentException("Not a number: '" + values[0] + "'");
 					radius = Integer.parseInt(values[0]);
 					if (!prepareToolQuery)
@@ -264,14 +267,14 @@ public class QueryParams implements Cloneable
 				if (values == null)
 					minutes = logblock.getConfig().defaultTime;
 				else
-					minutes = Utils.parseTimeSpec(values);
+					minutes = parseTimeSpec(values);
 				if (minutes == -1)
 					throw new IllegalArgumentException("Faile to parse time spec for '" + param + "'");
 			} else if (param.equals("before")) {
 				if (values == null)
 					minutes = logblock.getConfig().defaultTime * -1;
 				else
-					minutes = Utils.parseTimeSpec(values) * -1;
+					minutes = parseTimeSpec(values) * -1;
 				if (minutes == 1)
 					throw new IllegalArgumentException("Faile to parse time spec for '" + param + "'");
 			} else if (param.equals("sum")) {
@@ -296,7 +299,7 @@ public class QueryParams implements Cloneable
 			else if (param.equals("limit")) {
 				if (values.length != 1)
 					throw new IllegalArgumentException("Wrong count of arguments for '" + param + "'");
-				if (!Utils.isInt(values[0]))
+				if (!isInt(values[0]))
 					throw new IllegalArgumentException("Not a number: '" + values[0] + "'");
 				limit = Integer.parseInt(values[0]);
 			} else if (param.equals("world")) {
@@ -315,7 +318,7 @@ public class QueryParams implements Cloneable
 				i += values.length;
 		}
 		if (types.size() > 0)
-			for (final Set<Integer> equivalent : BukkitUtils.getBlockEquivalents()) {
+			for (final Set<Integer> equivalent : getBlockEquivalents()) {
 				boolean found = false;
 				for (final Integer type : types)
 					if (equivalent.contains(type)) {

@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
-public class ConnectionPool implements Closeable
+public class MySQLConnectionPool implements Closeable
 {
 	private final static int poolsize = 10;
 	private final static long timeToLive = 300000;
@@ -30,7 +30,7 @@ public class ConnectionPool implements Closeable
 	private final ConnectionReaper reaper;
 	private final String url, user, password;
 
-	public ConnectionPool(String url, String user, String password) throws ClassNotFoundException {
+	public MySQLConnectionPool(String url, String user, String password) throws ClassNotFoundException {
 		Class.forName("com.mysql.jdbc.Driver");
 		this.url = url;
 		this.user = user;

@@ -2,6 +2,7 @@ package de.diddiz.util;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,23 +10,41 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.logging.Logger;
 
 public class Utils
 {
-	public static void download(URL u, File file) throws IOException {
+	public static void download(Logger log, URL url, File file) throws IOException {
 		if (!file.getParentFile().exists())
 			file.getParentFile().mkdir();
 		if (file.exists())
 			file.delete();
 		file.createNewFile();
-		final InputStream in = u.openStream();
+		final int size = url.openConnection().getContentLength();
+		log.info("Downloading " + file.getName() + " (" + size / 1024 + "kb) ...");
+		final InputStream in = url.openStream();
 		final OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
 		final byte[] buffer = new byte[1024];
-		int len;
-		while ((len = in.read(buffer)) >= 0)
+		int len, downloaded = 0, msgs = 0;
+		final long start = System.currentTimeMillis();
+		while ((len = in.read(buffer)) >= 0) {
 			out.write(buffer, 0, len);
+			downloaded += len;
+			if ((int)((System.currentTimeMillis() - start) / 500) > msgs) {
+				log.info((int)((double)downloaded / (double)size * 100d) + "%");
+				msgs++;
+			}
+		}
 		in.close();
 		out.close();
+		log.info("Download finished");
+	}
+
+	public static void downloadIfNotExists(Logger log, File file, URL url) throws IOException {
+		if (!file.exists() || file.length() == 0)
+			Utils.download(log, url, file);
+		if (!file.exists() || file.length() == 0)
+			throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
 	}
 
 	public static boolean isInt(String str) {

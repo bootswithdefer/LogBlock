@@ -1,5 +1,8 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.BukkitUtils.compareInventories;
+import static de.diddiz.util.BukkitUtils.compressInventory;
+import static de.diddiz.util.BukkitUtils.rawData;
 import java.util.HashMap;
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
@@ -8,7 +11,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkitcontrib.event.inventory.InventoryCloseEvent;
 import org.bukkitcontrib.event.inventory.InventoryListener;
 import org.bukkitcontrib.event.inventory.InventoryOpenEvent;
-import de.diddiz.util.BukkitUtils;
 
 class LBChestAccessListener extends InventoryListener
 {
@@ -25,10 +27,10 @@ class LBChestAccessListener extends InventoryListener
 			final String playerName = event.getPlayer().getName();
 			final Location loc = event.getLocation();
 			final ItemStack[] before = containers.get(playerName.hashCode());
-			final ItemStack[] after = BukkitUtils.compressInventory(event.getInventory().getContents());
-			final ItemStack[] diff = BukkitUtils.compareInventories(before, after);
+			final ItemStack[] after = compressInventory(event.getInventory().getContents());
+			final ItemStack[] diff = compareInventories(before, after);
 			for (final ItemStack item : diff)
-				consumer.queueChestAccess(playerName, loc, loc.getWorld().getBlockTypeIdAt(loc), (short)item.getTypeId(), (short)item.getAmount(), BukkitUtils.rawData(item));
+				consumer.queueChestAccess(playerName, loc, loc.getWorld().getBlockTypeIdAt(loc), (short)item.getTypeId(), (short)item.getAmount(), rawData(item));
 			containers.remove(playerName.hashCode());
 		}
 	}
@@ -38,7 +40,7 @@ class LBChestAccessListener extends InventoryListener
 		if (!event.isCancelled() && event.getLocation() != null) {
 			final BlockState state = event.getLocation().getWorld().getBlockAt(event.getLocation()).getState();
 			if (state instanceof ContainerBlock)
-				containers.put(event.getPlayer().getName().hashCode(), BukkitUtils.compressInventory(((ContainerBlock)state).getInventory().getContents()));
+				containers.put(event.getPlayer().getName().hashCode(), compressInventory(((ContainerBlock)state).getInventory().getContents()));
 		}
 	}
 }

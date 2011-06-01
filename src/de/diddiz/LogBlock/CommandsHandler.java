@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.BukkitUtils.giveTool;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
@@ -27,7 +28,6 @@ import de.diddiz.LogBlock.QueryParams.SummarizationMode;
 import de.diddiz.LogBlock.WorldEditor.WorldEditorException;
 import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
 import de.diddiz.LogBlockQuestioner.QuestionerException;
-import de.diddiz.util.BukkitUtils;
 
 public class CommandsHandler implements CommandExecutor
 {
@@ -109,7 +109,7 @@ public class CommandsHandler implements CommandExecutor
 					final Player player = (Player)sender;
 					if (args.length == 1) {
 						if (logblock.hasPermission(player, "logblock.tool"))
-							BukkitUtils.giveTool(player, config.toolID);
+							giveTool(player, config.toolID);
 						else
 							sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 					} else if (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("on")) {
@@ -135,7 +135,7 @@ public class CommandsHandler implements CommandExecutor
 					final Player player = (Player)sender;
 					if (args.length == 1) {
 						if (logblock.hasPermission(player, "logblock.toolblock"))
-							BukkitUtils.giveTool(player, config.toolblockID);
+							giveTool(player, config.toolblockID);
 						else
 							player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 					} else if (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("on")) {
@@ -430,12 +430,24 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				rs = state.executeQuery(params.getQuery());
+				final int queue = logblock.getConsumer().getQueueSize();
+				if (queue > 50 && (!config.askSavequeueBeforeRollback || questioner != null && sender instanceof Player && questioner.askQuestion((Player)sender, "There are " + queue + " block in queue. Do yu want to process the queue before rollback?", "yes", "no").equals("yes")))
+					try {
+						new CommandSaveQueue(sender, null);
+					} catch (final Exception ex) {
+						sender.sendMessage(ChatColor.RED + ex.getMessage());
+					}
 				sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
+				rs = state.executeQuery(params.getQuery());
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
 				while (rs.next())
 					editor.queueBlockChange(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
+				if (changes == 0) {
+					sender.sendMessage(ChatColor.RED.toString() + changes + " blocks found.");
+					sender.sendMessage(ChatColor.RED + "Rollback aborted");
+					return;
+				}
 				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (config.askRollbacks && questioner != null && sender instanceof Player && !questioner.askQuestion((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Rollback aborted");
@@ -445,6 +457,8 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
 				sender.sendMessage(ChatColor.GREEN + "Undid " + editor.getSuccesses() + " of " + changes + " changes (" + editor.getErrors() + " errors, " + editor.getBlacklistCollisions() + " blacklist collisions)");
 				sender.sendMessage(ChatColor.GREEN + "Took: " + editor.getElapsedTime() + "ms");
+				if (logblock.hasPermission(sender, "logblock.clearlog"))
+					sender.sendMessage(ChatColor.LIGHT_PURPLE + "Delete the log with '/lb clearlog last'");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
@@ -475,6 +489,11 @@ public class CommandsHandler implements CommandExecutor
 				while (rs.next())
 					editor.queueBlockChange(rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), (short)(rs.getShort("itemamount") * 1), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
+				if (changes == 0) {
+					sender.sendMessage(ChatColor.RED.toString() + changes + " blocks found.");
+					sender.sendMessage(ChatColor.RED + "Redo aborted");
+					return;
+				}
 				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (config.askRedos && questioner != null && sender instanceof Player && !questioner.askQuestion((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Redo aborted");
@@ -512,7 +531,12 @@ public class CommandsHandler implements CommandExecutor
 				final SimpleDateFormat formatter = new SimpleDateFormat("yyMMddHHmmss");
 				int deleted;
 				final String table = params.getTable();
-				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` " + params.getWhere());
+				final String join;
+				if (params.players.size() > 0)
+					join = "INNER JOIN `lb-players` USING (playerid) ";
+				else
+					join = "";
+				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` " + join + params.getWhere());
 				rs.next();
 				if ((deleted = rs.getInt(1)) > 0) {
 					if (config.askClearLogs && sender instanceof Player && questioner != null) {
@@ -525,13 +549,13 @@ public class CommandsHandler implements CommandExecutor
 					}
 					if (config.dumpDeletedLog)
 						try {
-							state.execute("SELECT * FROM `" + table + "` " + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, formatter.format(System.currentTimeMillis()) + " " + table + " " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+							state.execute("SELECT * FROM `" + table + "` " + join + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, formatter.format(System.currentTimeMillis()) + " " + table + " " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 						} catch (final SQLException ex) {
 							sender.sendMessage(ChatColor.RED + "Error while dumping log. Make sure your MySQL user has access to the LogBlock folder, or disable clearlog.dumpDeletedLog");
 							log.log(Level.SEVERE, "[LogBlock ClearLog] Exception while dumping", ex);
 							return;
 						}
-					state.execute("DELETE FROM `" + table + "` " + params.getWhere());
+					state.execute("DELETE `" + table + "` FROM `" + table + "` " + join + params.getWhere());
 					sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + ". Deleted " + deleted + " entries.");
 				}
 				rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL");
@@ -562,75 +586,10 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	private List<String> ArgsToList(String[] arr, int offset) {
+	private static List<String> ArgsToList(String[] arr, int offset) {
 		final List<String> list = new ArrayList<String>(Arrays.asList(arr));
 		for (int i = 0; i < offset; i++)
 			list.remove(0);
 		return list;
-	}
-
-	private class HistoryFormatter
-	{
-		private final SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
-		private final SummarizationMode sum;
-
-		HistoryFormatter(SummarizationMode sum) {
-			this.sum = sum;
-		}
-
-		String format(ResultSet rs) {
-			try {
-				if (sum == SummarizationMode.NONE) {
-					final StringBuilder msg = new StringBuilder(formatter.format(rs.getTimestamp("date")) + " " + rs.getString("playername") + " ");
-					final int type = rs.getInt("type");
-					final int replaced = rs.getInt("replaced");
-					final String signtext;
-					if ((type == 63 || type == 68 || replaced == 63 || replaced == 68) && (signtext = rs.getString("signtext")) != null) {
-						final String action;
-						if (type == 0)
-							action = "destroyed ";
-						else
-							action = "created ";
-						if (!signtext.contains("\0"))
-							msg.append(action + signtext);
-						else
-							msg.append(action + "sign [" + signtext.replace("\0", "] [") + "]");
-					} else if (type == replaced) {
-						if (type == 0)
-							msg.append("did a unspecified action");
-						else if (type == 23 || type == 54 || type == 61) {
-							final int itemType = rs.getInt("itemtype");
-							final int itemAmount = rs.getInt("itemamount");
-							if (itemType == 0 || itemAmount == 0)
-								msg.append("looked inside " + BukkitUtils.getMaterialName(type));
-							else if (itemAmount < 0)
-								msg.append("took " + itemAmount * -1 + "x " + BukkitUtils.getMaterialName(itemType));
-							else
-								msg.append("put in " + itemAmount + "x " + BukkitUtils.getMaterialName(itemType));
-						}
-					} else if (type == 0)
-						msg.append("destroyed " + BukkitUtils.getMaterialName(replaced));
-					else if (replaced == 0)
-						msg.append("created " + BukkitUtils.getMaterialName(type));
-					else
-						msg.append("replaced " + BukkitUtils.getMaterialName(replaced) + " with " + BukkitUtils.getMaterialName(type));
-					return msg.toString();
-				} else if (sum == SummarizationMode.TYPES)
-					return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + BukkitUtils.getMaterialName(rs.getInt("type"));
-				else
-					return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + rs.getString("playername");
-			} catch (final SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock HistoryFormatter] Error", ex);
-				return null;
-			}
-		}
-
-		private String fillWithSpaces(Integer number) {
-			final StringBuilder filled = new StringBuilder(number.toString());
-			final int neededSpaces = (36 - filled.length() * 6) / 4;
-			for (int i = 0; i < neededSpaces; i++)
-				filled.append(' ');
-			return filled.toString();
-		}
 	}
 }

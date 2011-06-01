@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.BukkitUtils.equalTypes;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 import org.bukkit.World;
@@ -11,7 +12,6 @@ import org.bukkit.block.Sign;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Bed;
-import de.diddiz.util.BukkitUtils;
 
 public class WorldEditor implements Runnable
 {
@@ -144,7 +144,7 @@ public class WorldEditor implements Runnable
 						return PerformResult.SUCCESS;
 					} else
 						return PerformResult.NO_ACTION;
-				if (!(BukkitUtils.equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
+				if (!(equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
 					return PerformResult.NO_ACTION;
 				if (state instanceof ContainerBlock) {
 					((ContainerBlock)state).getInventory().clear();
@@ -156,8 +156,12 @@ public class WorldEditor implements Runnable
 				if (signtext != null && (curtype == 63 || curtype == 68)) {
 					final Sign sign = (Sign)block.getState();
 					final String[] lines = signtext.split("\0");
-					for (int i = 0; i < 4; i++)
-						sign.setLine(i, lines[i]);
+					try {
+						for (int i = 0; i < 4; i++)
+							sign.setLine(i, lines[i]);
+					} catch (final IndexOutOfBoundsException ex) {
+						return PerformResult.ERROR;
+					}
 					if (!sign.update())
 						return PerformResult.ERROR;
 				} else if (curtype == 26) {

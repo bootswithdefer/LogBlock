@@ -34,14 +34,15 @@ public class BukkitUtils
 	public static ItemStack[] compareInventories(ItemStack[] items1, ItemStack[] items2) {
 		final ItemStackComparator comperator = new ItemStackComparator();
 		final ArrayList<ItemStack> diff = new ArrayList<ItemStack>();
+		final int l1 = items1.length, l2 = items2.length;
 		int c1 = 0, c2 = 0;
-		while (c1 < items1.length || c2 < items2.length) {
-			if (c1 >= items1.length) {
+		while (c1 < l1 || c2 < l2) {
+			if (c1 >= l1) {
 				diff.add(items2[c2]);
 				c2++;
 				continue;
 			}
-			if (c2 >= items2.length) {
+			if (c2 >= l2) {
 				items1[c1].setAmount(items1[c1].getAmount() * -1);
 				diff.add(items1[c1]);
 				c1++;
@@ -147,7 +148,7 @@ public class BukkitUtils
 		return item.getData().getData();
 	}
 
-	private static class ItemStackComparator implements Comparator<ItemStack>
+	public static class ItemStackComparator implements Comparator<ItemStack>
 	{
 		@Override
 		public int compare(ItemStack a, ItemStack b) {

@@ -44,7 +44,7 @@ class LBToolListener extends PlayerListener
 				if (tables.get(player.getWorld().getName().hashCode()) != null) {
 					try {
 						final QueryParams params = logblock.getSession(player.getName()).toolQuery;
-						params.setLocation(event.getClickedBlock().getLocation());
+						params.setLocation(event.getClickedBlock().getFace(event.getBlockFace()).getLocation());
 						handler.new CommandLookup(player, params);
 					} catch (final Exception ex) {
 						player.sendMessage(ChatColor.RED + ex.getMessage());
