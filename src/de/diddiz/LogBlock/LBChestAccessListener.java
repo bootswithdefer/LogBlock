@@ -5,8 +5,6 @@ import static de.diddiz.util.BukkitUtils.compressInventory;
 import static de.diddiz.util.BukkitUtils.rawData;
 import java.util.HashMap;
 import org.bukkit.Location;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.ContainerBlock;
 import org.bukkit.inventory.ItemStack;
 import org.bukkitcontrib.event.inventory.InventoryCloseEvent;
 import org.bukkitcontrib.event.inventory.InventoryListener;
@@ -37,10 +35,7 @@ class LBChestAccessListener extends InventoryListener
 
 	@Override
 	public void onInventoryOpen(InventoryOpenEvent event) {
-		if (!event.isCancelled() && event.getLocation() != null) {
-			final BlockState state = event.getLocation().getWorld().getBlockAt(event.getLocation()).getState();
-			if (state instanceof ContainerBlock)
-				containers.put(event.getPlayer().getName().hashCode(), compressInventory(((ContainerBlock)state).getInventory().getContents()));
-		}
+		if (!event.isCancelled() && event.getLocation() != null)
+			containers.put(event.getPlayer().getName().hashCode(), compressInventory(event.getInventory().getContents()));
 	}
 }
