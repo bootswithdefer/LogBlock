@@ -58,7 +58,7 @@ public class Utils
 	public static int parseTimeSpec(String[] spec) {
 		if (spec == null || spec.length < 1 || spec.length > 2)
 			return -1;
-		if (!spec[0].contains(":") || !spec[0].contains("."))
+		if (!spec[0].contains(":") && !spec[0].contains("."))
 			if (spec.length == 2) {
 				if (!isInt(spec[0]))
 					return -1;
