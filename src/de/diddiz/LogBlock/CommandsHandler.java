@@ -354,9 +354,10 @@ public class CommandsHandler implements CommandExecutor
 
 		@Override
 		public void run() {
+			File file = null;
 			try {
 				rs = state.executeQuery(params.getQuery());
-				final File file = new File("plugins/LogBlock/log/" + params.getTitle() + ".log");
+				file = new File("plugins/LogBlock/log/" + params.getTitle() + ".log");
 				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
 				final String newline = System.getProperty("line.separator");
@@ -371,7 +372,7 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock WriteLogFile] SQL exception", ex);
 			} catch (final IOException ex) {
-				sender.sendMessage(ChatColor.RED + "IO exception");
+				sender.sendMessage(ChatColor.RED + "IO exception at file '" + file.getPath() + "'");
 				log.log(Level.SEVERE, "[LogBlock WriteLogFile] IO exception", ex);
 			} finally {
 				close();

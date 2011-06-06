@@ -41,7 +41,6 @@ public class Consumer extends TimerTask
 		log = logblock.getServer().getLogger();
 		config = logblock.getConfig();
 		hiddenplayers = config.hiddenPlayers;
-		readPlayers();
 	}
 
 	/**
@@ -257,7 +256,7 @@ public class Consumer extends TimerTask
 					if (b == null)
 						continue;
 					if (!players.contains(b.name.hashCode()))
-						if (!addPlayer(b.name)) {
+						if (!addPlayer(conn, state, b.name)) {
 							log.warning("[LogBlock Consumer] Failed to add player " + b.name);
 							continue;
 						}
@@ -288,13 +287,8 @@ public class Consumer extends TimerTask
 					if (k == null)
 						continue;
 					if (!players.contains(k.killer.hashCode()))
-						if (!addPlayer(k.killer)) {
+						if (!addPlayer(conn, state, k.killer)) {
 							log.warning("[LogBlock Consumer] Failed to add player " + k.killer);
-							continue;
-						}
-					if (!players.contains(k.victim.hashCode()))
-						if (!addPlayer(k.victim)) {
-							log.warning("[LogBlock Consumer] Failed to add player " + k.victim);
 							continue;
 						}
 					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) SELECT now(), playerid, (SELECT playerid FROM `lb-players` WHERE playername = '" + k.victim + "'), " + k.weapon + " FROM `lb-players` WHERE playername = '" + k.killer + "'");
@@ -331,29 +325,14 @@ public class Consumer extends TimerTask
 		return true;
 	}
 
-	private boolean addPlayer(String playerName) {
-		final Connection conn = logblock.getConnection();
-		if (conn == null)
-			return false;
-		Statement state = null;
-		try {
-			state = conn.createStatement();
-			conn.setAutoCommit(true);
-			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "');");
-			readPlayers();
-			return players.contains(playerName.hashCode());
-		} catch (final SQLException ex) {
-			log.log(Level.SEVERE, "[LogBlock] SQL exception", ex);
-			return false;
-		} finally {
-			try {
-				if (state != null)
-					state.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock] SQL exception on close", ex);
-			}
-		}
+	private boolean addPlayer(Connection conn, Statement state, String playerName) throws SQLException {
+		state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "');");
+		conn.commit();
+		final ResultSet rs = state.executeQuery("SELECT playername FROM `lb-players`");
+		while (rs.next())
+			players.add(rs.getString(1).hashCode());
+		rs.close();
+		return players.contains(playerName.hashCode());
 	}
 
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
@@ -364,31 +343,6 @@ public class Consumer extends TimerTask
 		if (signtext != null)
 			signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
 		bqueue.add(new BlockRow(loc.getWorld().getName().hashCode(), playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), signtext, ca));
-	}
-
-	private void readPlayers() {
-		final Connection conn = logblock.getConnection();
-		if (conn == null)
-			return;
-		Statement state = null;
-		ResultSet rs = null;
-		try {
-			conn.setAutoCommit(false);
-			state = conn.createStatement();
-			rs = state.executeQuery("SELECT playername FROM `lb-players`");
-			while (rs.next())
-				players.add(rs.getString(1).hashCode());
-		} catch (final SQLException ex) {
-			log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
-		} finally {
-			try {
-				if (state != null)
-					state.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
-			}
-		}
 	}
 
 	private static class BlockRow
