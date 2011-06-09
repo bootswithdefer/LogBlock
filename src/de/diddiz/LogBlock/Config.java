@@ -167,7 +167,7 @@ public class Config
 			throw new DataFormatException("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
 		hiddenPlayers = new HashSet<Integer>();
-		for (final String playerName : config.getStringList("hiddenPlayers", new ArrayList<String>()))
+		for (final String playerName : config.getStringList("logging.hiddenPlayers", new ArrayList<String>()))
 			hiddenPlayers.add(playerName.hashCode());
 		dontRollback = new HashSet<Integer>(config.getIntList("rollback.dontRollback", null));
 		replaceAnyway = new HashSet<Integer>(config.getIntList("rollback.replaceAnyway", null));
