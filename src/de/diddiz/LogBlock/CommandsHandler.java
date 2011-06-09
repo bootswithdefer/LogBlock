@@ -118,6 +118,23 @@ public class CommandsHandler implements CommandExecutor
 					} else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
 						logblock.getSession(player.getName()).toolEnabled = false;
 						player.sendMessage(ChatColor.GREEN + "Tool disabled.");
+					} else if (args[1].equalsIgnoreCase("mode")) {
+						final Session session = logblock.getSession(player.getName());
+						if (args.length == 3) {
+							final ToolMode mode;
+							try {
+								mode = ToolMode.valueOf(args[2].toUpperCase());
+							} catch (final IllegalArgumentException ex) {
+								sender.sendMessage(ChatColor.RED + "Can't find mode " + args[2]);
+								return true;
+							}
+							if (logblock.hasPermission(player, mode.getPermission())) {
+								session.toolMode = mode;
+								sender.sendMessage(ChatColor.GREEN + "Tool mode set to " + args[2]);
+							} else
+								sender.sendMessage(ChatColor.RED + "You aren't allowed to use mode " + args[2]);
+						} else
+							player.sendMessage(ChatColor.RED + "No mode specified");
 					} else if (logblock.hasPermission(player, "logblock.lookup"))
 						try {
 							final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
@@ -144,6 +161,23 @@ public class CommandsHandler implements CommandExecutor
 					} else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
 						logblock.getSession(player.getName()).toolBlockEnabled = false;
 						player.sendMessage(ChatColor.GREEN + "Tool block disabled.");
+					} else if (args[1].equalsIgnoreCase("mode")) {
+						final Session session = logblock.getSession(player.getName());
+						if (args.length == 3) {
+							final ToolMode mode;
+							try {
+								mode = ToolMode.valueOf(args[2].toUpperCase());
+							} catch (final IllegalArgumentException ex) {
+								sender.sendMessage(ChatColor.RED + "Can't find mode " + args[2]);
+								return true;
+							}
+							if (logblock.hasPermission(player, mode.getPermission())) {
+								session.toolBlockMode = mode;
+								sender.sendMessage(ChatColor.GREEN + "Toolblock mode set to " + args[2]);
+							} else
+								sender.sendMessage(ChatColor.RED + "You aren't allowed to use mode " + args[2]);
+						} else
+							player.sendMessage(ChatColor.RED + "No mode specified");
 					} else if (logblock.hasPermission(player, "logblock.lookup"))
 						try {
 							final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
@@ -162,7 +196,7 @@ public class CommandsHandler implements CommandExecutor
 						if (logblock.getConsumer().hide((Player)sender))
 							sender.sendMessage(ChatColor.GREEN + "You are now hided and won't appear in any log. Type '/lb hide' again to unhide");
 						else
-							sender.sendMessage(ChatColor.GREEN + "You aren't hided anylonger.");
+							sender.sendMessage(ChatColor.GREEN + "You aren't hidden anylonger.");
 					} else
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else
@@ -550,7 +584,7 @@ public class CommandsHandler implements CommandExecutor
 					}
 					if (config.dumpDeletedLog)
 						try {
-							state.execute("SELECT * FROM `" + table + "` " + join + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, formatter.format(System.currentTimeMillis()) + " " + table + " " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+							state.execute("SELECT * FROM `" + table + "` " + join + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, formatter.format(System.currentTimeMillis()) + " " + table + " " + params.getTitle().replace(":", ".") + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 						} catch (final SQLException ex) {
 							sender.sendMessage(ChatColor.RED + "Error while dumping log. Make sure your MySQL user has access to the LogBlock folder, or disable clearlog.dumpDeletedLog");
 							log.log(Level.SEVERE, "[LogBlock ClearLog] Exception while dumping", ex);

@@ -26,32 +26,45 @@ class LBToolListener extends PlayerListener
 	@Override
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		if (!event.isCancelled()) {
-			final Player player = event.getPlayer();
-			if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == toolID && logblock.hasPermission(player, "logblock.tool") && logblock.getSession(player.getName()).toolEnabled) {
-				if (tables.get(player.getWorld().getName().hashCode()) != null) {
-					try {
-						final QueryParams params = logblock.getSession(player.getName()).toolQuery;
-						params.setLocation(event.getClickedBlock().getLocation());
-						handler.new CommandLookup(player, params);
-					} catch (final Exception ex) {
-						player.sendMessage(ChatColor.RED + ex.getMessage());
-					}
-					if (event.getClickedBlock().getTypeId() != 26)
-						event.setCancelled(true);
-				} else
-					player.sendMessage("This world isn't logged");
-			} else if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getMaterial().getId() == toolblockID && logblock.hasPermission(player, "logblock.toolblock") && logblock.getSession(player.getName()).toolBlockEnabled)
-				if (tables.get(player.getWorld().getName().hashCode()) != null) {
-					try {
-						final QueryParams params = logblock.getSession(player.getName()).toolQuery;
-						params.setLocation(event.getClickedBlock().getFace(event.getBlockFace()).getLocation());
-						handler.new CommandLookup(player, params);
-					} catch (final Exception ex) {
-						player.sendMessage(ChatColor.RED + ex.getMessage());
-					}
-					event.setCancelled(true);
-				} else
-					player.sendMessage("This world isn't logged");
+			final Action action = event.getAction();
+			final int type = event.getMaterial().getId();
+			if (type == toolID && action == Action.RIGHT_CLICK_BLOCK || type == toolblockID && (action == Action.LEFT_CLICK_BLOCK || action == Action.RIGHT_CLICK_BLOCK)) {
+				final Player player = event.getPlayer();
+				final Session session = logblock.getSession(player.getName());
+				if (type == toolID && session.toolEnabled && logblock.hasPermission(player, "logblock.tool") || type == toolblockID && session.toolBlockEnabled && logblock.hasPermission(player, "logblock.toolblock"))
+					if (tables.get(player.getWorld().getName().hashCode()) != null) {
+						if (!(type == toolID && event.getClickedBlock().getTypeId() == 26))
+							event.setCancelled(true);
+						final QueryParams params;
+						ToolMode mode;
+						if (type == toolID) {
+							params = session.toolQuery;
+							mode = session.toolMode;
+						} else {
+							params = session.toolBlockQuery;
+							mode = session.toolBlockMode;
+						}
+						if (type == toolblockID && action == Action.RIGHT_CLICK_BLOCK)
+							params.setLocation(event.getClickedBlock().getFace(event.getBlockFace()).getLocation());
+						else
+							params.setLocation(event.getClickedBlock().getLocation());
+						try {
+							if (mode == ToolMode.ROLLBACK)
+								handler.new CommandRollback(player, params);
+							else if (mode == ToolMode.REDO)
+								handler.new CommandRedo(player, params);
+							else if (mode == ToolMode.CLEARLOG)
+								handler.new CommandClearLog(player, params);
+							else if (mode == ToolMode.WRITELOGFILE)
+								handler.new CommandWriteLogFile(player, params);
+							else
+								handler.new CommandLookup(player, params);
+						} catch (final Exception ex) {
+							player.sendMessage(ChatColor.RED + ex.getMessage());
+						}
+					} else
+						player.sendMessage("This world isn't logged");
+			}
 		}
 	}
 }
