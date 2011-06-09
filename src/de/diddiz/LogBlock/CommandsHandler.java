@@ -220,7 +220,6 @@ public class CommandsHandler implements CommandExecutor
 						params.order = Order.DESC;
 						params.sum = SummarizationMode.NONE;
 						params.bct = BlockChangeType.ALL;
-						params.selectFullBlockData = true;
 						new CommandRollback(sender, params);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
@@ -237,7 +236,6 @@ public class CommandsHandler implements CommandExecutor
 						params.order = Order.ASC;
 						params.sum = SummarizationMode.NONE;
 						params.bct = BlockChangeType.ALL;
-						params.selectFullBlockData = true;
 						new CommandRedo(sender, params);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
@@ -473,7 +471,7 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
 				sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
-				rs = state.executeQuery(params.getQuery());
+				rs = state.executeQuery(params.getRollbackQuery());
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
 				while (rs.next())
 					editor.queueBlockChange(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
@@ -492,8 +490,6 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
 				sender.sendMessage(ChatColor.GREEN + "Undid " + editor.getSuccesses() + " of " + changes + " changes (" + editor.getErrors() + " errors, " + editor.getBlacklistCollisions() + " blacklist collisions)");
 				sender.sendMessage(ChatColor.GREEN + "Took: " + editor.getElapsedTime() + "ms");
-				if (logblock.hasPermission(sender, "logblock.clearlog"))
-					sender.sendMessage(ChatColor.LIGHT_PURPLE + "Delete the log with '/lb clearlog last'");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
@@ -518,7 +514,7 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				rs = state.executeQuery(params.getQuery());
+				rs = state.executeQuery(params.getRollbackQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
 				while (rs.next())
