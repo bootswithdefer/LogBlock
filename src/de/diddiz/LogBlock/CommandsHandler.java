@@ -355,7 +355,7 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				rs = state.executeQuery(params.getQuery());
+				rs = state.executeQuery(params.getLookupQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle());
 				if (rs.next()) {
 					rs.beforeFirst();
@@ -366,7 +366,7 @@ public class CommandsHandler implements CommandExecutor
 					else if (sum == SummarizationMode.PLAYERS)
 						sender.sendMessage(ChatColor.GOLD + String.format("%-6s %-6s %s", "Created", "Destroyed", "Playername"));
 					while (rs.next())
-						sender.sendMessage(ChatColor.GOLD + histformatter.format(rs));
+						sender.sendMessage(ChatColor.GOLD + histformatter.format(rs, params.coords));
 				} else
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
 			} catch (final SQLException ex) {
@@ -388,7 +388,7 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			File file = null;
 			try {
-				rs = state.executeQuery(params.getQuery());
+				rs = state.executeQuery(params.getLookupQuery());
 				file = new File("plugins/LogBlock/log/" + params.getTitle() + ".log");
 				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
@@ -397,7 +397,7 @@ public class CommandsHandler implements CommandExecutor
 				file.getParentFile().mkdirs();
 				sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
 				while (rs.next())
-					writer.write(histformatter.format(rs) + newline);
+					writer.write(histformatter.format(rs, params.coords) + newline);
 				writer.close();
 				sender.sendMessage(ChatColor.GREEN + "Done");
 			} catch (final SQLException ex) {

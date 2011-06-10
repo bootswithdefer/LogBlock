@@ -15,7 +15,7 @@ public class HistoryFormatter
 		this.sum = sum;
 	}
 
-	String format(ResultSet rs) throws SQLException {
+	String format(ResultSet rs, boolean coords) throws SQLException {
 		if (sum == SummarizationMode.NONE) {
 			final StringBuilder msg = new StringBuilder(formatter.format(rs.getTimestamp("date")) + " " + rs.getString("playername") + " ");
 			final int type = rs.getInt("type");
@@ -50,6 +50,8 @@ public class HistoryFormatter
 				msg.append("created " + getMaterialName(type));
 			else
 				msg.append("replaced " + getMaterialName(replaced) + " with " + getMaterialName(type));
+			if (coords)
+				msg.append(" at " + rs.getInt("x") + ":" + rs.getInt("y") + ":" + rs.getInt("z"));
 			return msg.toString();
 		} else if (sum == SummarizationMode.TYPES)
 			return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + getMaterialName(rs.getInt("type"));

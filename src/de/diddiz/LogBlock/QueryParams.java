@@ -23,13 +23,13 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 
 public class QueryParams implements Cloneable
 {
-	private static final HashSet<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode()));
+	private static final HashSet<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode()));
 	public BlockChangeType bct = BlockChangeType.BOTH;
 	public int limit = 15, minutes = 0, radius = -1;
 	public Location loc = null;
 	public Order order = Order.DESC;
 	public List<String> players = new ArrayList<String>();
-	public boolean prepareToolQuery = false;
+	public boolean prepareToolQuery = false, coords = false;
 	public Selection sel = null;
 	public SummarizationMode sum = SummarizationMode.NONE;
 	public List<Integer> types = new ArrayList<Integer>();
@@ -61,10 +61,12 @@ public class QueryParams implements Cloneable
 		return "ORDER BY date " + order + ", id " + order + " ";
 	}
 
-	public String getQuery() {
+	public String getLookupQuery() {
 		if (sum == SummarizationMode.NONE) {
 			String select = "SELECT date, replaced, type, playername";
 			String from = "FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) ";
+			if (coords)
+				select += ", x, y, z";
 			if (types.size() == 0 || types.contains(63) || types.contains(68)) {
 				select += ", signtext";
 				from += "LEFT JOIN `" + getTable() + "-sign` USING (id) ";
@@ -310,6 +312,8 @@ public class QueryParams implements Cloneable
 				order = Order.ASC;
 			else if (param.equals("desc"))
 				order = Order.DESC;
+			else if (param.equals("coords"))
+				coords = true;
 			else
 				throw new IllegalArgumentException("Not a valid argument: '" + param + "'");
 			if (values != null)
