@@ -27,7 +27,6 @@ import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
 import de.diddiz.LogBlock.WorldEditor.WorldEditorException;
 import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
-import de.diddiz.LogBlockQuestioner.QuestionerException;
 
 public class CommandsHandler implements CommandExecutor
 {
@@ -464,7 +463,7 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			try {
 				final int queue = logblock.getConsumer().getQueueSize();
-				if (queue > 50 && (!config.askSavequeueBeforeRollback || questioner != null && sender instanceof Player && questioner.askQuestion((Player)sender, "There are " + queue + " block in queue. Do yu want to process the queue before rollback?", "yes", "no").equals("yes")))
+				if (queue > 50 && (!config.askSavequeueBeforeRollback || questioner != null && sender instanceof Player && questioner.ask((Player)sender, "There are " + queue + " block in queue. Do yu want to process the queue before rollback?", "yes", "no").equals("yes")))
 					try {
 						new CommandSaveQueue(sender, null);
 					} catch (final Exception ex) {
@@ -482,7 +481,7 @@ public class CommandsHandler implements CommandExecutor
 					return;
 				}
 				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
-				if (config.askRollbacks && questioner != null && sender instanceof Player && !questioner.askQuestion((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+				if (config.askRollbacks && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
@@ -493,9 +492,6 @@ public class CommandsHandler implements CommandExecutor
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
-			} catch (final QuestionerException ex) {
-				sender.sendMessage(ChatColor.RED + "Questioner exception");
-				log.log(Level.SEVERE, "[LogBlock Rollback] Questioner exception", ex);
 			} catch (final WorldEditorException ex) {
 				sender.sendMessage(ChatColor.RED + "WorldEditor exception");
 				log.log(Level.SEVERE, "[LogBlock Rollback] WorldEditor exception", ex);
@@ -526,7 +522,7 @@ public class CommandsHandler implements CommandExecutor
 					return;
 				}
 				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
-				if (config.askRedos && questioner != null && sender instanceof Player && !questioner.askQuestion((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+				if (config.askRedos && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
@@ -537,9 +533,6 @@ public class CommandsHandler implements CommandExecutor
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Redo] SQL exception", ex);
-			} catch (final QuestionerException ex) {
-				sender.sendMessage(ChatColor.RED + "Questioner exception");
-				log.log(Level.SEVERE, "[LogBlock Redo] Questioner exception", ex);
 			} catch (final WorldEditorException ex) {
 				sender.sendMessage(ChatColor.RED + "WorldEditor exception");
 				log.log(Level.SEVERE, "[LogBlock Redo] WorldEditor exception", ex);
@@ -573,7 +566,7 @@ public class CommandsHandler implements CommandExecutor
 					if (config.askClearLogs && sender instanceof Player && questioner != null) {
 						sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 						sender.sendMessage(ChatColor.GREEN.toString() + deleted + " blocks found.");
-						if (!questioner.askQuestion((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+						if (!questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 							sender.sendMessage(ChatColor.RED + "ClearLog aborted");
 							return;
 						}
@@ -608,9 +601,6 @@ public class CommandsHandler implements CommandExecutor
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock ClearLog] SQL exception", ex);
-			} catch (final QuestionerException ex) {
-				sender.sendMessage(ChatColor.RED + "Questioner exception");
-				log.log(Level.SEVERE, "[LogBlock ClearLog] Questioner exception", ex);
 			} finally {
 				close();
 			}

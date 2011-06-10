@@ -326,7 +326,7 @@ public class Consumer extends TimerTask
 	}
 
 	private boolean addPlayer(Connection conn, Statement state, String playerName) throws SQLException {
-		state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "');");
+		state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "')");
 		conn.commit();
 		final ResultSet rs = state.executeQuery("SELECT playername FROM `lb-players`");
 		while (rs.next())
