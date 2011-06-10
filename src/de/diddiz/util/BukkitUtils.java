@@ -143,9 +143,7 @@ public class BukkitUtils
 	}
 
 	public static byte rawData(ItemStack item) {
-		if (item.getData() == null)
-			return 0;
-		return item.getData().getData();
+		return item.getData() != null ? item.getData().getData() : 0;
 	}
 
 	public static class ItemStackComparator implements Comparator<ItemStack>

@@ -22,11 +22,7 @@ public class HistoryFormatter
 			final int replaced = rs.getInt("replaced");
 			final String signtext;
 			if ((type == 63 || type == 68 || replaced == 63 || replaced == 68) && (signtext = rs.getString("signtext")) != null) {
-				final String action;
-				if (type == 0)
-					action = "destroyed ";
-				else
-					action = "created ";
+				final String action = type == 0 ? "destroyed " : "created ";
 				if (!signtext.contains("\0"))
 					msg.append(action + signtext);
 				else

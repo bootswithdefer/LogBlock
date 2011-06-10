@@ -46,15 +46,11 @@ public class QueryParams implements Cloneable
 	}
 
 	public static boolean isKeyWord(String param) {
-		if (keywords.contains(param.toLowerCase().hashCode()))
-			return true;
-		return false;
+		return keywords.contains(param.toLowerCase().hashCode());
 	}
 
 	public String getLimit() {
-		if (limit == -1)
-			return "";
-		return "LIMIT " + limit;
+		return limit != -1 ? "LIMIT " + limit : "";
 	}
 
 	public String getOrderBy() {
@@ -205,14 +201,8 @@ public class QueryParams implements Cloneable
 	public void parseArgs(CommandSender sender, List<String> args) throws IllegalArgumentException {
 		if (args == null || args.size() == 0)
 			throw new IllegalArgumentException("No parameters specified.");
-		Player player = null;
-		if (sender instanceof Player)
-			player = (Player)sender;
-		final Session session;
-		if (!prepareToolQuery)
-			session = logblock.getSession(getSenderName(sender));
-		else
-			session = null;
+		final Player player = sender instanceof Player ? (Player)sender : null;
+		final Session session = prepareToolQuery ? null : logblock.getSession(getSenderName(sender));
 		if (player != null && world == null)
 			world = player.getWorld();
 		for (int i = 0; i < args.size(); i++) {

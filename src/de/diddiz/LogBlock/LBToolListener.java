@@ -35,15 +35,8 @@ class LBToolListener extends PlayerListener
 					if (tables.get(player.getWorld().getName().hashCode()) != null) {
 						if (!(type == toolID && event.getClickedBlock().getTypeId() == 26))
 							event.setCancelled(true);
-						final QueryParams params;
-						ToolMode mode;
-						if (type == toolID) {
-							params = session.toolQuery;
-							mode = session.toolMode;
-						} else {
-							params = session.toolBlockQuery;
-							mode = session.toolBlockMode;
-						}
+						final QueryParams params = type == toolID ? session.toolQuery : session.toolBlockQuery;
+						final ToolMode mode = type == toolID ? session.toolMode : session.toolBlockMode;
 						if (type == toolblockID && action == Action.RIGHT_CLICK_BLOCK)
 							params.setLocation(event.getClickedBlock().getFace(event.getBlockFace()).getLocation());
 						else
