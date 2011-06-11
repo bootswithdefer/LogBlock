@@ -1,5 +1,7 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.Utils.readURL;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -60,5 +62,13 @@ class Updater
 		}
 		state.close();
 		conn.close();
+	}
+
+	String checkVersion() {
+		try {
+			return readURL(new URL("http://diddiz.insane-architects.net/lbuptodate.php?v=" + logblock.getDescription().getVersion()));
+		} catch (final Exception ex) {
+			return "Can't connect to server";
+		}
 	}
 }

@@ -50,6 +50,7 @@ public class CommandsHandler implements CommandExecutor
 			return false;
 		if (args.length == 0) {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + logblock.getDescription().getVersion() + " by DiddiZ");
+			sender.sendMessage(ChatColor.LIGHT_PURPLE + logblock.getUpdater().checkVersion());
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
 		} else {
 			final String command = args[0].toLowerCase();

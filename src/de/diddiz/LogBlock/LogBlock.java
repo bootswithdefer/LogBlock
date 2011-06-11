@@ -33,6 +33,7 @@ public class LogBlock extends JavaPlugin
 	private MySQLConnectionPool pool;
 	private Consumer consumer = null;
 	private CommandsHandler commandsHandler;
+	private Updater updater = null;
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
 	private boolean errorAtLoading = false;
@@ -50,16 +51,22 @@ public class LogBlock extends JavaPlugin
 		return commandsHandler;
 	}
 
+	Updater getUpdater() {
+		return updater;
+	}
+
 	@Override
 	public void onLoad() {
 		log = getServer().getLogger();
 		try {
+			updater = new Updater(this);
+			log.info("[LogBlock] Version check: " + updater.checkVersion());
 			config = new Config(this);
 			downloadIfNotExists(log, new File("lib/mysql-connector-java-bin.jar"), new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"));
 			log.info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new MySQLConnectionPool(config.url, config.user, config.password);
 			getConnection().close();
-			new Updater(this).checkTables();
+			updater.checkTables();
 		} catch (final Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
 			errorAtLoading = true;
