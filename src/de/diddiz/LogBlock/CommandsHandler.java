@@ -4,7 +4,6 @@ import static de.diddiz.util.BukkitUtils.giveTool;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,7 +24,6 @@ import org.bukkit.scheduler.BukkitScheduler;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
-import de.diddiz.LogBlock.WorldEditor.WorldEditorException;
 import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
 
 public class CommandsHandler implements CommandExecutor
@@ -322,7 +320,7 @@ public class CommandsHandler implements CommandExecutor
 		protected Statement state = null;
 		protected ResultSet rs = null;
 
-		LBCommand(CommandSender sender, QueryParams params) throws Exception {
+		protected LBCommand(CommandSender sender, QueryParams params) throws Exception {
 			this.sender = sender;
 			this.params = params;
 			conn = logblock.getConnection();
@@ -341,7 +339,7 @@ public class CommandsHandler implements CommandExecutor
 				if (rs != null)
 					rs.close();
 			} catch (final SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock CommandHandler] SQL exception on close", ex);
+				log.log(Level.SEVERE, "[LogBlock CommandsHandler] SQL exception on close", ex);
 			}
 		}
 	}
@@ -369,9 +367,9 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.GOLD + histformatter.format(rs, params.coords));
 				} else
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
-			} catch (final SQLException ex) {
-				sender.sendMessage(ChatColor.RED + "SQL exception");
-				log.log(Level.SEVERE, "[LogBlock Lookup] SQL exception", ex);
+			} catch (final Exception ex) {
+				sender.sendMessage(ChatColor.RED + "Exception, check error log");
+				log.log(Level.SEVERE, "[LogBlock Lookup] Exception: ", ex);
 			} finally {
 				close();
 			}
@@ -404,12 +402,9 @@ public class CommandsHandler implements CommandExecutor
 					writer.write(histformatter.format(rs, params.coords) + newline);
 				writer.close();
 				sender.sendMessage(ChatColor.GREEN + "Done");
-			} catch (final SQLException ex) {
-				sender.sendMessage(ChatColor.RED + "SQL exception");
-				log.log(Level.SEVERE, ChatColor.RED + "[LogBlock WriteLogFile] SQL exception", ex);
-			} catch (final IOException ex) {
-				sender.sendMessage(ChatColor.RED + "IO exception at file '" + file.getPath() + "'");
-				log.log(Level.SEVERE, ChatColor.RED + "[LogBlock WriteLogFile] IO exception", ex);
+			} catch (final Exception ex) {
+				sender.sendMessage(ChatColor.RED + "Exception, check error log");
+				log.log(Level.SEVERE, "[LogBlock WriteLogFile] Exception (file was " + file.getAbsolutePath() + "): ", ex);
 			} finally {
 				close();
 			}
@@ -449,9 +444,9 @@ public class CommandsHandler implements CommandExecutor
 					player.teleport(new Location(params.world, x + 0.5, player.getWorld().getHighestBlockYAt(x, z), z + 0.5, player.getLocation().getYaw(), 90));
 				} else
 					sender.sendMessage(ChatColor.RED + "Query returned no result");
-			} catch (final SQLException ex) {
-				sender.sendMessage(ChatColor.RED + "SQL exception");
-				log.log(Level.SEVERE, "[LogBlock Teleport] SQL exception", ex);
+			} catch (final Exception ex) {
+				sender.sendMessage(ChatColor.RED + "Exception, check error log");
+				log.log(Level.SEVERE, "[LogBlock Teleport] Exception: ", ex);
 			} finally {
 				close();
 			}
@@ -491,12 +486,9 @@ public class CommandsHandler implements CommandExecutor
 				}
 				editor.start();
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ChatColor.RED + ", " + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
-			} catch (final SQLException ex) {
-				sender.sendMessage(ChatColor.RED + "SQL exception");
-				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
-			} catch (final WorldEditorException ex) {
-				sender.sendMessage(ChatColor.RED + "WorldEditor exception");
-				log.log(Level.SEVERE, "[LogBlock Rollback] WorldEditor exception", ex);
+			} catch (final Exception ex) {
+				sender.sendMessage(ChatColor.RED + "Exception, check error log");
+				log.log(Level.SEVERE, "[LogBlock Rollback] Exception: ", ex);
 			} finally {
 				close();
 			}
@@ -529,12 +521,9 @@ public class CommandsHandler implements CommandExecutor
 				}
 				editor.start();
 				sender.sendMessage(ChatColor.GREEN + "Redo finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ChatColor.RED + ", " + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
-			} catch (final SQLException ex) {
-				sender.sendMessage(ChatColor.RED + "SQL exception");
-				log.log(Level.SEVERE, "[LogBlock Redo] SQL exception", ex);
-			} catch (final WorldEditorException ex) {
-				sender.sendMessage(ChatColor.RED + "WorldEditor exception");
-				log.log(Level.SEVERE, "[LogBlock Redo] WorldEditor exception", ex);
+			} catch (final Exception ex) {
+				sender.sendMessage(ChatColor.RED + "Exception, check error log");
+				log.log(Level.SEVERE, "[LogBlock Redo] Exception: ", ex);
 			} finally {
 				close();
 			}
@@ -597,9 +586,9 @@ public class CommandsHandler implements CommandExecutor
 					state.execute("DELETE `" + table + "-chest` FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
 					sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-chest. Deleted " + deleted + " entries.");
 				}
-			} catch (final SQLException ex) {
-				sender.sendMessage(ChatColor.RED + "SQL exception");
-				log.log(Level.SEVERE, "[LogBlock ClearLog] SQL exception", ex);
+			} catch (final Exception ex) {
+				sender.sendMessage(ChatColor.RED + "Exception, check error log");
+				log.log(Level.SEVERE, "[LogBlock ClearLog] Exception: ", ex);
 			} finally {
 				close();
 			}
