@@ -122,10 +122,6 @@ public class Consumer extends TimerTask
 	/**
 	 * @param container
 	 * The respective container. Must be an instance of Chest, Dispencer or Furnace.
-	 * @param inType
-	 * Type id of the item traded in. May be 0 to indicate nothing traded in.
-	 * @param outType
-	 * Type id of the item traded out. May be 0 to indicate nothing traded out.
 	 */
 	public void queueChestAccess(String playerName, BlockState container, short itemType, short itemAmount, byte itemData) {
 		if (!(container instanceof ContainerBlock))
@@ -136,10 +132,6 @@ public class Consumer extends TimerTask
 	/**
 	 * @param type
 	 * Type id of the container. Must be 63 or 68.
-	 * @param inType
-	 * Type id of the item traded in. May be 0 to indicate nothing traded in.
-	 * @param outType
-	 * Type id of the item traded out. May be 0 to indicate nothing traded out.
 	 */
 	public void queueChestAccess(String playerName, Location loc, int type, short itemType, short itemAmount, byte itemData) {
 		queueBlock(playerName, loc, type, type, (byte)0, null, new ChestAccess(itemType, itemAmount, itemData));
