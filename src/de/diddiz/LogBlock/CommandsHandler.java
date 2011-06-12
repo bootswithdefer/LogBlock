@@ -462,25 +462,27 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				final int queue = logblock.getConsumer().getQueueSize();
-				if (queue > 50 && (!config.askSavequeueBeforeRollback || questioner != null && sender instanceof Player && questioner.ask((Player)sender, "There are " + queue + " block in queue. Do yu want to process the queue before rollback?", "yes", "no").equals("yes")))
+				if (logblock.getConsumer().getQueueSize() > 50)
 					try {
 						new CommandSaveQueue(sender, null);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
-				sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
+				if (!params.silent)
+					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 				rs = state.executeQuery(params.getRollbackQuery());
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
 				while (rs.next())
 					editor.queueBlockChange(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
-				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
+				if (!params.silent)
+					sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (changes == 0) {
-					sender.sendMessage(ChatColor.RED + "Rollback aborted");
+					if (!params.silent)
+						sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
-				if (config.askRollbacks && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+				if (!params.silent && config.askRollbacks && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
@@ -505,17 +507,20 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			try {
 				rs = state.executeQuery(params.getRollbackQuery());
-				sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
+				if (!params.silent)
+					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
 				while (rs.next())
 					editor.queueBlockChange(rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), (short)(rs.getShort("itemamount") * 1), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
-				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
+				if (!params.silent)
+					sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (changes == 0) {
-					sender.sendMessage(ChatColor.RED + "Redo aborted");
+					if (!params.silent)
+						sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
-				if (config.askRedos && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+				if (!params.silent && config.askRedos && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
@@ -551,7 +556,7 @@ public class CommandsHandler implements CommandExecutor
 				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` " + join + params.getWhere());
 				rs.next();
 				if ((deleted = rs.getInt(1)) > 0) {
-					if (config.askClearLogs && sender instanceof Player && questioner != null) {
+					if (!params.silent && config.askClearLogs && sender instanceof Player && questioner != null) {
 						sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 						sender.sendMessage(ChatColor.GREEN.toString() + deleted + " blocks found.");
 						if (!questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {

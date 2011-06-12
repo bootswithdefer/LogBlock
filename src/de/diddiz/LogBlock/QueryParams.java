@@ -23,13 +23,13 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 
 public class QueryParams implements Cloneable
 {
-	private static final HashSet<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode()));
+	private static final HashSet<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode()));
 	public BlockChangeType bct = BlockChangeType.BOTH;
 	public int limit = 15, minutes = 0, radius = -1;
 	public Location loc = null;
 	public Order order = Order.DESC;
 	public List<String> players = new ArrayList<String>();
-	public boolean prepareToolQuery = false, coords = false;
+	public boolean prepareToolQuery = false, coords = false, silent = false;
 	public Selection sel = null;
 	public SummarizationMode sum = SummarizationMode.NONE;
 	public List<Integer> types = new ArrayList<Integer>();
@@ -304,6 +304,8 @@ public class QueryParams implements Cloneable
 				order = Order.DESC;
 			else if (param.equals("coords"))
 				coords = true;
+			else if (param.equals("silent"))
+				silent = true;
 			else
 				throw new IllegalArgumentException("Not a valid argument: '" + param + "'");
 			if (values != null)

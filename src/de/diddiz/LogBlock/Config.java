@@ -124,9 +124,9 @@ public class Config
 		if (!subkeys.contains("toolblockID"))
 			config.setProperty("lookup.toolblockID", 7);
 		if (!subkeys.contains("toolQuery"))
-			config.setProperty("lookup.toolQuery", "area 0 all sum none limit 15 desc");
+			config.setProperty("lookup.toolQuery", "area 0 all sum none limit 15 desc silent");
 		if (!subkeys.contains("toolBlockQuery"))
-			config.setProperty("lookup.toolBlockQuery", "area 0 all sum none limit 15 desc");
+			config.setProperty("lookup.toolBlockQuery", "area 0 all sum none limit 15 desc silent");
 		subkeys = config.getKeys("questioner");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
