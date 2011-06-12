@@ -390,6 +390,10 @@ public class CommandsHandler implements CommandExecutor
 			try {
 				rs = state.executeQuery(params.getLookupQuery());
 				file = new File("plugins/LogBlock/log/" + params.getTitle() + ".log");
+				if (!file.canWrite()) {
+					log.severe(ChatColor.RED + "No rights to create file: " + file.getAbsolutePath());
+					return;
+				}
 				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
 				final String newline = System.getProperty("line.separator");
@@ -402,10 +406,10 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GREEN + "Done");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
-				log.log(Level.SEVERE, "[LogBlock WriteLogFile] SQL exception", ex);
+				log.log(Level.SEVERE, ChatColor.RED + "[LogBlock WriteLogFile] SQL exception", ex);
 			} catch (final IOException ex) {
 				sender.sendMessage(ChatColor.RED + "IO exception at file '" + file.getPath() + "'");
-				log.log(Level.SEVERE, "[LogBlock WriteLogFile] IO exception", ex);
+				log.log(Level.SEVERE, ChatColor.RED + "[LogBlock WriteLogFile] IO exception", ex);
 			} finally {
 				close();
 			}
@@ -476,20 +480,17 @@ public class CommandsHandler implements CommandExecutor
 				while (rs.next())
 					editor.queueBlockChange(rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
+				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (changes == 0) {
-					sender.sendMessage(ChatColor.RED.toString() + changes + " blocks found.");
 					sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
-				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (config.askRollbacks && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
 				editor.start();
-				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully");
-				sender.sendMessage(ChatColor.GREEN + "Undid " + editor.getSuccesses() + " of " + changes + " changes (" + editor.getErrors() + " errors, " + editor.getBlacklistCollisions() + " blacklist collisions)");
-				sender.sendMessage(ChatColor.GREEN + "Took: " + editor.getElapsedTime() + "ms");
+				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ChatColor.RED + ", " + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Rollback] SQL exception", ex);
@@ -517,20 +518,17 @@ public class CommandsHandler implements CommandExecutor
 				while (rs.next())
 					editor.queueBlockChange(rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getString("signtext"), rs.getShort("itemtype"), (short)(rs.getShort("itemamount") * 1), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
+				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (changes == 0) {
-					sender.sendMessage(ChatColor.RED.toString() + changes + " blocks found.");
 					sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
-				sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (config.askRedos && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
 				editor.start();
-				sender.sendMessage(ChatColor.GREEN + "Redo finished successfully");
-				sender.sendMessage(ChatColor.GREEN + "Redid " + editor.getSuccesses() + " of " + changes + " changes (" + editor.getErrors() + " errors, " + editor.getBlacklistCollisions() + " blacklist collisions)");
-				sender.sendMessage(ChatColor.GREEN + "Took: " + editor.getElapsedTime() + "ms");
+				sender.sendMessage(ChatColor.GREEN + "Redo finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ChatColor.RED + ", " + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
 			} catch (final SQLException ex) {
 				sender.sendMessage(ChatColor.RED + "SQL exception");
 				log.log(Level.SEVERE, "[LogBlock Redo] SQL exception", ex);
