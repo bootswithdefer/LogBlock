@@ -386,22 +386,22 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			File file = null;
 			try {
+				file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".") + ".log");
+				sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
 				rs = state.executeQuery(params.getLookupQuery());
-				file = new File("plugins/LogBlock/log/" + params.getTitle() + ".log");
-				if (!file.canWrite()) {
-					log.severe(ChatColor.RED + "No rights to create file: " + file.getAbsolutePath());
-					return;
-				}
+				file.getParentFile().mkdirs();
 				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
 				final String newline = System.getProperty("line.separator");
 				final HistoryFormatter histformatter = new HistoryFormatter(params.sum);
 				file.getParentFile().mkdirs();
-				sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
-				while (rs.next())
+				int counter = 0;
+				while (rs.next()) {
 					writer.write(histformatter.format(rs, params.coords) + newline);
+					counter++;
+				}
 				writer.close();
-				sender.sendMessage(ChatColor.GREEN + "Done");
+				sender.sendMessage(ChatColor.GREEN + "Wrote " + counter + " lines.");
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
 				log.log(Level.SEVERE, "[LogBlock WriteLogFile] Exception (file was " + file.getAbsolutePath() + "): ", ex);
