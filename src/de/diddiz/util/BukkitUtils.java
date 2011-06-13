@@ -134,7 +134,8 @@ public class BukkitUtils
 		else {
 			final int free = inv.firstEmpty();
 			if (free >= 0) {
-				inv.setItem(free, player.getItemInHand());
+				if (player.getItemInHand() != null && player.getItemInHand().getTypeId() != 0)
+					inv.setItem(free, player.getItemInHand());
 				player.setItemInHand(new ItemStack(type, 1));
 				player.sendMessage(ChatColor.GREEN + "Here's your " + getMaterialName(type));
 			} else
