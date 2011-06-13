@@ -371,7 +371,7 @@ public class QueryParams implements Cloneable
 		loc = params.loc;
 		radius = params.radius;
 		sel = params.sel;
-		if (minutes == 0)
+		if (params.minutes != 0 || minutes != logblock.getConfig().defaultTime)
 			minutes = params.minutes;
 		sum = params.sum;
 		bct = params.bct;

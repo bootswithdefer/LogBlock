@@ -156,12 +156,10 @@ public class WorldEditor implements Runnable
 				if (signtext != null && (curtype == 63 || curtype == 68)) {
 					final Sign sign = (Sign)block.getState();
 					final String[] lines = signtext.split("\0");
-					try {
-						for (int i = 0; i < 4; i++)
-							sign.setLine(i, lines[i]);
-					} catch (final IndexOutOfBoundsException ex) {
+					if (lines.length < 4)
 						return PerformResult.ERROR;
-					}
+					for (int i = 0; i < 4; i++)
+						sign.setLine(i, lines[i]);
 					if (!sign.update())
 						return PerformResult.ERROR;
 				} else if (curtype == 26) {

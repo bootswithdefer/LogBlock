@@ -26,7 +26,7 @@ class Updater
 		if (config.getString("version").compareTo(logblock.getDescription().getVersion()) >= 0)
 			return false;
 		if (config.getString("version").compareTo("1.10") < 0) {
-			log.info("Updating config to 1.10 ...");
+			log.info("[LogBlock] Updating config to 1.10 ...");
 			String params = config.getString("lookup.toolQuery");
 			if (!params.contains("silent"))
 				config.setProperty("lookup.toolQuery", params + " silent");
