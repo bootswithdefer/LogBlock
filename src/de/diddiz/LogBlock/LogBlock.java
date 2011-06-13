@@ -66,6 +66,8 @@ public class LogBlock extends JavaPlugin
 			log.info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new MySQLConnectionPool(config.url, config.user, config.password);
 			getConnection().close();
+			if (updater.update())
+				config = new Config(this);
 			updater.checkTables();
 		} catch (final Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);

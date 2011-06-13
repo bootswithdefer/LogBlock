@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bukkit.util.config.Configuration;
 
 class Updater
 {
@@ -17,6 +18,25 @@ class Updater
 	Updater(LogBlock logblock) {
 		this.logblock = logblock;
 		log = logblock.getServer().getLogger();
+	}
+
+	boolean update() {
+		final Configuration config = logblock.getConfiguration();
+		config.load();
+		if (config.getString("version").compareTo(logblock.getDescription().getVersion()) >= 0)
+			return false;
+		if (config.getString("version").compareTo("1.10") < 0) {
+			log.info("Updating config to 1.10 ...");
+			String params = config.getString("lookup.toolQuery");
+			if (!params.contains("silent"))
+				config.setProperty("lookup.toolQuery", params + " silent");
+			params = config.getString("lookup.toolBlockQuery");
+			if (!params.contains("silent"))
+				config.setProperty("lookup.toolBlockQuery", params + " silent");
+			config.setProperty("version", "1.10");
+		}
+		config.save();
+		return true;
 	}
 
 	void checkTables() throws SQLException {
