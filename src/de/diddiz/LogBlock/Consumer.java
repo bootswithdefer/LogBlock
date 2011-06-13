@@ -321,8 +321,13 @@ public class Consumer extends TimerTask
 		state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "')");
 		conn.commit();
 		final ResultSet rs = state.executeQuery("SELECT playername FROM `lb-players`");
-		while (rs.next())
-			players.add(rs.getString(1).hashCode());
+		while (rs.next()) {
+			final String name = rs.getString(1);
+			if (name.equalsIgnoreCase(playerName))
+				players.add(playerName.hashCode());
+			else
+				players.add(name.hashCode());
+		}
 		rs.close();
 		return players.contains(playerName.hashCode());
 	}
