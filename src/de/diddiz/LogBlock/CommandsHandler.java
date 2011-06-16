@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -294,6 +295,14 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 				} else
 					sender.sendMessage(ChatColor.RED + "You have to be a player.");
+			} else if (command.equals("spam")) {
+				final Consumer consumer = logblock.getConsumer();
+				final World world = logblock.getServer().getWorlds().get(0);
+				for (int i = 0; i < 10000; i++) {
+					final Location loc = new Location(world, Math.random() * 100 - 50, Math.random() * 127, Math.random() * 100 - 50);
+					world.getBlockAt(loc).setTypeId(4);
+					consumer.queueBlockPlace("Test", loc, 4, (byte)0);
+				}
 			} else if (command.equals("lookup") || QueryParams.isKeyWord(args[0])) {
 				if (logblock.hasPermission(sender, "logblock.lookup"))
 					try {

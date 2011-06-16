@@ -270,8 +270,6 @@ public class Consumer extends TimerTask
 							log.warning("[LogBlock Consumer] Failed to get generated keys. Unable to log chest access.");
 					}
 					count++;
-					if (count % 100 == 0)
-						conn.commit();
 				}
 				conn.commit();
 			}
@@ -292,8 +290,6 @@ public class Consumer extends TimerTask
 						}
 					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) VALUES (now(), " + players.get(k.killer.hashCode()) + ", " + k.weapon + ")");
 					count++;
-					if (count % 100 == 0)
-						conn.commit();
 				}
 				conn.commit();
 			}
