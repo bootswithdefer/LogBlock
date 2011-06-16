@@ -100,7 +100,9 @@ public class QueryParams implements Cloneable
 			title.append("destructions ");
 		else
 			title.append("changes ");
-		if (!players.isEmpty()) {
+		if (players.size() > 10)
+			title.append("from many players ");
+		else if (!players.isEmpty()) {
 			title.append("from player ");
 			for (int i = 0; i < players.size(); i++)
 				title.append(players.get(i) + ", ");

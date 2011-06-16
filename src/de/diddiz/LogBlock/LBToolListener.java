@@ -43,15 +43,15 @@ class LBToolListener extends PlayerListener
 							params.setLocation(event.getClickedBlock().getLocation());
 						try {
 							if (mode == ToolMode.ROLLBACK)
-								handler.new CommandRollback(player, params);
+								handler.new CommandRollback(player, params, true);
 							else if (mode == ToolMode.REDO)
-								handler.new CommandRedo(player, params);
+								handler.new CommandRedo(player, params, true);
 							else if (mode == ToolMode.CLEARLOG)
-								handler.new CommandClearLog(player, params);
+								handler.new CommandClearLog(player, params, true);
 							else if (mode == ToolMode.WRITELOGFILE)
-								handler.new CommandWriteLogFile(player, params);
+								handler.new CommandWriteLogFile(player, params, true);
 							else
-								handler.new CommandLookup(player, params);
+								handler.new CommandLookup(player, params, true);
 						} catch (final Exception ex) {
 							player.sendMessage(ChatColor.RED + ex.getMessage());
 						}

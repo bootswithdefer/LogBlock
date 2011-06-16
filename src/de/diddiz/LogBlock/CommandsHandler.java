@@ -202,7 +202,7 @@ public class CommandsHandler implements CommandExecutor
 			} else if (args[0].equalsIgnoreCase("savequeue")) {
 				if (logblock.hasPermission(sender, "logblock.rollback"))
 					try {
-						new CommandSaveQueue(sender, null);
+						new CommandSaveQueue(sender, null, true);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
@@ -218,7 +218,7 @@ public class CommandsHandler implements CommandExecutor
 						params.order = Order.DESC;
 						params.sum = SummarizationMode.NONE;
 						params.bct = BlockChangeType.ALL;
-						new CommandRollback(sender, params);
+						new CommandRollback(sender, params, true);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
@@ -234,7 +234,7 @@ public class CommandsHandler implements CommandExecutor
 						params.order = Order.ASC;
 						params.sum = SummarizationMode.NONE;
 						params.bct = BlockChangeType.ALL;
-						new CommandRedo(sender, params);
+						new CommandRedo(sender, params, true);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
@@ -249,7 +249,7 @@ public class CommandsHandler implements CommandExecutor
 							params.setPlayer(player.getName());
 							params.sum = SummarizationMode.TYPES;
 							params.world = player.getWorld();
-							new CommandLookup(sender, params);
+							new CommandLookup(sender, params, true);
 						} catch (final Exception ex) {
 							sender.sendMessage(ChatColor.RED + ex.getMessage());
 						}
@@ -264,7 +264,7 @@ public class CommandsHandler implements CommandExecutor
 						params.limit = -1;
 						params.bct = BlockChangeType.ALL;
 						params.sum = SummarizationMode.NONE;
-						new CommandWriteLogFile(sender, params);
+						new CommandWriteLogFile(sender, params, true);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
@@ -276,7 +276,7 @@ public class CommandsHandler implements CommandExecutor
 						final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
 						params.bct = BlockChangeType.ALL;
 						params.limit = -1;
-						new CommandClearLog(sender, params);
+						new CommandClearLog(sender, params, true);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
@@ -286,7 +286,7 @@ public class CommandsHandler implements CommandExecutor
 				if (sender instanceof Player) {
 					if (logblock.hasPermission(sender, "logblock.tp"))
 						try {
-							new CommandTeleport(sender, new QueryParams(logblock, sender, ArgsToList(args, 1)));
+							new CommandTeleport(sender, new QueryParams(logblock, sender, ArgsToList(args, 1)), true);
 						} catch (final Exception ex) {
 							sender.sendMessage(ChatColor.RED + ex.getMessage());
 						}
@@ -300,7 +300,7 @@ public class CommandsHandler implements CommandExecutor
 						final List<String> argsList = new ArrayList<String>(Arrays.asList(args));
 						if (command.equals("lookup"))
 							argsList.remove(0);
-						new CommandLookup(sender, new QueryParams(logblock, sender, argsList));
+						new CommandLookup(sender, new QueryParams(logblock, sender, argsList), true);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
@@ -320,13 +320,16 @@ public class CommandsHandler implements CommandExecutor
 		protected Statement state = null;
 		protected ResultSet rs = null;
 
-		protected LBCommand(CommandSender sender, QueryParams params) throws Exception {
+		protected LBCommand(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			this.sender = sender;
 			this.params = params;
 			conn = logblock.getConnection();
 			state = conn.createStatement();
-			if (scheduler.scheduleAsyncDelayedTask(logblock, this) == -1)
-				throw new Exception("Failed to schedule the command");
+			if (async) {
+				if (scheduler.scheduleAsyncDelayedTask(logblock, this) == -1)
+					throw new Exception("Failed to schedule the command");
+			} else
+				run();
 		}
 
 		@Override
@@ -346,8 +349,8 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandLookup extends LBCommand
 	{
-		public CommandLookup(CommandSender sender, QueryParams params) throws Exception {
-			super(sender, params);
+		public CommandLookup(CommandSender sender, QueryParams params, boolean async) throws Exception {
+			super(sender, params, async);
 		}
 
 		@Override
@@ -378,8 +381,8 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandWriteLogFile extends LBCommand
 	{
-		CommandWriteLogFile(CommandSender sender, QueryParams params) throws Exception {
-			super(sender, params);
+		CommandWriteLogFile(CommandSender sender, QueryParams params, boolean async) throws Exception {
+			super(sender, params, async);
 		}
 
 		@Override
@@ -413,8 +416,8 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandSaveQueue extends LBCommand
 	{
-		public CommandSaveQueue(CommandSender sender, QueryParams params) throws Exception {
-			super(sender, params);
+		public CommandSaveQueue(CommandSender sender, QueryParams params, boolean async) throws Exception {
+			super(sender, params, async);
 		}
 
 		@Override
@@ -429,8 +432,8 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandTeleport extends LBCommand
 	{
-		public CommandTeleport(CommandSender sender, QueryParams params) throws Exception {
-			super(sender, params);
+		public CommandTeleport(CommandSender sender, QueryParams params, boolean async) throws Exception {
+			super(sender, params, async);
 		}
 
 		@Override
@@ -455,8 +458,8 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandRollback extends LBCommand
 	{
-		public CommandRollback(CommandSender sender, QueryParams params) throws Exception {
-			super(sender, params);
+		public CommandRollback(CommandSender sender, QueryParams params, boolean async) throws Exception {
+			super(sender, params, async);
 		}
 
 		@Override
@@ -464,7 +467,7 @@ public class CommandsHandler implements CommandExecutor
 			try {
 				if (logblock.getConsumer().getQueueSize() > 50)
 					try {
-						new CommandSaveQueue(sender, null);
+						new CommandSaveQueue(sender, null, true);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}
@@ -499,8 +502,8 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandRedo extends LBCommand
 	{
-		public CommandRedo(CommandSender sender, QueryParams params) throws Exception {
-			super(sender, params);
+		public CommandRedo(CommandSender sender, QueryParams params, boolean async) throws Exception {
+			super(sender, params, async);
 		}
 
 		@Override
@@ -537,8 +540,8 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandClearLog extends LBCommand
 	{
-		public CommandClearLog(CommandSender sender, QueryParams params) throws Exception {
-			super(sender, params);
+		public CommandClearLog(CommandSender sender, QueryParams params, boolean async) throws Exception {
+			super(sender, params, async);
 		}
 
 		@Override
