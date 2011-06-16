@@ -147,7 +147,7 @@ public class LogBlock extends JavaPlugin
 			timer.scheduleAtFixedRate(consumer, config.delayBetweenRuns * 1000, config.delayBetweenRuns * 1000);
 			log.info("[LogBlock] Scheduled consumer with timer.");
 		}
-		log.info("Logblock v" + getDescription().getVersion() + " enabled.");
+		log.info("Logblock v" + getDescription().getVersion() + " by DiddiZ enabled.");
 	}
 
 	@Override

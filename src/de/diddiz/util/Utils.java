@@ -94,9 +94,9 @@ public class Utils
 							hours = Integer.parseInt(spec[0].substring(lastIndex, currIndex - 1));
 						else if (param.equals("m"))
 							minutes = Integer.parseInt(spec[0].substring(lastIndex, currIndex - 1));
-						lastIndex = currIndex;
-						currIndex++;
 					}
+					lastIndex = currIndex;
+					currIndex++;
 				}
 				if (days == 0 && hours == 0 && minutes == 0)
 					return -1;
