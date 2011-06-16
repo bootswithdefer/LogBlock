@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -36,7 +35,7 @@ public class Consumer extends TimerTask
 	private final Map<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
 	private final Logger log;
 	private final LogBlock logblock;
-	private final Set<Integer> players = new HashSet<Integer>();
+	private final Map<Integer, Integer> players = new HashMap<Integer, Integer>();
 
 	Consumer(LogBlock logblock) {
 		this.logblock = logblock;
@@ -249,13 +248,14 @@ public class Consumer extends TimerTask
 					b = bqueue.poll();
 					if (b == null)
 						continue;
-					if (!players.contains(b.name.hashCode()))
+					final int playerHash = b.name.hashCode();
+					if (!players.containsKey(playerHash))
 						if (!addPlayer(conn, state, b.name)) {
 							log.warning("[LogBlock Consumer] Failed to add player " + b.name);
 							continue;
 						}
 					table = config.tables.get(b.worldHash);
-					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) SELECT now(), playerid, " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.x + "', " + b.y + ", '" + b.z + "' FROM `lb-players` WHERE playername = '" + b.name + "'", Statement.RETURN_GENERATED_KEYS);
+					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (now(), " + players.get(playerHash) + ", " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.x + "', " + b.y + ", '" + b.z + "')", Statement.RETURN_GENERATED_KEYS);
 					if (b.signtext != null) {
 						final ResultSet keys = state.getGeneratedKeys();
 						if (keys.next())
@@ -280,12 +280,17 @@ public class Consumer extends TimerTask
 					k = kqueue.poll();
 					if (k == null)
 						continue;
-					if (!players.contains(k.killer.hashCode()))
+					if (!players.containsKey(k.killer.hashCode()))
 						if (!addPlayer(conn, state, k.killer)) {
 							log.warning("[LogBlock Consumer] Failed to add player " + k.killer);
 							continue;
 						}
-					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) SELECT now(), playerid, (SELECT playerid FROM `lb-players` WHERE playername = '" + k.victim + "'), " + k.weapon + " FROM `lb-players` WHERE playername = '" + k.killer + "'");
+					if (!players.containsKey(k.victim.hashCode()))
+						if (!addPlayer(conn, state, k.victim)) {
+							log.warning("[LogBlock Consumer] Failed to add player " + k.victim);
+							continue;
+						}
+					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) VALUES (now(), " + players.get(k.killer.hashCode()) + ", " + k.weapon + ")");
 					count++;
 					if (count % 100 == 0)
 						conn.commit();
@@ -324,9 +329,9 @@ public class Consumer extends TimerTask
 		conn.commit();
 		final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE playername = '" + playerName + "'");
 		if (rs.next())
-			players.add(playerName.hashCode());
+			players.put(playerName.hashCode(), rs.getInt(1));
 		rs.close();
-		return players.contains(playerName.hashCode());
+		return players.containsKey(playerName.hashCode());
 	}
 
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
