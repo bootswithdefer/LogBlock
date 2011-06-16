@@ -73,7 +73,7 @@ class Updater
 		try {
 			return readURL(new URL("http://diddiz.insane-architects.net/lbuptodate.php?v=" + logblock.getDescription().getVersion()));
 		} catch (final Exception ex) {
-			return "Can't connect to server";
+			return "Can't check version";
 		}
 	}
 }

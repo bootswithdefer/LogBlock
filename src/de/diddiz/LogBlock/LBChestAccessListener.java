@@ -4,6 +4,7 @@ import static de.diddiz.util.BukkitUtils.compareInventories;
 import static de.diddiz.util.BukkitUtils.compressInventory;
 import static de.diddiz.util.BukkitUtils.rawData;
 import java.util.HashMap;
+import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 import org.bukkitcontrib.event.inventory.InventoryCloseEvent;
@@ -13,7 +14,7 @@ import org.bukkitcontrib.event.inventory.InventoryOpenEvent;
 class LBChestAccessListener extends InventoryListener
 {
 	private final Consumer consumer;
-	private final HashMap<Integer, ItemStack[]> containers = new HashMap<Integer, ItemStack[]>();
+	private final Map<Integer, ItemStack[]> containers = new HashMap<Integer, ItemStack[]>();
 
 	LBChestAccessListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();

@@ -154,6 +154,7 @@ public class LogBlock extends JavaPlugin
 	public void onDisable() {
 		if (timer != null)
 			timer.cancel();
+		getServer().getScheduler().cancelTasks(this);
 		if (consumer != null && consumer.getQueueSize() > 0) {
 			log.info("[LogBlock] Waiting for consumer ...");
 			final Thread thread = new Thread(consumer);

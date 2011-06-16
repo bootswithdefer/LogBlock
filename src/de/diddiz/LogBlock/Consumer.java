@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -26,15 +28,15 @@ import org.bukkit.inventory.ItemStack;
 
 public class Consumer extends TimerTask
 {
-	private final LinkedBlockingQueue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
+	private final Queue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	private final Config config;
 	private final Set<Integer> hiddenplayers;
-	private final LinkedBlockingQueue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
-	private final HashMap<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
-	private final HashMap<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
+	private final Queue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
+	private final Map<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
+	private final Map<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
 	private final Logger log;
 	private final LogBlock logblock;
-	private final HashSet<Integer> players = new HashSet<Integer>();
+	private final Set<Integer> players = new HashSet<Integer>();
 
 	Consumer(LogBlock logblock) {
 		this.logblock = logblock;

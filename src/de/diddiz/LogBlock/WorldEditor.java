@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.equalTypes;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 import org.bukkit.World;
@@ -18,7 +19,7 @@ public class WorldEditor implements Runnable
 	private final Logger log;
 	private final LogBlock logblock;
 	private final Config config;
-	private final LinkedBlockingQueue<Edit> edits = new LinkedBlockingQueue<Edit>();
+	private final Queue<Edit> edits = new LinkedBlockingQueue<Edit>();
 	private final World world;
 	private int taskID;
 	private int successes = 0, errors = 0, blacklistCollisions = 0;

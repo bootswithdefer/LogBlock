@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.DataFormatException;
 import org.bukkit.Material;
@@ -15,7 +16,7 @@ import org.bukkit.util.config.Configuration;
 
 public class Config
 {
-	public final HashMap<Integer, String> tables;
+	public final Map<Integer, String> tables;
 	public final String url, user, password;
 	public final int delayBetweenRuns, forceToProcessAtLeast, timePerRun;
 	public final boolean useBukkitScheduler;
