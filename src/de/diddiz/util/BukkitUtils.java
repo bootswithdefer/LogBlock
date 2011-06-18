@@ -116,7 +116,10 @@ public class BukkitUtils
 	}
 
 	public static String getMaterialName(int type) {
-		return Material.getMaterial(type).toString().replace('_', ' ').toLowerCase();
+		final Material mat = Material.getMaterial(type);
+		if (mat != null)
+			return mat.toString().replace('_', ' ').toLowerCase();
+		return String.valueOf(type);
 	}
 
 	public static String getSenderName(CommandSender sender) {
