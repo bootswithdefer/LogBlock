@@ -132,6 +132,8 @@ public class LogBlock extends JavaPlugin
 				log.warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");
 		if (config.logLavaFlow)
 			pm.registerEvent(Type.BLOCK_FROMTO, lbBlockListener, Priority.Monitor, this);
+		if (config.logButtonsAndLevers)
+			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
 		if (config.logKills)
 			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Priority.Monitor, this);
 		if (config.useBukkitScheduler) {

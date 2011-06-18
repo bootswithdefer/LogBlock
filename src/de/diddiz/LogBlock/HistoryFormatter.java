@@ -30,7 +30,7 @@ public class HistoryFormatter
 			} else if (type == replaced) {
 				if (type == 0)
 					msg.append("did a unspecified action");
-				else if (type == 23 || type == 54 || type == 61) {
+				else if (type == 23 || type == 54 || type == 61 || type == 62) {
 					final int itemType = rs.getInt("itemtype");
 					final int itemAmount = rs.getInt("itemamount");
 					if (itemType == 0 || itemAmount == 0)
@@ -39,7 +39,10 @@ public class HistoryFormatter
 						msg.append("took " + itemAmount * -1 + "x " + getMaterialName(itemType));
 					else
 						msg.append("put in " + itemAmount + "x " + getMaterialName(itemType));
-				}
+				} else if (type == 69)
+					msg.append("swiched " + getMaterialName(type));
+				else if (type == 77)
+					msg.append("pressed " + getMaterialName(type));
 			} else if (type == 0)
 				msg.append("destroyed " + getMaterialName(replaced));
 			else if (replaced == 0)

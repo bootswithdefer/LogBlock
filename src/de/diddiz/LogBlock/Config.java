@@ -22,7 +22,7 @@ public class Config
 	public final boolean useBukkitScheduler;
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
-	public final boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logKills;
+	public final boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback;
@@ -100,6 +100,8 @@ public class Config
 			config.setProperty("logging.logLavaFlow", false);
 		if (!subkeys.contains("logChestAccess"))
 			config.setProperty("logging.logChestAccess", false);
+		if (!subkeys.contains("logButtonsAndLevers"))
+			config.setProperty("logging.logButtonsAndLevers", false);
 		if (!subkeys.contains("logKills"))
 			config.setProperty("logging.logKills", false);
 		if (!subkeys.contains("logKillsLevel"))
@@ -159,6 +161,7 @@ public class Config
 		logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		logFire = config.getBoolean("logging.logFire", false);
 		logChestAccess = config.getBoolean("logging.logChestAccess", false);
+		logButtonsAndLevers = config.getBoolean("logging.logButtonsAndLevers", false);
 		logLeavesDecay = config.getBoolean("logging.logLeavesDecay", false);
 		logLavaFlow = config.getBoolean("logging.logLavaFlow", false);
 		logKills = config.getBoolean("logging.logKills", false);
