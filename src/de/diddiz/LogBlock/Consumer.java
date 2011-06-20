@@ -276,9 +276,9 @@ public class Consumer extends TimerTask
 			if (!kqueue.isEmpty()) {
 				while (!kqueue.isEmpty() && (System.currentTimeMillis() - start < config.timePerRun || count < config.forceToProcessAtLeast)) {
 					k = kqueue.poll();
-					if (k == null)
+					if (k == null || k.victim == null)
 						continue;
-					if (!players.containsKey(k.killer.hashCode()))
+					if (k.killer != null && !players.containsKey(k.killer.hashCode()))
 						if (!addPlayer(conn, state, k.killer)) {
 							log.warning("[LogBlock Consumer] Failed to add player " + k.killer);
 							continue;
@@ -288,7 +288,7 @@ public class Consumer extends TimerTask
 							log.warning("[LogBlock Consumer] Failed to add player " + k.victim);
 							continue;
 						}
-					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) VALUES (now(), " + players.get(k.killer.hashCode()) + ", " + k.weapon + ")");
+					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) VALUES (now(), " + (k.killer == null ? "null" : players.get(k.killer.hashCode())) + ", " + players.get(k.victim.hashCode()) + ", " + k.weapon + ")");
 					count++;
 				}
 				conn.commit();
