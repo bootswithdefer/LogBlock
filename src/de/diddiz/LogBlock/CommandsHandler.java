@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.giveTool;
+import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -295,14 +295,6 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 				} else
 					sender.sendMessage(ChatColor.RED + "You have to be a player.");
-			} else if (command.equals("spam")) {
-				final Consumer consumer = logblock.getConsumer();
-				final World world = logblock.getServer().getWorlds().get(0);
-				for (int i = 0; i < 10000; i++) {
-					final Location loc = new Location(world, Math.random() * 100 - 50, Math.random() * 127, Math.random() * 100 - 50);
-					world.getBlockAt(loc).setTypeId(4);
-					consumer.queueBlockPlace("Test", loc, 4, (byte)0);
-				}
 			} else if (command.equals("lookup") || QueryParams.isKeyWord(args[0])) {
 				if (logblock.hasPermission(sender, "logblock.lookup"))
 					try {
@@ -448,14 +440,17 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				rs = state.executeQuery("SELECT x, z FROM `" + params.getTable() + "` INNER JOIN `lb-players` USING (playerid) " + params.getWhere() + params.getOrderBy() + " LIMIT 1");
+				rs = state.executeQuery("SELECT x, y, z FROM `" + params.getTable() + "` INNER JOIN `lb-players` USING (playerid) " + params.getWhere() + params.getOrderBy() + " LIMIT 1");
 				if (rs.next()) {
 					final Player player = (Player)sender;
-					final int x = rs.getInt("x");
-					final int z = rs.getInt("z");
-					player.teleport(new Location(params.world, x + 0.5, player.getWorld().getHighestBlockYAt(x, z), z + 0.5, player.getLocation().getYaw(), 90));
+					final int y = rs.getInt(2);
+					final Location loc = new Location(params.world, rs.getInt(1) + 0.5, y, rs.getInt(3) + 0.5, player.getLocation().getYaw(), 90);
+					final int y2 = saveSpawnHeight(loc);
+					loc.setY(y2);
+					player.teleport(loc);
+					sender.sendMessage(ChatColor.GREEN + "You were teleported " + Math.abs(y2 - y) + " blocks " + (y2 - y > 0 ? "above" : "below"));
 				} else
-					sender.sendMessage(ChatColor.RED + "Query returned no result");
+					sender.sendMessage(ChatColor.RED + "No blockchange found to teleport to");
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
 				log.log(Level.SEVERE, "[LogBlock Teleport] Exception: ", ex);

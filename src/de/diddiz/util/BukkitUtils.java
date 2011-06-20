@@ -7,7 +7,10 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Entity;
@@ -148,6 +151,23 @@ public class BukkitUtils
 
 	public static byte rawData(ItemStack item) {
 		return item.getData() != null ? item.getData().getData() : 0;
+	}
+
+	public static int saveSpawnHeight(Location loc) {
+		final World world = loc.getWorld();
+		final Chunk chunk = world.getChunkAt(loc);
+		if (!world.isChunkLoaded(chunk))
+			world.loadChunk(chunk);
+		final int x = loc.getBlockX(), z = loc.getBlockZ();
+		int y = loc.getBlockY();
+		boolean lower = world.getBlockTypeIdAt(x, y, z) == 0, upper = world.getBlockTypeIdAt(x, y + 1, z) == 0;
+		while ((!lower || !upper) && y != 127) {
+			lower = upper;
+			upper = world.getBlockTypeIdAt(x, ++y, z) == 0;
+		}
+		while (world.getBlockTypeIdAt(x, y - 1, z) == 0 && y != 0)
+			y--;
+		return y;
 	}
 
 	public static class ItemStackComparator implements Comparator<ItemStack>
