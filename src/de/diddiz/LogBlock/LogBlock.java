@@ -178,7 +178,7 @@ public class LogBlock extends JavaPlugin
 		return true;
 	}
 
-	Connection getConnection() {
+	public Connection getConnection() {
 		try {
 			return pool.getConnection();
 		} catch (final SQLException ex) {
