@@ -2,13 +2,17 @@ package de.diddiz.LogBlock;
 
 import java.util.Map;
 import org.bukkit.ChatColor;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
+import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
 
 class LBToolListener extends PlayerListener
 {
+	private final static BlockFace[] orientations = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
 	private final CommandsHandler handler;
 	private final LogBlock logblock;
 	private final int toolID;
@@ -33,14 +37,24 @@ class LBToolListener extends PlayerListener
 				final Session session = logblock.getSession(player.getName());
 				if (type == toolID && session.toolEnabled && logblock.hasPermission(player, "logblock.tool") || type == toolblockID && session.toolBlockEnabled && logblock.hasPermission(player, "logblock.toolblock"))
 					if (tables.get(player.getWorld().getName().hashCode()) != null) {
-						if (!(type == toolID && event.getClickedBlock().getTypeId() == 26))
+						final Block block = event.getClickedBlock();
+						if (!(type == toolID && block.getTypeId() == 26))
 							event.setCancelled(true);
 						final QueryParams params = type == toolID ? session.toolQuery : session.toolBlockQuery;
 						final ToolMode mode = type == toolID ? session.toolMode : session.toolBlockMode;
+						params.loc = null;
+						params.sel = null;
 						if (type == toolblockID && action == Action.RIGHT_CLICK_BLOCK)
-							params.setLocation(event.getClickedBlock().getFace(event.getBlockFace()).getLocation());
-						else
-							params.setLocation(event.getClickedBlock().getLocation());
+							params.setLocation(block.getFace(event.getBlockFace()).getLocation());
+						else if (event.getClickedBlock().getTypeId() != 54)
+							params.setLocation(block.getLocation());
+						else {
+							for (final BlockFace face : orientations)
+								if (block.getFace(face).getTypeId() == 54)
+									params.setSelection(new CuboidSelection(player.getWorld(), block.getLocation(), block.getFace(face).getLocation()));
+							if (params.sel == null)
+								params.setLocation(block.getLocation());
+						}
 						try {
 							if (mode == ToolMode.ROLLBACK)
 								handler.new CommandRollback(player, params, true);

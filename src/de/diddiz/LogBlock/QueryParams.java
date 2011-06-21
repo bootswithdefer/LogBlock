@@ -249,12 +249,12 @@ public class QueryParams implements Cloneable
 				final Plugin we = player.getServer().getPluginManager().getPlugin("WorldEdit");
 				if (we == null)
 					throw new IllegalArgumentException("WorldEdit plugin not found");
-				sel = ((WorldEditPlugin)we).getSelection(player);
-				if (sel == null)
+				final Selection selection = ((WorldEditPlugin)we).getSelection(player);
+				if (selection == null)
 					throw new IllegalArgumentException("No selection defined");
-				if (!(sel instanceof CuboidSelection))
+				if (!(selection instanceof CuboidSelection))
 					throw new IllegalArgumentException("You have to define a cuboid selection");
-				world = sel.getWorld();
+				setSelection(selection);
 			} else if (param.equals("time") || param.equals("since")) {
 				if (values == null)
 					minutes = logblock.getConfig().defaultTime;
@@ -339,6 +339,11 @@ public class QueryParams implements Cloneable
 	public void setLocation(Location loc) {
 		this.loc = loc;
 		world = loc.getWorld();
+	}
+
+	public void setSelection(Selection sel) {
+		this.sel = sel;
+		world = sel.getWorld();
 	}
 
 	public void setPlayer(String playerName) {
