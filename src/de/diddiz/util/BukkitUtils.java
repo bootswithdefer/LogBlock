@@ -110,7 +110,7 @@ public class BukkitUtils
 		return blockEquivalents;
 	}
 
-	public static String getEntityName(Entity entity) {
+	public static String entityName(Entity entity) {
 		if (entity instanceof Player)
 			return ((Player)entity).getName();
 		if (entity instanceof TNTPrimed)
@@ -118,14 +118,12 @@ public class BukkitUtils
 		return entity.getClass().getSimpleName().substring(5);
 	}
 
-	public static String getMaterialName(int type) {
+	public static String materialName(int type) {
 		final Material mat = Material.getMaterial(type);
-		if (mat != null)
-			return mat.toString().replace('_', ' ').toLowerCase();
-		return String.valueOf(type);
+		return mat != null ? mat.toString().replace('_', ' ').toLowerCase() : String.valueOf(type);
 	}
 
-	public static String getSenderName(CommandSender sender) {
+	public static String senderName(CommandSender sender) {
 		if (sender instanceof Player)
 			return ((Player)sender).getName();
 		if (sender instanceof ConsoleCommandSender)
@@ -136,21 +134,21 @@ public class BukkitUtils
 	public static void giveTool(Player player, int type) {
 		final Inventory inv = player.getInventory();
 		if (inv.contains(type))
-			player.sendMessage(ChatColor.RED + "You have alredy a " + getMaterialName(type));
+			player.sendMessage(ChatColor.RED + "You have alredy a " + materialName(type));
 		else {
 			final int free = inv.firstEmpty();
 			if (free >= 0) {
 				if (player.getItemInHand() != null && player.getItemInHand().getTypeId() != 0)
 					inv.setItem(free, player.getItemInHand());
 				player.setItemInHand(new ItemStack(type, 1));
-				player.sendMessage(ChatColor.GREEN + "Here's your " + getMaterialName(type));
+				player.sendMessage(ChatColor.GREEN + "Here's your " + materialName(type));
 			} else
 				player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory");
 		}
 	}
 
 	public static byte rawData(ItemStack item) {
-		return item.getData() != null ? item.getData().getData() : 0;
+		return item.getType() != null ? (item.getData() != null ? item.getData().getData() : 0) : 0;
 	}
 
 	public static int saveSpawnHeight(Location loc) {

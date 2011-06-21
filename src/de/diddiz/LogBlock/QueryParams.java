@@ -2,8 +2,8 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
-import static de.diddiz.util.BukkitUtils.getMaterialName;
-import static de.diddiz.util.BukkitUtils.getSenderName;
+import static de.diddiz.util.BukkitUtils.materialName;
+import static de.diddiz.util.BukkitUtils.senderName;
 import static de.diddiz.util.Utils.isInt;
 import static de.diddiz.util.Utils.parseTimeSpec;
 import java.util.ArrayList;
@@ -90,7 +90,7 @@ public class QueryParams implements Cloneable
 		final StringBuilder title = new StringBuilder();
 		if (!types.isEmpty()) {
 			for (int i = 0; i < types.size(); i++)
-				title.append(getMaterialName(types.get(i)) + ", ");
+				title.append(materialName(types.get(i)) + ", ");
 			title.deleteCharAt(title.length() - 2);
 		} else
 			title.append("Block ");
@@ -204,7 +204,7 @@ public class QueryParams implements Cloneable
 		if (args == null || args.size() == 0)
 			throw new IllegalArgumentException("No parameters specified.");
 		final Player player = sender instanceof Player ? (Player)sender : null;
-		final Session session = prepareToolQuery ? null : logblock.getSession(getSenderName(sender));
+		final Session session = prepareToolQuery ? null : logblock.getSession(senderName(sender));
 		if (player != null && world == null)
 			world = player.getWorld();
 		for (int i = 0; i < args.size(); i++) {

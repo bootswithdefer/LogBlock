@@ -1,6 +1,6 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.util.BukkitUtils.getMaterialName;
+import static de.diddiz.util.BukkitUtils.materialName;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -34,26 +34,26 @@ public class HistoryFormatter
 					final int itemType = rs.getInt("itemtype");
 					final int itemAmount = rs.getInt("itemamount");
 					if (itemType == 0 || itemAmount == 0)
-						msg.append("looked inside " + getMaterialName(type));
+						msg.append("looked inside " + materialName(type));
 					else if (itemAmount < 0)
-						msg.append("took " + itemAmount * -1 + "x " + getMaterialName(itemType));
+						msg.append("took " + itemAmount * -1 + "x " + materialName(itemType));
 					else
-						msg.append("put in " + itemAmount + "x " + getMaterialName(itemType));
+						msg.append("put in " + itemAmount + "x " + materialName(itemType));
 				} else if (type == 69)
-					msg.append("swiched " + getMaterialName(type));
+					msg.append("swiched " + materialName(type));
 				else if (type == 77)
-					msg.append("pressed " + getMaterialName(type));
+					msg.append("pressed " + materialName(type));
 			} else if (type == 0)
-				msg.append("destroyed " + getMaterialName(replaced));
+				msg.append("destroyed " + materialName(replaced));
 			else if (replaced == 0)
-				msg.append("created " + getMaterialName(type));
+				msg.append("created " + materialName(type));
 			else
-				msg.append("replaced " + getMaterialName(replaced) + " with " + getMaterialName(type));
+				msg.append("replaced " + materialName(replaced) + " with " + materialName(type));
 			if (coords)
 				msg.append(" at " + rs.getInt("x") + ":" + rs.getInt("y") + ":" + rs.getInt("z"));
 			return msg.toString();
 		} else if (sum == SummarizationMode.TYPES)
-			return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + getMaterialName(rs.getInt("type"));
+			return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + materialName(rs.getInt("type"));
 		else
 			return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + rs.getString("playername");
 	}

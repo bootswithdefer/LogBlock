@@ -1,7 +1,7 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.compressInventory;
-import static de.diddiz.util.BukkitUtils.getEntityName;
+import static de.diddiz.util.BukkitUtils.entityName;
 import static de.diddiz.util.BukkitUtils.rawData;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -176,7 +176,7 @@ public class Consumer extends TimerTask
 			weapon = ((Player)killer).getItemInHand().getTypeId();
 		lastAttackedEntity.put(killer.getEntityId(), victim.getEntityId());
 		lastAttackTime.put(killer.getEntityId(), System.currentTimeMillis());
-		queueKill(victim.getWorld(), getEntityName(killer), getEntityName(victim), weapon);
+		queueKill(victim.getWorld(), entityName(killer), entityName(victim), weapon);
 	}
 
 	/**
