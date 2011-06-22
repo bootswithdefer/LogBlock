@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.materialName;
+import static de.diddiz.util.Utils.spaces;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -10,12 +11,16 @@ public class HistoryFormatter
 {
 	private final SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
 	private final SummarizationMode sum;
+	private final boolean coords;
+	private final float factor;
 
-	HistoryFormatter(SummarizationMode sum) {
+	HistoryFormatter(SummarizationMode sum, boolean coords, float factor) {
 		this.sum = sum;
+		this.coords = coords;
+		this.factor = factor;
 	}
 
-	String format(ResultSet rs, boolean coords) throws SQLException {
+	String format(ResultSet rs) throws SQLException {
 		if (sum == SummarizationMode.NONE) {
 			final StringBuilder msg = new StringBuilder(formatter.format(rs.getTimestamp("date")) + " " + rs.getString("playername") + " ");
 			final int type = rs.getInt("type");
@@ -52,17 +57,12 @@ public class HistoryFormatter
 			if (coords)
 				msg.append(" at " + rs.getInt("x") + ":" + rs.getInt("y") + ":" + rs.getInt("z"));
 			return msg.toString();
-		} else if (sum == SummarizationMode.TYPES)
-			return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + materialName(rs.getInt("type"));
-		else
-			return fillWithSpaces(rs.getInt("created")) + fillWithSpaces(rs.getInt("destroyed")) + rs.getString("playername");
-	}
-
-	private static String fillWithSpaces(Integer number) {
-		final StringBuilder filled = new StringBuilder(number.toString());
-		final int neededSpaces = (36 - filled.length() * 6) / 4;
-		for (int i = 0; i < neededSpaces; i++)
-			filled.append(' ');
-		return filled.toString();
+		}
+		String c1 = String.valueOf(rs.getInt(2)), c2 = String.valueOf(rs.getInt(3));
+		c1 += spaces((int)((10 - c1.length()) / factor));
+		c2 += spaces((int)((10 - c2.length()) / factor));
+		if (sum == SummarizationMode.TYPES)
+			return c1 + c2 + materialName(rs.getInt(1));
+		return c1 + c2 + rs.getString(1);
 	}
 }

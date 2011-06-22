@@ -117,4 +117,11 @@ public class Utils
 			return -1;
 		}
 	}
+
+	public static String spaces(int count) {
+		final StringBuilder filled = new StringBuilder(count);
+		for (int i = 0; i < count; i++)
+			filled.append(' ');
+		return filled.toString();
+	}
 }

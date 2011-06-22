@@ -362,13 +362,13 @@ public class CommandsHandler implements CommandExecutor
 				if (rs.next()) {
 					rs.beforeFirst();
 					final SummarizationMode sum = params.sum;
-					final HistoryFormatter histformatter = new HistoryFormatter(sum);
+					final HistoryFormatter histformatter = new HistoryFormatter(sum, params.coords, (sender instanceof Player ? 2 / 3f : 1));
 					if (sum == SummarizationMode.TYPES)
-						sender.sendMessage(ChatColor.GOLD + String.format("%-6s %-6s %s", "Creat", "Destr", "Block"));
+						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - Block");
 					else if (sum == SummarizationMode.PLAYERS)
-						sender.sendMessage(ChatColor.GOLD + String.format("%-6s %-6s %s", "Created", "Destroyed", "Playername"));
+						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - Player");
 					while (rs.next())
-						sender.sendMessage(ChatColor.GOLD + histformatter.format(rs, params.coords));
+						sender.sendMessage(ChatColor.GOLD + histformatter.format(rs));
 				} else
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
 			} catch (final Exception ex) {
@@ -397,11 +397,11 @@ public class CommandsHandler implements CommandExecutor
 				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
 				final String newline = System.getProperty("line.separator");
-				final HistoryFormatter histformatter = new HistoryFormatter(params.sum);
+				final HistoryFormatter histformatter = new HistoryFormatter(params.sum, params.coords, 1);
 				file.getParentFile().mkdirs();
 				int counter = 0;
 				while (rs.next()) {
-					writer.write(histformatter.format(rs, params.coords) + newline);
+					writer.write(histformatter.format(rs) + newline);
 					counter++;
 				}
 				writer.close();
