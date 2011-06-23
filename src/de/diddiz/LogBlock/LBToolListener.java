@@ -29,7 +29,7 @@ class LBToolListener extends PlayerListener
 
 	@Override
 	public void onPlayerInteract(PlayerInteractEvent event) {
-		if (!event.isCancelled()) {
+		if (!event.isCancelled() && event.getMaterial() != null) {
 			final Action action = event.getAction();
 			final int type = event.getMaterial().getId();
 			if (type == toolID && action == Action.RIGHT_CLICK_BLOCK || type == toolblockID && (action == Action.LEFT_CLICK_BLOCK || action == Action.RIGHT_CLICK_BLOCK)) {
