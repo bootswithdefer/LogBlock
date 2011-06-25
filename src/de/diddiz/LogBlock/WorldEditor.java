@@ -185,7 +185,8 @@ public class WorldEditor implements Runnable
 						return PerformResult.SUCCESS;
 					if (!secBlock.setTypeIdAndData(curtype, (byte)(blockData ^ 8), true))
 						return PerformResult.ERROR;
-				}
+				} else if (curtype == 18 && (block.getData() & 8) > 0)
+					block.setData((byte)(block.getData() & 0xF7));
 				return PerformResult.SUCCESS;
 			} catch (final Exception ex) {
 				log.severe("[LogBlock Rollback] " + ex.toString());
