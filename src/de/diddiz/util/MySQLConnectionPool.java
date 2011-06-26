@@ -21,6 +21,10 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MySQLConnectionPool implements Closeable
 {
@@ -29,6 +33,7 @@ public class MySQLConnectionPool implements Closeable
 	private final Vector<JDCConnection> connections;
 	private final ConnectionReaper reaper;
 	private final String url, user, password;
+	private final Lock lock = new ReentrantLock();
 
 	public MySQLConnectionPool(String url, String user, String password) throws ClassNotFoundException {
 		Class.forName("com.mysql.jdbc.Driver");
@@ -41,41 +46,51 @@ public class MySQLConnectionPool implements Closeable
 	}
 
 	@Override
-	public synchronized void close() {
+	public void close() {
+		lock.lock();
 		final Enumeration<JDCConnection> conns = connections.elements();
 		while (conns.hasMoreElements()) {
 			final JDCConnection conn = conns.nextElement();
 			connections.remove(conn);
 			conn.terminate();
 		}
+		lock.unlock();
 	}
 
-	public synchronized Connection getConnection() throws SQLException {
-		JDCConnection conn;
-		for (int i = 0; i < connections.size(); i++) {
-			conn = connections.get(i);
-			if (conn.lease()) {
-				if (conn.isValid())
-					return conn;
-				connections.remove(conn);
-				conn.terminate();
+	public Connection getConnection() throws SQLException, InterruptedException, TimeoutException {
+		if (!lock.tryLock(100, TimeUnit.MILLISECONDS))
+			throw new TimeoutException();
+		try {
+			JDCConnection conn;
+			for (int i = 0; i < connections.size(); i++) {
+				conn = connections.get(i);
+				if (conn.lease()) {
+					if (conn.isValid())
+						return conn;
+					connections.remove(conn);
+					conn.terminate();
+				}
 			}
+			conn = new JDCConnection(DriverManager.getConnection(url, user, password));
+			conn.lease();
+			if (!conn.isValid()) {
+				conn.terminate();
+				throw new SQLException("Failed to validate a brand new connection");
+			}
+			connections.add(conn);
+			return conn;
+		} finally {
+			lock.unlock();
 		}
-		conn = new JDCConnection(DriverManager.getConnection(url, user, password));
-		conn.lease();
-		if (!conn.isValid()) {
-			conn.terminate();
-			throw new SQLException("Failed to validate a brand new connection");
-		}
-		connections.add(conn);
-		return conn;
 	}
 
-	private synchronized void reapConnections() {
+	private void reapConnections() {
+		lock.lock();
 		final long stale = System.currentTimeMillis() - timeToLive;
 		for (final JDCConnection conn : connections)
 			if (conn.inUse() && stale > conn.getLastUse() && !conn.isValid())
 				connections.remove(conn);
+		lock.unlock();
 	}
 
 	private class ConnectionReaper extends Thread

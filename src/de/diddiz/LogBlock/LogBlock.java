@@ -4,7 +4,6 @@ import static de.diddiz.util.Utils.downloadIfNotExists;
 import java.io.File;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -181,7 +180,7 @@ public class LogBlock extends JavaPlugin
 	public Connection getConnection() {
 		try {
 			return pool.getConnection();
-		} catch (final SQLException ex) {
+		} catch (final Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Error while fetching connection", ex);
 			return null;
 		}
