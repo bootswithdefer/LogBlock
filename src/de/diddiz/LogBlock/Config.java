@@ -25,13 +25,12 @@ public class Config
 	public final boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final LogKillsLevel logKillsLevel;
-	public final Set<Integer> dontRollback;
-	public final Set<Integer> replaceAnyway;
+	public final Set<Integer> dontRollback, replaceAnyway;
 	public final QueryParams toolQuery, toolBlockQuery;
 	public final int defaultDist, defaultTime;
 	public final int toolID, toolblockID;
 	public final boolean askRollbacks, askRedos, askClearLogs, askSavequeueBeforeRollback;
-	public final Set<Integer> hiddenPlayers;
+	public final Set<Integer> hiddenPlayers, hiddenBlocks;
 
 	public static enum LogKillsLevel {
 		PLAYERS, MONSTERS, ANIMALS
@@ -108,6 +107,8 @@ public class Config
 			config.setProperty("logging.logKillsLevel", "PLAYERS");
 		if (!subkeys.contains("hiddenPlayers"))
 			config.setProperty("logging.hiddenPlayers", new ArrayList<String>());
+		if (!subkeys.contains("hiddenBlocks"))
+			config.setProperty("logging.hiddenBlocks", Arrays.asList(new Integer[]{0}));
 		subkeys = config.getKeys("rollback");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
@@ -173,6 +174,14 @@ public class Config
 		hiddenPlayers = new HashSet<Integer>();
 		for (final String playerName : config.getStringList("logging.hiddenPlayers", new ArrayList<String>()))
 			hiddenPlayers.add(playerName.hashCode());
+		hiddenBlocks = new HashSet<Integer>();
+		for (final String blocktype : config.getStringList("logging.hiddenBlocks", new ArrayList<String>())) {
+			final Material mat = Material.matchMaterial(blocktype);
+			if (mat != null)
+				hiddenBlocks.add(mat.getId());
+			else
+				throw new DataFormatException("Not a valid material: '" + blocktype + "'");
+		}
 		dontRollback = new HashSet<Integer>(config.getIntList("rollback.dontRollback", null));
 		replaceAnyway = new HashSet<Integer>(config.getIntList("rollback.replaceAnyway", null));
 		try {

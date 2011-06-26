@@ -29,7 +29,7 @@ public class Consumer extends TimerTask
 {
 	private final Queue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
 	private final Config config;
-	private final Set<Integer> hiddenplayers;
+	private final Set<Integer> hiddenPlayers, hiddenBlocks;
 	private final Queue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
 	private final Map<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
 	private final Map<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
@@ -41,7 +41,8 @@ public class Consumer extends TimerTask
 		this.logblock = logblock;
 		log = logblock.getServer().getLogger();
 		config = logblock.getConfig();
-		hiddenplayers = config.hiddenPlayers;
+		hiddenPlayers = config.hiddenPlayers;
+		hiddenBlocks = config.hiddenBlocks;
 	}
 
 	/**
@@ -312,11 +313,11 @@ public class Consumer extends TimerTask
 
 	boolean hide(Player player) {
 		final int hash = player.getName().hashCode();
-		if (hiddenplayers.contains(hash)) {
-			hiddenplayers.remove(hash);
+		if (hiddenPlayers.contains(hash)) {
+			hiddenPlayers.remove(hash);
 			return false;
 		}
-		hiddenplayers.add(hash);
+		hiddenPlayers.add(hash);
 		return true;
 	}
 
@@ -331,7 +332,9 @@ public class Consumer extends TimerTask
 	}
 
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
-		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || hiddenplayers.contains(playerName.hashCode()) || !config.tables.containsKey(loc.getWorld().getName().hashCode()))
+		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || hiddenPlayers.contains(playerName.hashCode()) || !config.tables.containsKey(loc.getWorld().getName().hashCode()))
+			return;
+		if (typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
 			return;
 		if (playerName.length() > 32)
 			playerName = playerName.substring(0, 32);
