@@ -158,32 +158,20 @@ public class WorldEditor implements Runnable
 					final Sign sign = (Sign)block.getState();
 					final String[] lines = signtext.split("\0");
 					if (lines.length < 4)
-						return PerformResult.ERROR;
+						return PerformResult.NO_ACTION;
 					for (int i = 0; i < 4; i++)
 						sign.setLine(i, lines[i]);
 					if (!sign.update())
 						return PerformResult.ERROR;
 				} else if (curtype == 26) {
 					final Bed bed = (Bed)block.getState().getData();
-					final Block secBlock;
-					if (!bed.isHeadOfBed())
-						secBlock = block.getFace(bed.getFacing());
-					else
-						secBlock = block.getFace(bed.getFacing().getOppositeFace());
-					if (secBlock.getTypeId() != 0)
-						return PerformResult.SUCCESS;
-					if (!secBlock.setTypeIdAndData(26, (byte)(bed.getData() ^ 8), true))
+					final Block secBlock = bed.isHeadOfBed() ? block.getFace(bed.getFacing().getOppositeFace()) : block.getFace(bed.getFacing());
+					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(26, (byte)(bed.getData() ^ 8), true))
 						return PerformResult.ERROR;
 				} else if (curtype == 64 || curtype == 71) {
-					final Block secBlock;
 					final byte blockData = block.getData();
-					if ((blockData & 8) == 8)
-						secBlock = block.getFace(BlockFace.DOWN);
-					else
-						secBlock = block.getFace(BlockFace.UP);
-					if (secBlock.getTypeId() != 0)
-						return PerformResult.SUCCESS;
-					if (!secBlock.setTypeIdAndData(curtype, (byte)(blockData ^ 8), true))
+					final Block secBlock = (blockData & 8) == 8 ? block.getFace(BlockFace.DOWN) : block.getFace(BlockFace.UP);
+					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(curtype, (byte)(blockData ^ 8), true))
 						return PerformResult.ERROR;
 				} else if (curtype == 18 && (block.getData() & 8) > 0)
 					block.setData((byte)(block.getData() & 0xF7));
@@ -195,10 +183,9 @@ public class WorldEditor implements Runnable
 		}
 	}
 
+	@SuppressWarnings("serial")
 	public static class WorldEditorException extends Exception
 	{
-		private static final long serialVersionUID = 7509084196124728986L;
-
 		public WorldEditorException(String msg) {
 			super(msg);
 		}
