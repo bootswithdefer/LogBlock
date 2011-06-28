@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -62,6 +63,10 @@ class LBBlockListener extends BlockListener
 	public void onBlockPlace(BlockPlaceEvent event) {
 		if (!event.isCancelled()) {
 			final int type = event.getBlock().getTypeId();
+			if (type == 0) {
+				final Location loc = event.getBlock().getLocation();
+				System.out.println("[LogBlock] Bukkit provided no block type for the block placed by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + loc.getBlockZ() + ". Please check the conditions this happened under, and report it to Diddiz or Bukkit.");
+			}
 			if (logSignTexts && (type == 63 || type == 68))
 				return;
 			final BlockState before = event.getBlockReplacedState();
