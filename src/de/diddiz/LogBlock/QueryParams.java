@@ -5,6 +5,7 @@ import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
 import static de.diddiz.util.BukkitUtils.materialName;
 import static de.diddiz.util.BukkitUtils.senderName;
 import static de.diddiz.util.Utils.isInt;
+import static de.diddiz.util.Utils.listing;
 import static de.diddiz.util.Utils.parseTimeSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +30,7 @@ public class QueryParams implements Cloneable
 	public Location loc = null;
 	public Order order = Order.DESC;
 	public List<String> players = new ArrayList<String>();
+	public boolean excludePlayersMode = false;
 	public boolean prepareToolQuery = false, coords = false, silent = false;
 	public Selection sel = null;
 	public SummarizationMode sum = SummarizationMode.NONE;
@@ -89,9 +91,10 @@ public class QueryParams implements Cloneable
 	public String getTitle() {
 		final StringBuilder title = new StringBuilder();
 		if (!types.isEmpty()) {
+			final String[] blocknames = new String[types.size()];
 			for (int i = 0; i < types.size(); i++)
-				title.append(materialName(types.get(i)) + ", ");
-			title.deleteCharAt(title.length() - 2);
+				blocknames[i] = materialName(types.get(i));
+			title.append(listing(blocknames, ", ", " and ") + " ");
 		} else
 			title.append("Block ");
 		if (bct == BlockChangeType.CREATED)
@@ -101,13 +104,9 @@ public class QueryParams implements Cloneable
 		else
 			title.append("changes ");
 		if (players.size() > 10)
-			title.append("from many players ");
-		else if (!players.isEmpty()) {
-			title.append("from player ");
-			for (int i = 0; i < players.size(); i++)
-				title.append(players.get(i) + ", ");
-			title.deleteCharAt(title.length() - 2);
-		}
+			title.append((excludePlayersMode ? "without" : "from") + " many players ");
+		else if (!players.isEmpty())
+			title.append((excludePlayersMode ? "without" : "from") + " player" + (players.size() != 1 ? "s" : "") + " " + listing(players.toArray(new String[players.size()]), ", ", " and ") + " ");
 		if (minutes > 0)
 			title.append("in the last " + minutes + " minutes ");
 		if (minutes < 0)
@@ -175,13 +174,16 @@ public class QueryParams implements Cloneable
 				where.append("type = replaced AND (type = 23 OR type = 54 OR type = 61) AND ");
 				break;
 		}
-		if (!players.isEmpty() && sum != SummarizationMode.PLAYERS) {
-			where.append('(');
-			for (final String playerName : players)
-				where.append("playername = '" + playerName + "' OR ");
-			where.delete(where.length() - 4, where.length());
-			where.append(") AND ");
-		}
+		if (!players.isEmpty() && sum != SummarizationMode.PLAYERS)
+			if (!excludePlayersMode) {
+				where.append('(');
+				for (final String playerName : players)
+					where.append("playername = '" + playerName + "' OR ");
+				where.delete(where.length() - 4, where.length());
+				where.append(") AND ");
+			} else
+				for (final String playerName : players)
+					where.append("playername != '" + playerName + "' AND ");
 		if (loc != null) {
 			if (radius == 0)
 				where.append("x = '" + loc.getBlockX() + "' AND y = '" + loc.getBlockY() + "' AND z = '" + loc.getBlockZ() + "' AND ");
@@ -218,8 +220,11 @@ public class QueryParams implements Cloneable
 				if (values == null || values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
 				for (final String playerName : values)
-					if (playerName.length() > 0)
-						players.add(playerName.replace("\\", "\\\\").replace("'", "\\'"));
+					if (playerName.length() > 0) {
+						if (playerName.startsWith("!"))
+							excludePlayersMode = true;
+						players.add(playerName.replaceAll("[^a-zA-Z0-9_]", ""));
+					}
 			} else if (param.equals("block") || param.equals("type")) {
 				if (values == null || values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
