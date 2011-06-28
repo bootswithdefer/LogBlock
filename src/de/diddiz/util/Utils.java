@@ -67,6 +67,19 @@ public class Utils
 		return false;
 	}
 
+	public static String listing(String[] entries, String delimiter, String finalDelimiter) {
+		final int len = entries.length;
+		if (len == 0)
+			return "";
+		if (len == 1)
+			return entries[0];
+		final StringBuilder builder = new StringBuilder(entries[0]);
+		for (int i = 1; i < len - 1; i++)
+			builder.append(delimiter + entries[i]);
+		builder.append(finalDelimiter + entries[len - 1]);
+		return builder.toString();
+	}
+
 	public static int parseTimeSpec(String[] spec) {
 		if (spec == null || spec.length < 1 || spec.length > 2)
 			return -1;
