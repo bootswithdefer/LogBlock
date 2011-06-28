@@ -156,7 +156,7 @@ public class WorldEditor implements Runnable
 				final int curtype = block.getTypeId();
 				if (signtext != null && (curtype == 63 || curtype == 68)) {
 					final Sign sign = (Sign)block.getState();
-					final String[] lines = signtext.split("\0");
+					final String[] lines = signtext.split("\0", 4);
 					if (lines.length < 4)
 						return PerformResult.NO_ACTION;
 					for (int i = 0; i < 4; i++)
