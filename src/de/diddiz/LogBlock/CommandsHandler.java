@@ -84,15 +84,19 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GOLD + "world [worldname] -- Changes the world");
 				sender.sendMessage(ChatColor.GOLD + "time [number] [minutes|hours|days] -- Limits time");
 				sender.sendMessage(ChatColor.GOLD + "since <dd.MM.yyyy> <HH:mm:ss> -- Limits time to a fixed point");
+				sender.sendMessage(ChatColor.GOLD + "before <dd.MM.yyyy> <HH:mm:ss> -- Affects only blocks before a fixed time");
 				sender.sendMessage(ChatColor.GOLD + "limit <row count> -- Limits the result to count of rows");
 				sender.sendMessage(ChatColor.GOLD + "sum [none|blocks|players] -- Sums the result");
 				sender.sendMessage(ChatColor.GOLD + "asc, desc -- Changes the order of the displayed log");
+				sender.sendMessage(ChatColor.GOLD + "coords -- Shows coordinates for each block");
 			} else if (command.equals("permissions")) {
 				sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
 				if (logblock.hasPermission(sender, "logblock.tool"))
 					sender.sendMessage(ChatColor.GOLD + "logblock.tool");
 				if (logblock.hasPermission(sender, "logblock.toolblock"))
 					sender.sendMessage(ChatColor.GOLD + "logblock.toolblock");
+				if (logblock.hasPermission(sender, "logblock.lookup"))
+					sender.sendMessage(ChatColor.GOLD + "logblock.lookup");
 				if (logblock.hasPermission(sender, "logblock.me"))
 					sender.sendMessage(ChatColor.GOLD + "logblock.me");
 				if (logblock.hasPermission(sender, "logblock.tp"))
