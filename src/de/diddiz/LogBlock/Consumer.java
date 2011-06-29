@@ -255,20 +255,18 @@ public class Consumer extends TimerTask
 							log.warning("[LogBlock Consumer] Failed to add player " + b.playerName);
 							continue;
 						}
+					final boolean needKeys = b.signtext != null || b.ca != null;
 					table = config.tables.get(b.loc.getWorld().getName().hashCode());
-					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (now(), " + players.get(playerHash) + ", " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.loc.getBlockX() + "', " + b.loc.getBlockY() + ", '" + b.loc.getBlockZ() + "')", Statement.RETURN_GENERATED_KEYS);
-					if (b.signtext != null) {
+					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (now(), " + players.get(playerHash) + ", " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.loc.getBlockX() + "', " + b.loc.getBlockY() + ", '" + b.loc.getBlockZ() + "')", needKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+					if (needKeys) {
 						final ResultSet keys = state.getGeneratedKeys();
-						if (keys.next())
-							state.execute("INSERT INTO `" + table + "-sign` (id, signtext) values (" + keys.getInt(1) + ", '" + b.signtext + "')");
-						else
-							log.warning("[LogBlock Consumer] Failed to get generated keys. Unable to log sign text.");
-					} else if (b.ca != null) {
-						final ResultSet keys = state.getGeneratedKeys();
-						if (keys.next())
-							state.execute("INSERT INTO `" + table + "-chest` (id, itemtype, itemamount, itemdata) values (" + keys.getInt(1) + ", " + b.ca.itemType + ", " + b.ca.itemAmount + ", " + b.ca.itemData + ")");
-						else
-							log.warning("[LogBlock Consumer] Failed to get generated keys. Unable to log chest access.");
+						if (keys.next()) {
+							if (b.signtext != null)
+								state.execute("INSERT INTO `" + table + "-sign` (id, signtext) values (" + keys.getInt(1) + ", '" + b.signtext + "')");
+							if (b.ca != null)
+								state.execute("INSERT INTO `" + table + "-chest` (id, itemtype, itemamount, itemdata) values (" + keys.getInt(1) + ", " + b.ca.itemType + ", " + b.ca.itemAmount + ", " + b.ca.itemData + ")");
+						} else
+							log.warning("[LogBlock Consumer] Failed to get generated keys. You may have to repair " + table);
 					}
 					count++;
 				}
