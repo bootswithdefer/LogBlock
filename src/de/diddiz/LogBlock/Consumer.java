@@ -27,7 +27,7 @@ import org.bukkit.inventory.ItemStack;
 
 public class Consumer extends TimerTask
 {
-	private final Queue<BlockRow> bqueue = new LinkedBlockingQueue<BlockRow>();
+	private final Queue<BlockChange> bqueue = new LinkedBlockingQueue<BlockChange>();
 	private final Config config;
 	private final Set<Integer> hiddenPlayers, hiddenBlocks;
 	private final Queue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
@@ -234,7 +234,7 @@ public class Consumer extends TimerTask
 		if (conn == null)
 			return;
 		Statement state = null;
-		BlockRow b;
+		BlockChange b;
 		KillRow k;
 		String table;
 		if (getQueueSize() > 1000)
@@ -249,14 +249,14 @@ public class Consumer extends TimerTask
 					b = bqueue.poll();
 					if (b == null)
 						continue;
-					final int playerHash = b.name.hashCode();
+					final int playerHash = b.playerName.hashCode();
 					if (!players.containsKey(playerHash))
-						if (!addPlayer(conn, state, b.name)) {
-							log.warning("[LogBlock Consumer] Failed to add player " + b.name);
+						if (!addPlayer(conn, state, b.playerName)) {
+							log.warning("[LogBlock Consumer] Failed to add player " + b.playerName);
 							continue;
 						}
-					table = config.tables.get(b.worldHash);
-					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (now(), " + players.get(playerHash) + ", " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.x + "', " + b.y + ", '" + b.z + "')", Statement.RETURN_GENERATED_KEYS);
+					table = config.tables.get(b.loc.getWorld().getName().hashCode());
+					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (now(), " + players.get(playerHash) + ", " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.loc.getBlockX() + "', " + b.loc.getBlockY() + ", '" + b.loc.getBlockZ() + "')", Statement.RETURN_GENERATED_KEYS);
 					if (b.signtext != null) {
 						final ResultSet keys = state.getGeneratedKeys();
 						if (keys.next())
@@ -337,46 +337,7 @@ public class Consumer extends TimerTask
 		playerName = playerName.replaceAll("[^a-zA-Z0-9_]", "");
 		if (signtext != null)
 			signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
-		bqueue.add(new BlockRow(loc.getWorld().getName().hashCode(), playerName, typeBefore, typeAfter, data, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), signtext, ca));
-	}
-
-	private static class BlockRow
-	{
-		final ChestAccess ca;
-		final byte data;
-		final String name;
-		final int replaced, type;
-		final String signtext;
-		final int worldHash;
-		final int x, y, z;
-
-		BlockRow(int worldHash, String name, int replaced, int type, byte data, int x, int y, int z, String signtext, ChestAccess ca) {
-			this.worldHash = worldHash;
-			this.name = name;
-			this.replaced = replaced;
-			this.type = type;
-			this.data = data;
-			this.x = x;
-			this.y = y;
-			this.z = z;
-			this.signtext = signtext;
-			this.ca = ca;
-		}
-	}
-
-	private static class ChestAccess
-	{
-		final byte itemData;
-		final short itemType, itemAmount;
-
-		ChestAccess(short itemType, short itemAmount, byte itemData) {
-			this.itemType = itemType;
-			this.itemAmount = itemAmount;
-			if (itemData < 0)
-				this.itemData = 0;
-			else
-				this.itemData = itemData;
-		}
+		bqueue.add(new BlockChange(loc, playerName, typeBefore, typeAfter, data, signtext, ca));
 	}
 
 	private static class KillRow

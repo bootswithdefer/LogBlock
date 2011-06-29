@@ -4,6 +4,7 @@ import static de.diddiz.util.BukkitUtils.equalTypes;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -48,8 +49,8 @@ public class WorldEditor implements Runnable
 		return blacklistCollisions;
 	}
 
-	public void queueBlockChange(int type, int replaced, byte data, int x, int y, int z, String signtext, short itemType, short itemAmount, byte itemData) {
-		edits.add(new Edit(type, replaced, data, x, y, z, signtext, itemType, itemAmount, itemData));
+	public void queueEdit(int x, int y, int z, int replaced, int type, byte data, String signtext, short itemType, short itemAmount, byte itemData) {
+		edits.add(new Edit(new Location(world, x, y, z), null, replaced, type, data, signtext, new ChestAccess(itemType, itemAmount, itemData)));
 	}
 
 	public long getElapsedTime() {
@@ -96,55 +97,39 @@ public class WorldEditor implements Runnable
 		ERROR, SUCCESS, BLACKLISTED, NO_ACTION
 	}
 
-	private class Edit
+	private class Edit extends BlockChange
 	{
-		private final int type, replaced;
-		private final int x, y, z;
-		private final byte data;
-		private final String signtext;
-		public final short itemType, itemAmount;
-		public final byte itemData;
-
-		Edit(int type, int replaced, byte data, int x, int y, int z, String signtext, short itemType, short itemAmount, byte itemData) {
-			this.type = type;
-			this.replaced = replaced;
-			this.data = data;
-			this.x = x;
-			this.y = y;
-			this.z = z;
-			this.signtext = signtext;
-			this.itemType = itemType;
-			this.itemAmount = itemAmount;
-			this.itemData = itemData;
+		public Edit(Location loc, String playerName, int replaced, int type, byte data, String signtext, ChestAccess ca) {
+			super(loc, playerName, replaced, type, data, signtext, ca);
 		}
 
 		PerformResult perform() {
 			if (config.dontRollback.contains(replaced))
 				return PerformResult.BLACKLISTED;
 			try {
-				final Block block = world.getBlockAt(x, y, z);
+				final Block block = loc.getBlock();
 				final BlockState state = block.getState();
 				if (!world.isChunkLoaded(block.getChunk()))
 					world.loadChunk(block.getChunk());
-				if (type == replaced)
+				if (type == replaced) {
 					if (type == 0) {
-						if (block.setTypeId(0))
-							return PerformResult.SUCCESS;
-						return PerformResult.ERROR;
+						if (!block.setTypeId(0))
+							return PerformResult.ERROR;
 					} else if (type == 23 || type == 54 || type == 61) {
 						if (!(state instanceof ContainerBlock))
 							return PerformResult.NO_ACTION;
 						final Inventory inv = ((ContainerBlock)block.getState()).getInventory();
-						if (itemType != 0)
-							if (itemAmount > 0)
-								inv.removeItem(new ItemStack(itemType, itemAmount, (short)0, itemData));
-							else if (itemAmount < 0)
-								inv.addItem(new ItemStack(itemType, itemAmount * -1, (short)0, itemData));
+						if (ca != null)
+							if (ca.itemAmount > 0)
+								inv.removeItem(new ItemStack(ca.itemType, ca.itemAmount, (short)0, ca.itemData));
+							else if (ca.itemAmount < 0)
+								inv.addItem(new ItemStack(ca.itemType, ca.itemAmount * -1, (short)0, ca.itemData));
 						if (!state.update())
 							return PerformResult.ERROR;
-						return PerformResult.SUCCESS;
 					} else
 						return PerformResult.NO_ACTION;
+					return PerformResult.SUCCESS;
+				}
 				if (!(equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
 					return PerformResult.NO_ACTION;
 				if (state instanceof ContainerBlock) {
