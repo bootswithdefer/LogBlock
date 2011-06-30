@@ -13,6 +13,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Location;
@@ -36,6 +38,7 @@ public class Consumer extends TimerTask
 	private final Logger log;
 	private final LogBlock logblock;
 	private final Map<Integer, Integer> players = new HashMap<Integer, Integer>();
+	private final Lock lock = new ReentrantLock();
 
 	Consumer(LogBlock logblock) {
 		this.logblock = logblock;
@@ -229,10 +232,10 @@ public class Consumer extends TimerTask
 	}
 
 	@Override
-	public synchronized void run() {
-		final Connection conn = logblock.getConnection();
-		if (conn == null)
+	public void run() {
+		if (!lock.tryLock())
 			return;
+		final Connection conn = logblock.getConnection();
 		Statement state = null;
 		BlockChange b;
 		KillRow k;
@@ -240,6 +243,8 @@ public class Consumer extends TimerTask
 		if (getQueueSize() > 1000)
 			log.info("[LogBlock Consumer] Queue overloaded. Size: " + getQueueSize());
 		try {
+			if (conn == null)
+				return;
 			conn.setAutoCommit(false);
 			state = conn.createStatement();
 			final long start = System.currentTimeMillis();
@@ -302,6 +307,7 @@ public class Consumer extends TimerTask
 			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
 			}
+			lock.unlock();
 		}
 	}
 
