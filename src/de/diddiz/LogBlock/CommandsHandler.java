@@ -428,10 +428,12 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			final Consumer consumer = logblock.getConsumer();
-			sender.sendMessage(ChatColor.DARK_AQUA + "Current queue size: " + consumer.getQueueSize());
-			while (consumer.getQueueSize() > 0)
-				consumer.run();
-			sender.sendMessage(ChatColor.GREEN + "Queue saved successfully");
+			if (consumer.getQueueSize() > 0) {
+				sender.sendMessage(ChatColor.DARK_AQUA + "Current queue size: " + consumer.getQueueSize());
+				while (consumer.getQueueSize() > 0)
+					consumer.run();
+				sender.sendMessage(ChatColor.GREEN + "Queue saved successfully");
+			}
 		}
 	}
 
@@ -475,7 +477,7 @@ public class CommandsHandler implements CommandExecutor
 			try {
 				if (logblock.getConsumer().getQueueSize() > 50)
 					try {
-						new CommandSaveQueue(sender, null, true);
+						new CommandSaveQueue(sender, null, false);
 					} catch (final Exception ex) {
 						sender.sendMessage(ChatColor.RED + ex.getMessage());
 					}

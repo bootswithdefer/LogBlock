@@ -35,6 +35,20 @@ class Updater
 				config.setProperty("lookup.toolBlockQuery", params + " silent");
 			config.setProperty("version", "1.10");
 		}
+		if (config.getString("version").compareTo("1.20") < 0) {
+			log.info("[LogBlock] Updating tables to 1.20 ...");
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				for (final String table : logblock.getConfig().tables.values())
+					st.execute("ALTER TABLE `" + table + "-sign` MODIFY signtext VARCHAR(255) NOT NULL");
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {}
+			config.setProperty("version", "1.20");
+		}
+
 		config.save();
 		return true;
 	}
@@ -51,7 +65,7 @@ class Updater
 			if (dbm.getTables(null, null, table + "-chest", null).next() && state.executeQuery("SELECT * FROM `" + table + "-chest` LIMIT 1").getMetaData().getColumnCount() != 4) // Chest table update
 				state.execute("DROP TABLE `" + table + "-chest`");
 			createTable(dbm, state, table, "(id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
-			createTable(dbm, state, table + "-sign", "(id INT NOT NULL, signtext VARCHAR(255), PRIMARY KEY (id))");
+			createTable(dbm, state, table + "-sign", "(id INT NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id))");
 			createTable(dbm, state, table + "-chest", "(id INT NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
 			if (logblock.getConfig().logKills)
 				createTable(dbm, state, table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer SMALLINT UNSIGNED, victim SMALLINT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
