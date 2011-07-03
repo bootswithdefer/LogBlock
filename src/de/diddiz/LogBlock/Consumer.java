@@ -262,7 +262,7 @@ public class Consumer extends TimerTask
 						}
 					final boolean needKeys = b.signtext != null || b.ca != null;
 					table = config.tables.get(b.loc.getWorld().getName().hashCode());
-					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (now(), " + players.get(playerHash) + ", " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.loc.getBlockX() + "', " + b.loc.getBlockY() + ", '" + b.loc.getBlockZ() + "')", needKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+					state.execute("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + b.date + "), " + players.get(playerHash) + ", " + b.replaced + ", " + b.type + ", " + b.data + ", '" + b.loc.getBlockX() + "', " + b.loc.getBlockY() + ", '" + b.loc.getBlockZ() + "')", needKeys ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
 					if (needKeys) {
 						final ResultSet keys = state.getGeneratedKeys();
 						if (keys.next()) {
@@ -341,7 +341,7 @@ public class Consumer extends TimerTask
 		playerName = playerName.replaceAll("[^a-zA-Z0-9_]", "");
 		if (signtext != null)
 			signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
-		bqueue.add(new BlockChange(loc, playerName, typeBefore, typeAfter, data, signtext, ca));
+		bqueue.add(new BlockChange(System.currentTimeMillis() / 1000, loc, playerName, typeBefore, typeAfter, data, signtext, ca));
 	}
 
 	private static class KillRow

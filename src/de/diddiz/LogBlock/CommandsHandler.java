@@ -2,6 +2,8 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.giveTool;
 import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
+import static de.diddiz.util.BukkitUtils.senderName;
+import static de.diddiz.util.Utils.isInt;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
@@ -204,7 +206,16 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else
 					sender.sendMessage(ChatColor.RED + "You have to be a player.");
-			} else if (args[0].equalsIgnoreCase("savequeue")) {
+			} else if (command.equals("page")) {
+				if (args.length == 2 && isInt(args[1]))
+					showPage(sender, Integer.valueOf(args[1]));
+				else
+					sender.sendMessage(ChatColor.RED + "You have to specify a page");
+			} else if (command.equals("next"))
+				showPage(sender, logblock.getSession(senderName(sender)).page + 1);
+			else if (command.equals("prev"))
+				showPage(sender, logblock.getSession(senderName(sender)).page - 1);
+			else if (args[0].equalsIgnoreCase("savequeue")) {
 				if (logblock.hasPermission(sender, "logblock.rollback"))
 					try {
 						new CommandSaveQueue(sender, null, true);
@@ -317,6 +328,22 @@ public class CommandsHandler implements CommandExecutor
 		return true;
 	}
 
+	private void showPage(CommandSender sender, int page) {
+		final Session session = logblock.getSession(senderName(sender));
+		if (session.lookupCache != null && session.lookupCache.length > 0) {
+			final int startpos = (page - 1) * config.linesPerPage;
+			if (page > 0 && startpos < session.lookupCache.length - 1) {
+				final int stoppos = startpos + config.linesPerPage > session.lookupCache.length ? session.lookupCache.length : startpos + config.linesPerPage - 1;
+				sender.sendMessage(ChatColor.BLUE + "Page " + page + "/" + (int)Math.ceil(session.lookupCache.length / (double)config.linesPerPage));
+				for (int i = startpos; i <= stoppos; i++)
+					sender.sendMessage(ChatColor.GOLD + session.lookupCache[i].toString());
+				session.page = page;
+			} else
+				sender.sendMessage(ChatColor.RED + "There isn't a page '" + page + "'");
+		} else
+			sender.sendMessage(ChatColor.RED + "No blocks in lookup cache");
+	}
+
 	public abstract class LBCommand implements Runnable, Closeable
 	{
 		protected final CommandSender sender;
@@ -361,20 +388,22 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				if (params.limit == 15)
+					params.limit = config.linesLimit;
 				rs = state.executeQuery(params.getLookupQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle());
+				final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
 				if (rs.next()) {
 					rs.beforeFirst();
-					final SummarizationMode sum = params.sum;
-					final HistoryFormatter histformatter = new HistoryFormatter(sum, params.coords, (sender instanceof Player ? 2 / 3f : 1));
-					if (sum == SummarizationMode.TYPES)
-						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - Block");
-					else if (sum == SummarizationMode.PLAYERS)
-						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - Player");
 					while (rs.next())
-						sender.sendMessage(ChatColor.GOLD + histformatter.format(rs));
-				} else
+						blockchanges.add(new BlockChange(rs, params.coords));
+					logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new BlockChange[blockchanges.size()]);
+					showPage(sender, 1);
+				} else {
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
+					logblock.getSession(senderName(sender)).lookupCache = null;
+				}
+
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
 				log.log(Level.SEVERE, "[LogBlock Lookup] Exception: ", ex);

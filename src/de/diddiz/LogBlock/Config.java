@@ -28,6 +28,7 @@ public class Config
 	public final Set<Integer> dontRollback, replaceAnyway;
 	public final QueryParams toolQuery, toolBlockQuery;
 	public final int defaultDist, defaultTime;
+	public final int linesPerPage, linesLimit;
 	public final int toolID, toolblockID;
 	public final boolean askRollbacks, askRedos, askClearLogs, askSavequeueBeforeRollback;
 	public final Set<Integer> hiddenPlayers, hiddenBlocks;
@@ -131,6 +132,10 @@ public class Config
 			config.setProperty("lookup.toolQuery", "area 0 all sum none limit 15 desc silent");
 		if (!subkeys.contains("toolBlockQuery"))
 			config.setProperty("lookup.toolBlockQuery", "area 0 all sum none limit 15 desc silent");
+		if (!subkeys.contains("linesPerPage"))
+			config.setProperty("lookup.linesPerPage", 15);
+		if (!subkeys.contains("linesLimit"))
+			config.setProperty("lookup.linesLimit", 1500);
 		subkeys = config.getKeys("questioner");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
@@ -206,6 +211,8 @@ public class Config
 		toolblockID = config.getInt("lookup.toolblockID", 7);
 		if (Material.getMaterial(toolblockID) == null || !Material.getMaterial(toolblockID).isBlock() || toolblockID == 0)
 			throw new DataFormatException("lookup.toolblockID doesn't appear to be a valid block id");
+		linesPerPage = config.getInt("lookup.linesPerPage", 15);
+		linesLimit = config.getInt("lookup.linesLimit", 1500);
 		askRollbacks = config.getBoolean("questioner.askRollbacks", true);
 		askRedos = config.getBoolean("questioner.askRedos", true);
 		askClearLogs = config.getBoolean("questioner.askClearLogs", true);

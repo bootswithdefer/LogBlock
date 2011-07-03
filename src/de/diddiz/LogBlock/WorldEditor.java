@@ -50,7 +50,7 @@ public class WorldEditor implements Runnable
 	}
 
 	public void queueEdit(int x, int y, int z, int replaced, int type, byte data, String signtext, short itemType, short itemAmount, byte itemData) {
-		edits.add(new Edit(new Location(world, x, y, z), null, replaced, type, data, signtext, new ChestAccess(itemType, itemAmount, itemData)));
+		edits.add(new Edit(0, new Location(world, x, y, z), null, replaced, type, data, signtext, new ChestAccess(itemType, itemAmount, itemData)));
 	}
 
 	public long getElapsedTime() {
@@ -99,8 +99,8 @@ public class WorldEditor implements Runnable
 
 	private class Edit extends BlockChange
 	{
-		public Edit(Location loc, String playerName, int replaced, int type, byte data, String signtext, ChestAccess ca) {
-			super(loc, playerName, replaced, type, data, signtext, ca);
+		public Edit(long time, Location loc, String playerName, int replaced, int type, byte data, String signtext, ChestAccess ca) {
+			super(time, loc, playerName, replaced, type, data, signtext, ca);
 		}
 
 		PerformResult perform() {
