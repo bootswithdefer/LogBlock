@@ -332,9 +332,11 @@ public class CommandsHandler implements CommandExecutor
 		final Session session = logblock.getSession(senderName(sender));
 		if (session.lookupCache != null && session.lookupCache.length > 0) {
 			final int startpos = (page - 1) * config.linesPerPage;
-			if (page > 0 && startpos < session.lookupCache.length - 1) {
-				final int stoppos = startpos + config.linesPerPage > session.lookupCache.length ? session.lookupCache.length : startpos + config.linesPerPage - 1;
-				sender.sendMessage(ChatColor.BLUE + "Page " + page + "/" + (int)Math.ceil(session.lookupCache.length / (double)config.linesPerPage));
+			if (page > 0 && startpos <= session.lookupCache.length - 1) {
+				final int stoppos = startpos + config.linesPerPage > session.lookupCache.length ? session.lookupCache.length - 1 : startpos + config.linesPerPage - 1;
+				final int numberOfPages = (int)Math.ceil(session.lookupCache.length / (double)config.linesPerPage);
+				if (numberOfPages != 1)
+					sender.sendMessage(ChatColor.DARK_AQUA + "Page " + page + "/" + numberOfPages);
 				for (int i = startpos; i <= stoppos; i++)
 					sender.sendMessage(ChatColor.GOLD + session.lookupCache[i].toString());
 				session.page = page;
@@ -398,6 +400,8 @@ public class CommandsHandler implements CommandExecutor
 					while (rs.next())
 						blockchanges.add(new BlockChange(rs, params.coords));
 					logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new BlockChange[blockchanges.size()]);
+					if (blockchanges.size() > config.linesPerPage)
+						sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
 					showPage(sender, 1);
 				} else {
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
