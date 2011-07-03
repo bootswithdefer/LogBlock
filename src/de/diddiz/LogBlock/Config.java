@@ -30,7 +30,7 @@ public class Config
 	public final int defaultDist, defaultTime;
 	public final int linesPerPage, linesLimit;
 	public final int toolID, toolblockID;
-	public final boolean askRollbacks, askRedos, askClearLogs, askSavequeueBeforeRollback;
+	public final boolean askRollbacks, askRedos, askClearLogs;
 	public final Set<Integer> hiddenPlayers, hiddenBlocks;
 
 	public static enum LogKillsLevel {
@@ -145,8 +145,6 @@ public class Config
 			config.setProperty("questioner.askRedos", true);
 		if (!subkeys.contains("askClearLogs"))
 			config.setProperty("questioner.askClearLogs", true);
-		if (!subkeys.contains("askSavequeueBeforeRollback"))
-			config.setProperty("questioner.askSavequeueBeforeRollback", true);
 		if (!config.save())
 			throw new IOException("Error while writing to config.yml");
 		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getString("mysql.port") + "/" + config.getString("mysql.database");
@@ -216,7 +214,6 @@ public class Config
 		askRollbacks = config.getBoolean("questioner.askRollbacks", true);
 		askRedos = config.getBoolean("questioner.askRedos", true);
 		askClearLogs = config.getBoolean("questioner.askClearLogs", true);
-		askSavequeueBeforeRollback = config.getBoolean("questioner.askSavequeueBeforeRollback", true);
 		final List<String> worldNames = config.getStringList("loggedWorlds", null);
 		final List<String> worldTables = config.getStringList("tables", null);
 		tables = new HashMap<Integer, String>();
