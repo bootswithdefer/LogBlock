@@ -46,7 +46,7 @@ class LBToolListener extends PlayerListener
 						params.sel = null;
 						if (type == toolblockID && action == Action.RIGHT_CLICK_BLOCK)
 							params.setLocation(block.getFace(event.getBlockFace()).getLocation());
-						else if (event.getClickedBlock().getTypeId() != 54)
+						else if (block.getTypeId() != 54 || params.radius != 0)
 							params.setLocation(block.getLocation());
 						else {
 							for (final BlockFace face : orientations)
