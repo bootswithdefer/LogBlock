@@ -31,6 +31,7 @@ import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
 
 public class CommandsHandler implements CommandExecutor
 {
+	private final QueryParams defaultToolParams;
 	private final Logger log;
 	private final LogBlock logblock;
 	private final Config config;
@@ -43,6 +44,9 @@ public class CommandsHandler implements CommandExecutor
 		config = logblock.getConfig();
 		scheduler = logblock.getServer().getScheduler();
 		questioner = (LogBlockQuestioner)logblock.getServer().getPluginManager().getPlugin("LogBlockQuestioner");
+		defaultToolParams = new QueryParams(logblock);
+		defaultToolParams.radius = 0;
+		defaultToolParams.bct = BlockChangeType.ALL;
 	}
 
 	@Override
@@ -140,9 +144,13 @@ public class CommandsHandler implements CommandExecutor
 								sender.sendMessage(ChatColor.RED + "You aren't allowed to use mode " + args[2]);
 						} else
 							player.sendMessage(ChatColor.RED + "No mode specified");
+					} else if (args[1].equalsIgnoreCase("default")) {
+						logblock.getSession(player.getName()).toolQuery = config.toolQuery.clone();
+						sender.sendMessage(ChatColor.GREEN + "Tool parameters set to default.");
 					} else if (logblock.hasPermission(player, "logblock.lookup"))
 						try {
-							final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
+							final QueryParams params = defaultToolParams.clone();
+							params.parseArgs(sender, argsToList(args, 1));
 							logblock.getSession(player.getName()).toolQuery = params;
 							sender.sendMessage(ChatColor.GREEN + "Set tool query to: " + params.getTitle());
 						} catch (final Exception ex) {
@@ -183,9 +191,13 @@ public class CommandsHandler implements CommandExecutor
 								sender.sendMessage(ChatColor.RED + "You aren't allowed to use mode " + args[2]);
 						} else
 							player.sendMessage(ChatColor.RED + "No mode specified");
+					} else if (args[1].equalsIgnoreCase("default")) {
+						logblock.getSession(player.getName()).toolBlockQuery = config.toolBlockQuery.clone();
+						sender.sendMessage(ChatColor.GREEN + "Toolblock  parameters set to default.");
 					} else if (logblock.hasPermission(player, "logblock.lookup"))
 						try {
-							final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
+							final QueryParams params = defaultToolParams.clone();
+							params.parseArgs(sender, argsToList(args, 1));
 							logblock.getSession(player.getName()).toolBlockQuery = params;
 							sender.sendMessage(ChatColor.GREEN + "Set tool block query to: " + params.getTitle());
 						} catch (final Exception ex) {
@@ -229,7 +241,7 @@ public class CommandsHandler implements CommandExecutor
 					try {
 						final QueryParams params = new QueryParams(logblock);
 						params.minutes = logblock.getConfig().defaultTime;
-						params.parseArgs(sender, ArgsToList(args, 1));
+						params.parseArgs(sender, argsToList(args, 1));
 						params.limit = -1;
 						params.order = Order.DESC;
 						params.sum = SummarizationMode.NONE;
@@ -245,7 +257,7 @@ public class CommandsHandler implements CommandExecutor
 					try {
 						final QueryParams params = new QueryParams(logblock);
 						params.minutes = logblock.getConfig().defaultTime;
-						params.parseArgs(sender, ArgsToList(args, 1));
+						params.parseArgs(sender, argsToList(args, 1));
 						params.limit = -1;
 						params.order = Order.ASC;
 						params.sum = SummarizationMode.NONE;
@@ -276,7 +288,7 @@ public class CommandsHandler implements CommandExecutor
 			} else if (command.equals("writelogfile")) {
 				if (logblock.hasPermission(sender, "logblock.rollback"))
 					try {
-						final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
+						final QueryParams params = new QueryParams(logblock, sender, argsToList(args, 1));
 						params.limit = -1;
 						params.bct = BlockChangeType.ALL;
 						params.sum = SummarizationMode.NONE;
@@ -289,7 +301,7 @@ public class CommandsHandler implements CommandExecutor
 			} else if (command.equals("clearlog")) {
 				if (logblock.hasPermission(sender, "logblock.clearlog"))
 					try {
-						final QueryParams params = new QueryParams(logblock, sender, ArgsToList(args, 1));
+						final QueryParams params = new QueryParams(logblock, sender, argsToList(args, 1));
 						params.bct = BlockChangeType.ALL;
 						params.limit = -1;
 						new CommandClearLog(sender, params, true);
@@ -302,7 +314,7 @@ public class CommandsHandler implements CommandExecutor
 				if (sender instanceof Player) {
 					if (logblock.hasPermission(sender, "logblock.tp"))
 						try {
-							new CommandTeleport(sender, new QueryParams(logblock, sender, ArgsToList(args, 1)), true);
+							new CommandTeleport(sender, new QueryParams(logblock, sender, argsToList(args, 1)), true);
 						} catch (final Exception ex) {
 							sender.sendMessage(ChatColor.RED + ex.getMessage());
 						}
@@ -647,7 +659,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	private static List<String> ArgsToList(String[] arr, int offset) {
+	private static List<String> argsToList(String[] arr, int offset) {
 		final List<String> list = new ArrayList<String>(Arrays.asList(arr));
 		for (int i = 0; i < offset; i++)
 			list.remove(0);
