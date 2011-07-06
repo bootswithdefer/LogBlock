@@ -14,6 +14,8 @@ import org.bukkit.block.Sign;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Bed;
+import org.bukkit.material.PistonBaseMaterial;
+import org.bukkit.material.PistonExtensionMaterial;
 
 public class WorldEditor implements Runnable
 {
@@ -151,12 +153,22 @@ public class WorldEditor implements Runnable
 				} else if (curtype == 26) {
 					final Bed bed = (Bed)block.getState().getData();
 					final Block secBlock = bed.isHeadOfBed() ? block.getFace(bed.getFacing().getOppositeFace()) : block.getFace(bed.getFacing());
-					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(26, (byte)(bed.getData() ^ 8), true))
+					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(26, (byte)(bed.getData() | 8), true))
 						return PerformResult.ERROR;
 				} else if (curtype == 64 || curtype == 71) {
 					final byte blockData = block.getData();
 					final Block secBlock = (blockData & 8) == 8 ? block.getFace(BlockFace.DOWN) : block.getFace(BlockFace.UP);
-					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(curtype, (byte)(blockData ^ 8), true))
+					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(curtype, (byte)(blockData | 8), true))
+						return PerformResult.ERROR;
+				} else if ((curtype == 29 || curtype == 33) && (block.getData() & 8) > 0) {
+					final PistonBaseMaterial piston = (PistonBaseMaterial)block.getState().getData();
+					final Block secBlock = block.getFace(piston.getFacing());
+					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(34, curtype == 29 ? (byte)(block.getData() | 8) : (byte)(block.getData() & ~8), true))
+						return PerformResult.ERROR;
+				} else if (curtype == 34) {
+					final PistonExtensionMaterial piston = (PistonExtensionMaterial)block.getState().getData();
+					final Block secBlock = block.getFace(piston.getFacing().getOppositeFace());
+					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(piston.isSticky() ? 29 : 33, (byte)(block.getData() | 8), true))
 						return PerformResult.ERROR;
 				} else if (curtype == 18 && (block.getData() & 8) > 0)
 					block.setData((byte)(block.getData() & 0xF7));
