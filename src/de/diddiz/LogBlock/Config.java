@@ -26,6 +26,7 @@ public class Config
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
+	public final int rollbackMaxTime, rollbackMaxArea;
 	public final QueryParams toolQuery, toolBlockQuery;
 	public final int defaultDist, defaultTime;
 	public final int linesPerPage, linesLimit;
@@ -117,6 +118,10 @@ public class Config
 			config.setProperty("rollback.dontRollback", Arrays.asList(new Integer[]{10, 11, 46, 51}));
 		if (!subkeys.contains("replaceAnyway"))
 			config.setProperty("rollback.replaceAnyway", Arrays.asList(new Integer[]{8, 9, 10, 11, 51}));
+		if (!subkeys.contains("maxTime"))
+			config.setProperty("rollback.maxTime", "2 days");
+		if (!subkeys.contains("maxArea"))
+			config.setProperty("rollback.maxArea", 50);
 		subkeys = config.getKeys("lookup");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
@@ -187,6 +192,8 @@ public class Config
 		}
 		dontRollback = new HashSet<Integer>(config.getIntList("rollback.dontRollback", null));
 		replaceAnyway = new HashSet<Integer>(config.getIntList("rollback.replaceAnyway", null));
+		rollbackMaxTime = parseTimeSpec(config.getString("rollback.maxTime").split(" "));
+		rollbackMaxArea = config.getInt("rollback.maxArea", 50);
 		try {
 			toolQuery = new QueryParams(logblock);
 			toolQuery.prepareToolQuery = true;

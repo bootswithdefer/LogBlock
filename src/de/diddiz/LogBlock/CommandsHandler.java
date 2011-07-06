@@ -69,6 +69,7 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GOLD + "/lb tool -- Gives you the lb tool");
 				sender.sendMessage(ChatColor.GOLD + "/lb tool [on|off] -- Enables/Disables tool");
 				sender.sendMessage(ChatColor.GOLD + "/lb tool [params] -- Sets the tool lookup query");
+				sender.sendMessage(ChatColor.GOLD + "/lb tool default -- Sets the tool lookup query to default");
 				sender.sendMessage(ChatColor.GOLD + "/lb toolblock -- Analog to tool");
 				sender.sendMessage(ChatColor.GOLD + "/lb hide -- Hides you from log");
 				sender.sendMessage(ChatColor.GOLD + "/lb rollback [params] -- Rollback");
@@ -77,7 +78,7 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GOLD + "/lb writelogfile [params] -- Writes a log file");
 				sender.sendMessage(ChatColor.GOLD + "/lb lookup [params] -- Lookup");
 				sender.sendMessage(ChatColor.GOLD + "/lb me -- Displays your stats");
-				sender.sendMessage(ChatColor.GOLD + "Look at diddiz.insane-architects.net/logblock for the full commands reference");
+				sender.sendMessage(ChatColor.GOLD + "Look at github.com/DiddiZ/LogBlock/wiki/Commands for the full commands reference");
 			} else if (command.equals("params")) {
 				sender.sendMessage(ChatColor.DARK_AQUA + "LogBlock Query Parameters:");
 				sender.sendMessage(ChatColor.GOLD + "Use doublequotes to escape a keyword: world \"world\"");
@@ -96,23 +97,11 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GOLD + "asc, desc -- Changes the order of the displayed log");
 				sender.sendMessage(ChatColor.GOLD + "coords -- Shows coordinates for each block");
 			} else if (command.equals("permissions")) {
+				final String[] permissions = {"tool", "toolblock", "me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions"};
 				sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
-				if (logblock.hasPermission(sender, "logblock.tool"))
-					sender.sendMessage(ChatColor.GOLD + "logblock.tool");
-				if (logblock.hasPermission(sender, "logblock.toolblock"))
-					sender.sendMessage(ChatColor.GOLD + "logblock.toolblock");
-				if (logblock.hasPermission(sender, "logblock.lookup"))
-					sender.sendMessage(ChatColor.GOLD + "logblock.lookup");
-				if (logblock.hasPermission(sender, "logblock.me"))
-					sender.sendMessage(ChatColor.GOLD + "logblock.me");
-				if (logblock.hasPermission(sender, "logblock.tp"))
-					sender.sendMessage(ChatColor.GOLD + "logblock.tp");
-				if (logblock.hasPermission(sender, "logblock.rollback"))
-					sender.sendMessage(ChatColor.GOLD + "logblock.rollback");
-				if (logblock.hasPermission(sender, "logblock.clearlog"))
-					sender.sendMessage(ChatColor.GOLD + "logblock.clearlog");
-				if (logblock.hasPermission(sender, "logblock.hide"))
-					sender.sendMessage(ChatColor.GOLD + "logblock.hide");
+				for (final String permission : permissions)
+					if (logblock.hasPermission(sender, "logblock." + permission))
+						sender.sendMessage(ChatColor.GOLD + "logblock." + permission);
 			} else if (command.equals("tool")) {
 				if (sender instanceof Player) {
 					final Player player = (Player)sender;
@@ -358,6 +347,20 @@ public class CommandsHandler implements CommandExecutor
 			sender.sendMessage(ChatColor.RED + "No blocks in lookup cache");
 	}
 
+	private boolean checkRestrictions(CommandSender sender, QueryParams params) {
+		if (logblock.hasPermission(sender, "logblock.ignoreRestrictions"))
+			return true;
+		if (params.minutes <= 0 || params.minutes > config.rollbackMaxTime) {
+			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback more than " + config.rollbackMaxTime + " minutes");
+			return false;
+		}
+		if (params.sel == null && params.loc == null || params.radius > config.rollbackMaxArea || params.sel != null && (params.sel.getLength() > config.rollbackMaxArea || params.sel.getWidth() > config.rollbackMaxArea)) {
+			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback an area larger than " + config.rollbackMaxArea + " blocks");
+			return false;
+		}
+		return true;
+	}
+
 	public abstract class LBCommand implements Runnable, Closeable
 	{
 		protected final CommandSender sender;
@@ -520,6 +523,8 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				if (!checkRestrictions(sender, params))
+					return;
 				if (logblock.getConsumer().getQueueSize() > 50)
 					try {
 						new CommandSaveQueue(sender, null, false);
@@ -564,6 +569,8 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				if (!checkRestrictions(sender, params))
+					return;
 				rs = state.executeQuery(params.getRollbackQuery());
 				if (!params.silent)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
@@ -603,6 +610,8 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				if (!checkRestrictions(sender, params))
+					return;
 				final File dumpFolder = new File(logblock.getDataFolder(), "dumb");
 				final SimpleDateFormat formatter = new SimpleDateFormat("yyMMddHHmmss");
 				int deleted;
