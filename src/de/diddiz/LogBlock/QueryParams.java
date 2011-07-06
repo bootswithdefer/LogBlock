@@ -96,7 +96,7 @@ public class QueryParams implements Cloneable
 				blocknames[i] = materialName(types.get(i));
 			title.append(listing(blocknames, ", ", " and ") + " ");
 		} else
-			title.append("Block ");
+			title.append("block ");
 		if (bct == BlockChangeType.CREATED)
 			title.append("creations ");
 		else if (bct == BlockChangeType.DESTROYED)
@@ -110,7 +110,7 @@ public class QueryParams implements Cloneable
 		if (minutes > 0)
 			title.append("in the last " + minutes + " minutes ");
 		if (minutes < 0)
-			title.append("up to " + minutes + " minutes ago ");
+			title.append("up to " + minutes * -1 + " minutes ago ");
 		if (loc != null && radius > 0)
 			title.append("within " + radius + " blocks of you ");
 		if (loc != null && radius == 0)
