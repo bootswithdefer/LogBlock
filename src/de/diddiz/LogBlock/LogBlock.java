@@ -97,7 +97,7 @@ public class LogBlock extends JavaPlugin
 				if (config.tables.containsKey(world.getName().hashCode())) {
 					params.world = world;
 					try {
-						commandsHandler.new CommandClearLog(new ConsoleCommandSender(getServer()), params, true);
+						commandsHandler.new CommandClearLog(new ConsoleCommandSender(getServer()), params.clone(), true);
 					} catch (final Exception ex) {
 						log.severe("Failed to schedule ClearLog: " + ex.getMessage());
 					}
