@@ -90,19 +90,23 @@ public class QueryParams implements Cloneable
 
 	public String getTitle() {
 		final StringBuilder title = new StringBuilder();
-		if (!types.isEmpty()) {
-			final String[] blocknames = new String[types.size()];
-			for (int i = 0; i < types.size(); i++)
-				blocknames[i] = materialName(types.get(i));
-			title.append(listing(blocknames, ", ", " and ") + " ");
-		} else
-			title.append("block ");
-		if (bct == BlockChangeType.CREATED)
-			title.append("creations ");
-		else if (bct == BlockChangeType.DESTROYED)
-			title.append("destructions ");
-		else
-			title.append("changes ");
+		if (bct == BlockChangeType.CHESTACCESS)
+			title.append("chest accesses ");
+		else {
+			if (!types.isEmpty()) {
+				final String[] blocknames = new String[types.size()];
+				for (int i = 0; i < types.size(); i++)
+					blocknames[i] = materialName(types.get(i));
+				title.append(listing(blocknames, ", ", " and ") + " ");
+			} else
+				title.append("block ");
+			if (bct == BlockChangeType.CREATED)
+				title.append("creations ");
+			else if (bct == BlockChangeType.DESTROYED)
+				title.append("destructions ");
+			else
+				title.append("changes ");
+		}
 		if (players.size() > 10)
 			title.append((excludePlayersMode ? "without" : "from") + " many players ");
 		else if (!players.isEmpty())
@@ -111,13 +115,20 @@ public class QueryParams implements Cloneable
 			title.append("in the last " + minutes + " minutes ");
 		if (minutes < 0)
 			title.append("up to " + minutes * -1 + " minutes ago ");
-		if (loc != null && radius > 0)
-			title.append("within " + radius + " blocks of you ");
-		if (loc != null && radius == 0)
-			title.append("at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + " ");
-		else if (sel != null)
-			title.append("inside selection ");
-		title.append("in " + friendlyWorldname(world.getName()));
+		if (loc != null) {
+			if (radius > 0)
+				title.append("within " + radius + " blocks of " + (prepareToolQuery ? "clicked block" : "you") + " ");
+			else if (radius == 0)
+				title.append("at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + " ");
+		} else if (sel != null)
+			title.append(prepareToolQuery ? "at double chest" : "inside selection ");
+		else if (prepareToolQuery)
+			if (radius > 0)
+				title.append("within " + radius + " blocks of clicked block ");
+			else if (radius == 0)
+				title.append("at clicked block ");
+		if (!(sel != null && prepareToolQuery))
+			title.append("in " + friendlyWorldname(world.getName()));
 		title.setCharAt(0, String.valueOf(title.charAt(0)).toUpperCase().toCharArray()[0]);
 		return title.toString();
 	}
@@ -359,7 +370,10 @@ public class QueryParams implements Cloneable
 	@Override
 	protected QueryParams clone() {
 		try {
-			return (QueryParams)super.clone();
+			final QueryParams params = (QueryParams)super.clone();
+			params.players = new ArrayList<String>(players);
+			params.types = new ArrayList<Integer>(types);
+			return params;
 		} catch (final CloneNotSupportedException ex) {}
 		return null;
 	}
@@ -379,6 +393,7 @@ public class QueryParams implements Cloneable
 
 	public void merge(QueryParams params) {
 		players = params.players;
+		excludePlayersMode = params.excludePlayersMode;
 		types = params.types;
 		loc = params.loc;
 		radius = params.radius;

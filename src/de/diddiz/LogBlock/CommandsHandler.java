@@ -31,7 +31,6 @@ import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
 
 public class CommandsHandler implements CommandExecutor
 {
-	private final QueryParams defaultToolParams;
 	private final Logger log;
 	private final LogBlock logblock;
 	private final Config config;
@@ -44,9 +43,6 @@ public class CommandsHandler implements CommandExecutor
 		config = logblock.getConfig();
 		scheduler = logblock.getServer().getScheduler();
 		questioner = (LogBlockQuestioner)logblock.getServer().getPluginManager().getPlugin("LogBlockQuestioner");
-		defaultToolParams = new QueryParams(logblock);
-		defaultToolParams.radius = 0;
-		defaultToolParams.bct = BlockChangeType.ALL;
 	}
 
 	@Override
@@ -77,6 +73,7 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GOLD + "/lb tp [params] -- Teleports you to the location of griefing");
 				sender.sendMessage(ChatColor.GOLD + "/lb writelogfile [params] -- Writes a log file");
 				sender.sendMessage(ChatColor.GOLD + "/lb lookup [params] -- Lookup");
+				sender.sendMessage(ChatColor.GOLD + "/lb page /lb prev /lb next -- Browse lookup result pages");
 				sender.sendMessage(ChatColor.GOLD + "/lb me -- Displays your stats");
 				sender.sendMessage(ChatColor.GOLD + "Look at github.com/DiddiZ/LogBlock/wiki/Commands for the full commands reference");
 			} else if (command.equals("params")) {
@@ -96,6 +93,7 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GOLD + "sum [none|blocks|players] -- Sums the result");
 				sender.sendMessage(ChatColor.GOLD + "asc, desc -- Changes the order of the displayed log");
 				sender.sendMessage(ChatColor.GOLD + "coords -- Shows coordinates for each block");
+				sender.sendMessage(ChatColor.GOLD + "silent -- Displays lesser messages");
 			} else if (command.equals("permissions")) {
 				final String[] permissions = {"tool", "toolblock", "me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions"};
 				sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
@@ -138,7 +136,7 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.GREEN + "Tool parameters set to default.");
 					} else if (logblock.hasPermission(player, "logblock.lookup"))
 						try {
-							final QueryParams params = defaultToolParams.clone();
+							final QueryParams params = config.toolQuery.clone();
 							params.parseArgs(sender, argsToList(args, 1));
 							logblock.getSession(player.getName()).toolQuery = params;
 							sender.sendMessage(ChatColor.GREEN + "Set tool query to: " + params.getTitle());
@@ -185,7 +183,7 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.GREEN + "Toolblock  parameters set to default.");
 					} else if (logblock.hasPermission(player, "logblock.lookup"))
 						try {
-							final QueryParams params = defaultToolParams.clone();
+							final QueryParams params = config.toolBlockQuery.clone();
 							params.parseArgs(sender, argsToList(args, 1));
 							logblock.getSession(player.getName()).toolBlockQuery = params;
 							sender.sendMessage(ChatColor.GREEN + "Set tool block query to: " + params.getTitle());
@@ -200,7 +198,7 @@ public class CommandsHandler implements CommandExecutor
 				if (sender instanceof Player) {
 					if (logblock.hasPermission(sender, "logblock.hide")) {
 						if (logblock.getConsumer().hide((Player)sender))
-							sender.sendMessage(ChatColor.GREEN + "You are now hided and won't appear in any log. Type '/lb hide' again to unhide");
+							sender.sendMessage(ChatColor.GREEN + "You are now hidden and aren't logged. Type '/lb hide' again to unhide");
 						else
 							sender.sendMessage(ChatColor.GREEN + "You aren't hidden anylonger.");
 					} else
@@ -408,7 +406,7 @@ public class CommandsHandler implements CommandExecutor
 				if (params.limit == 15)
 					params.limit = config.linesLimit;
 				rs = state.executeQuery(params.getLookupQuery());
-				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle());
+				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
 				final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
 				if (rs.next()) {
 					rs.beforeFirst();
