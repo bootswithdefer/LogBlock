@@ -73,7 +73,8 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GOLD + "/lb tp [params] -- Teleports you to the location of griefing");
 				sender.sendMessage(ChatColor.GOLD + "/lb writelogfile [params] -- Writes a log file");
 				sender.sendMessage(ChatColor.GOLD + "/lb lookup [params] -- Lookup");
-				sender.sendMessage(ChatColor.GOLD + "/lb page /lb prev /lb next -- Browse lookup result pages");
+				sender.sendMessage(ChatColor.GOLD + "/lb prev|next -- Browse lookup result pages");
+				sender.sendMessage(ChatColor.GOLD + "/lb page -- Shows a specific lookup result page");
 				sender.sendMessage(ChatColor.GOLD + "/lb me -- Displays your stats");
 				sender.sendMessage(ChatColor.GOLD + "Look at github.com/DiddiZ/LogBlock/wiki/Commands for the full commands reference");
 			} else if (command.equals("params")) {
@@ -403,19 +404,26 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				if (params.limit == 15)
+				if (params.limit == 15 && params.sum == SummarizationMode.NONE)
 					params.limit = config.linesLimit;
 				rs = state.executeQuery(params.getLookupQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
 				final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
 				if (rs.next()) {
 					rs.beforeFirst();
-					while (rs.next())
-						blockchanges.add(new BlockChange(rs, params.coords));
-					logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new BlockChange[blockchanges.size()]);
-					if (blockchanges.size() > config.linesPerPage)
-						sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
-					showPage(sender, 1);
+					if (params.sum == SummarizationMode.NONE) {
+						while (rs.next())
+							blockchanges.add(new BlockChange(rs, params.coords));
+						logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new BlockChange[blockchanges.size()]);
+						if (blockchanges.size() > config.linesPerPage)
+							sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
+						showPage(sender, 1);
+					} else {
+						final HistoryFormatter histformatter = new HistoryFormatter(params.sum, params.coords, (sender instanceof Player ? 2 / 3f : 1));
+						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player"));
+						while (rs.next())
+							sender.sendMessage(ChatColor.GOLD + histformatter.format(rs));
+					}
 				} else {
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
 					logblock.getSession(senderName(sender)).lookupCache = null;
