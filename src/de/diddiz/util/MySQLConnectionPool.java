@@ -58,7 +58,7 @@ public class MySQLConnectionPool implements Closeable
 	}
 
 	public Connection getConnection() throws SQLException, InterruptedException, TimeoutException {
-		if (!lock.tryLock(1000, TimeUnit.MILLISECONDS))
+		if (!lock.tryLock(3000, TimeUnit.MILLISECONDS))
 			throw new TimeoutException();
 		try {
 			JDCConnection conn;

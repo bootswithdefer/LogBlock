@@ -360,19 +360,17 @@ public class CommandsHandler implements CommandExecutor
 		return true;
 	}
 
-	public abstract class LBCommand implements Runnable, Closeable
+	public abstract class AbstractCommand implements Runnable, Closeable
 	{
-		protected final CommandSender sender;
-		protected final QueryParams params;
+		protected CommandSender sender;
+		protected QueryParams params;
 		protected Connection conn = null;
 		protected Statement state = null;
 		protected ResultSet rs = null;
 
-		protected LBCommand(CommandSender sender, QueryParams params, boolean async) throws Exception {
+		protected AbstractCommand(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			this.sender = sender;
 			this.params = params;
-			conn = logblock.getConnection();
-			state = conn.createStatement();
 			if (async) {
 				if (scheduler.scheduleAsyncDelayedTask(logblock, this) == -1)
 					throw new Exception("Failed to schedule the command");
@@ -395,7 +393,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	public class CommandLookup extends LBCommand
+	public class CommandLookup extends AbstractCommand
 	{
 		public CommandLookup(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			super(sender, params, async);
@@ -404,6 +402,8 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				conn = logblock.getConnection();
+				state = conn.createStatement();
 				if (params.limit == 15 && params.sum == SummarizationMode.NONE)
 					params.limit = config.linesLimit;
 				rs = state.executeQuery(params.getLookupQuery());
@@ -438,7 +438,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	public class CommandWriteLogFile extends LBCommand
+	public class CommandWriteLogFile extends AbstractCommand
 	{
 		CommandWriteLogFile(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			super(sender, params, async);
@@ -448,6 +448,8 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			File file = null;
 			try {
+				conn = logblock.getConnection();
+				state = conn.createStatement();
 				file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".") + ".log");
 				sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
 				rs = state.executeQuery(params.getLookupQuery());
@@ -473,7 +475,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	public class CommandSaveQueue extends LBCommand
+	public class CommandSaveQueue extends AbstractCommand
 	{
 		public CommandSaveQueue(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			super(sender, params, async);
@@ -491,7 +493,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	public class CommandTeleport extends LBCommand
+	public class CommandTeleport extends AbstractCommand
 	{
 		public CommandTeleport(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			super(sender, params, async);
@@ -500,6 +502,8 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				conn = logblock.getConnection();
+				state = conn.createStatement();
 				rs = state.executeQuery("SELECT x, y, z FROM `" + params.getTable() + "` INNER JOIN `lb-players` USING (playerid) " + params.getWhere() + params.getOrderBy() + " LIMIT 1");
 				if (rs.next()) {
 					final Player player = (Player)sender;
@@ -510,7 +514,7 @@ public class CommandsHandler implements CommandExecutor
 					player.teleport(loc);
 					sender.sendMessage(ChatColor.GREEN + "You were teleported " + Math.abs(y2 - y) + " blocks " + (y2 - y > 0 ? "above" : "below"));
 				} else
-					sender.sendMessage(ChatColor.RED + "No blockchange found to teleport to");
+					sender.sendMessage(ChatColor.RED + "No block change found to teleport to");
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
 				log.log(Level.SEVERE, "[LogBlock Teleport] Exception: ", ex);
@@ -520,7 +524,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	public class CommandRollback extends LBCommand
+	public class CommandRollback extends AbstractCommand
 	{
 		public CommandRollback(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			super(sender, params, async);
@@ -529,6 +533,8 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				conn = logblock.getConnection();
+				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
 				if (logblock.getConsumer().getQueueSize() > 50)
@@ -566,7 +572,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	public class CommandRedo extends LBCommand
+	public class CommandRedo extends AbstractCommand
 	{
 		public CommandRedo(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			super(sender, params, async);
@@ -575,6 +581,8 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				conn = logblock.getConnection();
+				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
 				rs = state.executeQuery(params.getRollbackQuery());
@@ -607,7 +615,7 @@ public class CommandsHandler implements CommandExecutor
 		}
 	}
 
-	public class CommandClearLog extends LBCommand
+	public class CommandClearLog extends AbstractCommand
 	{
 		public CommandClearLog(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			super(sender, params, async);
@@ -616,6 +624,8 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				conn = logblock.getConnection();
+				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
 				final File dumpFolder = new File(logblock.getDataFolder(), "dumb");
