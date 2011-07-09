@@ -79,14 +79,32 @@ public class LogBlock extends JavaPlugin
 
 	@Override
 	public void onEnable() {
+		final PluginManager pm = getServer().getPluginManager();
 		if (errorAtLoading) {
-			getServer().getPluginManager().disablePlugin(this);
+			pm.disablePlugin(this);
 			return;
 		}
+		if (pm.getPlugin("WorldEdit") == null && !new File("lib/WorldEdit.jar").exists() && !new File("WorldEdit.jar").exists())
+			try {
+				download(log, new URL("http://diddiz.insane-architects.net/download/WorldEdit.jar"), new File("lib/WorldEdit.jar"));
+				log.info("[LogBlock] You've to restart/reload your server now.");
+				pm.disablePlugin(this);
+				return;
+			} catch (final Exception ex) {
+				log.warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
+			}
+		if (config.logChestAccess && pm.getPlugin("BukkitContrib") == null)
+			try {
+				download(log, new URL("http://bit.ly/autoupdateBukkitContrib"), new File("plugins/BukkitContrib.jar"));
+				pm.loadPlugin(new File("plugins/BukkitContrib.jar"));
+				pm.enablePlugin(pm.getPlugin("BukkitContrib"));
+			} catch (final Exception ex) {
+				log.warning("[LogBlock] Failed to install BukkitContrib, you may have to restart your server or install it manually.");
+			}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
-		if (getServer().getPluginManager().getPlugin("Permissions") != null) {
-			permissions = ((Permissions)getServer().getPluginManager().getPlugin("Permissions")).getHandler();
+		if (pm.getPlugin("Permissions") != null) {
+			permissions = ((Permissions)pm.getPlugin("Permissions")).getHandler();
 			log.info("[LogBlock] Permissions found.");
 		} else
 			log.info("[LogBlock] Permissions plugin not found. Using default permissions.");
@@ -107,15 +125,6 @@ public class LogBlock extends JavaPlugin
 		final LBBlockListener lbBlockListener = new LBBlockListener(this);
 		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
 		final LBEntityListener lbEntityListener = new LBEntityListener(this);
-		final PluginManager pm = getServer().getPluginManager();
-		if (config.logChestAccess && pm.getPlugin("BukkitContrib") == null)
-			try {
-				download(log, new URL("http://bit.ly/autoupdateBukkitContrib"), new File("plugins/BukkitContrib.jar"));
-				pm.loadPlugin(new File("plugins/BukkitContrib.jar"));
-				pm.enablePlugin(pm.getPlugin("BukkitContrib"));
-			} catch (final Exception ex) {
-				log.warning("[LogBlock] Failed to install BukkitContrib, you may have to restart your server or install it manually!");
-			}
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolListener(this), Priority.Normal, this);
 		if (config.logBlockCreations) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
