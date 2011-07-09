@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.Utils.download;
 import static de.diddiz.util.Utils.downloadIfNotExists;
 import java.io.File;
 import java.net.URL;
@@ -107,6 +108,14 @@ public class LogBlock extends JavaPlugin
 		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
 		final LBEntityListener lbEntityListener = new LBEntityListener(this);
 		final PluginManager pm = getServer().getPluginManager();
+		if (config.logChestAccess && pm.getPlugin("BukkitContrib") == null)
+			try {
+				download(log, new URL("http://bit.ly/autoupdateBukkitContrib"), new File("plugins/BukkitContrib.jar"));
+				pm.loadPlugin(new File("plugins/BukkitContrib.jar"));
+				pm.enablePlugin(pm.getPlugin("BukkitContrib"));
+			} catch (final Exception ex) {
+				log.warning("[LogBlock] Failed to install BukkitContrib, you may have to restart your server or install it manually!");
+			}
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolListener(this), Priority.Normal, this);
 		if (config.logBlockCreations) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
@@ -125,8 +134,8 @@ public class LogBlock extends JavaPlugin
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
 		if (config.logChestAccess)
-			if (getServer().getPluginManager().getPlugin("BukkitContrib") != null)
-				getServer().getPluginManager().registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
+			if (pm.getPlugin("BukkitContrib") != null)
+				pm.registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
 			else
 				log.warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");
 		if (config.logLavaFlow)
