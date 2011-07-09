@@ -1,8 +1,8 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.Utils.download;
-import static de.diddiz.util.Utils.downloadIfNotExists;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.HashMap;
@@ -22,9 +22,6 @@ import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.util.MySQLConnectionPool;
-
-// TODO Add painting logging
-// TODO Add Button, lever etc logging
 
 public class LogBlock extends JavaPlugin
 {
@@ -62,7 +59,11 @@ public class LogBlock extends JavaPlugin
 			updater = new Updater(this);
 			log.info("[LogBlock] Version check: " + updater.checkVersion());
 			config = new Config(this);
-			downloadIfNotExists(log, new File("lib/mysql-connector-java-bin.jar"), new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"));
+			final File file = new File("lib/mysql-connector-java-bin.jar");
+			if (!file.exists() || file.length() == 0)
+				download(log, new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
+			if (!file.exists() || file.length() == 0)
+				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
 			log.info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new MySQLConnectionPool(config.url, config.user, config.password);
 			getConnection().close();

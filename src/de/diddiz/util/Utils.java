@@ -3,7 +3,6 @@ package de.diddiz.util;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,20 +32,13 @@ public class Utils
 			out.write(buffer, 0, len);
 			downloaded += len;
 			if ((int)((System.currentTimeMillis() - start) / 500) > msgs) {
-				log.info((int)((double)downloaded / (double)size * 100d) + "%");
+				log.info((int)(downloaded / (double)size * 100d) + "%");
 				msgs++;
 			}
 		}
 		in.close();
 		out.close();
 		log.info("Download finished");
-	}
-
-	public static void downloadIfNotExists(Logger log, File file, URL url) throws IOException {
-		if (!file.exists() || file.length() == 0)
-			Utils.download(log, url, file);
-		if (!file.exists() || file.length() == 0)
-			throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
 	}
 
 	public static String readURL(URL url) throws IOException {
