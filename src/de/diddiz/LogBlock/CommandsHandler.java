@@ -133,8 +133,10 @@ public class CommandsHandler implements CommandExecutor
 						} else
 							player.sendMessage(ChatColor.RED + "No mode specified");
 					} else if (args[1].equalsIgnoreCase("default")) {
-						logblock.getSession(player.getName()).toolQuery = config.toolQuery.clone();
-						sender.sendMessage(ChatColor.GREEN + "Tool parameters set to default.");
+						final Session session = logblock.getSession(player.getName());
+						session.toolQuery = config.toolQuery.clone();
+						session.toolMode = ToolMode.LOOKUP;
+						sender.sendMessage(ChatColor.GREEN + "Tool set to default.");
 					} else if (logblock.hasPermission(player, "logblock.lookup"))
 						try {
 							final QueryParams params = config.toolQuery.clone();
@@ -180,8 +182,10 @@ public class CommandsHandler implements CommandExecutor
 						} else
 							player.sendMessage(ChatColor.RED + "No mode specified");
 					} else if (args[1].equalsIgnoreCase("default")) {
-						logblock.getSession(player.getName()).toolBlockQuery = config.toolBlockQuery.clone();
-						sender.sendMessage(ChatColor.GREEN + "Toolblock  parameters set to default.");
+						final Session session = logblock.getSession(player.getName());
+						session.toolBlockQuery = config.toolBlockQuery.clone();
+						session.toolBlockMode = ToolMode.LOOKUP;
+						sender.sendMessage(ChatColor.GREEN + "Toolblock set to default.");
 					} else if (logblock.hasPermission(player, "logblock.lookup"))
 						try {
 							final QueryParams params = config.toolBlockQuery.clone();
