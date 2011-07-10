@@ -541,12 +541,8 @@ public class CommandsHandler implements CommandExecutor
 				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
-				if (logblock.getConsumer().getQueueSize() > 50)
-					try {
-						new CommandSaveQueue(sender, null, false);
-					} catch (final Exception ex) {
-						sender.sendMessage(ChatColor.RED + ex.getMessage());
-					}
+				if (logblock.getConsumer().getQueueSize() > 0)
+					new CommandSaveQueue(sender, null, false);
 				if (!params.silent)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 				rs = state.executeQuery(params.getRollbackQuery());
@@ -567,6 +563,10 @@ public class CommandsHandler implements CommandExecutor
 				}
 				editor.start();
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
+				if (!params.silent && logblock.hasPermission(sender, "logblock.clearlog") && questioner != null && sender instanceof Player && questioner.ask((Player)sender, "Do you want to delete the rollbacked log?", "yes", "no").equals("yes")) {
+					params.silent = true;
+					new CommandClearLog(sender, params, false);
+				}
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
 				log.log(Level.SEVERE, "[LogBlock Rollback] Exception: ", ex);
