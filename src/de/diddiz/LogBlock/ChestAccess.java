@@ -8,6 +8,6 @@ public class ChestAccess
 	public ChestAccess(short itemType, short itemAmount, byte itemData) {
 		this.itemType = itemType;
 		this.itemAmount = itemAmount;
-		this.itemData = itemData;
+		this.itemData = itemData >= 0 ? itemData : 0;
 	}
 }
