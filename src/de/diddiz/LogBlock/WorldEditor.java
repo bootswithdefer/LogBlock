@@ -1,8 +1,15 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.equalTypes;
+import static de.diddiz.util.BukkitUtils.materialName;
+import java.io.File;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -27,6 +34,7 @@ public class WorldEditor implements Runnable
 	private int taskID;
 	private int successes = 0, errors = 0, blacklistCollisions = 0;
 	private long elapsedTime = 0;
+	final List<String> errorList = new ArrayList<String>();
 
 	public WorldEditor(LogBlock logblock, World world) {
 		log = logblock.getServer().getLogger();
@@ -76,27 +84,42 @@ public class WorldEditor implements Runnable
 	public synchronized void run() {
 		int counter = 0;
 		while (!edits.isEmpty() && counter < 1000) {
-			switch (edits.poll().perform()) {
-				case SUCCESS:
-					successes++;
-					break;
-				case ERROR:
-					errors++;
-					break;
-				case BLACKLISTED:
-					blacklistCollisions++;
-					break;
+			try {
+				switch (edits.poll().perform()) {
+					case SUCCESS:
+						successes++;
+						break;
+					case BLACKLISTED:
+						blacklistCollisions++;
+						break;
+				}
+			} catch (final WorldEditorException ex) {
+				errors++;
+				errorList.add(ex.getMessage());
+			} catch (final Exception ex) {
+				errors++;
+				errorList.add(ex.getMessage());
+				log.log(Level.WARNING, "[LogBlock WorldEditor] Exeption: ", ex);
 			}
 			counter++;
 		}
 		if (edits.isEmpty()) {
 			logblock.getServer().getScheduler().cancelTask(taskID);
+			if (errorList.size() > 0)
+				try {
+					final File file = new File("plugins/LogBlock/error/WorldEditor-" + new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis()) + ".log");
+					file.getParentFile().mkdirs();
+					final PrintWriter writer = new PrintWriter(file);
+					for (final String err : errorList)
+						writer.println(err);
+					writer.close();
+				} catch (final Exception ex) {}
 			notify();
 		}
 	}
 
 	private static enum PerformResult {
-		ERROR, SUCCESS, BLACKLISTED, NO_ACTION
+		SUCCESS, BLACKLISTED, NO_ACTION
 	}
 
 	private class Edit extends BlockChange
@@ -105,78 +128,75 @@ public class WorldEditor implements Runnable
 			super(time, loc, playerName, replaced, type, data, signtext, ca);
 		}
 
-		PerformResult perform() {
+		PerformResult perform() throws WorldEditorException {
 			if (config.dontRollback.contains(replaced))
 				return PerformResult.BLACKLISTED;
-			try {
-				final Block block = loc.getBlock();
-				final BlockState state = block.getState();
-				if (!world.isChunkLoaded(block.getChunk()))
-					world.loadChunk(block.getChunk());
-				if (type == replaced) {
-					if (type == 0) {
-						if (!block.setTypeId(0))
-							return PerformResult.ERROR;
-					} else if (type == 23 || type == 54 || type == 61) {
-						if (!(state instanceof ContainerBlock))
-							return PerformResult.NO_ACTION;
-						final Inventory inv = ((ContainerBlock)block.getState()).getInventory();
-						if (ca != null)
-							if (ca.itemAmount > 0)
-								inv.removeItem(new ItemStack(ca.itemType, ca.itemAmount, (short)0, ca.itemData));
-							else if (ca.itemAmount < 0)
-								inv.addItem(new ItemStack(ca.itemType, ca.itemAmount * -1, (short)0, ca.itemData));
-						if (!state.update())
-							return PerformResult.ERROR;
-					} else
-						return PerformResult.NO_ACTION;
-					return PerformResult.SUCCESS;
-				}
-				if (!(equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
-					return PerformResult.NO_ACTION;
-				if (state instanceof ContainerBlock) {
-					((ContainerBlock)state).getInventory().clear();
-					state.update();
-				}
-				if (!block.setTypeIdAndData(replaced, data, true))
-					return PerformResult.ERROR;
-				final int curtype = block.getTypeId();
-				if (signtext != null && (curtype == 63 || curtype == 68)) {
-					final Sign sign = (Sign)block.getState();
-					final String[] lines = signtext.split("\0", 4);
-					if (lines.length < 4)
-						return PerformResult.NO_ACTION;
-					for (int i = 0; i < 4; i++)
-						sign.setLine(i, lines[i]);
-					if (!sign.update())
-						return PerformResult.ERROR;
-				} else if (curtype == 26) {
-					final Bed bed = (Bed)block.getState().getData();
-					final Block secBlock = bed.isHeadOfBed() ? block.getFace(bed.getFacing().getOppositeFace()) : block.getFace(bed.getFacing());
-					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(26, (byte)(bed.getData() | 8), true))
-						return PerformResult.ERROR;
-				} else if (curtype == 64 || curtype == 71) {
-					final byte blockData = block.getData();
-					final Block secBlock = (blockData & 8) == 8 ? block.getFace(BlockFace.DOWN) : block.getFace(BlockFace.UP);
-					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(curtype, (byte)(blockData | 8), true))
-						return PerformResult.ERROR;
-				} else if ((curtype == 29 || curtype == 33) && (block.getData() & 8) > 0) {
-					final PistonBaseMaterial piston = (PistonBaseMaterial)block.getState().getData();
-					final Block secBlock = block.getFace(piston.getFacing());
-					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(34, curtype == 29 ? (byte)(block.getData() | 8) : (byte)(block.getData() & ~8), true))
-						return PerformResult.ERROR;
-				} else if (curtype == 34) {
-					final PistonExtensionMaterial piston = (PistonExtensionMaterial)block.getState().getData();
-					final Block secBlock = block.getFace(piston.getFacing().getOppositeFace());
-					if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(piston.isSticky() ? 29 : 33, (byte)(block.getData() | 8), true))
-						return PerformResult.ERROR;
-				} else if (curtype == 18 && (block.getData() & 8) > 0)
-					block.setData((byte)(block.getData() & 0xF7));
+			final Block block = loc.getBlock();
+			if (replaced == 0 && block.getTypeId() == 0)
 				return PerformResult.SUCCESS;
-			} catch (final Exception ex) {
-				log.severe("[LogBlock Rollback] " + ex.toString());
-				return PerformResult.ERROR;
+			final BlockState state = block.getState();
+			if (!world.isChunkLoaded(block.getChunk()))
+				world.loadChunk(block.getChunk());
+			if (type == replaced) {
+				if (type == 0) {
+					if (!block.setTypeId(0))
+						throw new WorldEditorException(block.getTypeId(), 0, block.getLocation());
+				} else if (type == 23 || type == 54 || type == 61) {
+					if (!(state instanceof ContainerBlock))
+						return PerformResult.NO_ACTION;
+					final Inventory inv = ((ContainerBlock)block.getState()).getInventory();
+					if (ca != null)
+						if (ca.itemAmount > 0)
+							inv.removeItem(new ItemStack(ca.itemType, ca.itemAmount, (short)0, ca.itemData));
+						else if (ca.itemAmount < 0)
+							inv.addItem(new ItemStack(ca.itemType, ca.itemAmount * -1, (short)0, ca.itemData));
+					if (!state.update())
+						throw new WorldEditorException("Failed to update inventory of " + materialName(block.getTypeId()));
+				} else
+					return PerformResult.NO_ACTION;
+				return PerformResult.SUCCESS;
 			}
+			if (!(equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
+				return PerformResult.NO_ACTION;
+			if (state instanceof ContainerBlock) {
+				((ContainerBlock)state).getInventory().clear();
+				state.update();
+			}
+			if (!block.setTypeIdAndData(replaced, data, true))
+				throw new WorldEditorException(block.getTypeId(), replaced, block.getLocation());
+			final int curtype = block.getTypeId();
+			if (signtext != null && (curtype == 63 || curtype == 68)) {
+				final Sign sign = (Sign)block.getState();
+				final String[] lines = signtext.split("\0", 4);
+				if (lines.length < 4)
+					return PerformResult.NO_ACTION;
+				for (int i = 0; i < 4; i++)
+					sign.setLine(i, lines[i]);
+				if (!sign.update())
+					throw new WorldEditorException("Failed to update signtext of " + materialName(block.getTypeId()));
+			} else if (curtype == 26) {
+				final Bed bed = (Bed)block.getState().getData();
+				final Block secBlock = bed.isHeadOfBed() ? block.getFace(bed.getFacing().getOppositeFace()) : block.getFace(bed.getFacing());
+				if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(26, (byte)(bed.getData() | 8), true))
+					throw new WorldEditorException(secBlock.getTypeId(), 26, secBlock.getLocation());
+			} else if (curtype == 64 || curtype == 71) {
+				final byte blockData = block.getData();
+				final Block secBlock = (blockData & 8) == 8 ? block.getFace(BlockFace.DOWN) : block.getFace(BlockFace.UP);
+				if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(curtype, (byte)(blockData | 8), true))
+					throw new WorldEditorException(secBlock.getTypeId(), curtype, secBlock.getLocation());
+			} else if ((curtype == 29 || curtype == 33) && (block.getData() & 8) > 0) {
+				final PistonBaseMaterial piston = (PistonBaseMaterial)block.getState().getData();
+				final Block secBlock = block.getFace(piston.getFacing());
+				if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(34, curtype == 29 ? (byte)(block.getData() | 8) : (byte)(block.getData() & ~8), true))
+					throw new WorldEditorException(secBlock.getTypeId(), 34, secBlock.getLocation());
+			} else if (curtype == 34) {
+				final PistonExtensionMaterial piston = (PistonExtensionMaterial)block.getState().getData();
+				final Block secBlock = block.getFace(piston.getFacing().getOppositeFace());
+				if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(piston.isSticky() ? 29 : 33, (byte)(block.getData() | 8), true))
+					throw new WorldEditorException(secBlock.getTypeId(), piston.isSticky() ? 29 : 33, secBlock.getLocation());
+			} else if (curtype == 18 && (block.getData() & 8) > 0)
+				block.setData((byte)(block.getData() & 0xF7));
+			return PerformResult.SUCCESS;
 		}
 	}
 
@@ -185,6 +205,10 @@ public class WorldEditor implements Runnable
 	{
 		public WorldEditorException(String msg) {
 			super(msg);
+		}
+
+		public WorldEditorException(int typeBefore, int typeAfter, Location loc) {
+			super("Failed to replace " + materialName(typeBefore) + " with " + materialName(typeAfter) + " at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
 		}
 	}
 }
