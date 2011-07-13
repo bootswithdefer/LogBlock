@@ -1,5 +1,9 @@
 package de.diddiz.LogBlock;
 
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -17,6 +21,7 @@ class LBBlockListener extends BlockListener
 	private final Consumer consumer;
 	private final boolean logChestAccess;
 	private final boolean logSignTexts;
+	private final List<String> errors = new ArrayList<String>(20);
 
 	LBBlockListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
@@ -28,6 +33,10 @@ class LBBlockListener extends BlockListener
 	public void onBlockBreak(BlockBreakEvent event) {
 		if (!event.isCancelled()) {
 			final int type = event.getBlock().getTypeId();
+			if (type == 0) {
+				final Location loc = event.getBlock().getLocation();
+				addError("Bukkit provided no block type for the block broken by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ".");
+			}
 			if (logSignTexts && (type == 63 || type == 68))
 				consumer.queueSignBreak(event.getPlayer().getName(), (Sign)event.getBlock().getState());
 			else if (logChestAccess && (type == 23 || type == 54 || type == 61))
@@ -63,14 +72,24 @@ class LBBlockListener extends BlockListener
 	public void onBlockPlace(BlockPlaceEvent event) {
 		if (!event.isCancelled()) {
 			final int type = event.getBlock().getTypeId();
-			if (type == 0 && event.getItemInHand().getTypeId() != 43 && event.getBlock().getFace(BlockFace.DOWN).getTypeId() != 43 && event.getItemInHand() != null && event.getItemInHand().getTypeId() != 51) {
-				final Location loc = event.getBlock().getLocation();
-				System.out.println("[LogBlock] Bukkit provided no block type for the block placed by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ". Please check the conditions this happened under, and report it to Diddiz or Bukkit.");
-			}
+			BlockState before = event.getBlockReplacedState();
+			final BlockState after = event.getBlockPlaced().getState();
+			if (type == 0 && event.getItemInHand() != null)
+				if (event.getItemInHand().getTypeId() == 51)
+					return;
+				else if (event.getItemInHand().getTypeId() == 44 && event.getBlock().getFace(BlockFace.DOWN).getTypeId() == 43) {
+					before = event.getBlock().getFace(BlockFace.DOWN).getState();
+					before.setTypeId(44);
+					after.setTypeId(43);
+					after.setData(event.getItemInHand().getData());
+				} else {
+					final Location loc = event.getBlock().getLocation();
+					addError("Bukkit provided no block type for the block placed by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ". Item in hand was: " + event.getItemInHand().getType() + ".");
+					after.setTypeId(event.getItemInHand().getTypeId());
+					after.setData(event.getItemInHand().getData());
+				}
 			if (logSignTexts && (type == 63 || type == 68))
 				return;
-			final BlockState before = event.getBlockReplacedState();
-			final BlockState after = event.getBlockPlaced().getState();
 			if (before.getTypeId() == 0)
 				consumer.queueBlockPlace(event.getPlayer().getName(), after);
 			else
@@ -88,5 +107,20 @@ class LBBlockListener extends BlockListener
 	public void onSignChange(SignChangeEvent event) {
 		if (!event.isCancelled())
 			consumer.queueSignPlace(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), event.getLines());
+	}
+
+	private void addError(String error) {
+		errors.add(error);
+		if (errors.size() == 20)
+			try {
+				System.out.println("Writing ...");
+				final File file = new File("plugins/LogBlock/error/BlockListener.log");
+				file.getParentFile().mkdirs();
+				final PrintWriter writer = new PrintWriter(file);
+				for (final String err : errors)
+					writer.println(err);
+				writer.close();
+				errors.clear();
+			} catch (final Exception ex) {}
 	}
 }
