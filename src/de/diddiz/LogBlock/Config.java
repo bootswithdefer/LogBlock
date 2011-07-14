@@ -22,7 +22,7 @@ public class Config
 	public final boolean useBukkitScheduler;
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
-	public final boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills;
+	public final boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills, logChat;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
@@ -107,6 +107,8 @@ public class Config
 			config.setProperty("logging.logKills", false);
 		if (!subkeys.contains("logKillsLevel"))
 			config.setProperty("logging.logKillsLevel", "PLAYERS");
+		if (!subkeys.contains("logChat"))
+			config.setProperty("logging.logChat", false);
 		if (!subkeys.contains("hiddenPlayers"))
 			config.setProperty("logging.hiddenPlayers", new ArrayList<String>());
 		if (!subkeys.contains("hiddenBlocks"))
@@ -174,6 +176,7 @@ public class Config
 		logLeavesDecay = config.getBoolean("logging.logLeavesDecay", false);
 		logLavaFlow = config.getBoolean("logging.logLavaFlow", false);
 		logKills = config.getBoolean("logging.logKills", false);
+		logChat = config.getBoolean("logging.logChat", false);
 		try {
 			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel"));
 		} catch (final IllegalArgumentException ex) {

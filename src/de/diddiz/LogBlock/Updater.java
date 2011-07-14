@@ -61,6 +61,8 @@ class Updater
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
 		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (playerid), UNIQUE (playername))");
+		if (logblock.getConfig().logChat)
+			createTable(dbm, state, "lb-chat", "(id INT NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid))");
 		for (final String table : logblock.getConfig().tables.values()) {
 			if (dbm.getTables(null, null, table + "-chest", null).next() && state.executeQuery("SELECT * FROM `" + table + "-chest` LIMIT 1").getMetaData().getColumnCount() != 4) // Chest table update
 				state.execute("DROP TABLE `" + table + "-chest`");
@@ -76,7 +78,7 @@ class Updater
 
 	private void createTable(DatabaseMetaData dbm, Statement state, String table, String query) throws SQLException {
 		if (!dbm.getTables(null, null, table, null).next()) {
-			log.log(Level.INFO, "[LogBlock] Crating table " + table + ".");
+			log.log(Level.INFO, "[LogBlock] Creating table " + table + ".");
 			state.execute("CREATE TABLE `" + table + "` " + query);
 			if (!dbm.getTables(null, null, table, null).next())
 				throw new SQLException("Table " + table + " not found and failed to create");

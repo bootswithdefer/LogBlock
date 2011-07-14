@@ -30,9 +30,10 @@ import org.bukkit.inventory.ItemStack;
 public class Consumer extends TimerTask
 {
 	private final Queue<BlockChange> bqueue = new LinkedBlockingQueue<BlockChange>();
+	private final Queue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
+	private final Queue<ChatRow> cqueue = new LinkedBlockingQueue<ChatRow>();
 	private final Config config;
 	private final Set<Integer> hiddenPlayers, hiddenBlocks;
-	private final Queue<KillRow> kqueue = new LinkedBlockingQueue<KillRow>();
 	private final Map<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
 	private final Map<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
 	private final Logger log;
@@ -231,14 +232,16 @@ public class Consumer extends TimerTask
 		queueSignPlace(playerName, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), sign.getLines());
 	}
 
+	public void queueChat(String player, String message) {
+		cqueue.add(new ChatRow(player, message.replace("\\", "\\\\").replace("'", "\\'")));
+	}
+
 	@Override
 	public void run() {
 		if (!lock.tryLock())
 			return;
 		final Connection conn = logblock.getConnection();
 		Statement state = null;
-		BlockChange b;
-		KillRow k;
 		String table;
 		if (getQueueSize() > 1000)
 			log.info("[LogBlock Consumer] Queue overloaded. Size: " + getQueueSize());
@@ -251,7 +254,7 @@ public class Consumer extends TimerTask
 			int count = 0;
 			if (!bqueue.isEmpty()) {
 				while (!bqueue.isEmpty() && (System.currentTimeMillis() - start < config.timePerRun || count < config.forceToProcessAtLeast)) {
-					b = bqueue.poll();
+					final BlockChange b = bqueue.poll();
 					if (b == null)
 						continue;
 					final int playerHash = b.playerName.hashCode();
@@ -279,7 +282,7 @@ public class Consumer extends TimerTask
 			}
 			if (!kqueue.isEmpty()) {
 				while (!kqueue.isEmpty() && (System.currentTimeMillis() - start < config.timePerRun || count < config.forceToProcessAtLeast)) {
-					k = kqueue.poll();
+					final KillRow k = kqueue.poll();
 					if (k == null || k.victim == null)
 						continue;
 					if (k.killer != null && !players.containsKey(k.killer.hashCode()))
@@ -293,6 +296,22 @@ public class Consumer extends TimerTask
 							continue;
 						}
 					state.execute("INSERT INTO `" + config.tables.get(k.worldHash) + "-kills` (date, killer, victim, weapon) VALUES (now(), " + (k.killer == null ? "null" : players.get(k.killer.hashCode())) + ", " + players.get(k.victim.hashCode()) + ", " + k.weapon + ")");
+					count++;
+				}
+				conn.commit();
+			}
+			if (!cqueue.isEmpty()) {
+				while (!cqueue.isEmpty() && (System.currentTimeMillis() - start < config.timePerRun || count < config.forceToProcessAtLeast)) {
+					final ChatRow c = cqueue.poll();
+					if (c == null)
+						continue;
+					final int playerHash = c.player.hashCode();
+					if (!players.containsKey(playerHash))
+						if (!addPlayer(conn, state, c.player)) {
+							log.warning("[LogBlock Consumer] Failed to add player " + c.player);
+							continue;
+						}
+					state.execute("INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + c.date + "), " + players.get(playerHash) + ", '" + c.message + "')");
 					count++;
 				}
 				conn.commit();
@@ -312,7 +331,7 @@ public class Consumer extends TimerTask
 	}
 
 	int getQueueSize() {
-		return bqueue.size() + kqueue.size();
+		return bqueue.size() + kqueue.size() + cqueue.size();
 	}
 
 	boolean hide(Player player) {
@@ -356,6 +375,18 @@ public class Consumer extends TimerTask
 			killer = attacker;
 			victim = defender;
 			this.weapon = weapon;
+		}
+	}
+
+	private static class ChatRow
+	{
+		final long date;
+		final String player, message;
+
+		ChatRow(String player, String message) {
+			date = System.currentTimeMillis() / 1000;
+			this.player = player;
+			this.message = message;
 		}
 	}
 }
