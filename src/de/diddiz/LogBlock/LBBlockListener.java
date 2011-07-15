@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Location;
@@ -15,9 +16,11 @@ import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.material.MaterialData;
 
 class LBBlockListener extends BlockListener
 {
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd HH:mm:ss");
 	private final Consumer consumer;
 	private final boolean logChestAccess;
 	private final boolean logSignTexts;
@@ -35,7 +38,7 @@ class LBBlockListener extends BlockListener
 			final int type = event.getBlock().getTypeId();
 			if (type == 0) {
 				final Location loc = event.getBlock().getLocation();
-				addError("Bukkit provided no block type for the block broken by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ".");
+				addError(dateFormat.format(System.currentTimeMillis()) + " Bukkit provided no block type for the block broken by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ".");
 			}
 			if (logSignTexts && (type == 63 || type == 68))
 				consumer.queueSignBreak(event.getPlayer().getName(), (Sign)event.getBlock().getState());
@@ -84,9 +87,9 @@ class LBBlockListener extends BlockListener
 					after.setData(event.getItemInHand().getData());
 				} else {
 					final Location loc = event.getBlock().getLocation();
-					addError("Bukkit provided no block type for the block placed by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ". Item in hand was: " + event.getItemInHand().getType() + ".");
+					addError(dateFormat.format(System.currentTimeMillis()) + " Bukkit provided no block type for the block placed by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ". Item in hand was: " + event.getItemInHand().getType() + ".");
 					after.setTypeId(event.getItemInHand().getTypeId());
-					after.setData(event.getItemInHand().getData());
+					after.setData(new MaterialData(event.getItemInHand().getTypeId()));
 				}
 			if (logSignTexts && (type == 63 || type == 68))
 				return;
@@ -113,7 +116,6 @@ class LBBlockListener extends BlockListener
 		errors.add(error);
 		if (errors.size() == 20)
 			try {
-				System.out.println("Writing ...");
 				final File file = new File("plugins/LogBlock/error/BlockListener.log");
 				file.getParentFile().mkdirs();
 				final PrintWriter writer = new PrintWriter(file);
