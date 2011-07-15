@@ -322,7 +322,8 @@ public class Consumer extends TimerTask
 			try {
 				if (state != null)
 					state.close();
-				conn.close();
+				if (conn != null)
+					conn.close();
 			} catch (final SQLException ex) {
 				log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
 			}
