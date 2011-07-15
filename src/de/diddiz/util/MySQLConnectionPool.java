@@ -21,8 +21,6 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -57,13 +55,12 @@ public class MySQLConnectionPool implements Closeable
 		lock.unlock();
 	}
 
-	public Connection getConnection() throws SQLException, InterruptedException, TimeoutException {
-		if (!lock.tryLock(3000, TimeUnit.MILLISECONDS))
-			throw new TimeoutException();
+	public Connection getConnection() throws SQLException {
+		lock.lock();
 		try {
-			JDCConnection conn;
-			for (int i = 0; i < connections.size(); i++) {
-				conn = connections.get(i);
+			final Enumeration<JDCConnection> conns = connections.elements();
+			while (conns.hasMoreElements()) {
+				final JDCConnection conn = conns.nextElement();
 				if (conn.lease()) {
 					if (conn.isValid())
 						return conn;
@@ -71,7 +68,7 @@ public class MySQLConnectionPool implements Closeable
 					conn.terminate();
 				}
 			}
-			conn = new JDCConnection(DriverManager.getConnection(url, user, password));
+			final JDCConnection conn = new JDCConnection(DriverManager.getConnection(url, user, password));
 			conn.lease();
 			if (!conn.isValid()) {
 				conn.terminate();
