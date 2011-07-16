@@ -1,10 +1,13 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.Utils.download;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.net.URL;
 import java.sql.Connection;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -59,7 +62,7 @@ public class LogBlock extends JavaPlugin
 			updater = new Updater(this);
 			log.info("[LogBlock] Version check: " + updater.checkVersion());
 			config = new Config(this);
-			final File file = new File("lib/mysql-connector-java-bin.jar");
+			File file = new File("lib/mysql-connector-java-bin.jar");
 			if (!file.exists() || file.length() == 0)
 				download(log, new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
 			if (!file.exists() || file.length() == 0)
@@ -70,6 +73,28 @@ public class LogBlock extends JavaPlugin
 			if (updater.update())
 				config = new Config(this);
 			updater.checkTables();
+			file = new File("plugins/LogBlock/consumer/queue.sql");
+			if (file.exists()) {
+				log.info("[LogBlock] Found stored queue. Try to import now.");
+				Connection conn = null;
+				try {
+					conn = getConnection();
+					conn.setAutoCommit(false);
+					final Statement state = conn.createStatement();
+					final BufferedReader in = new BufferedReader(new FileReader(file));
+					String insert = null;
+					while ((insert = in.readLine()) != null)
+						state.execute(insert);
+					conn.commit();
+					file.delete();
+					log.info("[LogBlock] Successfully imported stored queue.");
+				} catch (final Exception ex) {
+					log.log(Level.WARNING, "[LogBlock] Failed to import stored queue: ", ex);
+				} finally {
+					if (conn != null)
+						conn.close();
+				}
+			}
 		} catch (final Exception ex) {
 			log.log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
 			errorAtLoading = true;
@@ -182,10 +207,24 @@ public class LogBlock extends JavaPlugin
 		getServer().getScheduler().cancelTasks(this);
 		if (consumer != null && consumer.getQueueSize() > 0) {
 			log.info("[LogBlock] Waiting for consumer ...");
-			final Thread thread = new Thread(consumer);
+			int lastSize = -1, fails = 0;
 			while (consumer.getQueueSize() > 0) {
 				log.info("[LogBlock] Remaining queue size: " + consumer.getQueueSize());
-				thread.run();
+				if (lastSize == consumer.getQueueSize())
+					fails++;
+				else
+					fails = 0;
+				if (fails > 10) {
+					log.info("Unable to save queue to database. Trying to write to a local file.");
+					try {
+						consumer.writeToFile();
+					} catch (final FileNotFoundException ex) {
+						log.info("Failed to write. Given up.");
+						break;
+					}
+				}
+				lastSize = consumer.getQueueSize();
+				consumer.run();
 			}
 		}
 		if (pool != null)
