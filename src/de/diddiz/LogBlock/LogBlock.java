@@ -81,11 +81,12 @@ public class LogBlock extends JavaPlugin
 					conn = getConnection();
 					conn.setAutoCommit(false);
 					final Statement state = conn.createStatement();
-					final BufferedReader in = new BufferedReader(new FileReader(file));
+					final BufferedReader reader = new BufferedReader(new FileReader(file));
 					String insert = null;
-					while ((insert = in.readLine()) != null)
+					while ((insert = reader.readLine()) != null)
 						state.execute(insert);
 					conn.commit();
+					reader.close();
 					file.delete();
 					log.info("[LogBlock] Successfully imported stored queue.");
 				} catch (final Exception ex) {
