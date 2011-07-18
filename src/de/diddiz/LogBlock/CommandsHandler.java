@@ -598,7 +598,7 @@ public class CommandsHandler implements CommandExecutor
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
 
 				while (rs.next())
-					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), (short)(rs.getShort("itemamount") * -1), rs.getByte("itemdata"));
+					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), (short)-rs.getShort("itemamount"), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
 				if (!params.silent)
 					sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");

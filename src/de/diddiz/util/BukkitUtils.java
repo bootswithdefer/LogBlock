@@ -11,6 +11,8 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.ContainerBlock;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Entity;
@@ -166,6 +168,21 @@ public class BukkitUtils
 		while (world.getBlockTypeIdAt(x, y - 1, z) == 0 && y != 0)
 			y--;
 		return y;
+	}
+
+	public static int modifyContainer(BlockState b, ItemStack item) throws Exception {
+		if (!(b instanceof ContainerBlock))
+			throw new Exception("No container at " + b.getBlock().getLocation().toString());
+		final Inventory inv = ((ContainerBlock)b).getInventory();
+		if (item.getAmount() < 0) {
+			item.setAmount(-item.getAmount());
+			final ItemStack tmp = inv.removeItem(item).get(0);
+			return tmp != null ? tmp.getAmount() : 0;
+		} else if (item.getAmount() > 0) {
+			final ItemStack tmp = inv.addItem(item).get(0);
+			return tmp != null ? tmp.getAmount() : 0;
+		}
+		return 0;
 	}
 
 	public static class ItemStackComparator implements Comparator<ItemStack>

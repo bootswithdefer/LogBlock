@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.equalTypes;
 import static de.diddiz.util.BukkitUtils.materialName;
+import static de.diddiz.util.BukkitUtils.modifyContainer;
 import java.io.File;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
@@ -18,7 +19,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ContainerBlock;
 import org.bukkit.block.Sign;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Bed;
 import org.bukkit.material.PistonBaseMaterial;
@@ -141,17 +141,21 @@ public class WorldEditor implements Runnable
 				if (type == 0) {
 					if (!block.setTypeId(0))
 						throw new WorldEditorException(block.getTypeId(), 0, block.getLocation());
-				} else if (type == 23 || type == 54 || type == 61) {
-					if (!(state instanceof ContainerBlock))
-						return PerformResult.NO_ACTION;
-					final Inventory inv = ((ContainerBlock)block.getState()).getInventory();
-					if (ca != null)
-						if (ca.itemAmount > 0)
-							inv.removeItem(new ItemStack(ca.itemType, ca.itemAmount, (short)0, ca.itemData));
-						else if (ca.itemAmount < 0)
-							inv.addItem(new ItemStack(ca.itemType, ca.itemAmount * -1, (short)0, ca.itemData));
+				} else if (ca != null && (type == 23 || type == 54 || type == 61 || type == 62)) {
+					int leftover = 0;
+					try {
+						leftover = modifyContainer(state, new ItemStack(ca.itemType, -ca.itemAmount, (short)0, ca.itemData));
+						if (leftover > 0)
+							for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
+								if (block.getFace(face).getTypeId() == 54)
+									leftover = modifyContainer(block.getFace(face).getState(), new ItemStack(ca.itemType, ca.itemAmount < 0 ? leftover : -leftover, (short)0, ca.itemData));
+					} catch (final Exception ex) {
+						throw new WorldEditorException(ex.getMessage(), block.getLocation());
+					}
 					if (!state.update())
-						throw new WorldEditorException("Failed to update inventory of " + materialName(block.getTypeId()));
+						throw new WorldEditorException("Failed to update inventory of " + materialName(block.getTypeId()), block.getLocation());
+					if (leftover > 0 && ca.itemAmount < 0)
+						throw new WorldEditorException("Not enough space left in " + materialName(block.getTypeId()), block.getLocation());
 				} else
 					return PerformResult.NO_ACTION;
 				return PerformResult.SUCCESS;
@@ -173,7 +177,7 @@ public class WorldEditor implements Runnable
 				for (int i = 0; i < 4; i++)
 					sign.setLine(i, lines[i]);
 				if (!sign.update())
-					throw new WorldEditorException("Failed to update signtext of " + materialName(block.getTypeId()));
+					throw new WorldEditorException("Failed to update signtext of " + materialName(block.getTypeId()), block.getLocation());
 			} else if (curtype == 26) {
 				final Bed bed = (Bed)block.getState().getData();
 				final Block secBlock = bed.isHeadOfBed() ? block.getFace(bed.getFacing().getOppositeFace()) : block.getFace(bed.getFacing());
@@ -208,7 +212,11 @@ public class WorldEditor implements Runnable
 		}
 
 		public WorldEditorException(int typeBefore, int typeAfter, Location loc) {
-			super("Failed to replace " + materialName(typeBefore) + " with " + materialName(typeAfter) + " at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
+			this("Failed to replace " + materialName(typeBefore) + " with " + materialName(typeAfter), loc);
+		}
+
+		public WorldEditorException(String msg, Location loc) {
+			super(msg + " at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
 		}
 	}
 }
