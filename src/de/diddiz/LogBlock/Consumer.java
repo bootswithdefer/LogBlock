@@ -34,7 +34,7 @@ public class Consumer extends TimerTask
 {
 	private final Queue<Row> queue = new LinkedBlockingQueue<Row>();
 	private final Config config;
-	private final Map<Integer, String> tables;
+	private final Map<Integer, WorldConfig> worlds;
 	private final Set<Integer> hiddenPlayers, hiddenBlocks;
 	private final Map<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
 	private final Map<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
@@ -49,7 +49,7 @@ public class Consumer extends TimerTask
 		config = logblock.getConfig();
 		hiddenPlayers = config.hiddenPlayers;
 		hiddenBlocks = config.hiddenBlocks;
-		tables = config.tables;
+		worlds = config.worlds;
 	}
 
 	/**
@@ -198,7 +198,7 @@ public class Consumer extends TimerTask
 	 * Item id of the weapon. 0 for no weapon.
 	 */
 	public void queueKill(World world, String killerName, String victimName, int weapon) {
-		if (victimName == null || !tables.containsKey(world.getName().hashCode()))
+		if (victimName == null || !worlds.containsKey(world.getName().hashCode()))
 			return;
 		killerName = killerName.replaceAll("[^a-zA-Z0-9_]", "");
 		victimName = victimName.replaceAll("[^a-zA-Z0-9_]", "");
@@ -332,7 +332,7 @@ public class Consumer extends TimerTask
 	}
 
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
-		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || hiddenPlayers.contains(playerName.hashCode()) || !tables.containsKey(loc.getWorld().getName().hashCode()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
+		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || hiddenPlayers.contains(playerName.hashCode()) || !worlds.containsKey(loc.getWorld().getName().hashCode()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
 			return;
 		playerName = playerName.replaceAll("[^a-zA-Z0-9_]", "");
 		if (signtext != null)
@@ -355,12 +355,13 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
+			final String table = worlds.get(loc.getWorld().getName().hashCode()).table;
 			final String[] inserts = new String[ca != null || signtext != null ? 2 : 1];
-			inserts[0] = "INSERT INTO `" + tables.get(loc.getWorld().getName().hashCode()) + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + players.get(playerName.hashCode()) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + loc.getBlockY() + ", '" + loc.getBlockZ() + "');";
+			inserts[0] = "INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + players.get(playerName.hashCode()) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + loc.getBlockY() + ", '" + loc.getBlockZ() + "');";
 			if (signtext != null)
-				inserts[1] = "INSERT INTO `" + tables.get(loc.getWorld().getName().hashCode()) + "-sign` (id, signtext) values (LAST_INSERT_ID(), '" + signtext + "');";
+				inserts[1] = "INSERT INTO `" + table + "-sign` (id, signtext) values (LAST_INSERT_ID(), '" + signtext + "');";
 			else if (ca != null)
-				inserts[1] = "INSERT INTO `" + tables.get(loc.getWorld().getName().hashCode()) + "-chest` (id, itemtype, itemamount, itemdata) values (LAST_INSERT_ID(), " + ca.itemType + ", " + ca.itemAmount + ", " + ca.itemData + ");";
+				inserts[1] = "INSERT INTO `" + table + "-chest` (id, itemtype, itemamount, itemdata) values (LAST_INSERT_ID(), " + ca.itemType + ", " + ca.itemAmount + ", " + ca.itemData + ");";
 			return inserts;
 		}
 
@@ -387,7 +388,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"INSERT INTO `" + tables.get(worldHash) + "-kills` (date, killer, victim, weapon) VALUES (FROM_UNIXTIME(" + date + "), " + (killer == null ? "NULL" : players.get(killer.hashCode())) + ", " + players.get(victim.hashCode()) + ", " + weapon + ");"};
+			return new String[]{"INSERT INTO `" + worlds.get(worldHash).table + "-kills` (date, killer, victim, weapon) VALUES (FROM_UNIXTIME(" + date + "), " + (killer == null ? "NULL" : players.get(killer.hashCode())) + ", " + players.get(victim.hashCode()) + ", " + weapon + ");"};
 		}
 
 		@Override

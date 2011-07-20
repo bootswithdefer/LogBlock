@@ -140,7 +140,7 @@ public class LogBlock extends JavaPlugin
 			params.minutes = config.keepLogDays * -1440;
 			params.bct = BlockChangeType.ALL;
 			for (final World world : getServer().getWorlds())
-				if (config.tables.containsKey(world.getName().hashCode())) {
+				if (config.worlds.containsKey(world.getName().hashCode())) {
 					params.world = world;
 					try {
 						commandsHandler.new CommandClearLog(new ConsoleCommandSender(getServer()), params.clone(), true);

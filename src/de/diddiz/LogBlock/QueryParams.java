@@ -85,7 +85,7 @@ public class QueryParams implements Cloneable
 	}
 
 	public String getTable() {
-		return logblock.getConfig().tables.get(world.getName().hashCode());
+		return logblock.getConfig().worlds.get(world.getName().hashCode()).table;
 	}
 
 	public String getTitle() {
@@ -345,7 +345,7 @@ public class QueryParams implements Cloneable
 		if (!prepareToolQuery) {
 			if (world == null)
 				throw new IllegalArgumentException("No world specified");
-			if (!logblock.getConfig().tables.containsKey(world.getName().hashCode()))
+			if (!logblock.getConfig().worlds.containsKey(world.getName().hashCode()))
 				throw new IllegalArgumentException("This world ('" + world.getName() + "') isn't logged");
 		}
 		if (session != null)

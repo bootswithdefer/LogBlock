@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import java.util.Map;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Creeper;
@@ -17,37 +18,37 @@ import org.bukkit.event.entity.EntityListener;
 class LBEntityListener extends EntityListener
 {
 	private final Consumer consumer;
-	private final boolean logChestAccess;
 	private final boolean logCreeperExplosionsAsPlayer;
 	private final Config.LogKillsLevel logKillsLevel;
-	private final boolean logSignTexts;
+	private final Map<Integer, WorldConfig> worlds;
 
 	LBEntityListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
-		logSignTexts = logblock.getConfig().logSignTexts;
-		logChestAccess = logblock.getConfig().logChestAccess;
+		worlds = logblock.getConfig().worlds;
 		logCreeperExplosionsAsPlayer = logblock.getConfig().logCreeperExplosionsAsPlayerWhoTriggeredThese;
 		logKillsLevel = logblock.getConfig().logKillsLevel;
 	}
 
 	@Override
 	public void onEntityDamage(EntityDamageEvent event) {
-		if (event.isCancelled() || !(event instanceof EntityDamageByEntityEvent) || !(event.getEntity() instanceof LivingEntity))
-			return;
-		final LivingEntity victim = (LivingEntity)event.getEntity();
-		final Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
-		if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0)
-			return;
-		if (logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
-			return;
-		else if (logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
-			return;
-		consumer.queueKill(killer, victim);
+		final WorldConfig wcfg = worlds.get(event.getEntity().getWorld().getName().hashCode());
+		if (!event.isCancelled() && wcfg != null && wcfg.logKills && event instanceof EntityDamageByEntityEvent && event.getEntity() instanceof LivingEntity) {
+			final LivingEntity victim = (LivingEntity)event.getEntity();
+			final Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
+			if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0)
+				return;
+			if (logKillsLevel == Config.LogKillsLevel.PLAYERS && !(victim instanceof Player && killer instanceof Player))
+				return;
+			else if (logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
+				return;
+			consumer.queueKill(killer, victim);
+		}
 	}
 
 	@Override
 	public void onEntityExplode(EntityExplodeEvent event) {
-		if (!event.isCancelled()) {
+		final WorldConfig wcfg = worlds.get(event.getEntity().getWorld().getName().hashCode());
+		if (!event.isCancelled() && wcfg != null && wcfg.logExplosions) {
 			String name;
 			if (event.getEntity() instanceof TNTPrimed)
 				name = "TNT";
@@ -66,9 +67,9 @@ class LBEntityListener extends EntityListener
 				name = "Environment";
 			for (final Block block : event.blockList()) {
 				final int type = block.getTypeId();
-				if (logSignTexts & (type == 63 || type == 68))
+				if (wcfg.logSignTexts & (type == 63 || type == 68))
 					consumer.queueSignBreak(name, (Sign)block.getState());
-				else if (logChestAccess && (type == 23 || type == 54 || type == 61))
+				else if (wcfg.logChestAccess && (type == 23 || type == 54 || type == 61))
 					consumer.queueContainerBreak(name, block.getState());
 				else
 					consumer.queueBlockBreak(name, block.getState());

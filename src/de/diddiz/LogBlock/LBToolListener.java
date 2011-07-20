@@ -17,14 +17,14 @@ class LBToolListener extends PlayerListener
 	private final LogBlock logblock;
 	private final int toolID;
 	private final int toolblockID;
-	private final Map<Integer, String> tables;
+	private final Map<Integer, WorldConfig> worlds;
 
 	LBToolListener(LogBlock logblock) {
 		this.logblock = logblock;
 		handler = logblock.getCommandsHandler();
 		toolID = logblock.getConfig().toolID;
 		toolblockID = logblock.getConfig().toolblockID;
-		tables = logblock.getConfig().tables;
+		worlds = logblock.getConfig().worlds;
 	}
 
 	@Override
@@ -36,7 +36,7 @@ class LBToolListener extends PlayerListener
 				final Player player = event.getPlayer();
 				final Session session = logblock.getSession(player.getName());
 				if (type == toolID && session.toolEnabled && logblock.hasPermission(player, "logblock.tool") || type == toolblockID && session.toolBlockEnabled && logblock.hasPermission(player, "logblock.toolblock"))
-					if (tables.get(player.getWorld().getName().hashCode()) != null) {
+					if (worlds.get(player.getWorld().getName().hashCode()) != null) {
 						final Block block = event.getClickedBlock();
 						if (!(type == toolID && block.getTypeId() == 26))
 							event.setCancelled(true);

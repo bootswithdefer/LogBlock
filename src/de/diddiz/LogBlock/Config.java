@@ -1,6 +1,8 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.parseTimeSpec;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,13 +18,13 @@ import org.bukkit.util.config.Configuration;
 
 public class Config
 {
-	public final Map<Integer, String> tables;
+	public final Map<Integer, WorldConfig> worlds;
 	public final String url, user, password;
 	public final int delayBetweenRuns, forceToProcessAtLeast, timePerRun;
 	public final boolean useBukkitScheduler;
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
-	public final boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills, logChat;
+	public boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills, logChat;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
@@ -83,32 +85,10 @@ public class Config
 		subkeys = config.getKeys("logging");
 		if (subkeys == null)
 			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("logBlockCreations"))
-			config.setProperty("logging.logBlockCreations", true);
-		if (!subkeys.contains("logBlockDestroyings"))
-			config.setProperty("logging.logBlockDestroyings", true);
-		if (!subkeys.contains("logSignTexts"))
-			config.setProperty("logging.logSignTexts", false);
-		if (!subkeys.contains("logExplosions"))
-			config.setProperty("logging.logExplosions", false);
 		if (!subkeys.contains("logCreeperExplosionsAsPlayerWhoTriggeredThese"))
 			config.setProperty("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
-		if (!subkeys.contains("logFire"))
-			config.setProperty("logging.logFire", false);
-		if (!subkeys.contains("logLeavesDecay"))
-			config.setProperty("logging.logLeavesDecay", false);
-		if (!subkeys.contains("logLavaFlow"))
-			config.setProperty("logging.logLavaFlow", false);
-		if (!subkeys.contains("logChestAccess"))
-			config.setProperty("logging.logChestAccess", false);
-		if (!subkeys.contains("logButtonsAndLevers"))
-			config.setProperty("logging.logButtonsAndLevers", false);
-		if (!subkeys.contains("logKills"))
-			config.setProperty("logging.logKills", false);
 		if (!subkeys.contains("logKillsLevel"))
 			config.setProperty("logging.logKillsLevel", "PLAYERS");
-		if (!subkeys.contains("logChat"))
-			config.setProperty("logging.logChat", false);
 		if (!subkeys.contains("hiddenPlayers"))
 			config.setProperty("logging.hiddenPlayers", new ArrayList<String>());
 		if (!subkeys.contains("hiddenBlocks"))
@@ -165,18 +145,7 @@ public class Config
 		if (keepLogDays * 86400000L > System.currentTimeMillis())
 			throw new DataFormatException("Too large timespan for keepLogDays. Must be shorter than " + (int)(System.currentTimeMillis() / 86400000L) + " days.");
 		dumpDeletedLog = config.getBoolean("clearlog.dumpDeletedLog", false);
-		logBlockCreations = config.getBoolean("logging.logBlockCreations", true);
-		logBlockDestroyings = config.getBoolean("logging.logBlockDestroyings", true);
-		logSignTexts = config.getBoolean("logging.logSignTexts", false);
-		logExplosions = config.getBoolean("logging.logExplosions", false);
 		logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
-		logFire = config.getBoolean("logging.logFire", false);
-		logChestAccess = config.getBoolean("logging.logChestAccess", false);
-		logButtonsAndLevers = config.getBoolean("logging.logButtonsAndLevers", false);
-		logLeavesDecay = config.getBoolean("logging.logLeavesDecay", false);
-		logLavaFlow = config.getBoolean("logging.logLavaFlow", false);
-		logKills = config.getBoolean("logging.logKills", false);
-		logChat = config.getBoolean("logging.logChat", false);
 		try {
 			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel"));
 		} catch (final IllegalArgumentException ex) {
@@ -225,11 +194,84 @@ public class Config
 		askRedos = config.getBoolean("questioner.askRedos", true);
 		askClearLogs = config.getBoolean("questioner.askClearLogs", true);
 		final List<String> worldNames = config.getStringList("loggedWorlds", null);
-		final List<String> worldTables = config.getStringList("tables", null);
-		tables = new HashMap<Integer, String>();
-		if (worldNames == null || worldTables == null || worldNames.size() == 0 || worldNames.size() != worldTables.size())
-			throw new DataFormatException("worldNames or worldTables not set properly");
-		for (int i = 0; i < worldNames.size(); i++)
-			tables.put(worldNames.get(i).hashCode(), worldTables.get(i));
+		worlds = new HashMap<Integer, WorldConfig>();
+		if (worldNames == null || worldNames.size() == 0)
+			throw new DataFormatException("No worlds configured");
+		for (final String world : worldNames)
+			worlds.put(world.hashCode(), new WorldConfig(new File("plugins/LogBlock/" + friendlyWorldname(world) + ".yml")));
+		for (final WorldConfig wcfg : worlds.values()) {
+			if (wcfg.logBlockCreations)
+				logBlockCreations = true;
+			if (wcfg.logBlockDestroyings)
+				logBlockDestroyings = true;
+			if (wcfg.logSignTexts)
+				logSignTexts = true;
+			if (wcfg.logExplosions)
+				logExplosions = true;
+			if (wcfg.logFire)
+				logFire = true;
+			if (wcfg.logLeavesDecay)
+				logLeavesDecay = true;
+			if (wcfg.logLavaFlow)
+				logLavaFlow = true;
+			if (wcfg.logChestAccess)
+				logChestAccess = true;
+			if (wcfg.logButtonsAndLevers)
+				logButtonsAndLevers = true;
+			if (wcfg.logKills)
+				logKills = true;
+			if (wcfg.logChat)
+				logChat = true;
+		}
+
+	}
+}
+
+class WorldConfig
+{
+	public final String table;
+	public final boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills, logChat;
+
+	public WorldConfig(File file) {
+		final Configuration config = new Configuration(file);
+		config.load();
+		final List<String> keys = config.getKeys(null);
+		if (!keys.contains("table"))
+			config.setProperty("table", "lb-" + file.getName().substring(0, file.getName().length() - 4));
+		if (!keys.contains("logBlockCreations"))
+			config.setProperty("logBlockCreations", true);
+		if (!keys.contains("logBlockDestroyings"))
+			config.setProperty("logBlockDestroyings", true);
+		if (!keys.contains("logSignTexts"))
+			config.setProperty("logSignTexts", false);
+		if (!keys.contains("logExplosions"))
+			config.setProperty("logExplosions", false);
+		if (!keys.contains("logFire"))
+			config.setProperty("logFire", false);
+		if (!keys.contains("logLeavesDecay"))
+			config.setProperty("logLeavesDecay", false);
+		if (!keys.contains("logLavaFlow"))
+			config.setProperty("logLavaFlow", false);
+		if (!keys.contains("logChestAccess"))
+			config.setProperty("logChestAccess", false);
+		if (!keys.contains("logButtonsAndLevers"))
+			config.setProperty("logButtonsAndLevers", false);
+		if (!keys.contains("logKills"))
+			config.setProperty("logKills", false);
+		if (!keys.contains("logChat"))
+			config.setProperty("logChat", false);
+		config.save();
+		table = config.getString("table");
+		logBlockCreations = config.getBoolean("logBlockCreations", true);
+		logBlockDestroyings = config.getBoolean("logBlockDestroyings", true);
+		logSignTexts = config.getBoolean("logSignTexts", false);
+		logExplosions = config.getBoolean("logExplosions", false);
+		logFire = config.getBoolean("logFire", false);
+		logLeavesDecay = config.getBoolean("logLeavesDecay", false);
+		logLavaFlow = config.getBoolean("logLavaFlow", false);
+		logChestAccess = config.getBoolean("logChestAccess", false);
+		logButtonsAndLevers = config.getBoolean("logButtonsAndLevers", false);
+		logKills = config.getBoolean("logKills", false);
+		logChat = config.getBoolean("logChat", false);
 	}
 }

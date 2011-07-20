@@ -1,11 +1,14 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.readURL;
+import java.io.File;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.util.config.Configuration;
@@ -41,14 +44,41 @@ class Updater
 			try {
 				conn.setAutoCommit(true);
 				final Statement st = conn.createStatement();
-				for (final String table : logblock.getConfig().tables.values())
+				for (final String table : config.getStringList("tables", null))
 					st.execute("ALTER TABLE `" + table + "-sign` MODIFY signtext VARCHAR(255) NOT NULL");
 				st.close();
 				conn.close();
 			} catch (final SQLException ex) {}
 			config.setProperty("version", "1.20");
 		}
-
+		if (config.getString("version").compareTo("1.23") < 0) {
+			log.info("[LogBlock] Updating tables to 1.23 ...");
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				for (final String table : config.getStringList("tables", null))
+					if (st.executeQuery("SELECT * FROM `" + table + "-chest` LIMIT 1").getMetaData().getColumnCount() != 4)
+						st.execute("DROP TABLE `" + table + "-chest`");
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {}
+			log.info("[LogBlock] Updating config to 1.23 ...");
+			final List<String> worldNames = config.getStringList("loggedWorlds", null), worldTables = config.getStringList("tables", null);
+			final String[] nodes = new String[]{"BlockCreations", "BlockDestroyings", "SignTexts", "Explosions", "Fire", "LeavesDecay", "LavaFlow", "ChestAccess", "ButtonsAndLevers", "Kills", "Chat"};
+			for (int i = 0; i < worldNames.size(); i++) {
+				final Configuration wcfg = new Configuration(new File("plugins/LogBlock/" + friendlyWorldname(worldNames.get(i)) + ".yml"));
+				wcfg.load();
+				wcfg.setProperty("table", worldTables.get(i));
+				for (final String node : nodes)
+					wcfg.setProperty("log" + node, config.getBoolean("logging.log" + node, true));
+				wcfg.save();
+			}
+			for (final String node : nodes)
+				config.removeProperty("logging.log" + node);
+			config.removeProperty("tables");
+			config.setProperty("version", "1.23");
+		}
 		config.save();
 		return true;
 	}
@@ -63,14 +93,12 @@ class Updater
 		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (playerid), UNIQUE (playername))");
 		if (logblock.getConfig().logChat)
 			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid))");
-		for (final String table : logblock.getConfig().tables.values()) {
-			if (dbm.getTables(null, null, table + "-chest", null).next() && state.executeQuery("SELECT * FROM `" + table + "-chest` LIMIT 1").getMetaData().getColumnCount() != 4) // Chest table update
-				state.execute("DROP TABLE `" + table + "-chest`");
-			createTable(dbm, state, table, "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
-			createTable(dbm, state, table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id))");
-			createTable(dbm, state, table + "-chest", "(id INT UNSIGNED NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
-			if (logblock.getConfig().logKills)
-				createTable(dbm, state, table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer SMALLINT UNSIGNED, victim SMALLINT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
+		for (final WorldConfig wcfg : logblock.getConfig().worlds.values()) {
+			createTable(dbm, state, wcfg.table, "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
+			createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id))");
+			createTable(dbm, state, wcfg.table + "-chest", "(id INT UNSIGNED NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
+			if (wcfg.logKills)
+				createTable(dbm, state, wcfg.table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer SMALLINT UNSIGNED, victim SMALLINT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
 		}
 		state.close();
 		conn.close();
