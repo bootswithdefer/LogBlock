@@ -11,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -295,13 +296,16 @@ public class Consumer extends TimerTask
 		final File file = new File("plugins/LogBlock/consumer/queue.sql");
 		file.getParentFile().mkdirs();
 		final PrintWriter writer = new PrintWriter(file);
+		final Set<Integer> insertedPlayers = new HashSet<Integer>();
 		while (!queue.isEmpty()) {
 			final Row r = queue.poll();
 			if (r == null)
 				continue;
 			for (final String player : r.getPlayers())
-				if (!players.containsKey(player.hashCode()))
+				if (!players.containsKey(player.hashCode()) && !insertedPlayers.contains(player.hashCode())) {
 					writer.println("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + player + "');");
+					insertedPlayers.add(player.hashCode());
+				}
 			for (final String insert : r.getInserts())
 				writer.println(insert);
 		}
@@ -340,6 +344,15 @@ public class Consumer extends TimerTask
 		queue.add(new BlockRow(loc, playerName, typeBefore, typeAfter, data, signtext, ca));
 	}
 
+	private String playerID(String playerName) {
+		if (playerName == null)
+			return "NULL";
+		final Integer id = players.get(playerName.hashCode());
+		if (id != null)
+			return id.toString();
+		return "(SELECT playerid FROM `lb-players` WHERE playername = '" + playerName + "')";
+	}
+
 	private static interface Row
 	{
 		String[] getInserts();
@@ -357,7 +370,7 @@ public class Consumer extends TimerTask
 		public String[] getInserts() {
 			final String table = worlds.get(loc.getWorld().getName().hashCode()).table;
 			final String[] inserts = new String[ca != null || signtext != null ? 2 : 1];
-			inserts[0] = "INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + players.get(playerName.hashCode()) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + loc.getBlockY() + ", '" + loc.getBlockZ() + "');";
+			inserts[0] = "INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(playerName) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + loc.getBlockY() + ", '" + loc.getBlockZ() + "');";
 			if (signtext != null)
 				inserts[1] = "INSERT INTO `" + table + "-sign` (id, signtext) values (LAST_INSERT_ID(), '" + signtext + "');";
 			else if (ca != null)
@@ -388,7 +401,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"INSERT INTO `" + worlds.get(worldHash).table + "-kills` (date, killer, victim, weapon) VALUES (FROM_UNIXTIME(" + date + "), " + (killer == null ? "NULL" : players.get(killer.hashCode())) + ", " + players.get(victim.hashCode()) + ", " + weapon + ");"};
+			return new String[]{"INSERT INTO `" + worlds.get(worldHash).table + "-kills` (date, killer, victim, weapon) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ");"};
 		}
 
 		@Override
@@ -410,7 +423,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + players.get(player.hashCode()) + ", '" + message + "');"};
+			return new String[]{"INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(player) + ", '" + message + "');"};
 		}
 
 		@Override
