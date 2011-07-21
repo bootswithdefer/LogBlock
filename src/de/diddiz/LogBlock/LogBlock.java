@@ -211,11 +211,12 @@ public class LogBlock extends JavaPlugin
 			int lastSize = -1, fails = 0;
 			while (consumer.getQueueSize() > 0) {
 				log.info("[LogBlock] Remaining queue size: " + consumer.getQueueSize());
-				if (lastSize == consumer.getQueueSize())
+				if (lastSize == consumer.getQueueSize()) {
 					fails++;
-				else
+					log.info("[LogBlock] Remaining tries: " + (10 - fails));
+				} else
 					fails = 0;
-				if (fails > 10) {
+				if (fails == 10) {
 					log.info("Unable to save queue to database. Trying to write to a local file.");
 					try {
 						consumer.writeToFile();
