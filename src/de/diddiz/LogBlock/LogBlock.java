@@ -7,8 +7,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URL;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.logging.Level;
@@ -258,5 +262,26 @@ public class LogBlock extends JavaPlugin
 			sessions.put(playerName.hashCode(), session);
 		}
 		return session;
+	}
+
+	public List<BlockChange> getBlockChanges(QueryParams params) throws SQLException {
+		final Connection conn = getConnection();
+		Statement state = null;
+		ResultSet rs = null;
+		if (conn == null)
+			throw new SQLException("No connection");
+		try {
+			params.getLookupQuery();
+			state = conn.createStatement();
+			rs = state.executeQuery(params.getLookupQuery());
+			final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
+			while (rs.next())
+				blockchanges.add(new BlockChange(rs, params.coords));
+			return blockchanges;
+		} finally {
+			if (state != null)
+				state.close();
+			conn.close();
+		}
 	}
 }
