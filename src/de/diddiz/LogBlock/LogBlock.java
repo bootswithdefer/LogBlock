@@ -157,13 +157,14 @@ public class LogBlock extends JavaPlugin
 		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
 		final LBEntityListener lbEntityListener = new LBEntityListener(this);
 		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolListener(this), Priority.Normal, this);
-		if (config.logBlockCreations) {
+		if (config.logBlockPlacings) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Priority.Monitor, this);
 		}
-		if (config.logBlockDestroyings) {
+		if (config.logBlockBreaks) {
 			pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Priority.Monitor, this);
+			pm.registerEvent(Type.BLOCK_FROMTO, lbBlockListener, Priority.Monitor, this);
 		}
 		if (config.logSignTexts)
 			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Priority.Monitor, this);
@@ -178,8 +179,6 @@ public class LogBlock extends JavaPlugin
 				pm.registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
 			else
 				log.warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");
-		if (config.logLavaFlow)
-			pm.registerEvent(Type.BLOCK_FROMTO, lbBlockListener, Priority.Monitor, this);
 		if (config.logButtonsAndLevers)
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
 		if (config.logKills)
@@ -202,7 +201,7 @@ public class LogBlock extends JavaPlugin
 			timer.scheduleAtFixedRate(consumer, config.delayBetweenRuns * 1000, config.delayBetweenRuns * 1000);
 			log.info("[LogBlock] Scheduled consumer with timer.");
 		}
-		log.info("Logblock v" + getDescription().getVersion() + " by DiddiZ enabled.");
+		log.info("LogBlock v" + getDescription().getVersion() + " by DiddiZ enabled.");
 	}
 
 	@Override

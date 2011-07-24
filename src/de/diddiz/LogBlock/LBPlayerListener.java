@@ -21,14 +21,14 @@ class LBPlayerListener extends PlayerListener
 	@Override
 	public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logBlockCreations)
+		if (!event.isCancelled() && wcfg != null && wcfg.logBlockPlacings)
 			consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), event.getBucket() == Material.WATER_BUCKET ? 9 : 11, (byte)0);
 	}
 
 	@Override
 	public void onPlayerBucketFill(PlayerBucketFillEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logBlockDestroyings)
+		if (!event.isCancelled() && wcfg != null && wcfg.logBlockBreaks)
 			consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlockClicked().getState());
 	}
 

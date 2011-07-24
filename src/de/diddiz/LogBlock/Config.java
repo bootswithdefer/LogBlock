@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.zip.DataFormatException;
 import org.bukkit.Material;
@@ -24,7 +25,7 @@ public class Config
 	public final boolean useBukkitScheduler;
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
-	public boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills, logChat;
+	public boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
@@ -200,10 +201,10 @@ public class Config
 		for (final String world : worldNames)
 			worlds.put(world.hashCode(), new WorldConfig(new File("plugins/LogBlock/" + friendlyWorldname(world) + ".yml")));
 		for (final WorldConfig wcfg : worlds.values()) {
-			if (wcfg.logBlockCreations)
-				logBlockCreations = true;
-			if (wcfg.logBlockDestroyings)
-				logBlockDestroyings = true;
+			if (wcfg.logBlockPlacings)
+				logBlockPlacings = true;
+			if (wcfg.logBlockBreaks)
+				logBlockBreaks = true;
 			if (wcfg.logSignTexts)
 				logSignTexts = true;
 			if (wcfg.logExplosions)
@@ -214,6 +215,8 @@ public class Config
 				logLeavesDecay = true;
 			if (wcfg.logLavaFlow)
 				logLavaFlow = true;
+			if (wcfg.logWaterFlow)
+				logWaterFlow = true;
 			if (wcfg.logChestAccess)
 				logChestAccess = true;
 			if (wcfg.logButtonsAndLevers)
@@ -230,45 +233,39 @@ public class Config
 class WorldConfig
 {
 	public final String table;
-	public final boolean logBlockCreations, logBlockDestroyings, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logChestAccess, logButtonsAndLevers, logKills, logChat;
+	public final boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat;
 
 	public WorldConfig(File file) {
+		final Map<String, Object> def = new HashMap<String, Object>();
+		def.put("table", "lb-" + file.getName().substring(0, file.getName().length() - 4));
+		def.put("logBlockCreations", true);
+		def.put("logBlockDestroyings", true);
+		def.put("logSignTexts", true);
+		def.put("logExplosions", true);
+		def.put("logFire", true);
+		def.put("logLeavesDecay", false);
+		def.put("logLavaFlow", false);
+		def.put("logWaterFlow", false);
+		def.put("logChestAccess", false);
+		def.put("logButtonsAndLevers", false);
+		def.put("logKills", false);
+		def.put("logChat", false);
 		final Configuration config = new Configuration(file);
 		config.load();
 		final List<String> keys = config.getKeys(null);
-		if (!keys.contains("table"))
-			config.setProperty("table", "lb-" + file.getName().substring(0, file.getName().length() - 4));
-		if (!keys.contains("logBlockCreations"))
-			config.setProperty("logBlockCreations", true);
-		if (!keys.contains("logBlockDestroyings"))
-			config.setProperty("logBlockDestroyings", true);
-		if (!keys.contains("logSignTexts"))
-			config.setProperty("logSignTexts", false);
-		if (!keys.contains("logExplosions"))
-			config.setProperty("logExplosions", false);
-		if (!keys.contains("logFire"))
-			config.setProperty("logFire", false);
-		if (!keys.contains("logLeavesDecay"))
-			config.setProperty("logLeavesDecay", false);
-		if (!keys.contains("logLavaFlow"))
-			config.setProperty("logLavaFlow", false);
-		if (!keys.contains("logChestAccess"))
-			config.setProperty("logChestAccess", false);
-		if (!keys.contains("logButtonsAndLevers"))
-			config.setProperty("logButtonsAndLevers", false);
-		if (!keys.contains("logKills"))
-			config.setProperty("logKills", false);
-		if (!keys.contains("logChat"))
-			config.setProperty("logChat", false);
+		for (final Entry<String, Object> e : def.entrySet())
+			if (!keys.contains(e.getKey()))
+				config.setProperty(e.getKey(), e.getValue());
 		config.save();
 		table = config.getString("table");
-		logBlockCreations = config.getBoolean("logBlockCreations", true);
-		logBlockDestroyings = config.getBoolean("logBlockDestroyings", true);
+		logBlockPlacings = config.getBoolean("logBlockCreations", true);
+		logBlockBreaks = config.getBoolean("logBlockDestroyings", true);
 		logSignTexts = config.getBoolean("logSignTexts", false);
 		logExplosions = config.getBoolean("logExplosions", false);
 		logFire = config.getBoolean("logFire", false);
 		logLeavesDecay = config.getBoolean("logLeavesDecay", false);
 		logLavaFlow = config.getBoolean("logLavaFlow", false);
+		logWaterFlow = config.getBoolean("logWaterFlow", false);
 		logChestAccess = config.getBoolean("logChestAccess", false);
 		logButtonsAndLevers = config.getBoolean("logButtonsAndLevers", false);
 		logKills = config.getBoolean("logKills", false);
