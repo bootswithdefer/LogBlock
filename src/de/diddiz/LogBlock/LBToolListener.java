@@ -12,7 +12,6 @@ import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
 
 class LBToolListener extends PlayerListener
 {
-	private final static BlockFace[] orientations = {BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
 	private final CommandsHandler handler;
 	private final LogBlock logblock;
 	private final int toolID;
@@ -49,7 +48,7 @@ class LBToolListener extends PlayerListener
 						else if (block.getTypeId() != 54 || params.radius != 0)
 							params.setLocation(block.getLocation());
 						else {
-							for (final BlockFace face : orientations)
+							for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
 								if (block.getRelative(face).getTypeId() == 54)
 									params.setSelection(new CuboidSelection(player.getWorld(), block.getLocation(), block.getRelative(face).getLocation()));
 							if (params.sel == null)
