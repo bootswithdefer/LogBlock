@@ -101,6 +101,38 @@ public class CommandsHandler implements CommandExecutor
 				for (final String permission : permissions)
 					if (logblock.hasPermission(sender, "logblock." + permission))
 						sender.sendMessage(ChatColor.GOLD + "logblock." + permission);
+			} else if (command.equals("logging")) {
+				if (sender instanceof Player) {
+					final String world = ((Player)sender).getWorld().getName();
+					final WorldConfig wcfg = config.worlds.get(world.hashCode());
+					sender.sendMessage(ChatColor.DARK_AQUA + "Currently logging in " + world + ":");
+					String msg = "";
+					if (wcfg.logBlockPlacings)
+						msg += ", BlockPlacings";
+					if (wcfg.logBlockBreaks)
+						msg += ", BlockBreaks";
+					if (wcfg.logSignTexts)
+						msg += ", SignTexts";
+					if (wcfg.logExplosions)
+						msg += ", Explosions";
+					if (wcfg.logFire)
+						msg += ", Fire";
+					if (wcfg.logLeavesDecay)
+						msg += ", LeavesDecay";
+					if (wcfg.logLavaFlow)
+						msg += ", LavaFlow";
+					if (wcfg.logWaterFlow)
+						msg += ", WaterFlow";
+					if (wcfg.logChestAccess)
+						msg += ", ChestAccess";
+					if (wcfg.logButtonsAndLevers)
+						msg += ", ButtonsAndLevers";
+					if (wcfg.logKills)
+						msg += ", Kills";
+					if (wcfg.logChat)
+						msg += ", Chat";
+					sender.sendMessage(ChatColor.GOLD + msg.substring(2));
+				}
 			} else if (command.equals("tool") || command.equals("t")) {
 				if (sender instanceof Player) {
 					final Player player = (Player)sender;
