@@ -101,7 +101,7 @@ public class CommandsHandler implements CommandExecutor
 				for (final String permission : permissions)
 					if (logblock.hasPermission(sender, "logblock." + permission))
 						sender.sendMessage(ChatColor.GOLD + "logblock." + permission);
-			} else if (command.equals("tool")) {
+			} else if (command.equals("tool") || command.equals("t")) {
 				if (sender instanceof Player) {
 					final Player player = (Player)sender;
 					if (args.length == 1) {
@@ -150,7 +150,7 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else
 					sender.sendMessage(ChatColor.RED + "You have to be a player.");
-			} else if (command.equals("toolblock")) {
+			} else if (command.equals("toolblock") || command.equals("tb")) {
 				if (sender instanceof Player) {
 					final Player player = (Player)sender;
 					if (args.length == 1) {
