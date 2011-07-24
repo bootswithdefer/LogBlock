@@ -184,9 +184,8 @@ public class LogBlock extends JavaPlugin
 		if (config.logKills)
 			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Priority.Monitor, this);
 		if (config.logChat) {
-			final LBChatListener lbChatListener = new LBChatListener(this);
-			pm.registerEvent(Type.PLAYER_CHAT, lbChatListener, Priority.Monitor, this);
-			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbChatListener, Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_CHAT, lbPlayerListener, Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbPlayerListener, Priority.Monitor, this);
 		}
 		if (config.useBukkitScheduler) {
 			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delayBetweenRuns * 20, config.delayBetweenRuns * 20) > 0)
