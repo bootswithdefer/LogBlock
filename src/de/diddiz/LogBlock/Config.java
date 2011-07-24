@@ -34,7 +34,7 @@ public class Config
 	public final int defaultDist, defaultTime;
 	public final int linesPerPage, linesLimit;
 	public final int toolID, toolblockID;
-	public final boolean askRollbacks, askRedos, askClearLogs;
+	public final boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback;
 	public final Set<Integer> hiddenPlayers, hiddenBlocks;
 
 	public static enum LogKillsLevel {
@@ -42,97 +42,45 @@ public class Config
 	}
 
 	Config(LogBlock logblock) throws DataFormatException, IOException {
+		final Map<String, Object> def = new HashMap<String, Object>();
+		def.put("version", logblock.getDescription().getVersion());
+		def.put("loggedWorlds", Arrays.asList("world", "world_nether"));
+		def.put("mysql.host", "localhost");
+		def.put("mysql.port", 3306);
+		def.put("mysql.database", "minecraft");
+		def.put("mysql.user", "username");
+		def.put("mysql.password", "pass");
+		def.put("consumer.delayBetweenRuns", 6);
+		def.put("consumer.forceToProcessAtLeast", 20);
+		def.put("consumer.timePerRun", 200);
+		def.put("consumer.useBukkitScheduler", true);
+		def.put("clearlog.dumpDeletedLog", false);
+		def.put("clearlog.keepLogDays", -1);
+		def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
+		def.put("logging.logKillsLevel", "PLAYERS");
+		def.put("logging.hiddenPlayers", new ArrayList<String>());
+		def.put("logging.hiddenBlocks", Arrays.asList(0));
+		def.put("rollback.dontRollback", Arrays.asList(10, 11, 46, 51));
+		def.put("rollback.replaceAnyway", Arrays.asList(8, 9, 10, 11, 51));
+		def.put("rollback.maxTime", "2 days");
+		def.put("rollback.maxArea", 50);
+		def.put("lookup.defaultDist", 20);
+		def.put("lookup.defaultTime", "30 minutes");
+		def.put("lookup.toolID", 270);
+		def.put("lookup.toolblockID", 7);
+		def.put("lookup.toolQuery", "area 0 all sum none limit 15 desc silent");
+		def.put("lookup.toolBlockQuery", "area 0 all sum none limit 15 desc silent");
+		def.put("lookup.linesPerPage", 15);
+		def.put("lookup.linesLimit", 1500);
+		def.put("questioner.askRollbacks", true);
+		def.put("questioner.askRedos", true);
+		def.put("questioner.askClearLogs", true);
+		def.put("questioner.askClearLogAfterRollback", true);
 		final Configuration config = logblock.getConfiguration();
 		config.load();
-		final List<String> keys = config.getKeys(null);
-		List<String> subkeys;
-		if (!keys.contains("version"))
-			config.setProperty("version", logblock.getDescription().getVersion());
-		if (!keys.contains("loggedWorlds"))
-			config.setProperty("loggedWorlds", Arrays.asList(new String[]{"world", "world_nether"}));
-		if (!keys.contains("tables"))
-			config.setProperty("tables", Arrays.asList(new String[]{"lb-main", "lb-nether"}));
-		subkeys = config.getKeys("mysql");
-		if (subkeys == null)
-			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("host"))
-			config.setProperty("mysql.host", "localhost");
-		if (!subkeys.contains("port"))
-			config.setProperty("mysql.port", 3306);
-		if (!subkeys.contains("database"))
-			config.setProperty("mysql.database", "minecraft");
-		if (!subkeys.contains("user"))
-			config.setProperty("mysql.user", "username");
-		if (!subkeys.contains("password"))
-			config.setProperty("mysql.password", "pass");
-		subkeys = config.getKeys("consumer");
-		if (subkeys == null)
-			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("delayBetweenRuns"))
-			config.setProperty("consumer.delayBetweenRuns", 6);
-		if (!subkeys.contains("forceToProcessAtLeast"))
-			config.setProperty("consumer.forceToProcessAtLeast", 0);
-		if (!subkeys.contains("timePerRun"))
-			config.setProperty("consumer.timePerRun", 100);
-		if (!subkeys.contains("useBukkitScheduler"))
-			config.setProperty("consumer.useBukkitScheduler", true);
-		subkeys = config.getKeys("clearlog");
-		if (subkeys == null)
-			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("dumpDeletedLog"))
-			config.setProperty("clearlog.dumpDeletedLog", false);
-		if (!subkeys.contains("keepLogDays"))
-			config.setProperty("clearlog.keepLogDays", -1);
-		subkeys = config.getKeys("logging");
-		if (subkeys == null)
-			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("logCreeperExplosionsAsPlayerWhoTriggeredThese"))
-			config.setProperty("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
-		if (!subkeys.contains("logKillsLevel"))
-			config.setProperty("logging.logKillsLevel", "PLAYERS");
-		if (!subkeys.contains("hiddenPlayers"))
-			config.setProperty("logging.hiddenPlayers", new ArrayList<String>());
-		if (!subkeys.contains("hiddenBlocks"))
-			config.setProperty("logging.hiddenBlocks", Arrays.asList(new Integer[]{0}));
-		subkeys = config.getKeys("rollback");
-		if (subkeys == null)
-			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("dontRollback"))
-			config.setProperty("rollback.dontRollback", Arrays.asList(new Integer[]{10, 11, 46, 51}));
-		if (!subkeys.contains("replaceAnyway"))
-			config.setProperty("rollback.replaceAnyway", Arrays.asList(new Integer[]{8, 9, 10, 11, 51}));
-		if (!subkeys.contains("maxTime"))
-			config.setProperty("rollback.maxTime", "2 days");
-		if (!subkeys.contains("maxArea"))
-			config.setProperty("rollback.maxArea", 50);
-		subkeys = config.getKeys("lookup");
-		if (subkeys == null)
-			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("defaultDist"))
-			config.setProperty("lookup.defaultDist", 20);
-		if (!subkeys.contains("defaultTime"))
-			config.setProperty("lookup.defaultTime", "30 minutes");
-		if (!subkeys.contains("toolID"))
-			config.setProperty("lookup.toolID", 270);
-		if (!subkeys.contains("toolblockID"))
-			config.setProperty("lookup.toolblockID", 7);
-		if (!subkeys.contains("toolQuery"))
-			config.setProperty("lookup.toolQuery", "area 0 all sum none limit 15 desc silent");
-		if (!subkeys.contains("toolBlockQuery"))
-			config.setProperty("lookup.toolBlockQuery", "area 0 all sum none limit 15 desc silent");
-		if (!subkeys.contains("linesPerPage"))
-			config.setProperty("lookup.linesPerPage", 15);
-		if (!subkeys.contains("linesLimit"))
-			config.setProperty("lookup.linesLimit", 1500);
-		subkeys = config.getKeys("questioner");
-		if (subkeys == null)
-			subkeys = new ArrayList<String>();
-		if (!subkeys.contains("askRollbacks"))
-			config.setProperty("questioner.askRollbacks", true);
-		if (!subkeys.contains("askRedos"))
-			config.setProperty("questioner.askRedos", true);
-		if (!subkeys.contains("askClearLogs"))
-			config.setProperty("questioner.askClearLogs", true);
+		for (final Entry<String, Object> e : def.entrySet())
+			if (config.getProperty(e.getKey()) == null)
+				config.setProperty(e.getKey(), e.getValue());
 		if (!config.save())
 			throw new IOException("Error while writing to config.yml");
 		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getString("mysql.port") + "/" + config.getString("mysql.database");
@@ -194,6 +142,7 @@ public class Config
 		askRollbacks = config.getBoolean("questioner.askRollbacks", true);
 		askRedos = config.getBoolean("questioner.askRedos", true);
 		askClearLogs = config.getBoolean("questioner.askClearLogs", true);
+		askClearLogAfterRollback = config.getBoolean("questioner.askClearLogAfterRollback", true);
 		final List<String> worldNames = config.getStringList("loggedWorlds", null);
 		worlds = new HashMap<Integer, WorldConfig>();
 		if (worldNames == null || worldNames.size() == 0)
@@ -252,9 +201,8 @@ class WorldConfig
 		def.put("logChat", false);
 		final Configuration config = new Configuration(file);
 		config.load();
-		final List<String> keys = config.getKeys(null);
 		for (final Entry<String, Object> e : def.entrySet())
-			if (!keys.contains(e.getKey()))
+			if (config.getProperty(e.getKey()) == null)
 				config.setProperty(e.getKey(), e.getValue());
 		config.save();
 		table = config.getString("table");

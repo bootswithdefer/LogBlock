@@ -563,12 +563,13 @@ public class CommandsHandler implements CommandExecutor
 				}
 				editor.start();
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
-				if (!params.silent && logblock.hasPermission(sender, "logblock.clearlog") && questioner != null && sender instanceof Player) {
+				if (!params.silent && config.askClearLogAfterRollback && logblock.hasPermission(sender, "logblock.clearlog") && questioner != null && sender instanceof Player) {
 					Thread.sleep(1000);
 					if (questioner.ask((Player)sender, "Do you want to delete the rollbacked log?", "yes", "no").equals("yes")) {
 						params.silent = true;
 						new CommandClearLog(sender, params, false);
-					}
+					} else
+						sender.sendMessage(ChatColor.LIGHT_PURPLE + "Clearlog cancelled");
 				}
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
