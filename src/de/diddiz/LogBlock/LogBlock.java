@@ -241,8 +241,10 @@ public class LogBlock extends JavaPlugin
 	boolean hasPermission(CommandSender sender, String permission) {
 		if (permissions != null && sender instanceof Player)
 			return permissions.permission((Player)sender, permission);
-		if (permission.equals("logblock.lookup") || permission.equals("logblock.hide") || permission.equals("logblock.rollback") || permission.equals("logblock.tp") || permission.equals("logblock.clearlog"))
-			return sender.isOp();
+		if (sender instanceof ConsoleCommandSender)
+			return true;
+		if (sender instanceof Player)
+			return ((Player)sender).hasPermission(permission);
 		return true;
 	}
 
