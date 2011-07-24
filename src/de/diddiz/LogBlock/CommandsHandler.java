@@ -247,9 +247,9 @@ public class CommandsHandler implements CommandExecutor
 					showPage(sender, Integer.valueOf(args[1]));
 				else
 					sender.sendMessage(ChatColor.RED + "You have to specify a page");
-			} else if (command.equals("next"))
+			} else if (command.equals("next") || command.equals("+"))
 				showPage(sender, logblock.getSession(senderName(sender)).page + 1);
-			else if (command.equals("prev"))
+			else if (command.equals("prev") || command.equals("-"))
 				showPage(sender, logblock.getSession(senderName(sender)).page - 1);
 			else if (args[0].equalsIgnoreCase("savequeue")) {
 				if (logblock.hasPermission(sender, "logblock.rollback"))
