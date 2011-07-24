@@ -45,13 +45,13 @@ class LBToolListener extends PlayerListener
 						params.loc = null;
 						params.sel = null;
 						if (type == toolblockID && action == Action.RIGHT_CLICK_BLOCK)
-							params.setLocation(block.getFace(event.getBlockFace()).getLocation());
+							params.setLocation(block.getRelative(event.getBlockFace()).getLocation());
 						else if (block.getTypeId() != 54 || params.radius != 0)
 							params.setLocation(block.getLocation());
 						else {
 							for (final BlockFace face : orientations)
-								if (block.getFace(face).getTypeId() == 54)
-									params.setSelection(new CuboidSelection(player.getWorld(), block.getLocation(), block.getFace(face).getLocation()));
+								if (block.getRelative(face).getTypeId() == 54)
+									params.setSelection(new CuboidSelection(player.getWorld(), block.getLocation(), block.getRelative(face).getLocation()));
 							if (params.sel == null)
 								params.setLocation(block.getLocation());
 						}

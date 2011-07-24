@@ -83,8 +83,8 @@ class LBBlockListener extends BlockListener
 			if (type == 0 && event.getItemInHand() != null)
 				if (event.getItemInHand().getTypeId() == 51)
 					return;
-				else if (event.getItemInHand().getTypeId() == 44 && event.getBlock().getFace(BlockFace.DOWN).getTypeId() == 43) {
-					before = event.getBlock().getFace(BlockFace.DOWN).getState();
+				else if (event.getItemInHand().getTypeId() == 44 && event.getBlock().getRelative(BlockFace.DOWN).getTypeId() == 43) {
+					before = event.getBlock().getRelative(BlockFace.DOWN).getState();
 					before.setTypeId(44);
 					after.setTypeId(43);
 					after.setData(event.getItemInHand().getData());

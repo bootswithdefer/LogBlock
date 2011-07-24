@@ -19,9 +19,9 @@ class LBPlayerListener extends PlayerListener
 	public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
 		if (!event.isCancelled())
 			if (event.getBucket() == Material.WATER_BUCKET)
-				consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()).getLocation(), 9, (byte)0);
+				consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), 9, (byte)0);
 			else if (event.getBucket() == Material.LAVA_BUCKET)
-				consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getFace(event.getBlockFace()).getLocation(), 11, (byte)0);
+				consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), 11, (byte)0);
 	}
 
 	@Override

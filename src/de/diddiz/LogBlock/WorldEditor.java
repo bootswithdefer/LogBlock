@@ -147,8 +147,8 @@ public class WorldEditor implements Runnable
 						leftover = modifyContainer(state, new ItemStack(ca.itemType, -ca.itemAmount, (short)0, ca.itemData));
 						if (leftover > 0)
 							for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
-								if (block.getFace(face).getTypeId() == 54)
-									leftover = modifyContainer(block.getFace(face).getState(), new ItemStack(ca.itemType, ca.itemAmount < 0 ? leftover : -leftover, (short)0, ca.itemData));
+								if (block.getRelative(face).getTypeId() == 54)
+									leftover = modifyContainer(block.getRelative(face).getState(), new ItemStack(ca.itemType, ca.itemAmount < 0 ? leftover : -leftover, (short)0, ca.itemData));
 					} catch (final Exception ex) {
 						throw new WorldEditorException(ex.getMessage(), block.getLocation());
 					}
@@ -180,22 +180,22 @@ public class WorldEditor implements Runnable
 					throw new WorldEditorException("Failed to update signtext of " + materialName(block.getTypeId()), block.getLocation());
 			} else if (curtype == 26) {
 				final Bed bed = (Bed)block.getState().getData();
-				final Block secBlock = bed.isHeadOfBed() ? block.getFace(bed.getFacing().getOppositeFace()) : block.getFace(bed.getFacing());
+				final Block secBlock = bed.isHeadOfBed() ? block.getRelative(bed.getFacing().getOppositeFace()) : block.getRelative(bed.getFacing());
 				if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(26, (byte)(bed.getData() | 8), true))
 					throw new WorldEditorException(secBlock.getTypeId(), 26, secBlock.getLocation());
 			} else if (curtype == 64 || curtype == 71) {
 				final byte blockData = block.getData();
-				final Block secBlock = (blockData & 8) == 8 ? block.getFace(BlockFace.DOWN) : block.getFace(BlockFace.UP);
+				final Block secBlock = (blockData & 8) == 8 ? block.getRelative(BlockFace.DOWN) : block.getRelative(BlockFace.UP);
 				if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(curtype, (byte)(blockData | 8), true))
 					throw new WorldEditorException(secBlock.getTypeId(), curtype, secBlock.getLocation());
 			} else if ((curtype == 29 || curtype == 33) && (block.getData() & 8) > 0) {
 				final PistonBaseMaterial piston = (PistonBaseMaterial)block.getState().getData();
-				final Block secBlock = block.getFace(piston.getFacing());
+				final Block secBlock = block.getRelative(piston.getFacing());
 				if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(34, curtype == 29 ? (byte)(block.getData() | 8) : (byte)(block.getData() & ~8), true))
 					throw new WorldEditorException(secBlock.getTypeId(), 34, secBlock.getLocation());
 			} else if (curtype == 34) {
 				final PistonExtensionMaterial piston = (PistonExtensionMaterial)block.getState().getData();
-				final Block secBlock = block.getFace(piston.getFacing().getOppositeFace());
+				final Block secBlock = block.getRelative(piston.getFacing().getOppositeFace());
 				if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(piston.isSticky() ? 29 : 33, (byte)(block.getData() | 8), true))
 					throw new WorldEditorException(secBlock.getTypeId(), piston.isSticky() ? 29 : 33, secBlock.getLocation());
 			} else if (curtype == 18 && (block.getData() & 8) > 0)
