@@ -389,7 +389,7 @@ public class CommandsHandler implements CommandExecutor
 			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback more than " + config.rollbackMaxTime + " minutes");
 			return false;
 		}
-		if (config.rollbackMaxTime > 0 && (params.sel == null && params.loc == null || params.radius > config.rollbackMaxArea || params.sel != null && (params.sel.getLength() > config.rollbackMaxArea || params.sel.getWidth() > config.rollbackMaxArea))) {
+		if (config.rollbackMaxArea > 0 && (params.sel == null && params.loc == null || params.radius > config.rollbackMaxArea || params.sel != null && (params.sel.getLength() > config.rollbackMaxArea || params.sel.getWidth() > config.rollbackMaxArea))) {
 			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback an area larger than " + config.rollbackMaxArea + " blocks");
 			return false;
 		}
