@@ -47,14 +47,14 @@ class LBPlayerListener extends PlayerListener
 	@Override
 	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg.logChat)
+		if (!event.isCancelled() && wcfg != null && wcfg.logChat)
 			consumer.queueChat(event.getPlayer().getName(), event.getMessage());
 	}
 
 	@Override
 	public void onPlayerChat(PlayerChatEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg.logChat)
+		if (!event.isCancelled() && wcfg != null && wcfg.logChat)
 			consumer.queueChat(event.getPlayer().getName(), event.getMessage());
 	}
 }
