@@ -238,12 +238,8 @@ public class LogBlock extends JavaPlugin
 
 	boolean hasPermission(CommandSender sender, String permission) {
 		if (permissions != null && sender instanceof Player)
-			return permissions.permission((Player)sender, permission);
-		if (sender instanceof ConsoleCommandSender)
-			return true;
-		if (sender instanceof Player)
-			return ((Player)sender).hasPermission(permission);
-		return true;
+			return permissions.has((Player)sender, permission);
+		return sender.hasPermission(permission);
 	}
 
 	public Connection getConnection() {
