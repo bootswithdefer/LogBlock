@@ -232,9 +232,16 @@ public class QueryParams implements Cloneable
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
 				for (final String playerName : values)
 					if (playerName.length() > 0) {
-						if (playerName.startsWith("!"))
+						if (playerName.contains("!"))
 							excludePlayersMode = true;
-						players.add(playerName.replaceAll("[^a-zA-Z0-9_]", ""));
+						if (playerName.contains("\""))
+							players.add(playerName.replaceAll("[^a-zA-Z0-9_]", ""));
+						else {
+							final List<Player> matches = logblock.getServer().matchPlayer(playerName);
+							if (matches.size() > 1)
+								throw new IllegalArgumentException("Ambiguous playername '" + param + "'");
+							players.add(matches.size() == 1 ? matches.get(0).getName() : playerName.replaceAll("[^a-zA-Z0-9_]", ""));
+						}
 					}
 			} else if (param.equals("block") || param.equals("type")) {
 				if (values == null || values.length < 1)
@@ -387,7 +394,7 @@ public class QueryParams implements Cloneable
 			return null;
 		final String[] values = new String[i - offset];
 		for (int j = offset; j < i; j++)
-			values[j - offset] = args.get(j).replace("\"", "");
+			values[j - offset] = args.get(j);
 		return values;
 	}
 
