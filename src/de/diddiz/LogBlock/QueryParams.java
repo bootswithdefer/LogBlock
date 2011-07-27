@@ -284,7 +284,7 @@ public class QueryParams implements Cloneable
 				else
 					minutes = parseTimeSpec(values);
 				if (minutes == -1)
-					throw new IllegalArgumentException("Faile to parse time spec for '" + param + "'");
+					throw new IllegalArgumentException("Failed to parse time spec for '" + param + "'");
 			} else if (param.equals("before")) {
 				if (values == null)
 					minutes = logblock.getConfig().defaultTime * -1;
