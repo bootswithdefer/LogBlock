@@ -26,7 +26,7 @@ public class QueryParams implements Cloneable
 {
 	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode()));
 	public BlockChangeType bct = BlockChangeType.BOTH;
-	public int limit = 15, minutes = 0, radius = -1;
+	public int limit = -1, minutes = 0, radius = -1;
 	public Location loc = null;
 	public Order order = Order.DESC;
 	public List<String> players = new ArrayList<String>();
@@ -54,10 +54,6 @@ public class QueryParams implements Cloneable
 	public String getLimit() {
 		return limit > 0 ? "LIMIT " + limit : "";
 	}
-
-	// public String getRollbackQuery() {
-	// return "SELECT replaced, type, data, x, y, z, signtext, itemtype, itemamount, itemdata FROM `" + getTable() + "` " + (players.size() > 0 ? "INNER JOIN `lb-players` USING (playerid) " : "") + "LEFT JOIN `" + getTable() + "-sign` USING (id) LEFT JOIN `" + getTable() + "-chest` USING (id) " + getWhere() + getOrderBy() + getLimit();
-	// }
 
 	public String getQuery() {
 		if (sum == SummarizationMode.NONE) {
@@ -295,9 +291,9 @@ public class QueryParams implements Cloneable
 					throw new IllegalArgumentException("Failed to parse time spec for '" + param + "'");
 			} else if (param.equals("before")) {
 				if (values == null)
-					minutes = logblock.getConfig().defaultTime * -1;
+					minutes = -logblock.getConfig().defaultTime;
 				else
-					minutes = parseTimeSpec(values) * -1;
+					minutes = -parseTimeSpec(values);
 				if (minutes == 1)
 					throw new IllegalArgumentException("Faile to parse time spec for '" + param + "'");
 			} else if (param.equals("sum")) {
@@ -328,9 +324,10 @@ public class QueryParams implements Cloneable
 			} else if (param.equals("world")) {
 				if (values.length != 1)
 					throw new IllegalArgumentException("Wrong count of arguments for '" + param + "'");
-				if (sender.getServer().getWorld(values[0]) == null)
+				final World w = sender.getServer().getWorld(values[0].replace("\"", ""));
+				if (w == null)
 					throw new IllegalArgumentException("There is no world called '" + values[0] + "'");
-				world = sender.getServer().getWorld(values[0]);
+				world = w;
 			} else if (param.equals("asc"))
 				order = Order.ASC;
 			else if (param.equals("desc"))

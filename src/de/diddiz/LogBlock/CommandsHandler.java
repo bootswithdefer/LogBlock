@@ -260,7 +260,6 @@ public class CommandsHandler implements CommandExecutor
 				else if (args[0].equalsIgnoreCase("savequeue")) {
 					if (logblock.hasPermission(sender, "logblock.rollback"))
 						new CommandSaveQueue(sender, null, true);
-
 					else
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else if (command.equals("rollback") || command.equals("undo") || command.equals("rb")) {
@@ -418,16 +417,16 @@ public class CommandsHandler implements CommandExecutor
 					params.needSignText = true;
 				if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
 					params.needChestAccess = true;
+				if (params.limit < 0 && params.sum == SummarizationMode.NONE)
+					params.limit = config.linesLimit;
 				conn = logblock.getConnection();
 				state = conn.createStatement();
-				if (params.limit == 15 && params.sum == SummarizationMode.NONE)
-					params.limit = config.linesLimit;
 				rs = state.executeQuery(params.getQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
-				final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
 				if (rs.next()) {
 					rs.beforeFirst();
 					if (params.sum == SummarizationMode.NONE) {
+						final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
 						while (rs.next())
 							blockchanges.add(new BlockChange(rs, params));
 						logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new BlockChange[blockchanges.size()]);
@@ -564,7 +563,6 @@ public class CommandsHandler implements CommandExecutor
 				params.needData = true;
 				params.needSignText = true;
 				params.needChestAccess = true;
-				params.limit = -1;
 				params.order = Order.DESC;
 				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
@@ -624,7 +622,6 @@ public class CommandsHandler implements CommandExecutor
 				params.needData = true;
 				params.needSignText = true;
 				params.needChestAccess = true;
-				params.limit = -1;
 				params.order = Order.ASC;
 				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
@@ -676,14 +673,10 @@ public class CommandsHandler implements CommandExecutor
 				final File dumpFolder = new File(logblock.getDataFolder(), "dump");
 				if (!dumpFolder.exists())
 					dumpFolder.mkdirs();
-				final SimpleDateFormat formatter = new SimpleDateFormat("yyMMddHHmmss");
+				final String time = new SimpleDateFormat("yyMMddHHmmss").format(System.currentTimeMillis());
 				int deleted;
 				final String table = params.getTable();
-				final String join;
-				if (params.players.size() > 0)
-					join = "INNER JOIN `lb-players` USING (playerid) ";
-				else
-					join = "";
+				final String join = params.players.size() > 0 ? "INNER JOIN `lb-players` USING (playerid) " : "";
 				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` " + join + params.getWhere());
 				rs.next();
 				if ((deleted = rs.getInt(1)) > 0) {
@@ -697,10 +690,10 @@ public class CommandsHandler implements CommandExecutor
 					}
 					if (config.dumpDeletedLog)
 						try {
-							state.execute("SELECT * FROM `" + table + "` " + join + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, formatter.format(System.currentTimeMillis()) + " " + table + " " + params.getTitle().replace(":", ".") + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+							state.execute("SELECT * FROM `" + table + "` " + join + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, time + " " + table + " " + params.getTitle().replace(":", ".") + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 						} catch (final SQLException ex) {
 							sender.sendMessage(ChatColor.RED + "Error while dumping log. Make sure your MySQL user has access to the LogBlock folder, or disable clearlog.dumpDeletedLog");
-							log.log(Level.SEVERE, "[LogBlock ClearLog] Exception while dumping", ex);
+							log.log(Level.SEVERE, "[LogBlock ClearLog] Exception while dumping log: ", ex);
 							return;
 						}
 					state.execute("DELETE `" + table + "` FROM `" + table + "` " + join + params.getWhere());
@@ -710,7 +703,7 @@ public class CommandsHandler implements CommandExecutor
 				rs.next();
 				if ((deleted = rs.getInt(1)) > 0) {
 					if (config.dumpDeletedLog)
-						state.execute("SELECT id, signtext FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, formatter.format(System.currentTimeMillis()) + " " + table + "-sign " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+						state.execute("SELECT id, signtext FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, time + " " + table + "-sign " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 					state.execute("DELETE `" + table + "-sign` FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
 					sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-sign. Deleted " + deleted + " entries.");
 				}
@@ -718,7 +711,7 @@ public class CommandsHandler implements CommandExecutor
 				rs.next();
 				if ((deleted = rs.getInt(1)) > 0) {
 					if (config.dumpDeletedLog)
-						state.execute("SELECT id, itemtype, itemamount, itemdata FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, formatter.format(System.currentTimeMillis()) + " " + table + "-chest " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+						state.execute("SELECT id, itemtype, itemamount, itemdata FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, time + " " + table + "-chest " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 					state.execute("DELETE `" + table + "-chest` FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
 					sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-chest. Deleted " + deleted + " entries.");
 				}
