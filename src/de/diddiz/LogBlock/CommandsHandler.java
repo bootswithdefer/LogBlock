@@ -262,11 +262,8 @@ public class CommandsHandler implements CommandExecutor
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
 						params.minutes = logblock.getConfig().defaultTime;
-						params.parseArgs(sender, argsToList(args, 1));
-						params.limit = -1;
-						params.order = Order.DESC;
-						params.sum = SummarizationMode.NONE;
 						params.bct = BlockChangeType.ALL;
+						params.parseArgs(sender, argsToList(args, 1));
 						new CommandRollback(sender, params, true);
 					} else
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
@@ -274,11 +271,8 @@ public class CommandsHandler implements CommandExecutor
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
 						params.minutes = logblock.getConfig().defaultTime;
-						params.parseArgs(sender, argsToList(args, 1));
-						params.limit = -1;
-						params.order = Order.ASC;
-						params.sum = SummarizationMode.NONE;
 						params.bct = BlockChangeType.ALL;
+						params.parseArgs(sender, argsToList(args, 1));
 						new CommandRedo(sender, params, true);
 					} else
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
@@ -411,24 +405,32 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				params.needDate = true;
+				params.needType = true;
+				params.needData = true;
+				params.needPlayer = true;
+				if (params.types.size() == 0 || params.types.contains(63) || params.types.contains(68))
+					params.needSignText = true;
+				if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
+					params.needChestAccess = true;
 				conn = logblock.getConnection();
 				state = conn.createStatement();
 				if (params.limit == 15 && params.sum == SummarizationMode.NONE)
 					params.limit = config.linesLimit;
-				rs = state.executeQuery(params.getLookupQuery());
+				rs = state.executeQuery(params.getQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
 				final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
 				if (rs.next()) {
 					rs.beforeFirst();
 					if (params.sum == SummarizationMode.NONE) {
 						while (rs.next())
-							blockchanges.add(new BlockChange(rs, params.coords));
+							blockchanges.add(new BlockChange(rs, params));
 						logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new BlockChange[blockchanges.size()]);
 						if (blockchanges.size() > config.linesPerPage)
 							sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
 						showPage(sender, 1);
 					} else {
-						final HistoryFormatter histformatter = new HistoryFormatter(params.sum, params.coords, (sender instanceof Player ? 2 / 3f : 1));
+						final HistoryFormatter histformatter = new HistoryFormatter(params, (sender instanceof Player ? 2 / 3f : 1));
 						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player"));
 						while (rs.next())
 							sender.sendMessage(ChatColor.GOLD + histformatter.format(rs));
@@ -457,16 +459,24 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			File file = null;
 			try {
+				params.needDate = true;
+				params.needType = true;
+				params.needData = true;
+				params.needPlayer = true;
+				if (params.types.size() == 0 || params.types.contains(63) || params.types.contains(68))
+					params.needSignText = true;
+				if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
+					params.needChestAccess = true;
 				conn = logblock.getConnection();
 				state = conn.createStatement();
 				file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".") + ".log");
 				sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
-				rs = state.executeQuery(params.getLookupQuery());
+				rs = state.executeQuery(params.getQuery());
 				file.getParentFile().mkdirs();
 				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
 				final String newline = System.getProperty("line.separator");
-				final HistoryFormatter histformatter = new HistoryFormatter(params.sum, params.coords, 1);
+				final HistoryFormatter histformatter = new HistoryFormatter(params, 1);
 				file.getParentFile().mkdirs();
 				int counter = 0;
 				while (rs.next()) {
@@ -511,9 +521,11 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				params.needCoords = true;
+				params.limit = 1;
 				conn = logblock.getConnection();
 				state = conn.createStatement();
-				rs = state.executeQuery("SELECT x, y, z FROM `" + params.getTable() + "` INNER JOIN `lb-players` USING (playerid) " + params.getWhere() + params.getOrderBy() + " LIMIT 1");
+				rs = state.executeQuery(params.getQuery());
 				if (rs.next()) {
 					final Player player = (Player)sender;
 					final int y = rs.getInt(2);
@@ -542,6 +554,14 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				params.needCoords = true;
+				params.needType = true;
+				params.needData = true;
+				params.needSignText = true;
+				params.needChestAccess = true;
+				params.limit = -1;
+				params.order = Order.DESC;
+				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
 				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
@@ -550,7 +570,7 @@ public class CommandsHandler implements CommandExecutor
 					new CommandSaveQueue(sender, null, false);
 				if (!params.silent)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
-				rs = state.executeQuery(params.getRollbackQuery());
+				rs = state.executeQuery(params.getQuery());
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
 				while (rs.next())
 					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
@@ -594,15 +614,22 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
+				params.needCoords = true;
+				params.needType = true;
+				params.needData = true;
+				params.needSignText = true;
+				params.needChestAccess = true;
+				params.limit = -1;
+				params.order = Order.ASC;
+				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
 				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
-				rs = state.executeQuery(params.getRollbackQuery());
+				rs = state.executeQuery(params.getQuery());
 				if (!params.silent)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
-
 				while (rs.next())
 					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), (short)-rs.getShort("itemamount"), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
@@ -641,7 +668,9 @@ public class CommandsHandler implements CommandExecutor
 				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
-				final File dumpFolder = new File(logblock.getDataFolder(), "dumb");
+				final File dumpFolder = new File(logblock.getDataFolder(), "dump");
+				if (!dumpFolder.exists())
+					dumpFolder.mkdirs();
 				final SimpleDateFormat formatter = new SimpleDateFormat("yyMMddHHmmss");
 				int deleted;
 				final String table = params.getTable();

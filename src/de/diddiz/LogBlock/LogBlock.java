@@ -267,12 +267,11 @@ public class LogBlock extends JavaPlugin
 		if (conn == null)
 			throw new SQLException("No connection");
 		try {
-			params.getLookupQuery();
 			state = conn.createStatement();
-			rs = state.executeQuery(params.getLookupQuery());
+			rs = state.executeQuery(params.getQuery());
 			final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
 			while (rs.next())
-				blockchanges.add(new BlockChange(rs, params.coords));
+				blockchanges.add(new BlockChange(rs, params));
 			return blockchanges;
 		} finally {
 			if (state != null)

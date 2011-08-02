@@ -30,12 +30,12 @@ public class QueryParams implements Cloneable
 	public Location loc = null;
 	public Order order = Order.DESC;
 	public List<String> players = new ArrayList<String>();
-	public boolean excludePlayersMode = false;
-	public boolean prepareToolQuery = false, coords = false, silent = false;
+	public boolean excludePlayersMode = false, prepareToolQuery = false, silent = false;
 	public Selection sel = null;
 	public SummarizationMode sum = SummarizationMode.NONE;
 	public List<Integer> types = new ArrayList<Integer>();
 	public World world = null;
+	public boolean needId = false, needDate = false, needType = false, needData = false, needPlayer = false, needCoords = false, needSignText = false, needChestAccess = false;
 	private final LogBlock logblock;
 
 	public QueryParams(LogBlock logblock) {
@@ -52,36 +52,44 @@ public class QueryParams implements Cloneable
 	}
 
 	public String getLimit() {
-		return limit != -1 ? "LIMIT " + limit : "";
+		return limit > 0 ? "LIMIT " + limit : "";
 	}
 
-	public String getOrderBy() {
-		return "ORDER BY date " + order + ", id " + order + " ";
-	}
+	// public String getRollbackQuery() {
+	// return "SELECT replaced, type, data, x, y, z, signtext, itemtype, itemamount, itemdata FROM `" + getTable() + "` " + (players.size() > 0 ? "INNER JOIN `lb-players` USING (playerid) " : "") + "LEFT JOIN `" + getTable() + "-sign` USING (id) LEFT JOIN `" + getTable() + "-chest` USING (id) " + getWhere() + getOrderBy() + getLimit();
+	// }
 
-	public String getLookupQuery() {
+	public String getQuery() {
 		if (sum == SummarizationMode.NONE) {
-			String select = "SELECT date, replaced, type, playername";
-			String from = "FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) ";
-			if (coords)
-				select += ", x, y, z";
-			if (types.size() == 0 || types.contains(63) || types.contains(68)) {
-				select += ", signtext";
+			String select = "SELECT ";
+			String from = "FROM `" + getTable() + "` ";
+			if (needId)
+				select += "`" + getTable() + "`.id, ";
+			if (needDate)
+				select += "date, ";
+			if (needType)
+				select += "replaced, type, ";
+			if (needData)
+				select += "data, ";
+			if (needPlayer)
+				select += "playername, ";
+			if (needPlayer || players.size() > 0)
+				from += "INNER JOIN `lb-players` USING (playerid) ";
+			if (needCoords)
+				select += "x, y, z, ";
+			if (needSignText) {
+				select += "signtext, ";
 				from += "LEFT JOIN `" + getTable() + "-sign` USING (id) ";
 			}
-			if (types.size() == 0 || types.contains(23) || types.contains(54) || types.contains(61)) {
-				select += ", itemtype, itemamount, itemdata";
+			if (needChestAccess) {
+				select += "itemtype, itemamount, itemdata, ";
 				from += "LEFT JOIN `" + getTable() + "-chest` USING (id) ";
 			}
-			return select + " " + from + getWhere() + getOrderBy() + getLimit();
+			return select.substring(0, select.length() - 2) + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
 		} else if (sum == SummarizationMode.TYPES)
 			return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(type) AS created, 0 AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere() + "AND type > 0 GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(replaced) AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere() + "AND replaced > 0 GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
 		else
 			return "SELECT playername, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(type) AS created, 0 AS destroyed FROM `" + getTable() + "` " + getWhere() + "AND type > 0 GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(replaced) AS destroyed FROM `" + getTable() + "` " + getWhere() + "AND replaced > 0 GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
-	}
-
-	public String getRollbackQuery() {
-		return "SELECT replaced, type, data, x, y, z, signtext, itemtype, itemamount, itemdata FROM `" + getTable() + "` " + (players.size() > 0 ? "INNER JOIN `lb-players` USING (playerid) " : "") + "LEFT JOIN `" + getTable() + "-sign` USING (id) LEFT JOIN `" + getTable() + "-chest` USING (id) " + getWhere() + getOrderBy() + getLimit();
 	}
 
 	public String getTable() {
@@ -182,7 +190,7 @@ public class QueryParams implements Cloneable
 					where.append("replaced > 0 AND ");
 				break;
 			case CHESTACCESS:
-				where.append("type = replaced AND (type = 23 OR type = 54 OR type = 61) AND ");
+				where.append("type = replaced AND (type = 23 OR type = 54 OR type = 61 OR type = 62) AND ");
 				break;
 		}
 		if (!players.isEmpty() && sum != SummarizationMode.PLAYERS)
@@ -328,7 +336,7 @@ public class QueryParams implements Cloneable
 			else if (param.equals("desc"))
 				order = Order.DESC;
 			else if (param.equals("coords"))
-				coords = true;
+				needCoords = true;
 			else if (param.equals("silent"))
 				silent = true;
 			else

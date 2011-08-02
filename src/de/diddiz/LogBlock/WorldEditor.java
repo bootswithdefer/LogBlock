@@ -160,7 +160,7 @@ public class WorldEditor implements Runnable
 					return PerformResult.NO_ACTION;
 				return PerformResult.SUCCESS;
 			}
-			if (!(equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
+			if (!(equalTypes(block.getTypeId(), type) ^ config.replaceAnyway.contains(block.getTypeId())))
 				return PerformResult.NO_ACTION;
 			if (state instanceof ContainerBlock) {
 				((ContainerBlock)state).getInventory().clear();

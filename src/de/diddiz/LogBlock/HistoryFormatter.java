@@ -8,23 +8,21 @@ import de.diddiz.LogBlock.QueryParams.SummarizationMode;
 
 public class HistoryFormatter
 {
-	private final SummarizationMode sum;
-	private final boolean coords;
+	private final QueryParams params;
 	private final float factor;
 
-	HistoryFormatter(SummarizationMode sum, boolean coords, float factor) {
-		this.sum = sum;
-		this.coords = coords;
+	HistoryFormatter(QueryParams params, float factor) {
+		this.params = params;
 		this.factor = factor;
 	}
 
 	String format(ResultSet rs) throws SQLException {
-		if (sum == SummarizationMode.NONE)
-			return new BlockChange(rs, coords).toString();
+		if (params.sum == SummarizationMode.NONE)
+			return new BlockChange(rs, params).toString();
 		String c1 = String.valueOf(rs.getInt(2)), c2 = String.valueOf(rs.getInt(3));
 		c1 += spaces((int)((10 - c1.length()) / factor));
 		c2 += spaces((int)((10 - c2.length()) / factor));
-		if (sum == SummarizationMode.TYPES)
+		if (params.sum == SummarizationMode.TYPES)
 			return c1 + c2 + materialName(rs.getInt(1));
 		return c1 + c2 + rs.getString(1);
 	}
