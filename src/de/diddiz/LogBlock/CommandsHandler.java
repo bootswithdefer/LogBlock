@@ -23,6 +23,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitScheduler;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.LogBlock.QueryParams.Order;
@@ -138,15 +139,17 @@ public class CommandsHandler implements CommandExecutor
 					if (sender instanceof Player) {
 						final Player player = (Player)sender;
 						if (args.length == 1) {
-							if (logblock.hasPermission(player, "logblock.tool"))
+							if (logblock.hasPermission(player, "logblock.tool")) {
 								giveTool(player, config.toolID);
-							else
+								logblock.getSession(player.getName()).toolEnabled = true;
+							} else
 								sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 						} else if (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("on")) {
 							logblock.getSession(player.getName()).toolEnabled = true;
 							player.sendMessage(ChatColor.GREEN + "Tool enabled.");
 						} else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
 							logblock.getSession(player.getName()).toolEnabled = false;
+							player.getInventory().removeItem(new ItemStack(config.toolID, 1));
 							player.sendMessage(ChatColor.GREEN + "Tool disabled.");
 						} else if (args[1].equalsIgnoreCase("mode")) {
 							final Session session = logblock.getSession(player.getName());
@@ -187,15 +190,17 @@ public class CommandsHandler implements CommandExecutor
 					if (sender instanceof Player) {
 						final Player player = (Player)sender;
 						if (args.length == 1) {
-							if (logblock.hasPermission(player, "logblock.toolblock"))
+							if (logblock.hasPermission(player, "logblock.toolblock")) {
 								giveTool(player, config.toolblockID);
-							else
+								logblock.getSession(player.getName()).toolBlockEnabled = true;
+							} else
 								player.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 						} else if (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("on")) {
 							logblock.getSession(player.getName()).toolBlockEnabled = true;
 							player.sendMessage(ChatColor.GREEN + "Tool block enabled.");
 						} else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
 							logblock.getSession(player.getName()).toolBlockEnabled = false;
+							player.getInventory().removeItem(new ItemStack(config.toolblockID, 1));
 							player.sendMessage(ChatColor.GREEN + "Tool block disabled.");
 						} else if (args[1].equalsIgnoreCase("mode")) {
 							final Session session = logblock.getSession(player.getName());
