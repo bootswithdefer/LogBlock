@@ -124,21 +124,21 @@ public class LogBlock extends JavaPlugin
 			} catch (final Exception ex) {
 				log.warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
 			}
-		if (config.logChestAccess && pm.getPlugin("BukkitContrib") == null)
+		if (config.logChestAccess && pm.getPlugin("Spout") == null)
 			try {
-				download(log, new URL("http://bit.ly/autoupdateBukkitContrib"), new File("plugins/BukkitContrib.jar"));
-				pm.loadPlugin(new File("plugins/BukkitContrib.jar"));
-				pm.enablePlugin(pm.getPlugin("BukkitContrib"));
+				download(log, new URL("http://dl.dropbox.com/u/49805/Spout.jar"), new File("plugins/Spout.jar"));
+				pm.loadPlugin(new File("plugins/Spout.jar"));
+				pm.enablePlugin(pm.getPlugin("Spout"));
 			} catch (final Exception ex) {
-				log.warning("[LogBlock] Failed to install BukkitContrib, you may have to restart your server or install it manually.");
+				log.warning("[LogBlock] Failed to install Spout, you may have to restart your server or install it manually.");
 			}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
 		if (pm.getPlugin("Permissions") != null) {
 			permissions = ((Permissions)pm.getPlugin("Permissions")).getHandler();
-			log.info("[LogBlock] Permissions found.");
+			log.info("[LogBlock] Permissions plugin found.");
 		} else
-			log.info("[LogBlock] Permissions plugin not found. Using default permissions.");
+			log.info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
 		if (config.keepLogDays >= 0) {
 			final QueryParams params = new QueryParams(this);
 			params.minutes = config.keepLogDays * -1440;
@@ -175,7 +175,7 @@ public class LogBlock extends JavaPlugin
 		if (config.logLeavesDecay)
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
 		if (config.logChestAccess)
-			if (pm.getPlugin("BukkitContrib") != null)
+			if (pm.getPlugin("Spout") != null)
 				pm.registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
 			else
 				log.warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");

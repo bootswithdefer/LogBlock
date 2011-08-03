@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
-import org.bukkitcontrib.event.inventory.InventoryCloseEvent;
-import org.bukkitcontrib.event.inventory.InventoryListener;
-import org.bukkitcontrib.event.inventory.InventoryOpenEvent;
+import org.getspout.spoutapi.event.inventory.InventoryCloseEvent;
+import org.getspout.spoutapi.event.inventory.InventoryListener;
+import org.getspout.spoutapi.event.inventory.InventoryOpenEvent;
 
 class LBChestAccessListener extends InventoryListener
 {
