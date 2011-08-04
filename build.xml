@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<project default="logblock">
+	<target name="logblock">
+		<mkdir dir="build/lib/"/>
+		<mkdir dir="build/bin/"/>
+		<get src="http://ci.bukkit.org/job/dev-Bukkit/Recommended/artifact/target/bukkit-0.0.1-SNAPSHOT.jar" dest="build/lib/bukkit.jar"/>
+		<get src="http://www.theyeticave.net/downloads/permissions/3.1.6/Permissions.jar" dest="build/lib/Permissions.jar"/>
+		<get src="http://cloud.github.com/downloads/sk89q/worldedit/worldedit-4.6.zip" dest="build/WorldEdit.zip"/>
+		<unzip src="build/WorldEdit.zip" dest="build/lib/"><patternset><include name="WorldEdit.jar"/></patternset></unzip>
+		<get src="http://dl.dropbox.com/u/49805/SpoutAPI.jar" dest="build/lib/SpoutAPI.jar"/>
+		<get src="http://cloud.github.com/downloads/DiddiZ/LogBlockQuestioner/LogBlockQuestioner%20v0.02.zip" dest="build/LogBlockQuestioner.zip"/>
+		<unzip src="build/LogBlockQuestioner.zip" dest="build/lib/"><patternset><include name="LogBlockQuestioner.jar"/></patternset></unzip>
+		<javac srcdir="src/" destdir="build/bin/" classpath="build/lib/bukkit.jar;build/lib/Permissions.jar;build/lib/WorldEdit.jar;build/lib/SpoutAPI.jar;build/lib/LogBlockQuestioner.jar" debuglevel="lines" includeantruntime="false"/>
+		<jar destfile="LogBlock.jar" manifest="MANIFEST.MF">
+			<fileset dir="bin/"/>
+			<fileset file="plugin.yml" />
+		</jar>
+		<delete dir="build/"/>
+	</target>
+</project>
