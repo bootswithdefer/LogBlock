@@ -133,7 +133,7 @@ public class WorldEditor implements Runnable
 				return PerformResult.BLACKLISTED;
 			final Block block = loc.getBlock();
 			if (replaced == 0 && block.getTypeId() == 0)
-				return PerformResult.SUCCESS;
+				return PerformResult.NO_ACTION;
 			final BlockState state = block.getState();
 			if (!world.isChunkLoaded(block.getChunk()))
 				world.loadChunk(block.getChunk());
@@ -160,13 +160,18 @@ public class WorldEditor implements Runnable
 					return PerformResult.NO_ACTION;
 				return PerformResult.SUCCESS;
 			}
-			if (!(equalTypes(block.getTypeId(), type) ^ config.replaceAnyway.contains(block.getTypeId())))
+			if (!(equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
 				return PerformResult.NO_ACTION;
 			if (state instanceof ContainerBlock) {
 				((ContainerBlock)state).getInventory().clear();
 				state.update();
 			}
-			if (!block.setTypeIdAndData(replaced, data, true))
+			if (block.getTypeId() == replaced) {
+				if (block.getData() != (type == 0 ? data : (byte)0))
+					block.setData(type == 0 ? data : (byte)0, true);
+				else
+					return PerformResult.NO_ACTION;
+			} else if (!block.setTypeIdAndData(replaced, type == 0 ? data : (byte)0, true))
 				throw new WorldEditorException(block.getTypeId(), replaced, block.getLocation());
 			final int curtype = block.getTypeId();
 			if (signtext != null && (curtype == 63 || curtype == 68)) {
