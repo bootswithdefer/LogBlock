@@ -260,6 +260,10 @@ public class LogBlock extends JavaPlugin
 		return session;
 	}
 
+	/**
+	 * @param params
+	 * QueryParams that contains the needed columns (all other will be filled with default values) and the params. World is required.
+	 */
 	public List<BlockChange> getBlockChanges(QueryParams params) throws SQLException {
 		final Connection conn = getConnection();
 		Statement state = null;
