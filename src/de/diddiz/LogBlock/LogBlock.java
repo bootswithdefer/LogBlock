@@ -126,7 +126,7 @@ public class LogBlock extends JavaPlugin
 			}
 		if (config.logChestAccess && pm.getPlugin("Spout") == null)
 			try {
-				download(log, new URL("http://dl.dropbox.com/u/49805/Spout.jar"), new File("plugins/Spout.jar"));
+				download(log, new URL("http://ci.getspout.org/job/Spout/Recommended/artifact/target/spout-dev-SNAPSHOT.jar"), new File("plugins/Spout.jar"));
 				pm.loadPlugin(new File("plugins/Spout.jar"));
 				pm.enablePlugin(pm.getPlugin("Spout"));
 			} catch (final Exception ex) {
