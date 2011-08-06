@@ -340,7 +340,7 @@ public class CommandsHandler implements CommandExecutor
 		if (session.lookupCache != null && session.lookupCache.length > 0) {
 			final int startpos = (page - 1) * config.linesPerPage;
 			if (page > 0 && startpos <= session.lookupCache.length - 1) {
-				final int stoppos = startpos + config.linesPerPage > session.lookupCache.length ? session.lookupCache.length - 1 : startpos + config.linesPerPage - 1;
+				final int stoppos = startpos + config.linesPerPage >= session.lookupCache.length ? session.lookupCache.length - 1 : startpos + config.linesPerPage - 1;
 				final int numberOfPages = (int)Math.ceil(session.lookupCache.length / (double)config.linesPerPage);
 				if (numberOfPages != 1)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Page " + page + "/" + numberOfPages);
@@ -434,7 +434,7 @@ public class CommandsHandler implements CommandExecutor
 							sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
 						showPage(sender, 1);
 					} else {
-						final HistoryFormatter histformatter = new HistoryFormatter(params, (sender instanceof Player ? 2 / 3f : 1));
+						final HistoryFormatter histformatter = new HistoryFormatter(params, sender instanceof Player ? 2 / 3f : 1);
 						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player"));
 						while (rs.next())
 							sender.sendMessage(ChatColor.GOLD + histformatter.format(rs));
