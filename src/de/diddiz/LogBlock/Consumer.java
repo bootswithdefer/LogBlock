@@ -293,10 +293,11 @@ public class Consumer extends TimerTask
 	}
 
 	public void writeToFile() throws FileNotFoundException {
-		final File file = new File("plugins/LogBlock/consumer/queue.sql");
-		file.getParentFile().mkdirs();
-		final PrintWriter writer = new PrintWriter(file);
+		final long time = System.currentTimeMillis();
 		final Set<Integer> insertedPlayers = new HashSet<Integer>();
+		int counter = 0;
+		new File("plugins/LogBlock/import/").mkdirs();
+		PrintWriter writer = new PrintWriter(new File("plugins/LogBlock/import/queue-" + time + "-0.sql"));
 		while (!queue.isEmpty()) {
 			final Row r = queue.poll();
 			if (r == null)
@@ -308,6 +309,11 @@ public class Consumer extends TimerTask
 				}
 			for (final String insert : r.getInserts())
 				writer.println(insert);
+			counter++;
+			if (counter % 1000 == 0) {
+				writer.close();
+				writer = new PrintWriter(new File("plugins/LogBlock/import/queue-" + time + "-" + counter / 1000 + ".sql"));
+			}
 		}
 		writer.close();
 	}

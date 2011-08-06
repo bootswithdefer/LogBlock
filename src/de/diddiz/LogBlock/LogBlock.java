@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -66,7 +67,7 @@ public class LogBlock extends JavaPlugin
 			updater = new Updater(this);
 			log.info("[LogBlock] Version check: " + updater.checkVersion());
 			config = new Config(this);
-			File file = new File("lib/mysql-connector-java-bin.jar");
+			final File file = new File("lib/mysql-connector-java-bin.jar");
 			if (!file.exists() || file.length() == 0)
 				download(log, new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
 			if (!file.exists() || file.length() == 0)
@@ -77,24 +78,39 @@ public class LogBlock extends JavaPlugin
 			if (updater.update())
 				config = new Config(this);
 			updater.checkTables();
-			file = new File("plugins/LogBlock/consumer/queue.sql");
-			if (file.exists()) {
-				log.info("[LogBlock] Found stored queue. Try to import now.");
+			final File[] imports = new File("plugins/LogBlock/import/").listFiles(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.toLowerCase().endsWith(".sql");
+				}
+			});
+			if (imports != null && imports.length > 0) {
+				log.info("[LogBlock] Found " + imports.length + "imports.");
 				Connection conn = null;
 				try {
 					conn = getConnection();
 					conn.setAutoCommit(false);
-					final Statement state = conn.createStatement();
-					final BufferedReader reader = new BufferedReader(new FileReader(file));
-					String insert = null;
-					while ((insert = reader.readLine()) != null)
-						state.execute(insert);
-					conn.commit();
-					reader.close();
-					file.delete();
+					final Statement st = conn.createStatement();
+					for (final File sqlFile : imports)
+						try {
+							log.info("[LogBlock] Trying to import " + sqlFile.getName() + " ...");
+							final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
+							String line = null;
+							while ((line = reader.readLine()) != null)
+								st.addBatch(line);
+							st.executeBatch();
+							conn.commit();
+							reader.close();
+							sqlFile.delete();
+							log.info("[LogBlock] Successfully imported " + sqlFile.getName() + ".");
+						} catch (final Exception ex) {
+							log.log(Level.WARNING, "[LogBlock] Failed to import " + sqlFile.getName() + ": ", ex);
+							file.renameTo(new File("plugins/LogBlock/import/" + sqlFile.getName() + ".failed"));
+						}
+					st.close();
 					log.info("[LogBlock] Successfully imported stored queue.");
 				} catch (final Exception ex) {
-					log.log(Level.WARNING, "[LogBlock] Failed to import stored queue: ", ex);
+					log.log(Level.WARNING, "[LogBlock] Error while importing: ", ex);
 				} finally {
 					if (conn != null)
 						conn.close();
