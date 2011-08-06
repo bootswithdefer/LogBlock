@@ -415,7 +415,7 @@ public class CommandsHandler implements CommandExecutor
 				params.needPlayer = true;
 				if (params.types.size() == 0 || params.types.contains(63) || params.types.contains(68))
 					params.needSignText = true;
-				if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
+				if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62) || params.bct == BlockChangeType.CHESTACCESS)
 					params.needChestAccess = true;
 				if (params.limit < 0 && params.sum == SummarizationMode.NONE)
 					params.limit = config.linesLimit;

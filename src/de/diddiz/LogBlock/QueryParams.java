@@ -187,6 +187,13 @@ public class QueryParams implements Cloneable
 				break;
 			case CHESTACCESS:
 				where.append("type = replaced AND (type = 23 OR type = 54 OR type = 61 OR type = 62) AND ");
+				if (!types.isEmpty()) {
+					where.append('(');
+					for (final int type : types)
+						where.append("itemtype = " + type + " OR ");
+					where.delete(where.length() - 4, where.length());
+					where.append(") AND ");
+				}
 				break;
 		}
 		if (!players.isEmpty() && sum != SummarizationMode.PLAYERS)
