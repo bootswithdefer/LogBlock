@@ -16,6 +16,8 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -134,6 +136,26 @@ class LBBlockListener extends BlockListener
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null && wcfg.logSignTexts)
 			consumer.queueSignPlace(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), event.getLines());
+	}
+
+	@Override
+	public void onBlockForm(BlockFormEvent event) {
+		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
+		if (!event.isCancelled() && wcfg != null) {
+			final int type = event.getNewState().getTypeId();
+			if (wcfg.logSnowForm && (type == 78 || type == 79))
+				consumer.queueBlockReplace("SnowForm", event.getBlock().getState(), event.getNewState());
+		}
+	}
+
+	@Override
+	public void onBlockFade(BlockFadeEvent event) {
+		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
+		if (!event.isCancelled() && wcfg != null) {
+			final int type = event.getBlock().getTypeId();
+			if (wcfg.logSnowFade && (type == 78 || type == 79))
+				consumer.queueBlockReplace("SnowFade", event.getBlock().getState(), event.getNewState());
+		}
 	}
 
 	private void addError(String error) {

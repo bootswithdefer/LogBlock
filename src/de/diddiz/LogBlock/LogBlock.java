@@ -186,6 +186,10 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Priority.Monitor, this);
 		if (config.logFire)
 			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Priority.Monitor, this);
+		if (config.logSnowForm)
+			pm.registerEvent(Type.BLOCK_FORM, lbBlockListener, Priority.Monitor, this);
+		if (config.logSnowFade)
+			pm.registerEvent(Type.BLOCK_FADE, lbBlockListener, Priority.Monitor, this);
 		if (config.logExplosions)
 			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Priority.Monitor, this);
 		if (config.logLeavesDecay)
