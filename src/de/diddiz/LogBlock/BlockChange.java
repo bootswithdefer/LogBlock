@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import org.bukkit.Location;
 
-public class BlockChange
+public class BlockChange implements LookupCacheElement
 {
 	private final static SimpleDateFormat formatter = new SimpleDateFormat("MM-dd HH:mm:ss");
 	public final long id, date;
@@ -32,7 +32,7 @@ public class BlockChange
 	public BlockChange(ResultSet rs, QueryParams p) throws SQLException {
 		id = p.needId ? rs.getInt("id") : 0;
 		date = p.needDate ? rs.getTimestamp("date").getTime() : 0;
-		loc = p.needCoords ? new Location(null, rs.getInt("x"), rs.getInt("y"), rs.getInt("z")) : null;
+		loc = p.needCoords ? new Location(p.world, rs.getInt("x"), rs.getInt("y"), rs.getInt("z")) : null;
 		playerName = p.needPlayer ? rs.getString("playername") : null;
 		replaced = p.needType ? rs.getInt("replaced") : 0;
 		type = p.needType ? rs.getInt("type") : 0;
@@ -79,5 +79,15 @@ public class BlockChange
 		if (loc != null)
 			msg.append(" at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
 		return msg.toString();
+	}
+
+	@Override
+	public Location getLocation() {
+		return loc;
+	}
+
+	@Override
+	public String getMessage() {
+		return toString();
 	}
 }

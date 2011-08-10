@@ -164,7 +164,7 @@ public class BukkitUtils
 	}
 
 	public static byte rawData(ItemStack item) {
-		return item.getType() != null ? (item.getData() != null ? item.getData().getData() : 0) : 0;
+		return item.getType() != null ? item.getData() != null ? item.getData().getData() : 0 : 0;
 	}
 
 	public static int saveSpawnHeight(Location loc) {
@@ -186,7 +186,7 @@ public class BukkitUtils
 
 	public static int modifyContainer(BlockState b, ItemStack item) throws Exception {
 		if (!(b instanceof ContainerBlock))
-			throw new Exception("No container at " + b.getBlock().getLocation().toString());
+			throw new Exception("No container");
 		final Inventory inv = ((ContainerBlock)b).getInventory();
 		if (item.getAmount() < 0) {
 			item.setAmount(-item.getAmount());

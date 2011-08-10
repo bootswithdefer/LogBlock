@@ -313,7 +313,24 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("tp")) {
 					if (sender instanceof Player) {
 						if (logblock.hasPermission(sender, "logblock.tp"))
-							new CommandTeleport(sender, new QueryParams(logblock, sender, argsToList(args, 1)), true);
+							if (args.length == 2 || isInt(args[1])) {
+								final int pos = Integer.parseInt(args[1]) - 1;
+								final Player player = (Player)sender;
+								final Session session = logblock.getSession(player.getName());
+								if (session.lookupCache != null)
+									if (pos >= 0 && pos < session.lookupCache.length) {
+										final Location loc = session.lookupCache[pos].getLocation();
+										if (loc != null) {
+											player.teleport(new Location(loc.getWorld(), loc.getX() + 0.5, saveSpawnHeight(loc), loc.getZ() + 0.5, player.getLocation().getYaw(), 90));
+											player.sendMessage(ChatColor.LIGHT_PURPLE + "Teleported to " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
+										} else
+											sender.sendMessage(ChatColor.RED + "There is no location associated with that");
+									} else
+										sender.sendMessage(ChatColor.RED + "'" + args[1] + " is out of range");
+								else
+									sender.sendMessage(ChatColor.RED + "You havn't done a lookup yet");
+							} else
+								new CommandTeleport(sender, new QueryParams(logblock, sender, argsToList(args, 1)), true);
 						else
 							sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
 					} else
@@ -329,6 +346,9 @@ public class CommandsHandler implements CommandExecutor
 				} else
 					sender.sendMessage(ChatColor.RED + "Unknown command '" + args[0] + "'");
 			}
+		} catch (final NullPointerException ex) {
+			sender.sendMessage(ChatColor.RED + "Error, check log");
+			log.log(Level.WARNING, "NPE in commandshandler: ", ex);
 		} catch (final Exception ex) {
 			sender.sendMessage(ChatColor.RED + ex.getMessage());
 		}
@@ -345,7 +365,7 @@ public class CommandsHandler implements CommandExecutor
 				if (numberOfPages != 1)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Page " + page + "/" + numberOfPages);
 				for (int i = startpos; i <= stoppos; i++)
-					sender.sendMessage(ChatColor.GOLD + session.lookupCache[i].toString());
+					sender.sendMessage(ChatColor.GOLD + (session.lookupCache[i].getLocation() != null ? "(" + (i + 1) + ") " : "") + session.lookupCache[i].getMessage());
 				session.page = page;
 			} else
 				sender.sendMessage(ChatColor.RED + "There isn't a page '" + page + "'");
@@ -590,6 +610,7 @@ public class CommandsHandler implements CommandExecutor
 					return;
 				}
 				editor.start();
+				logblock.getSession(senderName(sender)).lookupCache = editor.errors;
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
 				if (!params.silent && config.askClearLogAfterRollback && logblock.hasPermission(sender, "logblock.clearlog") && questioner != null && sender instanceof Player) {
 					Thread.sleep(1000);

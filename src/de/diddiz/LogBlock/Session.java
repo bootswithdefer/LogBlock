@@ -9,7 +9,7 @@ public class Session
 	public boolean toolBlockEnabled = true;
 	public QueryParams toolBlockQuery;
 	public ToolMode toolBlockMode;
-	public BlockChange[] lookupCache = null;
+	public LookupCacheElement[] lookupCache = null;
 	public int page = 1;
 
 	Session(LogBlock logblock) {

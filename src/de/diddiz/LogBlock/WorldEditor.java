@@ -32,9 +32,9 @@ public class WorldEditor implements Runnable
 	private final Queue<Edit> edits = new LinkedBlockingQueue<Edit>();
 	private final World world;
 	private int taskID;
-	private int successes = 0, errors = 0, blacklistCollisions = 0;
+	private int successes = 0, blacklistCollisions = 0;
 	private long elapsedTime = 0;
-	final List<String> errorList = new ArrayList<String>();
+	public LookupCacheElement[] errors;
 
 	public WorldEditor(LogBlock logblock, World world) {
 		log = logblock.getServer().getLogger();
@@ -52,7 +52,7 @@ public class WorldEditor implements Runnable
 	}
 
 	public int getErrors() {
-		return errors;
+		return errors.length;
 	}
 
 	public int getBlacklistCollisions() {
@@ -67,21 +67,22 @@ public class WorldEditor implements Runnable
 		return elapsedTime;
 	}
 
-	synchronized public void start() throws WorldEditorException {
+	synchronized public void start() throws Exception {
 		final long start = System.currentTimeMillis();
 		taskID = logblock.getServer().getScheduler().scheduleSyncRepeatingTask(logblock, this, 0, 1);
 		if (taskID == -1)
-			throw new WorldEditorException("Failed to schedule task");
+			throw new Exception("Failed to schedule task");
 		try {
 			this.wait();
 		} catch (final InterruptedException ex) {
-			throw new WorldEditorException("Interrupted");
+			throw new Exception("Interrupted");
 		}
 		elapsedTime = System.currentTimeMillis() - start;
 	}
 
 	@Override
 	public synchronized void run() {
+		final List<WorldEditorException> errorList = new ArrayList<WorldEditorException>();
 		int counter = 0;
 		while (!edits.isEmpty() && counter < 1000) {
 			try {
@@ -94,11 +95,8 @@ public class WorldEditor implements Runnable
 						break;
 				}
 			} catch (final WorldEditorException ex) {
-				errors++;
-				errorList.add(ex.getMessage());
+				errorList.add(ex);
 			} catch (final Exception ex) {
-				errors++;
-				errorList.add(ex.getMessage());
 				log.log(Level.WARNING, "[LogBlock WorldEditor] Exeption: ", ex);
 			}
 			counter++;
@@ -110,10 +108,11 @@ public class WorldEditor implements Runnable
 					final File file = new File("plugins/LogBlock/error/WorldEditor-" + new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis()) + ".log");
 					file.getParentFile().mkdirs();
 					final PrintWriter writer = new PrintWriter(file);
-					for (final String err : errorList)
-						writer.println(err);
+					for (final LookupCacheElement err : errorList)
+						writer.println(err.getMessage());
 					writer.close();
 				} catch (final Exception ex) {}
+			errors = errorList.toArray(new WorldEditorException[errorList.size()]);
 			notify();
 		}
 	}
@@ -210,18 +209,22 @@ public class WorldEditor implements Runnable
 	}
 
 	@SuppressWarnings("serial")
-	public static class WorldEditorException extends Exception
+	public static class WorldEditorException extends Exception implements LookupCacheElement
 	{
-		public WorldEditorException(String msg) {
-			super(msg);
-		}
+		private final Location loc;
 
 		public WorldEditorException(int typeBefore, int typeAfter, Location loc) {
 			this("Failed to replace " + materialName(typeBefore) + " with " + materialName(typeAfter), loc);
 		}
 
 		public WorldEditorException(String msg, Location loc) {
-			super(msg + " at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
+			super(msg + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
+			this.loc = loc;
+		}
+
+		@Override
+		public Location getLocation() {
+			return loc;
 		}
 	}
 }
