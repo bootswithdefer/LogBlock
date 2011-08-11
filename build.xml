@@ -7,10 +7,12 @@
 		<get src="http://www.theyeticave.net/downloads/permissions/3.1.6/Permissions.jar" dest="lib/Permissions.jar"/>
 		<get src="http://cloud.github.com/downloads/sk89q/worldedit/worldedit-4.6.zip" dest="WorldEdit.zip"/>
 		<unzip src="WorldEdit.zip" dest="lib/"><patternset><include name="WorldEdit.jar"/></patternset></unzip>
+		<delete file="WorldEdit.zip"/>
 		<get src="http://ci.getspout.org/job/Spout/Recommended/artifact/target/spout-dev-SNAPSHOT.jar" dest="lib/Spout.jar"/>
 		<get src="http://cloud.github.com/downloads/DiddiZ/LogBlockQuestioner/LogBlockQuestioner%20v0.02.zip" dest="LogBlockQuestioner.zip"/>
 		<unzip src="LogBlockQuestioner.zip" dest="lib/"><patternset><include name="LogBlockQuestioner.jar"/></patternset></unzip>
-		<javac srcdir="src/" destdir="bin/" classpath="lib/*.jar" debuglevel="lines" includeantruntime="false"/>
+		<delete file="LogBlockQuestioner.zip"/>
+		<javac srcdir="src/" destdir="bin/" classpath="lib/bukkit.jar;lib/Permissions.jar;lib/WorldEdit.jar;lib/SpoutAPI.jar;lib/LogBlockQuestioner.jar" debuglevel="lines" includeantruntime="false"/>
 		<jar destfile="LogBlock.jar" manifest="MANIFEST.MF">
 			<fileset dir="bin/"/>
 			<fileset file="plugin.yml" />
