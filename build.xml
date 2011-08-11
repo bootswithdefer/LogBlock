@@ -12,7 +12,7 @@
 		<get src="http://cloud.github.com/downloads/DiddiZ/LogBlockQuestioner/LogBlockQuestioner%20v0.02.zip" dest="LogBlockQuestioner.zip"/>
 		<unzip src="LogBlockQuestioner.zip" dest="lib/"><patternset><include name="LogBlockQuestioner.jar"/></patternset></unzip>
 		<delete file="LogBlockQuestioner.zip"/>
-		<javac srcdir="src/" destdir="bin/" classpath="lib/bukkit.jar;lib/Permissions.jar;lib/WorldEdit.jar;lib/Spout.jar;lib/LogBlockQuestioner.jar" debuglevel="lines" includeantruntime="false"/>
+		<javac srcdir="src/" destdir="bin/" classpath="lib/bukkit.jar;lib/Permissions.jar;lib/WorldEdit.jar;lib/Spout.jar;lib/LogBlockQuestioner.jar" debug="true" debuglevel="lines,source" includeantruntime="false"/>
 		<jar destfile="LogBlock.jar" manifest="MANIFEST.MF">
 			<fileset dir="bin/"/>
 			<fileset file="src/plugin.yml"/>
