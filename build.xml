@@ -15,7 +15,7 @@
 		<javac srcdir="src/" destdir="bin/" classpath="lib/bukkit.jar;lib/Permissions.jar;lib/WorldEdit.jar;lib/Spout.jar;lib/LogBlockQuestioner.jar" debuglevel="lines" includeantruntime="false"/>
 		<jar destfile="LogBlock.jar" manifest="MANIFEST.MF">
 			<fileset dir="bin/"/>
-			<fileset file="plugin.yml" />
+			<fileset file="src/plugin.yml"/>
 		</jar>
 	</target>
 </project>
