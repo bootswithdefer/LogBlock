@@ -463,10 +463,9 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
 					logblock.getSession(senderName(sender)).lookupCache = null;
 				}
-
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
-				log.log(Level.SEVERE, "[LogBlock Lookup] Exception: ", ex);
+				log.log(Level.SEVERE, "[LogBlock Lookup] " + params.getQuery() + ": ", ex);
 			} finally {
 				close();
 			}
@@ -511,7 +510,7 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GREEN + "Wrote " + counter + " lines.");
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
-				log.log(Level.SEVERE, "[LogBlock WriteLogFile] Exception (file was " + file.getAbsolutePath() + "): ", ex);
+				log.log(Level.SEVERE, "[LogBlock WriteLogFile] " + params.getQuery() + " (file was " + file.getAbsolutePath() + "): ", ex);
 			} finally {
 				close();
 			}
@@ -562,7 +561,7 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.RED + "No block change found to teleport to");
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
-				log.log(Level.SEVERE, "[LogBlock Teleport] Exception: ", ex);
+				log.log(Level.SEVERE, "[LogBlock Teleport] " + params.getQuery() + ": ", ex);
 			} finally {
 				close();
 			}
@@ -622,7 +621,7 @@ public class CommandsHandler implements CommandExecutor
 				}
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
-				log.log(Level.SEVERE, "[LogBlock Rollback] Exception: ", ex);
+				log.log(Level.SEVERE, "[LogBlock Rollback] " + params.getQuery() + ": ", ex);
 			} finally {
 				close();
 			}
@@ -671,7 +670,7 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.GREEN + "Redo finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
-				log.log(Level.SEVERE, "[LogBlock Redo] Exception: ", ex);
+				log.log(Level.SEVERE, "[LogBlock Redo] " + params.getQuery() + ": ", ex);
 			} finally {
 				close();
 			}
