@@ -47,24 +47,23 @@ class LBEntityListener extends EntityListener
 
 	@Override
 	public void onEntityExplode(EntityExplodeEvent event) {
-		final WorldConfig wcfg = worlds.get(event.getEntity().getWorld().getName().hashCode());
+		final WorldConfig wcfg = worlds.get(event.getLocation().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null && wcfg.logExplosions) {
-			String name;
-			if (event.getEntity() instanceof TNTPrimed)
+			final String name;
+			if (event.getEntity() == null)
+				name = "Explosion";
+			else if (event.getEntity() instanceof TNTPrimed)
 				name = "TNT";
 			else if (event.getEntity() instanceof Creeper) {
 				if (logCreeperExplosionsAsPlayer) {
 					final Entity target = ((Creeper)event.getEntity()).getTarget();
-					if (target instanceof Player)
-						name = ((Player)target).getName();
-					else
-						name = "Creeper";
+					name = target instanceof Player ? ((Player)target).getName() : "Creeper";
 				} else
 					name = "Creeper";
 			} else if (event.getEntity() instanceof Fireball)
 				name = "Ghast";
 			else
-				name = "Environment";
+				name = "Explosion";
 			for (final Block block : event.blockList()) {
 				final int type = block.getTypeId();
 				if (wcfg.logSignTexts & (type == 63 || type == 68))
