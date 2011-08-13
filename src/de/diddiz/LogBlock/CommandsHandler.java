@@ -528,8 +528,16 @@ public class CommandsHandler implements CommandExecutor
 			final Consumer consumer = logblock.getConsumer();
 			if (consumer.getQueueSize() > 0) {
 				sender.sendMessage(ChatColor.DARK_AQUA + "Current queue size: " + consumer.getQueueSize());
-				while (consumer.getQueueSize() > 0)
+				int lastSize = -1, fails = 0;
+				while (consumer.getQueueSize() > 0) {
+					fails = lastSize == consumer.getQueueSize() ? fails + 1 : 0;
+					if (fails > 10) {
+						sender.sendMessage(ChatColor.RED + "Unable to save queue");
+						return;
+					}
+					lastSize = consumer.getQueueSize();
 					consumer.run();
+				}
 				sender.sendMessage(ChatColor.GREEN + "Queue saved successfully");
 			}
 		}
