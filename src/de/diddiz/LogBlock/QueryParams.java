@@ -132,7 +132,10 @@ public class QueryParams implements Cloneable
 			else if (radius == 0)
 				title.append("at clicked block ");
 		if (!(sel != null && prepareToolQuery))
-			title.append("in " + friendlyWorldname(world.getName()));
+			title.append("in " + friendlyWorldname(world.getName()) + " ");
+		if (sum != SummarizationMode.NONE)
+			title.append("summed up by " + (sum == SummarizationMode.TYPES ? "blocks" : "players") + " ");
+		title.deleteCharAt(title.length() - 1);
 		title.setCharAt(0, String.valueOf(title.charAt(0)).toUpperCase().toCharArray()[0]);
 		return title.toString();
 	}

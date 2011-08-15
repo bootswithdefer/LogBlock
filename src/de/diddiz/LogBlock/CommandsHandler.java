@@ -295,10 +295,10 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.RED + "You have to be a player.");
 				} else if (command.equals("writelogfile")) {
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
-						final QueryParams params = new QueryParams(logblock, sender, argsToList(args, 1));
+						final QueryParams params = new QueryParams(logblock);
 						params.limit = -1;
 						params.bct = BlockChangeType.ALL;
-						params.sum = SummarizationMode.NONE;
+						params.parseArgs(sender, argsToList(args, 1));
 						new CommandWriteLogFile(sender, params, true);
 					} else
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
@@ -348,7 +348,7 @@ public class CommandsHandler implements CommandExecutor
 			}
 		} catch (final NullPointerException ex) {
 			sender.sendMessage(ChatColor.RED + "Error, check log");
-			log.log(Level.WARNING, "NPE in commandshandler: ", ex);
+			log.log(Level.WARNING, "[LogBlock] NPE in commandshandler: ", ex);
 		} catch (final Exception ex) {
 			sender.sendMessage(ChatColor.RED + ex.getMessage());
 		}
@@ -445,20 +445,18 @@ public class CommandsHandler implements CommandExecutor
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
 				if (rs.next()) {
 					rs.beforeFirst();
-					if (params.sum == SummarizationMode.NONE) {
-						final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
-						while (rs.next())
+					final List<LookupCacheElement> blockchanges = new ArrayList<LookupCacheElement>();
+					while (rs.next())
+						if (params.sum == SummarizationMode.NONE)
 							blockchanges.add(new BlockChange(rs, params));
-						logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new BlockChange[blockchanges.size()]);
-						if (blockchanges.size() > config.linesPerPage)
-							sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
-						showPage(sender, 1);
-					} else {
-						final HistoryFormatter histformatter = new HistoryFormatter(params, sender instanceof Player ? 2 / 3f : 1);
+						else
+							blockchanges.add(new SummedBlockChanges(rs, params, sender instanceof Player ? 2 / 3f : 1));
+					logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
+					if (blockchanges.size() > config.linesPerPage)
+						sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
+					if (params.sum != SummarizationMode.NONE)
 						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player"));
-						while (rs.next())
-							sender.sendMessage(ChatColor.GOLD + histformatter.format(rs));
-					}
+					showPage(sender, 1);
 				} else {
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
 					logblock.getSession(senderName(sender)).lookupCache = null;
@@ -499,11 +497,15 @@ public class CommandsHandler implements CommandExecutor
 				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
 				final String newline = System.getProperty("line.separator");
-				final HistoryFormatter histformatter = new HistoryFormatter(params, 1);
 				file.getParentFile().mkdirs();
 				int counter = 0;
+				if (params.sum != SummarizationMode.NONE)
+					writer.write("Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player") + newline);
 				while (rs.next()) {
-					writer.write(histformatter.format(rs) + newline);
+					if (params.sum == SummarizationMode.NONE)
+						writer.write(new BlockChange(rs, params).getMessage() + newline);
+					else
+						writer.write(new SummedBlockChanges(rs, params, 1).getMessage() + newline);
 					counter++;
 				}
 				writer.close();
