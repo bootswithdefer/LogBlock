@@ -101,22 +101,16 @@ class LBBlockListener extends BlockListener
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null && wcfg.logBlockPlacings) {
 			final int type = event.getBlock().getTypeId();
-			BlockState before = event.getBlockReplacedState();
+			final BlockState before = event.getBlockReplacedState();
 			final BlockState after = event.getBlockPlaced().getState();
-			if (type == 0 && event.getItemInHand() != null)
+			if (type == 0 && event.getItemInHand() != null) {
 				if (event.getItemInHand().getTypeId() == 51)
 					return;
-				else if (event.getItemInHand().getTypeId() == 44 && event.getBlock().getRelative(BlockFace.DOWN).getTypeId() == 43) {
-					before = event.getBlock().getRelative(BlockFace.DOWN).getState();
-					before.setTypeId(44);
-					after.setTypeId(43);
-					after.setData(event.getItemInHand().getData());
-				} else {
-					final Location loc = event.getBlock().getLocation();
-					addError(dateFormat.format(System.currentTimeMillis()) + " Bukkit provided no block type for the block placed by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ". Item in hand was: " + event.getItemInHand().getType() + ".");
-					after.setTypeId(event.getItemInHand().getTypeId());
-					after.setData(new MaterialData(event.getItemInHand().getTypeId()));
-				}
+				final Location loc = event.getBlock().getLocation();
+				addError(dateFormat.format(System.currentTimeMillis()) + " Bukkit provided no block type for the block placed by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ". Item in hand was: " + event.getItemInHand().getType() + ".");
+				after.setTypeId(event.getItemInHand().getTypeId());
+				after.setData(new MaterialData(event.getItemInHand().getTypeId()));
+			}
 			if (wcfg.logSignTexts && (type == 63 || type == 68))
 				return;
 			if (before.getTypeId() == 0)
