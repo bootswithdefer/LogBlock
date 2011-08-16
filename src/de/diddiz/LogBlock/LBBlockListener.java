@@ -52,7 +52,7 @@ class LBBlockListener extends BlockListener
 			else if (wcfg.logChestAccess && (type == 23 || type == 54 || type == 61))
 				consumer.queueContainerBreak(event.getPlayer().getName(), event.getBlock().getState());
 			else if (type == 79)
-				consumer.queueBlockReplace(event.getPlayer().getName(), event.getBlock().getState(), 11, (byte)0);
+				consumer.queueBlockReplace(event.getPlayer().getName(), event.getBlock().getState(), 9, (byte)0);
 			else
 				consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlock().getState());
 		}
