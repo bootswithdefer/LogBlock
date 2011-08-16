@@ -556,6 +556,7 @@ public class CommandsHandler implements CommandExecutor
 			try {
 				params.needCoords = true;
 				params.limit = 1;
+				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
 				state = conn.createStatement();
 				rs = state.executeQuery(params.getQuery());
