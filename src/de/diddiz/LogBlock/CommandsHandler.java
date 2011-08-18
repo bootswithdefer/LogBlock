@@ -446,11 +446,9 @@ public class CommandsHandler implements CommandExecutor
 				if (rs.next()) {
 					rs.beforeFirst();
 					final List<LookupCacheElement> blockchanges = new ArrayList<LookupCacheElement>();
+					final LookupCacheElementFactory factory = new LookupCacheElementFactory(params, sender instanceof Player ? 2 / 3f : 1);
 					while (rs.next())
-						if (params.sum == SummarizationMode.NONE)
-							blockchanges.add(new BlockChange(rs, params));
-						else
-							blockchanges.add(new SummedBlockChanges(rs, params, sender instanceof Player ? 2 / 3f : 1));
+						blockchanges.add(factory.getLookupCacheElement(rs));
 					logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
 					if (blockchanges.size() > config.linesPerPage)
 						sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
@@ -501,11 +499,9 @@ public class CommandsHandler implements CommandExecutor
 				int counter = 0;
 				if (params.sum != SummarizationMode.NONE)
 					writer.write("Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player") + newline);
+				final LookupCacheElementFactory factory = new LookupCacheElementFactory(params, sender instanceof Player ? 2 / 3f : 1);
 				while (rs.next()) {
-					if (params.sum == SummarizationMode.NONE)
-						writer.write(new BlockChange(rs, params).getMessage() + newline);
-					else
-						writer.write(new SummedBlockChanges(rs, params, 1).getMessage() + newline);
+					writer.write(factory.getLookupCacheElement(rs).getMessage()+ newline);
 					counter++;
 				}
 				writer.close();
