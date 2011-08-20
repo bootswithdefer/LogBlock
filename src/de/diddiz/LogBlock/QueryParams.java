@@ -169,7 +169,10 @@ public class QueryParams implements Cloneable
 		final StringBuilder where = new StringBuilder("WHERE ");
 		if (blockChangeType == BlockChangeType.CHAT) {
 			if (match != null && match.length() > 0)
-				where.append("MATCH (message) AGAINST ('" + match + "' IN BOOLEAN MODE) AND ");
+				if (match.length() > 3)
+					where.append("MATCH (message) AGAINST ('" + match + "' IN BOOLEAN MODE) AND ");
+				else
+					where.append("message LIKE '%" + match + "%' AND ");
 		} else {
 			switch (blockChangeType) {
 				case ALL:
