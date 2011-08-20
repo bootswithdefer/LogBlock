@@ -5,6 +5,7 @@ import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
 import static de.diddiz.util.BukkitUtils.materialName;
 import static de.diddiz.util.BukkitUtils.senderName;
 import static de.diddiz.util.Utils.isInt;
+import static de.diddiz.util.Utils.join;
 import static de.diddiz.util.Utils.listing;
 import static de.diddiz.util.Utils.parseTimeSpec;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 
 public class QueryParams implements Cloneable
 {
-	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode()));
+	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode(), "chat".hashCode(), "search".hashCode(), "match".hashCode()));
 	public BlockChangeType bct = BlockChangeType.BOTH;
 	public int limit = -1, minutes = 0, radius = -1;
 	public Location loc = null;
@@ -35,7 +36,8 @@ public class QueryParams implements Cloneable
 	public SummarizationMode sum = SummarizationMode.NONE;
 	public List<Integer> types = new ArrayList<Integer>();
 	public World world = null;
-	public boolean needId = false, needDate = false, needType = false, needData = false, needPlayer = false, needCoords = false, needSignText = false, needChestAccess = false;
+	public String match = null;
+	public boolean needId = false, needDate = false, needType = false, needData = false, needPlayer = false, needCoords = false, needSignText = false, needChestAccess = false, needMessage = false;
 	private final LogBlock logblock;
 
 	public QueryParams(LogBlock logblock) {
@@ -56,6 +58,21 @@ public class QueryParams implements Cloneable
 	}
 
 	public String getQuery() {
+		if (bct == BlockChangeType.CHAT) {
+			String select = "SELECT ";
+			String from = "FROM `lb-chat` ";
+			if (needId)
+				select += "id, ";
+			if (needDate)
+				select += "date, ";
+			if (needPlayer)
+				select += "playername, ";
+			if (needPlayer || players.size() > 0)
+				from += "INNER JOIN `lb-players` USING (playerid) ";
+			if (needMessage)
+				select += "message, ";
+			return select.substring(0, select.length() - 2) + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
+		}
 		if (sum == SummarizationMode.NONE) {
 			String select = "SELECT ";
 			String from = "FROM `" + getTable() + "` ";
@@ -96,6 +113,8 @@ public class QueryParams implements Cloneable
 		final StringBuilder title = new StringBuilder();
 		if (bct == BlockChangeType.CHESTACCESS)
 			title.append("chest accesses ");
+		else if (bct == BlockChangeType.CHAT)
+			title.append("chat messages ");
 		else {
 			if (!types.isEmpty()) {
 				final String[] blocknames = new String[types.size()];
@@ -115,10 +134,12 @@ public class QueryParams implements Cloneable
 			title.append((excludePlayersMode ? "without" : "from") + " many players ");
 		else if (!players.isEmpty())
 			title.append((excludePlayersMode ? "without" : "from") + " player" + (players.size() != 1 ? "s" : "") + " " + listing(players.toArray(new String[players.size()]), ", ", " and ") + " ");
+		if (match != null && match.length() > 0)
+			title.append("matching '" + match + "' ");
 		if (minutes > 0)
 			title.append("in the last " + minutes + " minutes ");
 		if (minutes < 0)
-			title.append("up to " + minutes * -1 + " minutes ago ");
+			title.append("more than " + minutes * -1 + " minutes ago ");
 		if (loc != null) {
 			if (radius > 0)
 				title.append("within " + radius + " blocks of " + (prepareToolQuery ? "clicked block" : "you") + " ");
@@ -146,58 +167,70 @@ public class QueryParams implements Cloneable
 
 	public String getWhere(BlockChangeType blockChangeType) {
 		final StringBuilder where = new StringBuilder("WHERE ");
-		switch (blockChangeType) {
-			case ALL:
-				if (!types.isEmpty()) {
-					where.append('(');
-					for (final int type : types)
-						where.append("type = " + type + " OR replaced = " + type + " OR ");
-					where.delete(where.length() - 4, where.length() - 1);
-					where.append(") AND ");
-				}
-				break;
-			case BOTH:
-				where.append("type <> replaced AND ");
-				if (!types.isEmpty()) {
-					where.append('(');
-					for (final int type : types)
-						where.append("type = " + type + " OR replaced = " + type + " OR ");
-					where.delete(where.length() - 4, where.length());
-					where.append(") AND ");
-				}
-				break;
-			case CREATED:
-				where.append("type <> replaced AND ");
-				if (!types.isEmpty()) {
-					where.append('(');
-					for (final int type : types)
-						where.append("type = " + type + " OR ");
-					where.delete(where.length() - 4, where.length());
-					where.append(") AND ");
-				} else
-					where.append("type > 0 AND ");
-				break;
-			case DESTROYED:
-				where.append("type <> replaced AND ");
-				if (!types.isEmpty()) {
-					where.append('(');
-					for (final int type : types)
-						where.append("replaced = " + type + " OR ");
-					where.delete(where.length() - 4, where.length());
-					where.append(") AND ");
-				} else
-					where.append("replaced > 0 AND ");
-				break;
-			case CHESTACCESS:
-				where.append("type = replaced AND (type = 23 OR type = 54 OR type = 61 OR type = 62) AND ");
-				if (!types.isEmpty()) {
-					where.append('(');
-					for (final int type : types)
-						where.append("itemtype = " + type + " OR ");
-					where.delete(where.length() - 4, where.length());
-					where.append(") AND ");
-				}
-				break;
+		if (blockChangeType == BlockChangeType.CHAT) {
+			if (match != null && match.length() > 0)
+				where.append("MATCH (message) AGAINST ('" + match + "' IN BOOLEAN MODE) AND ");
+		} else {
+			switch (blockChangeType) {
+				case ALL:
+					if (!types.isEmpty()) {
+						where.append('(');
+						for (final int type : types)
+							where.append("type = " + type + " OR replaced = " + type + " OR ");
+						where.delete(where.length() - 4, where.length() - 1);
+						where.append(") AND ");
+					}
+					break;
+				case BOTH:
+					where.append("type <> replaced AND ");
+					if (!types.isEmpty()) {
+						where.append('(');
+						for (final int type : types)
+							where.append("type = " + type + " OR replaced = " + type + " OR ");
+						where.delete(where.length() - 4, where.length());
+						where.append(") AND ");
+					}
+					break;
+				case CREATED:
+					where.append("type <> replaced AND ");
+					if (!types.isEmpty()) {
+						where.append('(');
+						for (final int type : types)
+							where.append("type = " + type + " OR ");
+						where.delete(where.length() - 4, where.length());
+						where.append(") AND ");
+					} else
+						where.append("type > 0 AND ");
+					break;
+				case DESTROYED:
+					where.append("type <> replaced AND ");
+					if (!types.isEmpty()) {
+						where.append('(');
+						for (final int type : types)
+							where.append("replaced = " + type + " OR ");
+						where.delete(where.length() - 4, where.length());
+						where.append(") AND ");
+					} else
+						where.append("replaced > 0 AND ");
+					break;
+				case CHESTACCESS:
+					where.append("type = replaced AND (type = 23 OR type = 54 OR type = 61 OR type = 62) AND ");
+					if (!types.isEmpty()) {
+						where.append('(');
+						for (final int type : types)
+							where.append("itemtype = " + type + " OR ");
+						where.delete(where.length() - 4, where.length());
+						where.append(") AND ");
+					}
+					break;
+			}
+			if (loc != null) {
+				if (radius == 0)
+					where.append("x = '" + loc.getBlockX() + "' AND y = '" + loc.getBlockY() + "' AND z = '" + loc.getBlockZ() + "' AND ");
+				else if (radius > 0)
+					where.append("x > '" + (loc.getBlockX() - radius) + "' AND x < '" + (loc.getBlockX() + radius) + "' AND z > '" + (loc.getBlockZ() - radius) + "' AND z < '" + (loc.getBlockZ() + radius) + "' AND ");
+			} else if (sel != null)
+				where.append("x >= '" + sel.getMinimumPoint().getBlockX() + "' AND x <= '" + sel.getMaximumPoint().getBlockX() + "' AND y >= '" + sel.getMinimumPoint().getBlockY() + "' AND y <= '" + sel.getMaximumPoint().getBlockY() + "' AND z >= '" + sel.getMinimumPoint().getBlockZ() + "' AND z <= '" + sel.getMaximumPoint().getBlockZ() + "' AND ");
 		}
 		if (!players.isEmpty() && sum != SummarizationMode.PLAYERS)
 			if (!excludePlayersMode) {
@@ -209,13 +242,6 @@ public class QueryParams implements Cloneable
 			} else
 				for (final String playerName : players)
 					where.append("playername != '" + playerName + "' AND ");
-		if (loc != null) {
-			if (radius == 0)
-				where.append("x = '" + loc.getBlockX() + "' AND y = '" + loc.getBlockY() + "' AND z = '" + loc.getBlockZ() + "' AND ");
-			else if (radius > 0)
-				where.append("x > '" + (loc.getBlockX() - radius) + "' AND x < '" + (loc.getBlockX() + radius) + "' AND z > '" + (loc.getBlockZ() - radius) + "' AND z < '" + (loc.getBlockZ() + radius) + "' AND ");
-		} else if (sel != null)
-			where.append("x >= '" + sel.getMinimumPoint().getBlockX() + "' AND x <= '" + sel.getMaximumPoint().getBlockX() + "' AND y >= '" + sel.getMinimumPoint().getBlockY() + "' AND y <= '" + sel.getMaximumPoint().getBlockY() + "' AND z >= '" + sel.getMinimumPoint().getBlockZ() + "' AND z <= '" + sel.getMaximumPoint().getBlockZ() + "' AND ");
 		if (minutes > 0)
 			where.append("date > date_sub(now(), INTERVAL " + minutes + " MINUTE) AND ");
 		if (minutes < 0)
@@ -323,6 +349,8 @@ public class QueryParams implements Cloneable
 				bct = BlockChangeType.DESTROYED;
 			else if (param.equals("chestaccess"))
 				bct = BlockChangeType.CHESTACCESS;
+			else if (param.equals("chat"))
+				bct = BlockChangeType.CHAT;
 			else if (param.equals("all"))
 				bct = BlockChangeType.ALL;
 			else if (param.equals("limit")) {
@@ -346,7 +374,11 @@ public class QueryParams implements Cloneable
 				needCoords = true;
 			else if (param.equals("silent"))
 				silent = true;
-			else
+			else if (param.equals("search") || param.equals("match")) {
+				if (values.length == 0)
+					throw new IllegalArgumentException("No arguments for '" + param + "'");
+				match = join(values, " ").replace("\\", "\\\\").replace("'", "\\'");
+			} else
 				throw new IllegalArgumentException("Not a valid argument: '" + param + "'");
 			if (values != null)
 				i += values.length;
@@ -413,24 +445,25 @@ public class QueryParams implements Cloneable
 		return values;
 	}
 
-	public void merge(QueryParams params) {
-		players = params.players;
-		excludePlayersMode = params.excludePlayersMode;
-		types = params.types;
-		loc = params.loc;
-		radius = params.radius;
-		sel = params.sel;
-		if (params.minutes != 0 || minutes != logblock.getConfig().defaultTime)
-			minutes = params.minutes;
-		sum = params.sum;
-		bct = params.bct;
-		limit = params.limit;
-		world = params.world;
-		order = params.order;
+	public void merge(QueryParams p) {
+		players = p.players;
+		excludePlayersMode = p.excludePlayersMode;
+		types = p.types;
+		loc = p.loc;
+		radius = p.radius;
+		sel = p.sel;
+		if (p.minutes != 0 || minutes != logblock.getConfig().defaultTime)
+			minutes = p.minutes;
+		sum = p.sum;
+		bct = p.bct;
+		limit = p.limit;
+		world = p.world;
+		order = p.order;
+		match = p.match;
 	}
 
 	public static enum BlockChangeType {
-		ALL, BOTH, CHESTACCESS, CREATED, DESTROYED
+		ALL, BOTH, CHESTACCESS, CREATED, DESTROYED, CHAT
 	}
 
 	public static enum Order {

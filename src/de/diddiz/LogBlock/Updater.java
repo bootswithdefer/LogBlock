@@ -79,6 +79,17 @@ class Updater
 			config.removeProperty("tables");
 			config.setProperty("version", "1.23");
 		}
+		if (config.getString("version").compareTo("1.27") < 0) {
+			log.info("[LogBlock] Updating tables to 1.27 ...");
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				st.execute("ALTER TABLE `lb-chat` ENGINE = MyISAM, ADD FULLTEXT message (message)");
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {}
+		}
 		config.save();
 		return true;
 	}
@@ -92,7 +103,7 @@ class Updater
 		conn.setAutoCommit(true);
 		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL DEFAULT '-', PRIMARY KEY (playerid), UNIQUE (playername))");
 		if (logblock.getConfig().logChat)
-			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid))");
+			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM");
 		for (final WorldConfig wcfg : logblock.getConfig().worlds.values()) {
 			createTable(dbm, state, wcfg.table, "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
 			createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id))");

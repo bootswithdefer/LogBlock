@@ -429,16 +429,20 @@ public class CommandsHandler implements CommandExecutor
 		@Override
 		public void run() {
 			try {
-				params.needDate = true;
-				params.needType = true;
-				params.needData = true;
-				params.needPlayer = true;
-				if (params.types.size() == 0 || params.types.contains(63) || params.types.contains(68))
-					params.needSignText = true;
-				if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62) || params.bct == BlockChangeType.CHESTACCESS)
-					params.needChestAccess = true;
-				if (params.limit < 0 && params.sum == SummarizationMode.NONE)
-					params.limit = config.linesLimit;
+				if (params.bct == BlockChangeType.CHAT) {
+					params.needDate = true;
+					params.needPlayer = true;
+					params.needMessage = true;
+				} else {
+					params.needDate = true;
+					params.needType = true;
+					params.needData = true;
+					params.needPlayer = true;
+					if (params.types.size() == 0 || params.types.contains(63) || params.types.contains(68))
+						params.needSignText = true;
+					if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
+						params.needChestAccess = true;
+				}
 				conn = logblock.getConnection();
 				state = conn.createStatement();
 				rs = state.executeQuery(params.getQuery());
@@ -478,14 +482,20 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			File file = null;
 			try {
-				params.needDate = true;
-				params.needType = true;
-				params.needData = true;
-				params.needPlayer = true;
-				if (params.types.size() == 0 || params.types.contains(63) || params.types.contains(68))
-					params.needSignText = true;
-				if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
-					params.needChestAccess = true;
+				if (params.bct == BlockChangeType.CHAT) {
+					params.needDate = true;
+					params.needPlayer = true;
+					params.needMessage = true;
+				} else {
+					params.needDate = true;
+					params.needType = true;
+					params.needData = true;
+					params.needPlayer = true;
+					if (params.types.size() == 0 || params.types.contains(63) || params.types.contains(68))
+						params.needSignText = true;
+					if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
+						params.needChestAccess = true;
+				}
 				conn = logblock.getConnection();
 				state = conn.createStatement();
 				file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".") + ".log");
@@ -501,7 +511,7 @@ public class CommandsHandler implements CommandExecutor
 					writer.write("Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player") + newline);
 				final LookupCacheElementFactory factory = new LookupCacheElementFactory(params, sender instanceof Player ? 2 / 3f : 1);
 				while (rs.next()) {
-					writer.write(factory.getLookupCacheElement(rs).getMessage()+ newline);
+					writer.write(factory.getLookupCacheElement(rs).getMessage() + newline);
 					counter++;
 				}
 				writer.close();

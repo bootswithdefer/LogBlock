@@ -416,25 +416,20 @@ public class Consumer extends TimerTask
 		}
 	}
 
-	private class ChatRow implements Row
+	private class ChatRow extends ChatMessage implements Row
 	{
-		final long date;
-		final String player, message;
-
 		ChatRow(String player, String message) {
-			date = System.currentTimeMillis() / 1000;
-			this.player = player;
-			this.message = message;
+			super(player, message);
 		}
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(player) + ", '" + message + "');"};
+			return new String[]{"INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(playerName) + ", '" + message + "');"};
 		}
 
 		@Override
 		public String[] getPlayers() {
-			return new String[]{player};
+			return new String[]{playerName};
 		}
 	}
 }

@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
 
 public class LookupCacheElementFactory
@@ -15,6 +16,8 @@ public class LookupCacheElementFactory
 	}
 
 	public LookupCacheElement getLookupCacheElement(ResultSet rs) throws SQLException {
+		if (params.bct == BlockChangeType.CHAT)
+			return new ChatMessage(rs, params);
 		if (params.sum == SummarizationMode.NONE)
 			return new BlockChange(rs, params);
 		return new SummedBlockChanges(rs, params, spaceFactor);

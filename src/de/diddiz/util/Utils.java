@@ -131,4 +131,14 @@ public class Utils
 			filled.append(' ');
 		return filled.toString();
 	}
+
+	public static String join(String[] s, String delimiter) {
+		if (s == null || s.length == 0)
+			return "";
+		final int len = s.length;
+		final StringBuffer buffer = new StringBuffer(s[0]);
+		for (int i = 1; i < len; i++)
+			buffer.append(delimiter).append(s[i]);
+		return buffer.toString();
+	}
 }
