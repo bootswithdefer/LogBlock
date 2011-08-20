@@ -152,7 +152,7 @@ public class QueryParams implements Cloneable
 				title.append("within " + radius + " blocks of clicked block ");
 			else if (radius == 0)
 				title.append("at clicked block ");
-		if (!(sel != null && prepareToolQuery))
+		if (world != null && !(sel != null && prepareToolQuery))
 			title.append("in " + friendlyWorldname(world.getName()) + " ");
 		if (sum != SummarizationMode.NONE)
 			title.append("summed up by " + (sum == SummarizationMode.TYPES ? "blocks" : "players") + " ");
@@ -399,7 +399,7 @@ public class QueryParams implements Cloneable
 						if (!types.contains(type))
 							types.add(type);
 			}
-		if (!prepareToolQuery) {
+		if (!prepareToolQuery && bct != BlockChangeType.CHAT) {
 			if (world == null)
 				throw new IllegalArgumentException("No world specified");
 			if (!logblock.getConfig().worlds.containsKey(world.getName().hashCode()))
