@@ -324,7 +324,7 @@ public class CommandsHandler implements CommandExecutor
 											player.teleport(new Location(loc.getWorld(), loc.getX() + 0.5, saveSpawnHeight(loc), loc.getZ() + 0.5, player.getLocation().getYaw(), 90));
 											player.sendMessage(ChatColor.LIGHT_PURPLE + "Teleported to " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
 										} else
-											sender.sendMessage(ChatColor.RED + "There is no location associated with that");
+											sender.sendMessage(ChatColor.RED + "There is no location associated with that. Did you forget coords parameter?");
 									} else
 										sender.sendMessage(ChatColor.RED + "'" + args[1] + " is out of range");
 								else
