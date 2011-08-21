@@ -89,6 +89,7 @@ class Updater
 				st.close();
 				conn.close();
 			} catch (final SQLException ex) {}
+			config.setProperty("version", "1.27");
 		}
 		config.save();
 		return true;
