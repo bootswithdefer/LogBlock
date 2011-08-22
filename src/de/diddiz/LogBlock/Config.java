@@ -25,7 +25,7 @@ public class Config
 	public final boolean useBukkitScheduler;
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
-	public boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade;
+	public boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
@@ -178,6 +178,8 @@ public class Config
 				logSnowForm = true;
 			if (wcfg.logSnowFade)
 				logSnowFade = true;
+			if (wcfg.logDoors)
+				logDoors = true;
 		}
 	}
 }
@@ -185,7 +187,7 @@ public class Config
 class WorldConfig
 {
 	public final String table;
-	public final boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade;
+	public final boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors;
 
 	public WorldConfig(File file) {
 		final Map<String, Object> def = new HashMap<String, Object>();
@@ -204,6 +206,7 @@ class WorldConfig
 		def.put("logChat", false);
 		def.put("logSnowForm", false);
 		def.put("logSnowFade", false);
+		def.put("logDoors", false);
 		final Configuration config = new Configuration(file);
 		config.load();
 		for (final Entry<String, Object> e : def.entrySet())
@@ -225,5 +228,6 @@ class WorldConfig
 		logChat = config.getBoolean("logChat", false);
 		logSnowForm = config.getBoolean("logSnowForm", false);
 		logSnowFade = config.getBoolean("logSnowFade", false);
+		logDoors = config.getBoolean("logDoors", false);
 	}
 }

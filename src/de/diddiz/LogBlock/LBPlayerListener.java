@@ -37,10 +37,12 @@ class LBPlayerListener extends PlayerListener
 	@Override
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logButtonsAndLevers && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+		if (!event.isCancelled() && wcfg != null && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
 			final int type = event.getClickedBlock().getTypeId();
-			if (type == 69 || type == 77)
+			if (wcfg.logButtonsAndLevers && (type == 69 || type == 77))
 				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
+			else if (wcfg.logDoors && (type == 64 || type == 96))
+				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)((event.getClickedBlock().getData() & 4) / 4));
 		}
 	}
 
