@@ -168,11 +168,13 @@ public class QueryParams implements Cloneable
 	public String getWhere(BlockChangeType blockChangeType) {
 		final StringBuilder where = new StringBuilder("WHERE ");
 		if (blockChangeType == BlockChangeType.CHAT) {
-			if (match != null && match.length() > 0)
-				if (match.length() > 3)
+			if (match != null && match.length() > 0) {
+				final boolean unlike = match.startsWith("-");
+				if (match.length() > 3 && !unlike || match.length() > 4)
 					where.append("MATCH (message) AGAINST ('" + match + "' IN BOOLEAN MODE) AND ");
 				else
-					where.append("message LIKE '%" + match + "%' AND ");
+					where.append("message " + (unlike ? "NOT " : "") + "LIKE '%" + (unlike ? match.substring(1) : match) + "%' AND ");
+			}
 		} else {
 			switch (blockChangeType) {
 				case ALL:
