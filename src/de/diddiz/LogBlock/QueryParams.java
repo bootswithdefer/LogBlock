@@ -146,7 +146,7 @@ public class QueryParams implements Cloneable
 			else if (radius == 0)
 				title.append("at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + " ");
 		} else if (sel != null)
-			title.append(prepareToolQuery ? "at double chest" : "inside selection ");
+			title.append(prepareToolQuery ? "at double chest " : "inside selection ");
 		else if (prepareToolQuery)
 			if (radius > 0)
 				title.append("within " + radius + " blocks of clicked block ");
