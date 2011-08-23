@@ -36,7 +36,7 @@ class LBChestAccessListener extends InventoryListener
 
 	@Override
 	public void onInventoryOpen(InventoryOpenEvent event) {
-		if (!event.isCancelled() && event.getLocation() != null)
+		if (!event.isCancelled() && event.getLocation() != null && event.getLocation().getBlock().getTypeId() != 58)
 			containers.put(event.getPlayer().getName().hashCode(), compressInventory(event.getInventory().getContents()));
 	}
 }
