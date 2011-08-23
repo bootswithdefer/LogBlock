@@ -37,6 +37,7 @@ public class Consumer extends TimerTask
 	private final Config config;
 	private final Map<Integer, WorldConfig> worlds;
 	private final Set<Integer> hiddenPlayers, hiddenBlocks;
+	private final Set<String> failedPlayers = new HashSet<String>();
 	private final Map<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
 	private final Map<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
 	private final Logger log;
@@ -264,7 +265,10 @@ public class Consumer extends TimerTask
 				for (final String player : r.getPlayers())
 					if (!players.containsKey(player.hashCode()))
 						if (!addPlayer(state, player)) {
-							log.warning("[LogBlock Consumer] Failed to add player " + player);
+							if (!failedPlayers.contains(player)) {
+								failedPlayers.add(player);
+								log.warning("[LogBlock Consumer] Failed to add player " + player);
+							}
 							continue process;
 						}
 				for (final String insert : r.getInserts())
