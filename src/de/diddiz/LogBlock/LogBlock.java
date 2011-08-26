@@ -172,7 +172,10 @@ public class LogBlock extends JavaPlugin
 		final LBBlockListener lbBlockListener = new LBBlockListener(this);
 		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
 		final LBEntityListener lbEntityListener = new LBEntityListener(this);
-		pm.registerEvent(Type.PLAYER_INTERACT, new LBToolListener(this), Priority.Normal, this);
+		final LBToolListener lbToolListener = new LBToolListener(this);
+		pm.registerEvent(Type.PLAYER_INTERACT, lbToolListener, Priority.Normal, this);
+		if (config.askRollbackAfterBan)
+			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbToolListener, Priority.Normal, this);
 		if (config.logBlockPlacings) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Priority.Monitor, this);

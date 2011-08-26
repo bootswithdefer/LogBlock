@@ -34,7 +34,8 @@ public class Config
 	public final int defaultDist, defaultTime;
 	public final int linesPerPage, linesLimit;
 	public final int toolID, toolblockID;
-	public final boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback;
+	public final boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback, askRollbackAfterBan;
+	public final String banPermission;
 	public final Set<Integer> hiddenPlayers, hiddenBlocks;
 
 	public static enum LogKillsLevel {
@@ -76,6 +77,8 @@ public class Config
 		def.put("questioner.askRedos", true);
 		def.put("questioner.askClearLogs", true);
 		def.put("questioner.askClearLogAfterRollback", true);
+		def.put("questioner.askRollbackAfterBan", false);
+		def.put("questioner.banPermission", "mcbans.ban.local");
 		final Configuration config = logblock.getConfiguration();
 		config.load();
 		for (final Entry<String, Object> e : def.entrySet())
@@ -143,6 +146,8 @@ public class Config
 		askRedos = config.getBoolean("questioner.askRedos", true);
 		askClearLogs = config.getBoolean("questioner.askClearLogs", true);
 		askClearLogAfterRollback = config.getBoolean("questioner.askClearLogAfterRollback", true);
+		askRollbackAfterBan = config.getBoolean("questioner.askRollbackAfterBan", false);
+		banPermission = config.getString("questioner.banPermission");
 		final List<String> worldNames = config.getStringList("loggedWorlds", null);
 		worlds = new HashMap<Integer, WorldConfig>();
 		if (worldNames == null || worldNames.size() == 0)

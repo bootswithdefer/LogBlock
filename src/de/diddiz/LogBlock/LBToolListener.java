@@ -2,10 +2,12 @@ package de.diddiz.LogBlock;
 
 import java.util.Map;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
 import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
@@ -71,6 +73,29 @@ class LBToolListener extends PlayerListener
 					} else
 						player.sendMessage("This world isn't logged");
 			}
+		}
+	}
+
+	@Override
+	public void onPlayerCommandPreprocess(final PlayerCommandPreprocessEvent event) {
+		final String[] split = event.getMessage().split(" ");
+		if (split.length > 1 && split[0].equalsIgnoreCase("/ban") && logblock.hasPermission(event.getPlayer(), logblock.getConfig().banPermission)) {
+			final QueryParams p = new QueryParams(logblock);
+			p.setPlayer(split[1].equalsIgnoreCase("g") ? split[2] : split[1]);
+			p.minutes = 0;
+			p.silent = false;
+			logblock.getServer().getScheduler().scheduleAsyncDelayedTask(logblock, new Runnable() {
+				@Override
+				public void run() {
+					for (final World world : logblock.getServer().getWorlds())
+						if (logblock.getConfig().worlds.get(world.getName().hashCode()) != null) {
+							p.world = world;
+							try {
+								handler.new CommandRollback(event.getPlayer(), p, false);
+							} catch (final Exception ex) {}
+						}
+				}
+			});
 		}
 	}
 }
