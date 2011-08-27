@@ -30,10 +30,10 @@ public class Config
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
 	public final int rollbackMaxTime, rollbackMaxArea;
-	public final QueryParams toolQuery, toolBlockQuery;
+	public final HashMap<String, Tool> toolsByName;
+	public final HashMap<Integer, Tool> toolsByType;
 	public final int defaultDist, defaultTime;
 	public final int linesPerPage, linesLimit;
-	public final int toolID, toolblockID;
 	public final boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback, askRollbackAfterBan;
 	public final String banPermission;
 	public final Set<Integer> hiddenPlayers, hiddenBlocks;
@@ -43,7 +43,7 @@ public class Config
 	}
 
 	Config(LogBlock logblock) throws DataFormatException, IOException {
-		final Map<String, Object> def = new HashMap<String, Object>();
+		final Map<String, Object> def = new HashMap<String, Object>(), tooldef = new HashMap<String, Object>(), tbdef = new HashMap<String, Object>(), tdef = new HashMap<String, Object>();
 		def.put("version", logblock.getDescription().getVersion());
 		def.put("loggedWorlds", Arrays.asList("world", "world_nether"));
 		def.put("mysql.host", "localhost");
@@ -67,10 +67,6 @@ public class Config
 		def.put("rollback.maxArea", 50);
 		def.put("lookup.defaultDist", 20);
 		def.put("lookup.defaultTime", "30 minutes");
-		def.put("lookup.toolID", 270);
-		def.put("lookup.toolblockID", 7);
-		def.put("lookup.toolQuery", "area 0 all sum none limit 15 desc silent");
-		def.put("lookup.toolBlockQuery", "area 0 all sum none limit 15 desc silent");
 		def.put("lookup.linesPerPage", 15);
 		def.put("lookup.linesLimit", 1500);
 		def.put("questioner.askRollbacks", true);
@@ -79,6 +75,23 @@ public class Config
 		def.put("questioner.askClearLogAfterRollback", true);
 		def.put("questioner.askRollbackAfterBan", false);
 		def.put("questioner.banPermission", "mcbans.ban.local");
+		tdef.put("aliases", Arrays.asList("t"));
+		tdef.put("leftClickBehavior", "NONE");
+		tdef.put("rightClickBehavior", "TOOL");
+		tdef.put("defaultEnabled", true);
+		tdef.put("item", 270);
+		tdef.put("params", "area 0 all sum none limit 15 desc silent");
+		tdef.put("mode", "LOOKUP");
+		tbdef.put("aliases", Arrays.asList("tb"));
+		tbdef.put("leftClickBehavior", "TOOL");
+		tbdef.put("rightClickBehavior", "BLOCK");
+		tbdef.put("defaultEnabled", true);
+		tbdef.put("item", 7);
+		tbdef.put("params", "area 0 all sum none limit 15 desc silent");
+		tbdef.put("mode", "LOOKUP");
+		tooldef.put("tool", tdef);
+		tooldef.put("toolblock", tbdef);
+		def.put("tools", tooldef);
 		final Configuration config = logblock.getConfiguration();
 		config.load();
 		for (final Entry<String, Object> e : def.entrySet())
@@ -118,28 +131,8 @@ public class Config
 		replaceAnyway = new HashSet<Integer>(config.getIntList("rollback.replaceAnyway", null));
 		rollbackMaxTime = parseTimeSpec(config.getString("rollback.maxTime").split(" "));
 		rollbackMaxArea = config.getInt("rollback.maxArea", 50);
-		try {
-			toolQuery = new QueryParams(logblock);
-			toolQuery.prepareToolQuery = true;
-			toolQuery.parseArgs(new ConsoleCommandSender(logblock.getServer()), Arrays.asList(config.getString("lookup.toolQuery").split(" ")));
-		} catch (final IllegalArgumentException ex) {
-			throw new DataFormatException("Error at lookup.toolQuery: " + ex.getMessage());
-		}
-		try {
-			toolBlockQuery = new QueryParams(logblock);
-			toolBlockQuery.prepareToolQuery = true;
-			toolBlockQuery.parseArgs(new ConsoleCommandSender(logblock.getServer()), Arrays.asList(config.getString("lookup.toolBlockQuery").split(" ")));
-		} catch (final IllegalArgumentException ex) {
-			throw new DataFormatException("Error at lookup.toolBlockQuery: " + ex.getMessage());
-		}
 		defaultDist = config.getInt("lookup.defaultDist", 20);
 		defaultTime = parseTimeSpec(config.getString("lookup.defaultTime").split(" "));
-		toolID = config.getInt("lookup.toolID", 270);
-		if (Material.getMaterial(toolID) == null || Material.getMaterial(toolID).isBlock())
-			throw new DataFormatException("lookup.toolID doesn't appear to be a valid item id");
-		toolblockID = config.getInt("lookup.toolblockID", 7);
-		if (Material.getMaterial(toolblockID) == null || !Material.getMaterial(toolblockID).isBlock() || toolblockID == 0)
-			throw new DataFormatException("lookup.toolblockID doesn't appear to be a valid block id");
 		linesPerPage = config.getInt("lookup.linesPerPage", 15);
 		linesLimit = config.getInt("lookup.linesLimit", 1500);
 		askRollbacks = config.getBoolean("questioner.askRollbacks", true);
@@ -148,6 +141,33 @@ public class Config
 		askClearLogAfterRollback = config.getBoolean("questioner.askClearLogAfterRollback", true);
 		askRollbackAfterBan = config.getBoolean("questioner.askRollbackAfterBan", false);
 		banPermission = config.getString("questioner.banPermission");
+		final List<String> toolNames = config.getKeys("tools");
+		System.out.println(toolNames.size());
+		final List<Tool> tools = new ArrayList<Tool>();
+		for (final String toolName : toolNames)
+			try {
+				final List<String> aliases = config.getStringList("tools." + toolName + ".aliases", null);
+				final ToolBehavior leftClickBehavior = ToolBehavior.valueOf(config.getString("tools." + toolName + ".leftClickBehavior"));
+				final ToolBehavior rightClickBehavior = ToolBehavior.valueOf(config.getString("tools." + toolName + ".rightClickBehavior"));
+				final boolean defaultEnabled = config.getBoolean("tools." + toolName + ".defaultEnabled", false);
+				final int item = config.getInt("tools." + toolName + ".item", 0);
+				final QueryParams params = new QueryParams(logblock);
+				params.prepareToolQuery = true;
+				params.parseArgs(new ConsoleCommandSender(logblock.getServer()), Arrays.asList(config.getString("tools." + toolName + ".params").split(" ")));
+				final ToolMode mode = ToolMode.valueOf(config.getString("tools." + toolName + ".mode"));
+				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode));
+			} catch (final Exception ex) {
+				ex.printStackTrace();
+				throw new DataFormatException("Error at parsing tool '" + toolName + "': " + ex.getMessage());
+			}
+		toolsByName = new HashMap<String, Tool>();
+		toolsByType = new HashMap<Integer, Tool>();
+		for (final Tool tool : tools) {
+			toolsByType.put(tool.item, tool);
+			toolsByName.put(tool.name, tool);
+			for (final String alias : tool.aliases)
+				toolsByName.put(alias, tool);
+		}
 		final List<String> worldNames = config.getStringList("loggedWorlds", null);
 		worlds = new HashMap<Integer, WorldConfig>();
 		if (worldNames == null || worldNames.size() == 0)

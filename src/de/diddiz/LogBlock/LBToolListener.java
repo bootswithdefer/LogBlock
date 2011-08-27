@@ -16,16 +16,14 @@ class LBToolListener extends PlayerListener
 {
 	private final CommandsHandler handler;
 	private final LogBlock logblock;
-	private final int toolID;
-	private final int toolblockID;
+	private final Map<Integer, Tool> toolsByType;
 	private final Map<Integer, WorldConfig> worlds;
 
 	LBToolListener(LogBlock logblock) {
 		this.logblock = logblock;
 		handler = logblock.getCommandsHandler();
-		toolID = logblock.getConfig().toolID;
-		toolblockID = logblock.getConfig().toolblockID;
 		worlds = logblock.getConfig().worlds;
+		toolsByType = logblock.getConfig().toolsByType;
 	}
 
 	@Override
@@ -33,45 +31,43 @@ class LBToolListener extends PlayerListener
 		if (!event.isCancelled() && event.getMaterial() != null) {
 			final Action action = event.getAction();
 			final int type = event.getMaterial().getId();
-			if (type == toolID && action == Action.RIGHT_CLICK_BLOCK || type == toolblockID && (action == Action.LEFT_CLICK_BLOCK || action == Action.RIGHT_CLICK_BLOCK)) {
-				final Player player = event.getPlayer();
-				final Session session = logblock.getSession(player.getName());
-				if (type == toolID && session.toolEnabled && logblock.hasPermission(player, "logblock.tool") || type == toolblockID && session.toolBlockEnabled && logblock.hasPermission(player, "logblock.toolblock"))
-					if (worlds.get(player.getWorld().getName().hashCode()) != null) {
-						final Block block = event.getClickedBlock();
-						if (!(type == toolID && block.getTypeId() == 26))
-							event.setCancelled(true);
-						final QueryParams params = type == toolID ? session.toolQuery : session.toolBlockQuery;
-						final ToolMode mode = type == toolID ? session.toolMode : session.toolBlockMode;
-						params.loc = null;
-						params.sel = null;
-						if (type == toolblockID && action == Action.RIGHT_CLICK_BLOCK)
-							params.setLocation(block.getRelative(event.getBlockFace()).getLocation());
-						else if (block.getTypeId() != 54 || params.radius != 0)
+			final Tool tool = toolsByType.get(type);
+			final Player player = event.getPlayer();
+			if (tool != null && (action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_BLOCK) && worlds.containsKey(player.getWorld().getName().hashCode()) && logblock.hasPermission(player, "logblock.tools." + tool.name)) {
+				final ToolBehavior behavior = action == Action.RIGHT_CLICK_BLOCK ? tool.rightClickBehavior : tool.leftClickBehavior;
+				final ToolData toolData = logblock.getSession(player.getName()).toolData.get(tool);
+				if (behavior != ToolBehavior.NONE && toolData.enabled) {
+					final Block block = event.getClickedBlock();
+					final QueryParams params = toolData.params;
+					params.loc = null;
+					params.sel = null;
+					if (behavior == ToolBehavior.BLOCK)
+						params.setLocation(block.getRelative(event.getBlockFace()).getLocation());
+					else if (block.getTypeId() != 54 || tool.params.radius != 0)
+						params.setLocation(block.getLocation());
+					else {
+						for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
+							if (block.getRelative(face).getTypeId() == 54)
+								params.setSelection(new CuboidSelection(event.getPlayer().getWorld(), block.getLocation(), block.getRelative(face).getLocation()));
+
+						if (params.sel == null)
 							params.setLocation(block.getLocation());
-						else {
-							for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
-								if (block.getRelative(face).getTypeId() == 54)
-									params.setSelection(new CuboidSelection(player.getWorld(), block.getLocation(), block.getRelative(face).getLocation()));
-							if (params.sel == null)
-								params.setLocation(block.getLocation());
-						}
-						try {
-							if (mode == ToolMode.ROLLBACK)
-								handler.new CommandRollback(player, params, true);
-							else if (mode == ToolMode.REDO)
-								handler.new CommandRedo(player, params, true);
-							else if (mode == ToolMode.CLEARLOG)
-								handler.new CommandClearLog(player, params, true);
-							else if (mode == ToolMode.WRITELOGFILE)
-								handler.new CommandWriteLogFile(player, params, true);
-							else
-								handler.new CommandLookup(player, params, true);
-						} catch (final Exception ex) {
-							player.sendMessage(ChatColor.RED + ex.getMessage());
-						}
-					} else
-						player.sendMessage("This world isn't logged");
+					}
+					try {
+						if (toolData.mode == ToolMode.ROLLBACK)
+							handler.new CommandRollback(player, params, true);
+						else if (toolData.mode == ToolMode.REDO)
+							handler.new CommandRedo(player, params, true);
+						else if (toolData.mode == ToolMode.CLEARLOG)
+							handler.new CommandClearLog(player, params, true);
+						else if (toolData.mode == ToolMode.WRITELOGFILE)
+							handler.new CommandWriteLogFile(player, params, true);
+						else
+							handler.new CommandLookup(player, params, true);
+					} catch (final Exception ex) {
+						player.sendMessage(ChatColor.RED + ex.getMessage());
+					}
+				}
 			}
 		}
 	}

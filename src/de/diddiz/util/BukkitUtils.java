@@ -184,17 +184,17 @@ public class BukkitUtils
 		return y;
 	}
 
-	public static int modifyContainer(BlockState b, ItemStack item) throws Exception {
-		if (!(b instanceof ContainerBlock))
-			throw new Exception("No container");
-		final Inventory inv = ((ContainerBlock)b).getInventory();
-		if (item.getAmount() < 0) {
-			item.setAmount(-item.getAmount());
-			final ItemStack tmp = inv.removeItem(item).get(0);
-			return tmp != null ? tmp.getAmount() : 0;
-		} else if (item.getAmount() > 0) {
-			final ItemStack tmp = inv.addItem(item).get(0);
-			return tmp != null ? tmp.getAmount() : 0;
+	public static int modifyContainer(BlockState b, ItemStack item) {
+		if (b instanceof ContainerBlock) {
+			final Inventory inv = ((ContainerBlock)b).getInventory();
+			if (item.getAmount() < 0) {
+				item.setAmount(-item.getAmount());
+				final ItemStack tmp = inv.removeItem(item).get(0);
+				return tmp != null ? tmp.getAmount() : 0;
+			} else if (item.getAmount() > 0) {
+				final ItemStack tmp = inv.addItem(item).get(0);
+				return tmp != null ? tmp.getAmount() : 0;
+			}
 		}
 		return 0;
 	}
