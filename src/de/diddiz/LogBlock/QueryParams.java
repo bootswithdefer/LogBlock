@@ -443,7 +443,7 @@ public class QueryParams implements Cloneable
 			if (isKeyWord(args.get(i)))
 				break;
 		if (i == offset)
-			return null;
+			return new String[0];
 		final String[] values = new String[i - offset];
 		for (int j = offset; j < i; j++)
 			values[j - offset] = args.get(j);
