@@ -49,7 +49,6 @@ class LBToolListener extends PlayerListener
 						for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
 							if (block.getRelative(face).getTypeId() == 54)
 								params.setSelection(new CuboidSelection(event.getPlayer().getWorld(), block.getLocation(), block.getRelative(face).getLocation()));
-
 						if (params.sel == null)
 							params.setLocation(block.getLocation());
 					}
@@ -67,6 +66,7 @@ class LBToolListener extends PlayerListener
 					} catch (final Exception ex) {
 						player.sendMessage(ChatColor.RED + ex.getMessage());
 					}
+					event.setCancelled(true);
 				}
 			}
 		}
