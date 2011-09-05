@@ -157,7 +157,7 @@ public class LogBlock extends JavaPlugin
 			log.info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
 		if (config.keepLogDays >= 0) {
 			final QueryParams params = new QueryParams(this);
-			params.minutes = config.keepLogDays * -1440;
+			params.before = config.keepLogDays * 1440;
 			params.bct = BlockChangeType.ALL;
 			for (final World world : getServer().getWorlds())
 				if (config.worlds.containsKey(world.getName().hashCode())) {

@@ -27,7 +27,7 @@ public class QueryParams implements Cloneable
 {
 	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode(), "chat".hashCode(), "search".hashCode(), "match".hashCode()));
 	public BlockChangeType bct = BlockChangeType.BOTH;
-	public int limit = -1, minutes = 0, radius = -1;
+	public int limit = -1, before = 0, since = 0, radius = -1;
 	public Location loc = null;
 	public Order order = Order.DESC;
 	public List<String> players = new ArrayList<String>();
@@ -136,10 +136,12 @@ public class QueryParams implements Cloneable
 			title.append((excludePlayersMode ? "without" : "from") + " player" + (players.size() != 1 ? "s" : "") + " " + listing(players.toArray(new String[players.size()]), ", ", " and ") + " ");
 		if (match != null && match.length() > 0)
 			title.append("matching '" + match + "' ");
-		if (minutes > 0)
-			title.append("in the last " + minutes + " minutes ");
-		if (minutes < 0)
-			title.append("more than " + minutes * -1 + " minutes ago ");
+		if (before > 0 && since > 0)
+			title.append("between " + since + " and " + before + " minutes ago ");
+		else if (since > 0)
+			title.append("in the last " + since + " minutes ");
+		else if (before > 0)
+			title.append("more than " + before * -1 + " minutes ago ");
 		if (loc != null) {
 			if (radius > 0)
 				title.append("within " + radius + " blocks of " + (prepareToolQuery ? "clicked block" : "you") + " ");
@@ -247,10 +249,10 @@ public class QueryParams implements Cloneable
 			} else
 				for (final String playerName : players)
 					where.append("playername != '" + playerName + "' AND ");
-		if (minutes > 0)
-			where.append("date > date_sub(now(), INTERVAL " + minutes + " MINUTE) AND ");
-		if (minutes < 0)
-			where.append("date < date_sub(now(), INTERVAL " + minutes * -1 + " MINUTE) AND ");
+		if (since > 0)
+			where.append("date > date_sub(now(), INTERVAL " + since + " MINUTE) AND ");
+		if (before > 0)
+			where.append("date < date_sub(now(), INTERVAL " + before + " MINUTE) AND ");
 		if (where.length() > 6)
 			where.delete(where.length() - 4, where.length());
 		else
@@ -324,18 +326,18 @@ public class QueryParams implements Cloneable
 					throw new IllegalArgumentException("You have to define a cuboid selection");
 				setSelection(selection);
 			} else if (param.equals("time") || param.equals("since")) {
-				if (values == null)
-					minutes = logblock.getConfig().defaultTime;
+				if (values.length == 0)
+					since = logblock.getConfig().defaultTime;
 				else
-					minutes = parseTimeSpec(values);
-				if (minutes == -1)
+					since = parseTimeSpec(values);
+				if (since == -1)
 					throw new IllegalArgumentException("Failed to parse time spec for '" + param + "'");
 			} else if (param.equals("before")) {
-				if (values == null)
-					minutes = -logblock.getConfig().defaultTime;
+				if (values.length == 0)
+					before = logblock.getConfig().defaultTime;
 				else
-					minutes = -parseTimeSpec(values);
-				if (minutes == 1)
+					before = parseTimeSpec(values);
+				if (before == -1)
 					throw new IllegalArgumentException("Faile to parse time spec for '" + param + "'");
 			} else if (param.equals("sum")) {
 				if (values == null || values.length != 1)
@@ -457,8 +459,9 @@ public class QueryParams implements Cloneable
 		loc = p.loc;
 		radius = p.radius;
 		sel = p.sel;
-		if (p.minutes != 0 || minutes != logblock.getConfig().defaultTime)
-			minutes = p.minutes;
+		if (p.since != 0 || since != logblock.getConfig().defaultTime)
+			since = p.since;
+		before = p.before;
 		sum = p.sum;
 		bct = p.bct;
 		limit = p.limit;

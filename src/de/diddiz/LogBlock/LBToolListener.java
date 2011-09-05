@@ -78,7 +78,7 @@ class LBToolListener extends PlayerListener
 		if (split.length > 1 && split[0].equalsIgnoreCase("/ban") && logblock.hasPermission(event.getPlayer(), logblock.getConfig().banPermission)) {
 			final QueryParams p = new QueryParams(logblock);
 			p.setPlayer(split[1].equalsIgnoreCase("g") ? split[2] : split[1]);
-			p.minutes = 0;
+			p.since = 0;
 			p.silent = false;
 			logblock.getServer().getScheduler().scheduleAsyncDelayedTask(logblock, new Runnable() {
 				@Override

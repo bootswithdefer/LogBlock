@@ -215,7 +215,7 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("rollback") || command.equals("undo") || command.equals("rb")) {
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
-						params.minutes = logblock.getConfig().defaultTime;
+						params.since = logblock.getConfig().defaultTime;
 						params.bct = BlockChangeType.ALL;
 						params.parseArgs(sender, argsToList(args, 1));
 						new CommandRollback(sender, params, true);
@@ -224,7 +224,7 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("redo")) {
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
-						params.minutes = logblock.getConfig().defaultTime;
+						params.since = logblock.getConfig().defaultTime;
 						params.bct = BlockChangeType.ALL;
 						params.parseArgs(sender, argsToList(args, 1));
 						new CommandRedo(sender, params, true);
@@ -326,7 +326,7 @@ public class CommandsHandler implements CommandExecutor
 	private boolean checkRestrictions(CommandSender sender, QueryParams params) {
 		if (logblock.hasPermission(sender, "logblock.ignoreRestrictions"))
 			return true;
-		if (config.rollbackMaxTime > 0 && (params.minutes <= 0 || params.minutes > config.rollbackMaxTime)) {
+		if (config.rollbackMaxTime > 0 && (params.before <= 0 || params.since > config.rollbackMaxTime)) {
 			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback more than " + config.rollbackMaxTime + " minutes");
 			return false;
 		}
