@@ -202,7 +202,7 @@ public class LogBlock extends JavaPlugin
 				pm.registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
 			else
 				log.warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");
-		if (config.logButtonsAndLevers || config.logDoors)
+		if (config.logButtonsAndLevers || config.logDoors || config.logCakes)
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
 		if (config.logKills)
 			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Priority.Monitor, this);

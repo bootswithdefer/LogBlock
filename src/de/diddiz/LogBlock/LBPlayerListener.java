@@ -43,6 +43,8 @@ class LBPlayerListener extends PlayerListener
 				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
 			else if (wcfg.logDoors && (type == 64 || type == 96))
 				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)((event.getClickedBlock().getData() & 4) / 4));
+			else if (wcfg.logCakes && type == 92 && event.getPlayer().getHealth() < 20)
+				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
 		}
 	}
 
