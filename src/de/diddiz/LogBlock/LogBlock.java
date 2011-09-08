@@ -141,12 +141,18 @@ public class LogBlock extends JavaPlugin
 				log.warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
 			}
 		if (config.logChestAccess && pm.getPlugin("Spout") == null)
-			try {
-				download(log, new URL("http://ci.getspout.org/job/Spout/Recommended/artifact/target/spout-dev-SNAPSHOT.jar"), new File("plugins/Spout.jar"));
-				pm.loadPlugin(new File("plugins/Spout.jar"));
-				pm.enablePlugin(pm.getPlugin("Spout"));
-			} catch (final Exception ex) {
-				log.warning("[LogBlock] Failed to install Spout, you may have to restart your server or install it manually.");
+			if (config.installSpout)
+				try {
+					download(log, new URL("http://ci.getspout.org/job/Spout/Recommended/artifact/target/spout-dev-SNAPSHOT.jar"), new File("plugins/Spout.jar"));
+					pm.loadPlugin(new File("plugins/Spout.jar"));
+					pm.enablePlugin(pm.getPlugin("Spout"));
+				} catch (final Exception ex) {
+					config.logChestAccess = false;
+					log.warning("[LogBlock] Failed to install Spout, you may have to restart your server or install it manually.");
+				}
+			else {
+				config.logChestAccess = false;
+				log.warning("[LogBlock] Spout is not installed. Disabling chest logging.");
 			}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);

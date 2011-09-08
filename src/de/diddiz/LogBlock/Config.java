@@ -36,6 +36,7 @@ public class Config
 	public final int linesPerPage, linesLimit;
 	public final boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback, askRollbackAfterBan;
 	public final String banPermission;
+	public final boolean installSpout;
 	public final Set<Integer> hiddenPlayers, hiddenBlocks;
 
 	public static enum LogKillsLevel {
@@ -75,6 +76,7 @@ public class Config
 		def.put("questioner.askClearLogAfterRollback", true);
 		def.put("questioner.askRollbackAfterBan", false);
 		def.put("questioner.banPermission", "mcbans.ban.local");
+		def.put("updater.installSpout", true);
 		tdef.put("aliases", Arrays.asList("t"));
 		tdef.put("leftClickBehavior", "NONE");
 		tdef.put("rightClickBehavior", "TOOL");
@@ -141,6 +143,7 @@ public class Config
 		askClearLogAfterRollback = config.getBoolean("questioner.askClearLogAfterRollback", true);
 		askRollbackAfterBan = config.getBoolean("questioner.askRollbackAfterBan", false);
 		banPermission = config.getString("questioner.banPermission");
+		installSpout = config.getBoolean("updater.installSpout", true);
 		final List<String> toolNames = config.getKeys("tools");
 		System.out.println(toolNames.size());
 		final List<Tool> tools = new ArrayList<Tool>();
