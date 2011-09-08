@@ -65,8 +65,9 @@ public class LogBlock extends JavaPlugin
 		log = getServer().getLogger();
 		try {
 			updater = new Updater(this);
-			log.info("[LogBlock] Version check: " + updater.checkVersion());
 			config = new Config(this);
+			if (config.checkVersion)
+				log.info("[LogBlock] Version check: " + updater.checkVersion());
 			final File file = new File("lib/mysql-connector-java-bin.jar");
 			if (!file.exists() || file.length() == 0)
 				download(log, new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
