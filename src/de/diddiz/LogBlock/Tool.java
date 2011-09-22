@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import java.util.List;
+import org.bukkit.permissions.PermissionDefault;
 
 public class Tool
 {
@@ -11,8 +12,9 @@ public class Tool
 	public final int item;
 	public final QueryParams params;
 	public final ToolMode mode;
+	public final PermissionDefault permissionDefault;
 
-	public Tool(String name, List<String> aliases, ToolBehavior leftClickBehavior, ToolBehavior rightClickBehavior, boolean defaultEnabled, int item, QueryParams params, ToolMode mode) {
+	public Tool(String name, List<String> aliases, ToolBehavior leftClickBehavior, ToolBehavior rightClickBehavior, boolean defaultEnabled, int item, QueryParams params, ToolMode mode, PermissionDefault permissionDefault) {
 		this.name = name;
 		this.aliases = aliases;
 		this.leftClickBehavior = leftClickBehavior;
@@ -21,6 +23,7 @@ public class Tool
 		this.item = item;
 		this.params = params;
 		this.mode = mode;
+		this.permissionDefault = permissionDefault;
 	}
 }
 

@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.zip.DataFormatException;
 import org.bukkit.Material;
 import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.util.config.Configuration;
 
 public class Config
@@ -85,6 +86,7 @@ public class Config
 		tdef.put("item", 270);
 		tdef.put("params", "area 0 all sum none limit 15 desc silent");
 		tdef.put("mode", "LOOKUP");
+		tdef.put("permissionDefault", "TRUE");
 		tbdef.put("aliases", Arrays.asList("tb"));
 		tbdef.put("leftClickBehavior", "TOOL");
 		tbdef.put("rightClickBehavior", "BLOCK");
@@ -92,6 +94,7 @@ public class Config
 		tbdef.put("item", 7);
 		tbdef.put("params", "area 0 all sum none limit 15 desc silent");
 		tbdef.put("mode", "LOOKUP");
+		tbdef.put("permissionDefault", "TRUE");
 		tooldef.put("tool", tdef);
 		tooldef.put("toolblock", tbdef);
 		def.put("tools", tooldef);
@@ -115,7 +118,7 @@ public class Config
 		dumpDeletedLog = config.getBoolean("clearlog.dumpDeletedLog", false);
 		logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		try {
-			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel"));
+			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel").toUpperCase());
 		} catch (final IllegalArgumentException ex) {
 			throw new DataFormatException("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
@@ -151,16 +154,18 @@ public class Config
 		final List<Tool> tools = new ArrayList<Tool>();
 		for (final String toolName : toolNames)
 			try {
-				final List<String> aliases = config.getStringList("tools." + toolName + ".aliases", null);
-				final ToolBehavior leftClickBehavior = ToolBehavior.valueOf(config.getString("tools." + toolName + ".leftClickBehavior"));
-				final ToolBehavior rightClickBehavior = ToolBehavior.valueOf(config.getString("tools." + toolName + ".rightClickBehavior"));
-				final boolean defaultEnabled = config.getBoolean("tools." + toolName + ".defaultEnabled", false);
-				final int item = config.getInt("tools." + toolName + ".item", 0);
+				final String path = "tools." + toolName;
+				final List<String> aliases = config.getStringList(path + ".aliases", null);
+				final ToolBehavior leftClickBehavior = ToolBehavior.valueOf(config.getString(path + ".leftClickBehavior").toUpperCase());
+				final ToolBehavior rightClickBehavior = ToolBehavior.valueOf(config.getString(path + ".rightClickBehavior").toUpperCase());
+				final boolean defaultEnabled = config.getBoolean(path + ".defaultEnabled", false);
+				final int item = config.getInt(path + ".item", 0);
 				final QueryParams params = new QueryParams(logblock);
 				params.prepareToolQuery = true;
-				params.parseArgs(new ConsoleCommandSender(logblock.getServer()), Arrays.asList(config.getString("tools." + toolName + ".params").split(" ")));
-				final ToolMode mode = ToolMode.valueOf(config.getString("tools." + toolName + ".mode"));
-				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode));
+				params.parseArgs(new ConsoleCommandSender(logblock.getServer()), Arrays.asList(config.getString(path + ".params").split(" ")));
+				final ToolMode mode = ToolMode.valueOf(config.getString(path + ".mode").toUpperCase());
+				final PermissionDefault pdef = PermissionDefault.valueOf(config.getString(path + ".permissionDefault").toUpperCase());
+				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode, pdef));
 			} catch (final Exception ex) {
 				ex.printStackTrace();
 				throw new DataFormatException("Error at parsing tool '" + toolName + "': " + ex.getMessage());

@@ -14,8 +14,6 @@ permissions:
     logblock.*:
         description: Gives access to all LogBlock commands
         children:
-            logblock.tool: true
-            logblock.toolblock: true
             logblock.lookup: true
             logblock.rollback: true
             logblock.clearlog: true
@@ -23,12 +21,6 @@ permissions:
             logblock.tp: true
             logblock.me: true
             logblock.ignoreRestrictions: true
-    logblock.tool:
-        description: 'Allows using the tool (the woodpickaxe) with default query (toolQuery in config)'
-        default: true
-    logblock.toolblock:
-        description: 'Allows using the tool block (the bedrock block) with default query (toolBlockQuery in config)'
-        default: true
     logblock.lookup:
         description: 'Grants access to /lb lookup commands and allows defining custom tool queries'
         default: op

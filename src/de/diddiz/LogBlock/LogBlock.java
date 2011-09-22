@@ -24,6 +24,7 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
+import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.nijiko.permissions.PermissionHandler;
@@ -230,6 +231,11 @@ public class LogBlock extends JavaPlugin
 			timer = new Timer();
 			timer.scheduleAtFixedRate(consumer, config.delayBetweenRuns * 1000, config.delayBetweenRuns * 1000);
 			log.info("[LogBlock] Scheduled consumer with timer.");
+		}
+		for (final Tool tool : config.toolsByType.values()) {
+			final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
+			pm.addPermission(perm);
+			// perm.addParent("logblock.*", true);
 		}
 		log.info("LogBlock v" + getDescription().getVersion() + " by DiddiZ enabled.");
 	}
