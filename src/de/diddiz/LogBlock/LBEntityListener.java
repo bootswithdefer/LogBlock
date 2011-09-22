@@ -1,15 +1,20 @@
 package de.diddiz.LogBlock;
 
 import java.util.Map;
+import net.minecraft.server.EntityEnderman;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.craftbukkit.entity.CraftEnderman;
 import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
+import org.bukkit.event.entity.EndermanPickupEvent;
+import org.bukkit.event.entity.EndermanPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
@@ -73,6 +78,22 @@ class LBEntityListener extends EntityListener
 				else
 					consumer.queueBlockBreak(name, block.getState());
 			}
+		}
+	}
+
+	@Override
+	public void onEndermanPickup(EndermanPickupEvent event) {
+		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
+		if (!event.isCancelled() && wcfg != null && wcfg.logEndermen)
+			consumer.queueBlockBreak("Enderman", event.getBlock().getState());
+	}
+
+	@Override
+	public void onEndermanPlace(EndermanPlaceEvent event) {
+		final WorldConfig wcfg = worlds.get(event.getLocation().getWorld().getName().hashCode());
+		if (!event.isCancelled() && wcfg != null && wcfg.logEndermen && event.getEntity() instanceof Enderman) {
+			final EntityEnderman enderman = ((CraftEnderman)event.getEntity()).getHandle();
+			consumer.queueBlockPlace("Enderman", event.getLocation(), enderman.getCarriedId(), (byte)enderman.getCarriedData());
 		}
 	}
 }

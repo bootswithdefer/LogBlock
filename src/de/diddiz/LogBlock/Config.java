@@ -26,7 +26,7 @@ public class Config
 	public final boolean useBukkitScheduler;
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
-	public boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes;
+	public boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes, logEndermen;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
@@ -217,6 +217,8 @@ public class Config
 				logDoors = true;
 			if (wcfg.logCakes)
 				logCakes = true;
+			if (wcfg.logEndermen)
+				logEndermen = true;
 		}
 	}
 }
@@ -224,7 +226,7 @@ public class Config
 class WorldConfig
 {
 	public final String table;
-	public final boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes;
+	public final boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes, logEndermen;
 
 	public WorldConfig(File file) {
 		final Map<String, Object> def = new HashMap<String, Object>();
@@ -245,6 +247,7 @@ class WorldConfig
 		def.put("logSnowFade", false);
 		def.put("logDoors", false);
 		def.put("logCakes", false);
+		def.put("logEndermen", false);
 		final Configuration config = new Configuration(file);
 		config.load();
 		for (final Entry<String, Object> e : def.entrySet())
@@ -268,5 +271,6 @@ class WorldConfig
 		logSnowFade = config.getBoolean("logSnowFade", false);
 		logDoors = config.getBoolean("logDoors", false);
 		logCakes = config.getBoolean("logCakes", false);
+		logEndermen = config.getBoolean("logEndermen", false);
 	}
 }

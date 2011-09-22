@@ -219,6 +219,10 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbPlayerListener, Priority.Monitor, this);
 			pm.registerEvent(Type.SERVER_COMMAND, new LBServerListener(this), Priority.Monitor, this);
 		}
+		if (config.logEndermen) {
+			pm.registerEvent(Type.ENDERMAN_PICKUP, lbEntityListener, Priority.Monitor, this);
+			pm.registerEvent(Type.ENDERMAN_PLACE, lbEntityListener, Priority.Monitor, this);
+		}
 		if (config.useBukkitScheduler) {
 			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delayBetweenRuns * 20, config.delayBetweenRuns * 20) > 0)
 				log.info("[LogBlock] Scheduled consumer with bukkit scheduler.");
