@@ -4,6 +4,7 @@
 		<mkdir dir="lib/"/>
 		<mkdir dir="bin/"/>
 		<get src="http://ci.bukkit.org/job/dev-Bukkit/Recommended/artifact/target/bukkit-0.0.1-SNAPSHOT.jar" dest="lib/bukkit.jar"/>
+		<get src="http://ci.bukkit.org/job/dev-CraftBukkit/promotion/latest/Recommended/artifact/target/craftbukkit-0.0.1-SNAPSHOT.jar" dest="lib/craftbukkit.jar"/>
 		<get src="http://www.theyeticave.net/downloads/permissions/3.1.6/Permissions.jar" dest="lib/Permissions.jar"/>
 		<get src="http://cloud.github.com/downloads/sk89q/worldedit/worldedit-4.6.zip" dest="WorldEdit.zip"/>
 		<unzip src="WorldEdit.zip" dest="lib/"><patternset><include name="WorldEdit.jar"/></patternset></unzip>
@@ -12,7 +13,7 @@
 		<get src="http://cloud.github.com/downloads/DiddiZ/LogBlockQuestioner/LogBlockQuestioner%20v0.02.zip" dest="LogBlockQuestioner.zip"/>
 		<unzip src="LogBlockQuestioner.zip" dest="lib/"><patternset><include name="LogBlockQuestioner.jar"/></patternset></unzip>
 		<delete file="LogBlockQuestioner.zip"/>
-		<javac srcdir="src/" destdir="bin/" classpath="lib/bukkit.jar;lib/Permissions.jar;lib/WorldEdit.jar;lib/Spout.jar;lib/LogBlockQuestioner.jar" debug="true" debuglevel="lines,source" includeantruntime="false"/>
+		<javac srcdir="src/" destdir="bin/" classpath="lib/bukkit.jar;lib/craftbukkit.jar;lib/Permissions.jar;lib/WorldEdit.jar;lib/Spout.jar;lib/LogBlockQuestioner.jar" debug="true" debuglevel="lines,source" includeantruntime="false"/>
 		<jar destfile="LogBlock.jar" manifest="MANIFEST.MF">
 			<fileset dir="bin/"/>
 			<fileset file="src/plugin.yml"/>
