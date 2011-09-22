@@ -91,6 +91,13 @@ class Updater
 			} catch (final SQLException ex) {}
 			config.setProperty("version", "1.27");
 		}
+		if (config.getString("version").compareTo("1.30") < 0) {
+			log.info("[LogBlock] Updating config to 1.30 ...");
+			for (final String tool : config.getKeys("tools"))
+				if (config.getProperty("tools." + tool + ".permissionDefault") == null)
+					config.setProperty("tools." + tool + ".permissionDefault", "OP");
+			config.setProperty("version", "1.30");
+		}
 		config.save();
 		return true;
 	}

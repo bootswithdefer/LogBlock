@@ -12,7 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.zip.DataFormatException;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.permissions.PermissionDefault;
@@ -150,7 +152,6 @@ public class Config
 		installSpout = config.getBoolean("updater.installSpout", true);
 		checkVersion = config.getBoolean("updater.checkVersion", true);
 		final List<String> toolNames = config.getKeys("tools");
-		System.out.println(toolNames.size());
 		final List<Tool> tools = new ArrayList<Tool>();
 		for (final String toolName : toolNames)
 			try {
@@ -167,8 +168,7 @@ public class Config
 				final PermissionDefault pdef = PermissionDefault.valueOf(config.getString(path + ".permissionDefault").toUpperCase());
 				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode, pdef));
 			} catch (final Exception ex) {
-				ex.printStackTrace();
-				throw new DataFormatException("Error at parsing tool '" + toolName + "': " + ex.getMessage());
+				Bukkit.getLogger().log(Level.WARNING, "Error at parsing tool '" + toolName + "':)", ex);
 			}
 		toolsByName = new HashMap<String, Tool>();
 		toolsByType = new HashMap<Integer, Tool>();
