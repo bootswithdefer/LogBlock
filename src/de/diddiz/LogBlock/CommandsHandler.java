@@ -213,6 +213,11 @@ public class CommandsHandler implements CommandExecutor
 						new CommandSaveQueue(sender, null, true);
 					else
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+				} else if (args[0].equalsIgnoreCase("queuesize")) {
+					if (logblock.hasPermission(sender, "logblock.rollback"))
+						sender.sendMessage("Current queue size: " + logblock.getConsumer().getQueueSize());
+					else
+						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else if (command.equals("rollback") || command.equals("undo") || command.equals("rb")) {
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
