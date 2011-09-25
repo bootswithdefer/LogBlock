@@ -16,7 +16,6 @@ import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.util.config.Configuration;
 
@@ -163,7 +162,7 @@ public class Config
 				final int item = config.getInt(path + ".item", 0);
 				final QueryParams params = new QueryParams(logblock);
 				params.prepareToolQuery = true;
-				params.parseArgs(new ConsoleCommandSender(logblock.getServer()), Arrays.asList(config.getString(path + ".params").split(" ")));
+				params.parseArgs(Bukkit.getConsoleSender(), Arrays.asList(config.getString(path + ".params").split(" ")));
 				final ToolMode mode = ToolMode.valueOf(config.getString(path + ".mode").toUpperCase());
 				final PermissionDefault pdef = PermissionDefault.valueOf(config.getString(path + ".permissionDefault").toUpperCase());
 				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode, pdef));

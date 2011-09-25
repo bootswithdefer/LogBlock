@@ -20,7 +20,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
@@ -171,7 +170,7 @@ public class LogBlock extends JavaPlugin
 				if (config.worlds.containsKey(world.getName().hashCode())) {
 					params.world = world;
 					try {
-						commandsHandler.new CommandClearLog(new ConsoleCommandSender(getServer()), params.clone(), true);
+						commandsHandler.new CommandClearLog(getServer().getConsoleSender(), params.clone(), true);
 					} catch (final Exception ex) {
 						log.severe("Failed to schedule ClearLog: " + ex.getMessage());
 					}
