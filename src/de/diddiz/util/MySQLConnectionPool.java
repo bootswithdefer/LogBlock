@@ -371,23 +371,28 @@ public class MySQLConnectionPool implements Closeable
 		public <T> T unwrap(Class<T> iface) throws SQLException {
 			return conn.unwrap(iface);
 		}
-		
+
+		@SuppressWarnings("unused")
 		public int getNetworkTimeout() throws SQLException {
 			return networkTimeout;
 		}
-		
+
+		@SuppressWarnings("unused")
 		public void setNetworkTimeout(Executor exec, int timeout) throws SQLException {
 			networkTimeout = timeout;
 		}
-		
+
+		@SuppressWarnings("unused")
 		public void abort(Executor exec) throws SQLException {
-			//Not implemented really...
+			// Not implemented really...
 		}
-		
+
+		@SuppressWarnings("unused")
 		public String getSchema() throws SQLException {
 			return schema;
 		}
-		
+
+		@SuppressWarnings("unused")
 		public void setSchema(String str) throws SQLException {
 			schema = str;
 		}
