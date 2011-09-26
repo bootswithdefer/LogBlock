@@ -38,8 +38,6 @@ public class Consumer extends TimerTask
 	private final Map<Integer, WorldConfig> worlds;
 	private final Set<Integer> hiddenPlayers, hiddenBlocks;
 	private final Set<String> failedPlayers = new HashSet<String>();
-	private final Map<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
-	private final Map<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
 	private final Logger log;
 	private final LogBlock logblock;
 	private final Map<Integer, Integer> players = new HashMap<Integer, Integer>();
@@ -179,13 +177,9 @@ public class Consumer extends TimerTask
 	public void queueKill(Entity killer, Entity victim) {
 		if (killer == null || victim == null)
 			return;
-		if (lastAttackedEntity.containsKey(killer.getEntityId()) && lastAttackedEntity.get(killer.getEntityId()) == victim.getEntityId() && System.currentTimeMillis() - lastAttackTime.get(killer.getEntityId()) < 5000)
-			return;
 		int weapon = 0;
 		if (killer instanceof Player && ((Player)killer).getItemInHand() != null)
 			weapon = ((Player)killer).getItemInHand().getTypeId();
-		lastAttackedEntity.put(killer.getEntityId(), victim.getEntityId());
-		lastAttackTime.put(killer.getEntityId(), System.currentTimeMillis());
 		queueKill(victim.getWorld(), entityName(killer), entityName(victim), weapon);
 	}
 

@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.server.EntityEnderman;
 import org.bukkit.block.Block;
@@ -26,6 +27,8 @@ class LBEntityListener extends EntityListener
 	private final boolean logCreeperExplosionsAsPlayer;
 	private final Config.LogKillsLevel logKillsLevel;
 	private final Map<Integer, WorldConfig> worlds;
+	private final Map<Integer, Integer> lastAttackedEntity = new HashMap<Integer, Integer>();
+	private final Map<Integer, Long> lastAttackTime = new HashMap<Integer, Long>();
 
 	LBEntityListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
@@ -46,7 +49,11 @@ class LBEntityListener extends EntityListener
 				return;
 			else if (logKillsLevel == Config.LogKillsLevel.MONSTERS && !((victim instanceof Player || victim instanceof Monster) && killer instanceof Player || killer instanceof Monster))
 				return;
+			if (lastAttackedEntity.containsKey(killer.getEntityId()) && lastAttackedEntity.get(killer.getEntityId()) == victim.getEntityId() && System.currentTimeMillis() - lastAttackTime.get(killer.getEntityId()) < 5000)
+				return;
 			consumer.queueKill(killer, victim);
+			lastAttackedEntity.put(killer.getEntityId(), victim.getEntityId());
+			lastAttackTime.put(killer.getEntityId(), System.currentTimeMillis());
 		}
 	}
 
