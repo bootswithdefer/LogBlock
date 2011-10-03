@@ -237,6 +237,14 @@ public class Consumer extends TimerTask
 		queue.add(new ChatRow(player, message.replace("\\", "\\\\").replace("'", "\\'")));
 	}
 
+	public void queueJoin(Player player) {
+		queue.add(new PlayerJoinRow(player));
+	}
+
+	public void queueLeave(Player player) {
+		queue.add(new PlayerLeaveRow(player));
+	}
+
 	@Override
 	public void run() {
 		if (queue.isEmpty() || !lock.tryLock())
@@ -423,6 +431,50 @@ public class Consumer extends TimerTask
 		@Override
 		public String[] getInserts() {
 			return new String[]{"INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(playerName) + ", '" + message + "');"};
+		}
+
+		@Override
+		public String[] getPlayers() {
+			return new String[]{playerName};
+		}
+	}
+
+	private class PlayerJoinRow implements Row
+	{
+		private final String playerName;
+		private final long lastLogin;
+		private final String ip;
+
+		PlayerJoinRow(Player player) {
+			playerName = player.getName();
+			lastLogin = System.currentTimeMillis() / 1000;
+			ip = player.getAddress().toString().replace("'", "\\'");
+		}
+
+		@Override
+		public String[] getInserts() {
+			return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), ip = '" + ip + "' WHERE playerid = " + playerID(playerName) + ";"};
+		}
+
+		@Override
+		public String[] getPlayers() {
+			return new String[]{playerName};
+		}
+	}
+
+	private class PlayerLeaveRow implements Row
+	{
+		private final String playerName;
+		private final long leaveTime;
+
+		PlayerLeaveRow(Player player) {
+			playerName = player.getName();
+			leaveTime = System.currentTimeMillis() / 1000;
+		}
+
+		@Override
+		public String[] getInserts() {
+			return new String[]{"UPDATE `lb-players` SET onlinetime = ADDTIME(onlinetime, TIMEDIFF(FROM_UNIXTIME(" + leaveTime + "), lastlogin)) WHERE playerid = " + playerID(playerName) + ";"};
 		}
 
 		@Override

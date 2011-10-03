@@ -28,7 +28,7 @@ public class Config
 	public final int keepLogDays;
 	public final boolean dumpDeletedLog;
 	public boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes, logEndermen;
-	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese;
+	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese, logPlayerInfo;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
 	public final int rollbackMaxTime, rollbackMaxArea;
@@ -62,6 +62,7 @@ public class Config
 		def.put("clearlog.keepLogDays", -1);
 		def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		def.put("logging.logKillsLevel", "PLAYERS");
+		def.put("logging.logPlayerInfo", true);
 		def.put("logging.hiddenPlayers", new ArrayList<String>());
 		def.put("logging.hiddenBlocks", Arrays.asList(0));
 		def.put("rollback.dontRollback", Arrays.asList(10, 11, 46, 51));
@@ -118,6 +119,7 @@ public class Config
 			throw new DataFormatException("Too large timespan for keepLogDays. Must be shorter than " + (int)(System.currentTimeMillis() / 86400000L) + " days.");
 		dumpDeletedLog = config.getBoolean("clearlog.dumpDeletedLog", false);
 		logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
+		logPlayerInfo = config.getBoolean("logging.logPlayerInfo", true);
 		try {
 			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel").toUpperCase());
 		} catch (final IllegalArgumentException ex) {

@@ -8,7 +8,9 @@ import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 class LBPlayerListener extends PlayerListener
 {
@@ -60,5 +62,15 @@ class LBPlayerListener extends PlayerListener
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
 		if (wcfg != null && wcfg.logChat)
 			consumer.queueChat(event.getPlayer().getName(), event.getMessage());
+	}
+
+	@Override
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		consumer.queueJoin(event.getPlayer());
+	}
+
+	@Override
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		consumer.queueLeave(event.getPlayer());
 	}
 }

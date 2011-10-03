@@ -222,6 +222,10 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.ENDERMAN_PICKUP, lbEntityListener, Priority.Monitor, this);
 			pm.registerEvent(Type.ENDERMAN_PLACE, lbEntityListener, Priority.Monitor, this);
 		}
+		if (config.logPlayerInfo) {
+			pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Monitor, this);
+			pm.registerEvent(Type.PLAYER_QUIT, lbPlayerListener, Priority.Monitor, this);
+		}
 		if (config.useBukkitScheduler) {
 			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delayBetweenRuns * 20, config.delayBetweenRuns * 20) > 0)
 				log.info("[LogBlock] Scheduled consumer with bukkit scheduler.");
@@ -248,6 +252,9 @@ public class LogBlock extends JavaPlugin
 		if (timer != null)
 			timer.cancel();
 		getServer().getScheduler().cancelTasks(this);
+		if (config.logPlayerInfo)
+			for (final Player player : getServer().getOnlinePlayers())
+				consumer.queueLeave(player);
 		if (consumer != null && consumer.getQueueSize() > 0) {
 			log.info("[LogBlock] Waiting for consumer ...");
 			int lastSize = -1, fails = 0;
