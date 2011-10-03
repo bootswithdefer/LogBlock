@@ -99,11 +99,14 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.GOLD + "coords -- Shows coordinates for each block");
 					sender.sendMessage(ChatColor.GOLD + "silent -- Displays lesser messages");
 				} else if (command.equals("permissions")) {
-					final String[] permissions = {"tool", "toolblock", "me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions"};
+					final String[] permissions = {"me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions"};
 					sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
 					for (final String permission : permissions)
 						if (logblock.hasPermission(sender, "logblock." + permission))
 							sender.sendMessage(ChatColor.GOLD + "logblock." + permission);
+					for (final Tool tool : config.toolsByType.values())
+						if (logblock.hasPermission(sender, "logblock.tools." + tool.name))
+							sender.sendMessage(ChatColor.GOLD + "logblock.tools." + tool.name);
 				} else if (command.equals("logging")) {
 					if (sender instanceof Player) {
 						final String world = ((Player)sender).getWorld().getName();
