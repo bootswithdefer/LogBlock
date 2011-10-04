@@ -28,7 +28,7 @@ import org.bukkit.material.MaterialData;
 class LBBlockListener extends BlockListener
 {
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd HH:mm:ss");
-	private static final Set<Integer> nonFluidProofBlocks = new HashSet<Integer>(Arrays.asList(27, 28, 31, 32, 37, 38, 39, 40, 50, 51, 55, 59, 66, 69, 70, 75, 76, 78, 93, 94));
+	private static final Set<Integer> nonFluidProofBlocks = new HashSet<Integer>(Arrays.asList(27, 28, 31, 32, 37, 38, 39, 40, 50, 51, 55, 59, 66, 69, 70, 75, 76, 78, 93, 94, 104, 105, 106));
 	private final Consumer consumer;
 	private final Map<Integer, WorldConfig> worlds;
 	private final List<String> errors = new ArrayList<String>(20);
