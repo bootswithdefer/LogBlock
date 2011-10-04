@@ -453,7 +453,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), ip = '" + ip + "' WHERE playerid = " + playerID(playerName) + ";"};
+			return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "' WHERE playerid = " + playerID(playerName) + ";"};
 		}
 
 		@Override

@@ -11,6 +11,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
 import org.bukkit.util.config.Configuration;
 
 class Updater
@@ -48,7 +49,10 @@ class Updater
 					st.execute("ALTER TABLE `" + table + "-sign` MODIFY signtext VARCHAR(255) NOT NULL");
 				st.close();
 				conn.close();
-			} catch (final SQLException ex) {}
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+				return false;
+			}
 			config.setProperty("version", "1.20");
 		}
 		if (config.getString("version").compareTo("1.23") < 0) {
@@ -62,7 +66,10 @@ class Updater
 						st.execute("DROP TABLE `" + table + "-chest`");
 				st.close();
 				conn.close();
-			} catch (final SQLException ex) {}
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+				return false;
+			}
 			log.info("[LogBlock] Updating config to 1.23 ...");
 			final List<String> worldNames = config.getStringList("loggedWorlds", null), worldTables = config.getStringList("tables", null);
 			final String[] nodes = new String[]{"BlockCreations", "BlockDestroyings", "SignTexts", "Explosions", "Fire", "LeavesDecay", "LavaFlow", "ChestAccess", "ButtonsAndLevers", "Kills", "Chat"};
@@ -88,7 +95,10 @@ class Updater
 				st.execute("ALTER TABLE `lb-chat` ENGINE = MyISAM, ADD FULLTEXT message (message)");
 				st.close();
 				conn.close();
-			} catch (final SQLException ex) {}
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+				return false;
+			}
 			config.setProperty("version", "1.27");
 		}
 		if (config.getString("version").compareTo("1.30") < 0) {
@@ -107,8 +117,26 @@ class Updater
 				st.execute("ALTER TABLE `lb-players` ADD COLUMN lastlogin DATETIME NOT NULL, ADD COLUMN onlinetime TIME NOT NULL, ADD COLUMN ip VARCHAR(255) NOT NULL");
 				st.close();
 				conn.close();
-			} catch (final SQLException ex) {}
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+				return false;
+			}
 			config.setProperty("version", "1.31");
+		}
+		if (config.getString("version").compareTo("1.32") < 0) {
+			log.info("[LogBlock] Updating tables to 1.32 ...");
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				st.execute("ALTER TABLE `lb-players` ADD COLUMN firstlogin DATETIME NOT NULL AFTER playername");
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+				return false;
+			}
+			config.setProperty("version", "1.32");
 		}
 		config.save();
 		return true;
@@ -121,7 +149,7 @@ class Updater
 		final Statement state = conn.createStatement();
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
-		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, lastlogin DATETIME NOT NULL, onlinetime TIME NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
+		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime TIME NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
 		if (logblock.getConfig().logChat)
 			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM");
 		for (final WorldConfig wcfg : logblock.getConfig().worlds.values()) {
