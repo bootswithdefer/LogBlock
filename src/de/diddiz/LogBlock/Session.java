@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.bukkit.entity.Player;
 
 public class Session
 {
@@ -10,10 +11,10 @@ public class Session
 	public int page = 1;
 	public Map<Tool, ToolData> toolData;
 
-	Session(LogBlock logblock) {
+	Session(LogBlock logblock, Player player) {
 		toolData = new HashMap<Tool, ToolData>();
 		for (final Tool tool : logblock.getConfig().toolsByType.values())
-			toolData.put(tool, new ToolData(tool));
+			toolData.put(tool, new ToolData(tool, logblock, player));
 	}
 }
 
@@ -23,8 +24,8 @@ class ToolData
 	QueryParams params;
 	ToolMode mode;
 
-	ToolData(Tool tool) {
-		enabled = tool.defaultEnabled;
+	ToolData(Tool tool, LogBlock logblock, Player player) {
+		enabled = tool.defaultEnabled && logblock.hasPermission(player, "logblock.tools." + tool.name);
 		params = tool.params.clone();
 		mode = tool.mode;
 	}

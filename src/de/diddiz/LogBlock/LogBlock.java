@@ -181,6 +181,7 @@ public class LogBlock extends JavaPlugin
 		final LBEntityListener lbEntityListener = new LBEntityListener(this);
 		final LBToolListener lbToolListener = new LBToolListener(this);
 		pm.registerEvent(Type.PLAYER_INTERACT, lbToolListener, Priority.Normal, this);
+		pm.registerEvent(Type.PLAYER_CHANGED_WORLD, lbToolListener, Priority.Normal, this);
 		if (config.askRollbackAfterBan)
 			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbToolListener, Priority.Normal, this);
 		if (config.logBlockPlacings) {
@@ -298,10 +299,14 @@ public class LogBlock extends JavaPlugin
 		}
 	}
 
+	public Map<Integer, Session> getSessions() {
+		return sessions;
+	}
+
 	public Session getSession(String playerName) {
 		Session session = sessions.get(playerName.hashCode());
 		if (session == null) {
-			session = new Session(this);
+			session = new Session(this, getServer().getPlayer(playerName));
 			sessions.put(playerName.hashCode(), session);
 		}
 		return session;

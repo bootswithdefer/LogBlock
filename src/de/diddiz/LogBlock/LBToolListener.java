@@ -1,15 +1,18 @@
 package de.diddiz.LogBlock;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.inventory.ItemStack;
 import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
 
 class LBToolListener extends PlayerListener
@@ -93,5 +96,21 @@ class LBToolListener extends PlayerListener
 				}
 			});
 		}
+	}
+
+	@Override
+	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+		final Player player = event.getPlayer();
+		final Session session = logblock.getSessions().get(player.getName().hashCode());
+		if (session != null)
+			for (final Entry<Tool, ToolData> entry : session.toolData.entrySet()) {
+				final Tool tool = entry.getKey();
+				final ToolData toolData = entry.getValue();
+				if (toolData.enabled && !logblock.hasPermission(player, "logblock.tools." + tool.name)) {
+					toolData.enabled = false;
+					player.getInventory().removeItem(new ItemStack(tool.item, 1));
+					player.sendMessage(ChatColor.GREEN + "Tool disabled.");
+				}
+			}
 	}
 }
