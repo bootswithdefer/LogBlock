@@ -66,7 +66,7 @@ public class BlockChange implements LookupCacheElement
 					msg.append("put in " + ca.itemAmount + "x " + materialName(ca.itemType, ca.itemData));
 			} else if (type == 23 || type == 54 || type == 61 || type == 62)
 				msg.append("opened " + materialName(type));
-			else if (type == 64 || type == 71 || type == 96)
+			else if (type == 64 || type == 71 || type == 96 || type == 107)
 				msg.append((data == 0 ? "opened" : "closed") + " " + materialName(type));
 			else if (type == 69)
 				msg.append("swiched " + materialName(type));
