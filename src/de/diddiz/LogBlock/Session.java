@@ -13,8 +13,9 @@ public class Session
 
 	Session(LogBlock logblock, Player player) {
 		toolData = new HashMap<Tool, ToolData>();
-		for (final Tool tool : logblock.getConfig().toolsByType.values())
-			toolData.put(tool, new ToolData(tool, logblock, player));
+		if (player != null)
+			for (final Tool tool : logblock.getConfig().toolsByType.values())
+				toolData.put(tool, new ToolData(tool, logblock, player));
 	}
 }
 
