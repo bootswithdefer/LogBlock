@@ -88,16 +88,18 @@ class Updater
 		}
 		if (config.getString("version").compareTo("1.27") < 0) {
 			log.info("[LogBlock] Updating tables to 1.27 ...");
-			final Connection conn = logblock.getConnection();
-			try {
-				conn.setAutoCommit(true);
-				final Statement st = conn.createStatement();
-				st.execute("ALTER TABLE `lb-chat` ENGINE = MyISAM, ADD FULLTEXT message (message)");
-				st.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
-				return false;
+			if (logblock.getConfig().logChat) {
+				final Connection conn = logblock.getConnection();
+				try {
+					conn.setAutoCommit(true);
+					final Statement st = conn.createStatement();
+					st.execute("ALTER TABLE `lb-chat` ENGINE = MyISAM, ADD FULLTEXT message (message)");
+					st.close();
+					conn.close();
+				} catch (final SQLException ex) {
+					Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+					return false;
+				}
 			}
 			config.setProperty("version", "1.27");
 		}
