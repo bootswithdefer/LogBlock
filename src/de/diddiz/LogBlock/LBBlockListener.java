@@ -35,7 +35,7 @@ class LBBlockListener extends BlockListener
 
 	LBBlockListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
-		worlds = logblock.getConfig().worlds;
+		worlds = logblock.getLBConfig().worlds;
 	}
 
 	@Override

@@ -19,7 +19,7 @@ class LBPlayerListener extends PlayerListener
 
 	LBPlayerListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
-		worlds = logblock.getConfig().worlds;
+		worlds = logblock.getLBConfig().worlds;
 	}
 
 	@Override

@@ -1,18 +1,15 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.readURL;
-import java.io.File;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
-import org.bukkit.util.config.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 
 class Updater
 {
@@ -25,70 +22,12 @@ class Updater
 	}
 
 	boolean update() {
-		final Configuration config = logblock.getConfiguration();
-		config.load();
+		final ConfigurationSection config = logblock.getConfig();
 		if (config.getString("version").compareTo(logblock.getDescription().getVersion()) >= 0)
 			return false;
-		if (config.getString("version").compareTo("1.10") < 0) {
-			log.info("[LogBlock] Updating config to 1.10 ...");
-			String params = config.getString("lookup.toolQuery");
-			if (!params.contains("silent"))
-				config.setProperty("lookup.toolQuery", params + " silent");
-			params = config.getString("lookup.toolBlockQuery");
-			if (!params.contains("silent"))
-				config.setProperty("lookup.toolBlockQuery", params + " silent");
-			config.setProperty("version", "1.10");
-		}
-		if (config.getString("version").compareTo("1.20") < 0) {
-			log.info("[LogBlock] Updating tables to 1.20 ...");
-			final Connection conn = logblock.getConnection();
-			try {
-				conn.setAutoCommit(true);
-				final Statement st = conn.createStatement();
-				for (final String table : config.getStringList("tables", null))
-					st.execute("ALTER TABLE `" + table + "-sign` MODIFY signtext VARCHAR(255) NOT NULL");
-				st.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
-				return false;
-			}
-			config.setProperty("version", "1.20");
-		}
-		if (config.getString("version").compareTo("1.23") < 0) {
-			log.info("[LogBlock] Updating tables to 1.23 ...");
-			final Connection conn = logblock.getConnection();
-			try {
-				conn.setAutoCommit(true);
-				final Statement st = conn.createStatement();
-				for (final String table : config.getStringList("tables", null))
-					if (st.executeQuery("SELECT * FROM `" + table + "-chest` LIMIT 1").getMetaData().getColumnCount() != 4)
-						st.execute("DROP TABLE `" + table + "-chest`");
-				st.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
-				return false;
-			}
-			log.info("[LogBlock] Updating config to 1.23 ...");
-			final List<String> worldNames = config.getStringList("loggedWorlds", null), worldTables = config.getStringList("tables", null);
-			final String[] nodes = new String[]{"BlockCreations", "BlockDestroyings", "SignTexts", "Explosions", "Fire", "LeavesDecay", "LavaFlow", "ChestAccess", "ButtonsAndLevers", "Kills", "Chat"};
-			for (int i = 0; i < worldNames.size(); i++) {
-				final Configuration wcfg = new Configuration(new File("plugins/LogBlock/" + friendlyWorldname(worldNames.get(i)) + ".yml"));
-				wcfg.load();
-				wcfg.setProperty("table", worldTables.get(i));
-				for (final String node : nodes)
-					wcfg.setProperty("log" + node, config.getBoolean("logging.log" + node, true));
-				wcfg.save();
-			}
-			for (final String node : nodes)
-				config.removeProperty("logging.log" + node);
-			config.removeProperty("tables");
-			config.setProperty("version", "1.23");
-		}
 		if (config.getString("version").compareTo("1.27") < 0) {
 			log.info("[LogBlock] Updating tables to 1.27 ...");
-			if (logblock.getConfig().logChat) {
+			if (logblock.getLBConfig().logChat) {
 				final Connection conn = logblock.getConnection();
 				try {
 					conn.setAutoCommit(true);
@@ -101,14 +40,14 @@ class Updater
 					return false;
 				}
 			}
-			config.setProperty("version", "1.27");
+			config.set("version", "1.27");
 		}
 		if (config.getString("version").compareTo("1.30") < 0) {
 			log.info("[LogBlock] Updating config to 1.30 ...");
-			for (final String tool : config.getKeys("tools"))
-				if (config.getProperty("tools." + tool + ".permissionDefault") == null)
-					config.setProperty("tools." + tool + ".permissionDefault", "OP");
-			config.setProperty("version", "1.30");
+			for (final String tool : config.getConfigurationSection("tools").getKeys(false))
+				if (config.get("tools." + tool + ".permissionDefault") == null)
+					config.set("tools." + tool + ".permissionDefault", "OP");
+			config.set("version", "1.30");
 		}
 		if (config.getString("version").compareTo("1.31") < 0) {
 			log.info("[LogBlock] Updating tables to 1.31 ...");
@@ -123,7 +62,7 @@ class Updater
 				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
 				return false;
 			}
-			config.setProperty("version", "1.31");
+			config.set("version", "1.31");
 		}
 		if (config.getString("version").compareTo("1.32") < 0) {
 			log.info("[LogBlock] Updating tables to 1.32 ...");
@@ -138,9 +77,9 @@ class Updater
 				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
 				return false;
 			}
-			config.setProperty("version", "1.32");
+			config.set("version", "1.32");
 		}
-		config.save();
+		logblock.saveConfig();
 		return true;
 	}
 
@@ -152,9 +91,9 @@ class Updater
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
 		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime TIME NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
-		if (logblock.getConfig().logChat)
+		if (logblock.getLBConfig().logChat)
 			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM");
-		for (final WorldConfig wcfg : logblock.getConfig().worlds.values()) {
+		for (final WorldConfig wcfg : logblock.getLBConfig().worlds.values()) {
 			createTable(dbm, state, wcfg.table, "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
 			createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id))");
 			createTable(dbm, state, wcfg.table + "-chest", "(id INT UNSIGNED NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");

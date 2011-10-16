@@ -106,7 +106,7 @@ public class QueryParams implements Cloneable
 	}
 
 	public String getTable() {
-		return logblock.getConfig().worlds.get(world.getName().hashCode()).table;
+		return logblock.getLBConfig().worlds.get(world.getName().hashCode()).table;
 	}
 
 	public String getTitle() {
@@ -303,7 +303,7 @@ public class QueryParams implements Cloneable
 				if (player == null && !prepareToolQuery)
 					throw new IllegalArgumentException("You have to ba a player to use area");
 				if (values == null) {
-					radius = logblock.getConfig().defaultDist;
+					radius = logblock.getLBConfig().defaultDist;
 					if (!prepareToolQuery)
 						loc = player.getLocation();
 				} else {
@@ -327,14 +327,14 @@ public class QueryParams implements Cloneable
 				setSelection(selection);
 			} else if (param.equals("time") || param.equals("since")) {
 				if (values.length == 0)
-					since = logblock.getConfig().defaultTime;
+					since = logblock.getLBConfig().defaultTime;
 				else
 					since = parseTimeSpec(values);
 				if (since == -1)
 					throw new IllegalArgumentException("Failed to parse time spec for '" + param + "'");
 			} else if (param.equals("before")) {
 				if (values.length == 0)
-					before = logblock.getConfig().defaultTime;
+					before = logblock.getLBConfig().defaultTime;
 				else
 					before = parseTimeSpec(values);
 				if (before == -1)
@@ -406,7 +406,7 @@ public class QueryParams implements Cloneable
 		if (!prepareToolQuery && bct != BlockChangeType.CHAT) {
 			if (world == null)
 				throw new IllegalArgumentException("No world specified");
-			if (!logblock.getConfig().worlds.containsKey(world.getName().hashCode()))
+			if (!logblock.getLBConfig().worlds.containsKey(world.getName().hashCode()))
 				throw new IllegalArgumentException("This world ('" + world.getName() + "') isn't logged");
 		}
 		if (session != null)
@@ -459,7 +459,7 @@ public class QueryParams implements Cloneable
 		loc = p.loc;
 		radius = p.radius;
 		sel = p.sel;
-		if (p.since != 0 || since != logblock.getConfig().defaultTime)
+		if (p.since != 0 || since != logblock.getLBConfig().defaultTime)
 			since = p.since;
 		before = p.before;
 		sum = p.sum;

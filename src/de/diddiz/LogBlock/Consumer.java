@@ -46,7 +46,7 @@ public class Consumer extends TimerTask
 	Consumer(LogBlock logblock) {
 		this.logblock = logblock;
 		log = logblock.getServer().getLogger();
-		config = logblock.getConfig();
+		config = logblock.getLBConfig();
 		hiddenPlayers = config.hiddenPlayers;
 		hiddenBlocks = config.hiddenBlocks;
 		worlds = config.worlds;

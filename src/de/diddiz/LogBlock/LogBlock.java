@@ -44,7 +44,7 @@ public class LogBlock extends JavaPlugin
 	private boolean errorAtLoading = false;
 	private final Map<Integer, Session> sessions = new HashMap<Integer, Session>();
 
-	public Config getConfig() {
+	public Config getLBConfig() {
 		return config;
 	}
 

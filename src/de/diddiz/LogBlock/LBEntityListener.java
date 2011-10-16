@@ -32,9 +32,9 @@ class LBEntityListener extends EntityListener
 
 	LBEntityListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
-		worlds = logblock.getConfig().worlds;
-		logCreeperExplosionsAsPlayer = logblock.getConfig().logCreeperExplosionsAsPlayerWhoTriggeredThese;
-		logKillsLevel = logblock.getConfig().logKillsLevel;
+		worlds = logblock.getLBConfig().worlds;
+		logCreeperExplosionsAsPlayer = logblock.getLBConfig().logCreeperExplosionsAsPlayerWhoTriggeredThese;
+		logKillsLevel = logblock.getLBConfig().logKillsLevel;
 	}
 
 	@Override

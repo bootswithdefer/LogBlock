@@ -25,8 +25,8 @@ class LBToolListener extends PlayerListener
 	LBToolListener(LogBlock logblock) {
 		this.logblock = logblock;
 		handler = logblock.getCommandsHandler();
-		worlds = logblock.getConfig().worlds;
-		toolsByType = logblock.getConfig().toolsByType;
+		worlds = logblock.getLBConfig().worlds;
+		toolsByType = logblock.getLBConfig().toolsByType;
 	}
 
 	@Override
@@ -78,7 +78,7 @@ class LBToolListener extends PlayerListener
 	@Override
 	public void onPlayerCommandPreprocess(final PlayerCommandPreprocessEvent event) {
 		final String[] split = event.getMessage().split(" ");
-		if (split.length > 1 && split[0].equalsIgnoreCase("/ban") && logblock.hasPermission(event.getPlayer(), logblock.getConfig().banPermission)) {
+		if (split.length > 1 && split[0].equalsIgnoreCase("/ban") && logblock.hasPermission(event.getPlayer(), logblock.getLBConfig().banPermission)) {
 			final QueryParams p = new QueryParams(logblock);
 			p.setPlayer(split[1].equalsIgnoreCase("g") ? split[2] : split[1]);
 			p.since = 0;
@@ -87,7 +87,7 @@ class LBToolListener extends PlayerListener
 				@Override
 				public void run() {
 					for (final World world : logblock.getServer().getWorlds())
-						if (logblock.getConfig().worlds.get(world.getName().hashCode()) != null) {
+						if (worlds.get(world.getName().hashCode()) != null) {
 							p.world = world;
 							try {
 								handler.new CommandRollback(event.getPlayer(), p, false);

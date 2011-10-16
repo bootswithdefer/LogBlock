@@ -39,7 +39,7 @@ public class WorldEditor implements Runnable
 	public WorldEditor(LogBlock logblock, World world) {
 		log = logblock.getServer().getLogger();
 		this.logblock = logblock;
-		config = logblock.getConfig();
+		config = logblock.getLBConfig();
 		this.world = world;
 	}
 

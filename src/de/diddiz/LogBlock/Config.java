@@ -16,8 +16,9 @@ import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.permissions.PermissionDefault;
-import org.bukkit.util.config.Configuration;
 
 public class Config
 {
@@ -32,8 +33,8 @@ public class Config
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
 	public final int rollbackMaxTime, rollbackMaxArea;
-	public final HashMap<String, Tool> toolsByName;
-	public final HashMap<Integer, Tool> toolsByType;
+	public final Map<String, Tool> toolsByName;
+	public final Map<Integer, Tool> toolsByType;
 	public final int defaultDist, defaultTime;
 	public final int linesPerPage, linesLimit;
 	public final boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback, askRollbackAfterBan;
@@ -42,11 +43,12 @@ public class Config
 	public final Set<Integer> hiddenPlayers, hiddenBlocks;
 
 	public static enum LogKillsLevel {
-		PLAYERS, MONSTERS, ANIMALS
+		PLAYERS, MONSTERS, ANIMALS;
 	}
 
 	Config(LogBlock logblock) throws DataFormatException, IOException {
-		final Map<String, Object> def = new HashMap<String, Object>(), tooldef = new HashMap<String, Object>(), tbdef = new HashMap<String, Object>(), tdef = new HashMap<String, Object>();
+		final FileConfiguration config = logblock.getConfig();
+		final Map<String, Object> def = new HashMap<String, Object>();
 		def.put("version", logblock.getDescription().getVersion());
 		def.put("loggedWorlds", Arrays.asList("world", "world_nether"));
 		def.put("mysql.host", "localhost");
@@ -81,32 +83,26 @@ public class Config
 		def.put("questioner.banPermission", "mcbans.ban.local");
 		def.put("updater.installSpout", true);
 		def.put("updater.checkVersion", true);
-		tdef.put("aliases", Arrays.asList("t"));
-		tdef.put("leftClickBehavior", "NONE");
-		tdef.put("rightClickBehavior", "TOOL");
-		tdef.put("defaultEnabled", true);
-		tdef.put("item", 270);
-		tdef.put("params", "area 0 all sum none limit 15 desc silent");
-		tdef.put("mode", "LOOKUP");
-		tdef.put("permissionDefault", "TRUE");
-		tbdef.put("aliases", Arrays.asList("tb"));
-		tbdef.put("leftClickBehavior", "TOOL");
-		tbdef.put("rightClickBehavior", "BLOCK");
-		tbdef.put("defaultEnabled", true);
-		tbdef.put("item", 7);
-		tbdef.put("params", "area 0 all sum none limit 15 desc silent");
-		tbdef.put("mode", "LOOKUP");
-		tbdef.put("permissionDefault", "TRUE");
-		tooldef.put("tool", tdef);
-		tooldef.put("toolblock", tbdef);
-		def.put("tools", tooldef);
-		final Configuration config = logblock.getConfiguration();
-		config.load();
+		def.put("tools.tool.aliases", Arrays.asList("t"));
+		def.put("tools.tool.leftClickBehavior", "NONE");
+		def.put("tools.tool.rightClickBehavior", "TOOL");
+		def.put("tools.tool.defaultEnabled", true);
+		def.put("tools.tool.item", 270);
+		def.put("tools.tool.params", "area 0 all sum none limit 15 desc silent");
+		def.put("tools.tool.mode", "LOOKUP");
+		def.put("tools.tool.permissionDefault", "TRUE");
+		def.put("tools.toolblock.aliases", Arrays.asList("tb"));
+		def.put("tools.toolblock.leftClickBehavior", "TOOL");
+		def.put("tools.toolblock.rightClickBehavior", "BLOCK");
+		def.put("tools.toolblock.defaultEnabled", true);
+		def.put("tools.toolblock.item", 7);
+		def.put("tools.toolblock.params", "area 0 all sum none limit 15 desc silent");
+		def.put("tools.toolblock.mode", "LOOKUP");
+		def.put("tools.toolblock.permissionDefault", "TRUE");
 		for (final Entry<String, Object> e : def.entrySet())
-			if (config.getProperty(e.getKey()) == null)
-				config.setProperty(e.getKey(), e.getValue());
-		if (!config.save())
-			throw new IOException("Error while writing to config.yml");
+			if (!config.contains(e.getKey()))
+				config.set(e.getKey(), e.getValue());
+		logblock.saveConfig();
 		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getString("mysql.port") + "/" + config.getString("mysql.database");
 		user = config.getString("mysql.user");
 		password = config.getString("mysql.password");
@@ -126,18 +122,18 @@ public class Config
 			throw new DataFormatException("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
 		hiddenPlayers = new HashSet<Integer>();
-		for (final String playerName : config.getStringList("logging.hiddenPlayers", new ArrayList<String>()))
+		for (final Object playerName : config.getList("logging.hiddenPlayers"))
 			hiddenPlayers.add(playerName.hashCode());
 		hiddenBlocks = new HashSet<Integer>();
-		for (final String blocktype : config.getStringList("logging.hiddenBlocks", new ArrayList<String>())) {
-			final Material mat = Material.matchMaterial(blocktype);
+		for (final Object blocktype : config.getList("logging.hiddenBlocks")) {
+			final Material mat = Material.matchMaterial(String.valueOf(blocktype));
 			if (mat != null)
 				hiddenBlocks.add(mat.getId());
 			else
 				throw new DataFormatException("Not a valid material: '" + blocktype + "'");
 		}
-		dontRollback = new HashSet<Integer>(config.getIntList("rollback.dontRollback", null));
-		replaceAnyway = new HashSet<Integer>(config.getIntList("rollback.replaceAnyway", null));
+		dontRollback = new HashSet<Integer>(toIntList(config.getList("rollback.dontRollback")));
+		replaceAnyway = new HashSet<Integer>(toIntList(config.getList("rollback.replaceAnyway")));
 		rollbackMaxTime = parseTimeSpec(config.getString("rollback.maxTime").split(" "));
 		rollbackMaxArea = config.getInt("rollback.maxArea", 50);
 		defaultDist = config.getInt("lookup.defaultDist", 20);
@@ -152,12 +148,11 @@ public class Config
 		banPermission = config.getString("questioner.banPermission");
 		installSpout = config.getBoolean("updater.installSpout", true);
 		checkVersion = config.getBoolean("updater.checkVersion", true);
-		final List<String> toolNames = config.getKeys("tools");
 		final List<Tool> tools = new ArrayList<Tool>();
-		for (final String toolName : toolNames)
+		for (final String toolName : config.getConfigurationSection("tools").getKeys(false))
 			try {
 				final String path = "tools." + toolName;
-				final List<String> aliases = config.getStringList(path + ".aliases", null);
+				final List<String> aliases = toStringList(config.getList(path + ".aliases"));
 				final ToolBehavior leftClickBehavior = ToolBehavior.valueOf(config.getString(path + ".leftClickBehavior").toUpperCase());
 				final ToolBehavior rightClickBehavior = ToolBehavior.valueOf(config.getString(path + ".rightClickBehavior").toUpperCase());
 				final boolean defaultEnabled = config.getBoolean(path + ".defaultEnabled", false);
@@ -179,9 +174,9 @@ public class Config
 			for (final String alias : tool.aliases)
 				toolsByName.put(alias, tool);
 		}
-		final List<String> worldNames = config.getStringList("loggedWorlds", null);
+		final List<String> worldNames = toStringList(config.getList("loggedWorlds"));
 		worlds = new HashMap<Integer, WorldConfig>();
-		if (worldNames == null || worldNames.size() == 0)
+		if (worldNames.size() == 0)
 			throw new DataFormatException("No worlds configured");
 		for (final String world : worldNames)
 			worlds.put(world.hashCode(), new WorldConfig(new File("plugins/LogBlock/" + friendlyWorldname(world) + ".yml")));
@@ -222,6 +217,34 @@ public class Config
 				logEndermen = true;
 		}
 	}
+
+	public static List<String> toStringList(List<?> list) {
+		if (list == null)
+			return new ArrayList<String>();
+		final List<String> strs = new ArrayList<String>(list.size());
+		for (final Object obj : list)
+			if (obj instanceof String)
+				strs.add((String)obj);
+			else
+				strs.add(String.valueOf(obj));
+		return strs;
+	}
+
+	public static List<Integer> toIntList(List<?> list) {
+		if (list == null)
+			return new ArrayList<Integer>();
+		final List<Integer> ints = new ArrayList<Integer>(list.size());
+		for (final Object obj : list)
+			if (obj instanceof Integer)
+				ints.add((Integer)obj);
+			else
+				try {
+					ints.add(Integer.valueOf(String.valueOf(obj)));
+				} catch (final NumberFormatException ex) {
+					Bukkit.getLogger().warning("[LogBlock] Config error: '" + obj + "' is not a number");
+				}
+		return ints;
+	}
 }
 
 class WorldConfig
@@ -229,7 +252,7 @@ class WorldConfig
 	public final String table;
 	public final boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes, logEndermen;
 
-	public WorldConfig(File file) {
+	public WorldConfig(File file) throws IOException {
 		final Map<String, Object> def = new HashMap<String, Object>();
 		def.put("table", "lb-" + file.getName().substring(0, file.getName().length() - 4));
 		def.put("logBlockCreations", true);
@@ -249,12 +272,11 @@ class WorldConfig
 		def.put("logDoors", false);
 		def.put("logCakes", false);
 		def.put("logEndermen", false);
-		final Configuration config = new Configuration(file);
-		config.load();
+		final YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 		for (final Entry<String, Object> e : def.entrySet())
-			if (config.getProperty(e.getKey()) == null)
-				config.setProperty(e.getKey(), e.getValue());
-		config.save();
+			if (config.get(e.getKey()) == null)
+				config.set(e.getKey(), e.getValue());
+		config.save(file);
 		table = config.getString("table");
 		logBlockPlacings = config.getBoolean("logBlockCreations", true);
 		logBlockBreaks = config.getBoolean("logBlockDestroyings", true);

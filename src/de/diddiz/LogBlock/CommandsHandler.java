@@ -41,7 +41,7 @@ public class CommandsHandler implements CommandExecutor
 	CommandsHandler(LogBlock logblock) {
 		this.logblock = logblock;
 		log = logblock.getServer().getLogger();
-		config = logblock.getConfig();
+		config = logblock.getLBConfig();
 		scheduler = logblock.getServer().getScheduler();
 		questioner = (LogBlockQuestioner)logblock.getServer().getPluginManager().getPlugin("LogBlockQuestioner");
 	}
@@ -224,7 +224,7 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("rollback") || command.equals("undo") || command.equals("rb")) {
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
-						params.since = logblock.getConfig().defaultTime;
+						params.since = config.defaultTime;
 						params.bct = BlockChangeType.ALL;
 						params.parseArgs(sender, argsToList(args, 1));
 						new CommandRollback(sender, params, true);
@@ -233,7 +233,7 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("redo")) {
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
-						params.since = logblock.getConfig().defaultTime;
+						params.since = config.defaultTime;
 						params.bct = BlockChangeType.ALL;
 						params.parseArgs(sender, argsToList(args, 1));
 						new CommandRedo(sender, params, true);
