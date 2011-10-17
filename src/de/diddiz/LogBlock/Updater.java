@@ -1,24 +1,22 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.Utils.readURL;
+import static org.bukkit.Bukkit.getLogger;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 
 class Updater
 {
-	private final Logger log;
 	private final LogBlock logblock;
 
 	Updater(LogBlock logblock) {
 		this.logblock = logblock;
-		log = logblock.getServer().getLogger();
 	}
 
 	boolean update() {
@@ -26,7 +24,7 @@ class Updater
 		if (config.getString("version").compareTo(logblock.getDescription().getVersion()) >= 0)
 			return false;
 		if (config.getString("version").compareTo("1.27") < 0) {
-			log.info("[LogBlock] Updating tables to 1.27 ...");
+			getLogger().info("[LogBlock] Updating tables to 1.27 ...");
 			if (logblock.getLBConfig().logChat) {
 				final Connection conn = logblock.getConnection();
 				try {
@@ -43,14 +41,14 @@ class Updater
 			config.set("version", "1.27");
 		}
 		if (config.getString("version").compareTo("1.30") < 0) {
-			log.info("[LogBlock] Updating config to 1.30 ...");
+			getLogger().info("[LogBlock] Updating config to 1.30 ...");
 			for (final String tool : config.getConfigurationSection("tools").getKeys(false))
 				if (config.get("tools." + tool + ".permissionDefault") == null)
 					config.set("tools." + tool + ".permissionDefault", "OP");
 			config.set("version", "1.30");
 		}
 		if (config.getString("version").compareTo("1.31") < 0) {
-			log.info("[LogBlock] Updating tables to 1.31 ...");
+			getLogger().info("[LogBlock] Updating tables to 1.31 ...");
 			final Connection conn = logblock.getConnection();
 			try {
 				conn.setAutoCommit(true);
@@ -65,7 +63,7 @@ class Updater
 			config.set("version", "1.31");
 		}
 		if (config.getString("version").compareTo("1.32") < 0) {
-			log.info("[LogBlock] Updating tables to 1.32 ...");
+			getLogger().info("[LogBlock] Updating tables to 1.32 ...");
 			final Connection conn = logblock.getConnection();
 			try {
 				conn.setAutoCommit(true);
@@ -106,7 +104,7 @@ class Updater
 
 	private void createTable(DatabaseMetaData dbm, Statement state, String table, String query) throws SQLException {
 		if (!dbm.getTables(null, null, table, null).next()) {
-			log.log(Level.INFO, "[LogBlock] Creating table " + table + ".");
+			getLogger().log(Level.INFO, "[LogBlock] Creating table " + table + ".");
 			state.execute("CREATE TABLE `" + table + "` " + query);
 			if (!dbm.getTables(null, null, table, null).next())
 				throw new SQLException("Table " + table + " not found and failed to create");

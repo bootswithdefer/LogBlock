@@ -3,6 +3,7 @@ package de.diddiz.LogBlock;
 import static de.diddiz.util.BukkitUtils.compressInventory;
 import static de.diddiz.util.BukkitUtils.entityName;
 import static de.diddiz.util.BukkitUtils.rawData;
+import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -20,7 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
@@ -38,14 +38,12 @@ public class Consumer extends TimerTask
 	private final Map<Integer, WorldConfig> worlds;
 	private final Set<Integer> hiddenPlayers, hiddenBlocks;
 	private final Set<String> failedPlayers = new HashSet<String>();
-	private final Logger log;
 	private final LogBlock logblock;
 	private final Map<Integer, Integer> players = new HashMap<Integer, Integer>();
 	private final Lock lock = new ReentrantLock();
 
 	Consumer(LogBlock logblock) {
 		this.logblock = logblock;
-		log = logblock.getServer().getLogger();
 		config = logblock.getLBConfig();
 		hiddenPlayers = config.hiddenPlayers;
 		hiddenBlocks = config.hiddenBlocks;
@@ -252,7 +250,7 @@ public class Consumer extends TimerTask
 		final Connection conn = logblock.getConnection();
 		Statement state = null;
 		if (getQueueSize() > 1000)
-			log.info("[LogBlock Consumer] Queue overloaded. Size: " + getQueueSize());
+			getLogger().info("[LogBlock Consumer] Queue overloaded. Size: " + getQueueSize());
 		try {
 			if (conn == null)
 				return;
@@ -269,7 +267,7 @@ public class Consumer extends TimerTask
 						if (!addPlayer(state, player)) {
 							if (!failedPlayers.contains(player)) {
 								failedPlayers.add(player);
-								log.warning("[LogBlock Consumer] Failed to add player " + player);
+								getLogger().warning("[LogBlock Consumer] Failed to add player " + player);
 							}
 							continue process;
 						}
@@ -277,14 +275,14 @@ public class Consumer extends TimerTask
 					try {
 						state.execute(insert);
 					} catch (final SQLException ex) {
-						log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on " + insert + ": ", ex);
+						getLogger().log(Level.SEVERE, "[LogBlock Consumer] SQL exception on " + insert + ": ", ex);
 						break process;
 					}
 				count++;
 			}
 			conn.commit();
 		} catch (final SQLException ex) {
-			log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
+			getLogger().log(Level.SEVERE, "[LogBlock Consumer] SQL exception", ex);
 		} finally {
 			try {
 				if (state != null)
@@ -292,7 +290,7 @@ public class Consumer extends TimerTask
 				if (conn != null)
 					conn.close();
 			} catch (final SQLException ex) {
-				log.log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
+				getLogger().log(Level.SEVERE, "[LogBlock Consumer] SQL exception on close", ex);
 			}
 			lock.unlock();
 		}

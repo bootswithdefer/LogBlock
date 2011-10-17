@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.Utils.download;
+import static org.bukkit.Bukkit.getLogger;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -33,7 +33,6 @@ import de.diddiz.util.MySQLConnectionPool;
 
 public class LogBlock extends JavaPlugin
 {
-	private Logger log;
 	private Config config;
 	private MySQLConnectionPool pool;
 	private Consumer consumer = null;
@@ -62,18 +61,17 @@ public class LogBlock extends JavaPlugin
 
 	@Override
 	public void onLoad() {
-		log = getServer().getLogger();
 		try {
 			updater = new Updater(this);
 			config = new Config(this);
 			if (config.checkVersion)
-				log.info("[LogBlock] Version check: " + updater.checkVersion());
+				getLogger().info("[LogBlock] Version check: " + updater.checkVersion());
 			final File file = new File("lib/mysql-connector-java-bin.jar");
 			if (!file.exists() || file.length() == 0)
-				download(log, new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
+				download(getLogger(), new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
 			if (!file.exists() || file.length() == 0)
 				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
-			log.info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
+			getLogger().info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new MySQLConnectionPool(config.url, config.user, config.password);
 			getConnection().close();
 			if (updater.update())
@@ -86,7 +84,7 @@ public class LogBlock extends JavaPlugin
 				}
 			});
 			if (imports != null && imports.length > 0) {
-				log.info("[LogBlock] Found " + imports.length + "imports.");
+				getLogger().info("[LogBlock] Found " + imports.length + "imports.");
 				Connection conn = null;
 				try {
 					conn = getConnection();
@@ -94,7 +92,7 @@ public class LogBlock extends JavaPlugin
 					final Statement st = conn.createStatement();
 					for (final File sqlFile : imports)
 						try {
-							log.info("[LogBlock] Trying to import " + sqlFile.getName() + " ...");
+							getLogger().info("[LogBlock] Trying to import " + sqlFile.getName() + " ...");
 							final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
 							String line = null;
 							while ((line = reader.readLine()) != null)
@@ -103,22 +101,22 @@ public class LogBlock extends JavaPlugin
 							conn.commit();
 							reader.close();
 							sqlFile.delete();
-							log.info("[LogBlock] Successfully imported " + sqlFile.getName() + ".");
+							getLogger().info("[LogBlock] Successfully imported " + sqlFile.getName() + ".");
 						} catch (final Exception ex) {
-							log.log(Level.WARNING, "[LogBlock] Failed to import " + sqlFile.getName() + ": ", ex);
+							getLogger().log(Level.WARNING, "[LogBlock] Failed to import " + sqlFile.getName() + ": ", ex);
 							file.renameTo(new File("plugins/LogBlock/import/" + sqlFile.getName() + ".failed"));
 						}
 					st.close();
-					log.info("[LogBlock] Successfully imported stored queue.");
+					getLogger().info("[LogBlock] Successfully imported stored queue.");
 				} catch (final Exception ex) {
-					log.log(Level.WARNING, "[LogBlock] Error while importing: ", ex);
+					getLogger().log(Level.WARNING, "[LogBlock] Error while importing: ", ex);
 				} finally {
 					if (conn != null)
 						conn.close();
 				}
 			}
 		} catch (final Exception ex) {
-			log.log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
+			getLogger().log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
 			errorAtLoading = true;
 			return;
 		}
@@ -134,34 +132,34 @@ public class LogBlock extends JavaPlugin
 		}
 		if (pm.getPlugin("WorldEdit") == null && !new File("lib/WorldEdit.jar").exists() && !new File("WorldEdit.jar").exists())
 			try {
-				download(log, new URL("http://diddiz.insane-architects.net/download/WorldEdit.jar"), new File("lib/WorldEdit.jar"));
-				log.info("[LogBlock] You've to restart/reload your server now.");
+				download(getLogger(), new URL("http://diddiz.insane-architects.net/download/WorldEdit.jar"), new File("lib/WorldEdit.jar"));
+				getLogger().info("[LogBlock] You've to restart/reload your server now.");
 				pm.disablePlugin(this);
 				return;
 			} catch (final Exception ex) {
-				log.warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
+				getLogger().warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
 			}
 		if (config.logChestAccess && pm.getPlugin("Spout") == null)
 			if (config.installSpout)
 				try {
-					download(log, new URL("http://ci.getspout.org/job/Spout/Recommended/artifact/target/spout-dev-SNAPSHOT.jar"), new File("plugins/Spout.jar"));
+					download(getLogger(), new URL("http://ci.getspout.org/job/Spout/Recommended/artifact/target/spout-dev-SNAPSHOT.jar"), new File("plugins/Spout.jar"));
 					pm.loadPlugin(new File("plugins/Spout.jar"));
 					pm.enablePlugin(pm.getPlugin("Spout"));
 				} catch (final Exception ex) {
 					config.logChestAccess = false;
-					log.warning("[LogBlock] Failed to install Spout, you may have to restart your server or install it manually.");
+					getLogger().warning("[LogBlock] Failed to install Spout, you may have to restart your server or install it manually.");
 				}
 			else {
 				config.logChestAccess = false;
-				log.warning("[LogBlock] Spout is not installed. Disabling chest logging.");
+				getLogger().warning("[LogBlock] Spout is not installed. Disabling chest logging.");
 			}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
 		if (pm.getPlugin("Permissions") != null) {
 			permissions = ((Permissions)pm.getPlugin("Permissions")).getHandler();
-			log.info("[LogBlock] Permissions plugin found.");
+			getLogger().info("[LogBlock] Permissions plugin found.");
 		} else
-			log.info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
+			getLogger().info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
 		if (config.keepLogDays >= 0) {
 			final QueryParams params = new QueryParams(this);
 			params.before = config.keepLogDays * 1440;
@@ -172,7 +170,7 @@ public class LogBlock extends JavaPlugin
 					try {
 						commandsHandler.new CommandClearLog(getServer().getConsoleSender(), params.clone(), true);
 					} catch (final Exception ex) {
-						log.severe("Failed to schedule ClearLog: " + ex.getMessage());
+						getLogger().log(Level.SEVERE, "Failed to schedule ClearLog: ", ex);
 					}
 				}
 		}
@@ -209,7 +207,7 @@ public class LogBlock extends JavaPlugin
 			if (pm.getPlugin("Spout") != null)
 				pm.registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
 			else
-				log.warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");
+				getLogger().warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");
 		if (config.logButtonsAndLevers || config.logDoors || config.logCakes)
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
 		if (config.logKills)
@@ -229,23 +227,23 @@ public class LogBlock extends JavaPlugin
 		}
 		if (config.useBukkitScheduler) {
 			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delayBetweenRuns * 20, config.delayBetweenRuns * 20) > 0)
-				log.info("[LogBlock] Scheduled consumer with bukkit scheduler.");
+				getLogger().info("[LogBlock] Scheduled consumer with bukkit scheduler.");
 			else {
-				log.warning("[LogBlock] Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
+				getLogger().warning("[LogBlock] Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
 				timer = new Timer();
 				timer.scheduleAtFixedRate(consumer, config.delayBetweenRuns * 1000, config.delayBetweenRuns * 1000);
 			}
 		} else {
 			timer = new Timer();
 			timer.scheduleAtFixedRate(consumer, config.delayBetweenRuns * 1000, config.delayBetweenRuns * 1000);
-			log.info("[LogBlock] Scheduled consumer with timer.");
+			getLogger().info("[LogBlock] Scheduled consumer with timer.");
 		}
 		for (final Tool tool : config.toolsByType.values()) {
 			final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
 			pm.addPermission(perm);
 			// perm.addParent("logblock.*", true);
 		}
-		log.info("LogBlock v" + getDescription().getVersion() + " by DiddiZ enabled.");
+		getLogger().info("LogBlock v" + getDescription().getVersion() + " by DiddiZ enabled.");
 	}
 
 	@Override
@@ -257,21 +255,21 @@ public class LogBlock extends JavaPlugin
 			for (final Player player : getServer().getOnlinePlayers())
 				consumer.queueLeave(player);
 		if (consumer != null && consumer.getQueueSize() > 0) {
-			log.info("[LogBlock] Waiting for consumer ...");
+			getLogger().info("[LogBlock] Waiting for consumer ...");
 			int lastSize = -1, fails = 0;
 			while (consumer.getQueueSize() > 0) {
-				log.info("[LogBlock] Remaining queue size: " + consumer.getQueueSize());
+				getLogger().info("[LogBlock] Remaining queue size: " + consumer.getQueueSize());
 				if (lastSize == consumer.getQueueSize()) {
 					fails++;
-					log.info("[LogBlock] Remaining tries: " + (10 - fails));
+					getLogger().info("[LogBlock] Remaining tries: " + (10 - fails));
 				} else
 					fails = 0;
 				if (fails == 10) {
-					log.info("Unable to save queue to database. Trying to write to a local file.");
+					getLogger().info("Unable to save queue to database. Trying to write to a local file.");
 					try {
 						consumer.writeToFile();
 					} catch (final FileNotFoundException ex) {
-						log.info("Failed to write. Given up.");
+						getLogger().info("Failed to write. Given up.");
 						break;
 					}
 				}
@@ -281,7 +279,7 @@ public class LogBlock extends JavaPlugin
 		}
 		if (pool != null)
 			pool.close();
-		log.info("LogBlock disabled.");
+		getLogger().info("LogBlock disabled.");
 	}
 
 	boolean hasPermission(CommandSender sender, String permission) {
@@ -294,7 +292,7 @@ public class LogBlock extends JavaPlugin
 		try {
 			return pool.getConnection();
 		} catch (final Exception ex) {
-			log.log(Level.SEVERE, "[LogBlock] Error while fetching connection", ex);
+			getLogger().log(Level.SEVERE, "[LogBlock] Error while fetching connection", ex);
 			return null;
 		}
 	}

@@ -3,6 +3,7 @@ package de.diddiz.LogBlock;
 import static de.diddiz.util.BukkitUtils.equalTypes;
 import static de.diddiz.util.BukkitUtils.materialName;
 import static de.diddiz.util.BukkitUtils.modifyContainer;
+import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -26,7 +26,6 @@ import org.bukkit.material.PistonExtensionMaterial;
 
 public class WorldEditor implements Runnable
 {
-	private final Logger log;
 	private final LogBlock logblock;
 	private final Config config;
 	private final Queue<Edit> edits = new LinkedBlockingQueue<Edit>();
@@ -37,7 +36,6 @@ public class WorldEditor implements Runnable
 	public LookupCacheElement[] errors;
 
 	public WorldEditor(LogBlock logblock, World world) {
-		log = logblock.getServer().getLogger();
 		this.logblock = logblock;
 		config = logblock.getLBConfig();
 		this.world = world;
@@ -97,7 +95,7 @@ public class WorldEditor implements Runnable
 			} catch (final WorldEditorException ex) {
 				errorList.add(ex);
 			} catch (final Exception ex) {
-				log.log(Level.WARNING, "[LogBlock WorldEditor] Exeption: ", ex);
+				getLogger().log(Level.WARNING, "[LogBlock WorldEditor] Exeption: ", ex);
 			}
 			counter++;
 		}

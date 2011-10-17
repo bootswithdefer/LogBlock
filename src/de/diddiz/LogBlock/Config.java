@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.parseTimeSpec;
+import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -164,7 +165,7 @@ public class Config
 				final PermissionDefault pdef = PermissionDefault.valueOf(config.getString(path + ".permissionDefault").toUpperCase());
 				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode, pdef));
 			} catch (final Exception ex) {
-				Bukkit.getLogger().log(Level.WARNING, "Error at parsing tool '" + toolName + "':)", ex);
+				getLogger().log(Level.WARNING, "Error at parsing tool '" + toolName + "':)", ex);
 			}
 		toolsByName = new HashMap<String, Tool>();
 		toolsByType = new HashMap<Integer, Tool>();
@@ -241,7 +242,7 @@ public class Config
 				try {
 					ints.add(Integer.valueOf(String.valueOf(obj)));
 				} catch (final NumberFormatException ex) {
-					Bukkit.getLogger().warning("[LogBlock] Config error: '" + obj + "' is not a number");
+					getLogger().warning("[LogBlock] Config error: '" + obj + "' is not a number");
 				}
 		return ints;
 	}
