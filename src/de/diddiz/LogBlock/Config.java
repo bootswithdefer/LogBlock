@@ -165,7 +165,7 @@ public class Config
 				final PermissionDefault pdef = PermissionDefault.valueOf(config.getString(path + ".permissionDefault").toUpperCase());
 				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode, pdef));
 			} catch (final Exception ex) {
-				getLogger().log(Level.WARNING, "Error at parsing tool '" + toolName + "':)", ex);
+				getLogger().log(Level.WARNING, "Error at parsing tool '" + toolName + "': ", ex);
 			}
 		toolsByName = new HashMap<String, Tool>();
 		toolsByType = new HashMap<Integer, Tool>();

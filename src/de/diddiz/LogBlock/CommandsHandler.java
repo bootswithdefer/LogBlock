@@ -95,9 +95,8 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.GOLD + "coords -- Shows coordinates for each block");
 					sender.sendMessage(ChatColor.GOLD + "silent -- Displays lesser messages");
 				} else if (command.equals("permissions")) {
-					final String[] permissions = {"me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions"};
 					sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
-					for (final String permission : permissions)
+					for (final String permission : new String[]{"me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions", "spawnTools"})
 						if (logblock.hasPermission(sender, "logblock." + permission))
 							sender.sendMessage(ChatColor.GOLD + "logblock." + permission);
 					for (final Tool tool : config.toolsByType.values())
@@ -142,7 +141,7 @@ public class CommandsHandler implements CommandExecutor
 						final Tool tool = config.toolsByName.get(command);
 						final ToolData toolData = session.toolData.get(tool);
 						if (args.length == 1) {
-							if (logblock.hasPermission(player, "logblock.tools." + tool.name)) {
+							if (logblock.hasPermission(player, "logblock.spawnTools")) {
 								giveTool(player, tool.item);
 								session.toolData.get(tool).enabled = true;
 							} else

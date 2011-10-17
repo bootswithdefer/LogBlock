@@ -21,6 +21,7 @@ permissions:
             logblock.tp: true
             logblock.me: true
             logblock.ignoreRestrictions: true
+            logblock.spawnTools: true
     logblock.lookup:
         description: 'Grants access to /lb lookup commands and allows defining custom tool queries'
         default: op
@@ -45,3 +46,6 @@ permissions:
     logblock.ignoreRestrictions:
         description: 'Allows to ignore the rollback restrictions rollback.maxTime and rollback.maxArea'
         default: op
+    logblock.spawnTools:
+        description: 'Allows to spawn tools'
+        default: true
