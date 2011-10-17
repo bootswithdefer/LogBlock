@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,6 +16,8 @@ import java.util.logging.Logger;
 
 public class Utils
 {
+	public static String newline = System.getProperty("line.separator");
+
 	public static void download(Logger log, URL url, File file) throws IOException {
 		if (!file.getParentFile().exists())
 			file.getParentFile().mkdir();
@@ -140,5 +143,19 @@ public class Utils
 		for (int i = 1; i < len; i++)
 			buffer.append(delimiter).append(s[i]);
 		return buffer.toString();
+	}
+
+	public static class ExtensionFilenameFilter implements FilenameFilter
+	{
+		private final String ext;
+
+		public ExtensionFilenameFilter(String ext) {
+			this.ext = ext;
+		}
+
+		@Override
+		public boolean accept(File dir, String name) {
+			return name.toLowerCase().endsWith(ext);
+		}
 	}
 }

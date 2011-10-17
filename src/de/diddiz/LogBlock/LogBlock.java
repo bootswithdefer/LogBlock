@@ -3,10 +3,11 @@ package de.diddiz.LogBlock;
 import static de.diddiz.util.Utils.download;
 import static org.bukkit.Bukkit.getLogger;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FilenameFilter;
+import java.io.FileWriter;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -30,6 +31,8 @@ import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.util.MySQLConnectionPool;
+import de.diddiz.util.Utils;
+import de.diddiz.util.Utils.ExtensionFilenameFilter;
 
 public class LogBlock extends JavaPlugin
 {
@@ -77,50 +80,56 @@ public class LogBlock extends JavaPlugin
 			if (updater.update())
 				config = new Config(this);
 			updater.checkTables();
-			final File[] imports = new File("plugins/LogBlock/import/").listFiles(new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.toLowerCase().endsWith(".sql");
-				}
-			});
-			if (imports != null && imports.length > 0) {
-				getLogger().info("[LogBlock] Found " + imports.length + "imports.");
-				Connection conn = null;
-				try {
-					conn = getConnection();
-					conn.setAutoCommit(false);
-					final Statement st = conn.createStatement();
-					for (final File sqlFile : imports)
-						try {
-							getLogger().info("[LogBlock] Trying to import " + sqlFile.getName() + " ...");
-							final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
-							String line = null;
-							while ((line = reader.readLine()) != null)
-								st.addBatch(line);
-							st.executeBatch();
-							conn.commit();
-							reader.close();
-							sqlFile.delete();
-							getLogger().info("[LogBlock] Successfully imported " + sqlFile.getName() + ".");
-						} catch (final Exception ex) {
-							getLogger().log(Level.WARNING, "[LogBlock] Failed to import " + sqlFile.getName() + ": ", ex);
-							file.renameTo(new File("plugins/LogBlock/import/" + sqlFile.getName() + ".failed"));
-						}
-					st.close();
-					getLogger().info("[LogBlock] Successfully imported stored queue.");
-				} catch (final Exception ex) {
-					getLogger().log(Level.WARNING, "[LogBlock] Error while importing: ", ex);
-				} finally {
-					if (conn != null)
-						conn.close();
-				}
-			}
+			doImports();
 		} catch (final Exception ex) {
 			getLogger().log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
 			errorAtLoading = true;
 			return;
 		}
 		consumer = new Consumer(this);
+	}
+
+	private void doImports() {
+		final File[] imports = new File("plugins/LogBlock/import/").listFiles(new ExtensionFilenameFilter("sql"));
+		if (imports != null && imports.length > 0) {
+			getLogger().info("[LogBlock] Found " + imports.length + " imports.");
+			Connection conn = null;
+			try {
+				conn = getConnection();
+				conn.setAutoCommit(false);
+				final Statement st = conn.createStatement();
+				final BufferedWriter writer = new BufferedWriter(new FileWriter(new File(getDataFolder(), "import/failed.txt")));
+				int successes = 0, errors = 0;
+				for (final File sqlFile : imports) {
+					getLogger().info("[LogBlock] Trying to import " + sqlFile.getName() + " ...");
+					final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
+					String line = null;
+					while ((line = reader.readLine()) != null)
+						try {
+							st.execute(line);
+							successes++;
+						} catch (final Exception ex) {
+							getLogger().warning("[LogBlock] Error while importing: '" + line + "': " + ex.getMessage());
+							writer.write(line + Utils.newline);
+							errors++;
+						}
+					conn.commit();
+					reader.close();
+					sqlFile.delete();
+					getLogger().info("[LogBlock] Successfully imported " + sqlFile.getName() + ".");
+				}
+				writer.close();
+				st.close();
+				getLogger().info("[LogBlock] Successfully imported stored queue. (" + successes + " rows imported, " + errors + " errors)");
+			} catch (final Exception ex) {
+				getLogger().log(Level.WARNING, "[LogBlock] Error while importing: ", ex);
+			} finally {
+				if (conn != null)
+					try {
+						conn.close();
+					} catch (final SQLException ex) {}
+			}
+		}
 	}
 
 	@Override
