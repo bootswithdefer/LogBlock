@@ -45,6 +45,7 @@ public class LogBlock extends JavaPlugin
 	private PermissionHandler permissions = null;
 	private boolean errorAtLoading = false;
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
+	private boolean connected = true;
 
 	public Config getLBConfig() {
 		return config;
@@ -76,13 +77,16 @@ public class LogBlock extends JavaPlugin
 				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
 			getLogger().info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new MySQLConnectionPool(config.url, config.user, config.password);
-			getConnection().close();
+			final Connection conn = getConnection();
+			if (conn == null)
+				throw new SQLException("No MySQL connection");
+			conn.close();
 			if (updater.update())
 				config = new Config(this);
 			updater.checkTables();
 			doImports();
 		} catch (final Exception ex) {
-			getLogger().log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
+			getLogger().severe("[LogBlock] Error while loading: " + ex.getMessage());
 			errorAtLoading = true;
 			return;
 		}
@@ -299,9 +303,18 @@ public class LogBlock extends JavaPlugin
 
 	public Connection getConnection() {
 		try {
-			return pool.getConnection();
+			final Connection conn = pool.getConnection();
+			if (!connected) {
+				getLogger().info("[LogBlock] MySQL connection rebuild");
+				connected = true;
+			}
+			return conn;
 		} catch (final Exception ex) {
-			getLogger().log(Level.SEVERE, "[LogBlock] Error while fetching connection", ex);
+			if (connected) {
+				getLogger().log(Level.SEVERE, "[LogBlock] Error while fetching connection: ", ex);
+				connected = false;
+			} else
+				getLogger().severe("[LogBlock] MySQL connection lost");
 			return null;
 		}
 	}

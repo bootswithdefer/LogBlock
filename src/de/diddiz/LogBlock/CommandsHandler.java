@@ -396,6 +396,10 @@ public class CommandsHandler implements CommandExecutor
 						params.needChestAccess = true;
 				}
 				conn = logblock.getConnection();
+				if (conn == null) {
+					sender.sendMessage(ChatColor.RED + "MySQL connection lost");
+					return;
+				}
 				state = conn.createStatement();
 				rs = state.executeQuery(params.getQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
@@ -449,6 +453,10 @@ public class CommandsHandler implements CommandExecutor
 						params.needChestAccess = true;
 				}
 				conn = logblock.getConnection();
+				if (conn == null) {
+					sender.sendMessage(ChatColor.RED + "MySQL connection lost");
+					return;
+				}
 				state = conn.createStatement();
 				file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".") + ".log");
 				sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
@@ -516,6 +524,10 @@ public class CommandsHandler implements CommandExecutor
 				params.limit = 1;
 				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
+				if (conn == null) {
+					sender.sendMessage(ChatColor.RED + "MySQL connection lost");
+					return;
+				}
 				state = conn.createStatement();
 				rs = state.executeQuery(params.getQuery());
 				if (rs.next()) {
@@ -554,6 +566,10 @@ public class CommandsHandler implements CommandExecutor
 				params.order = Order.DESC;
 				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
+				if (conn == null) {
+					sender.sendMessage(ChatColor.RED + "MySQL connection lost");
+					return;
+				}
 				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
@@ -614,6 +630,10 @@ public class CommandsHandler implements CommandExecutor
 				params.order = Order.ASC;
 				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
+				if (conn == null) {
+					sender.sendMessage(ChatColor.RED + "MySQL connection lost");
+					return;
+				}
 				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
@@ -657,6 +677,10 @@ public class CommandsHandler implements CommandExecutor
 			try {
 				conn = logblock.getConnection();
 				state = conn.createStatement();
+				if (conn == null) {
+					sender.sendMessage(ChatColor.RED + "MySQL connection lost");
+					return;
+				}
 				if (!checkRestrictions(sender, params))
 					return;
 				final File dumpFolder = new File(logblock.getDataFolder(), "dump");
