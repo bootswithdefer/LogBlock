@@ -171,7 +171,7 @@ public class Config
 		toolsByType = new HashMap<Integer, Tool>();
 		for (final Tool tool : tools) {
 			toolsByType.put(tool.item, tool);
-			toolsByName.put(tool.name, tool);
+			toolsByName.put(tool.name.toLowerCase(), tool);
 			for (final String alias : tool.aliases)
 				toolsByName.put(alias, tool);
 		}

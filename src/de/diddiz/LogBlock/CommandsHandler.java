@@ -46,8 +46,6 @@ public class CommandsHandler implements CommandExecutor
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-		if (!cmd.getName().equalsIgnoreCase("lb"))
-			return false;
 		try {
 			if (args.length == 0) {
 				sender.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + logblock.getDescription().getVersion() + " by DiddiZ");
@@ -303,11 +301,9 @@ public class CommandsHandler implements CommandExecutor
 				} else
 					sender.sendMessage(ChatColor.RED + "Unknown command '" + args[0] + "'");
 			}
-		} catch (final NullPointerException ex) {
-			sender.sendMessage(ChatColor.RED + "Error, check log");
-			getLogger().log(Level.WARNING, "[LogBlock] NPE in commandshandler: ", ex);
 		} catch (final Exception ex) {
-			sender.sendMessage(ChatColor.RED + ex.getMessage());
+			sender.sendMessage(ChatColor.RED + "Error, check log");
+			getLogger().log(Level.WARNING, "[LogBlock] Exception in commands handler: ", ex);
 		}
 		return true;
 	}
