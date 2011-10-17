@@ -41,7 +41,7 @@ public class LogBlock extends JavaPlugin
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
 	private boolean errorAtLoading = false;
-	private final Map<Integer, Session> sessions = new HashMap<Integer, Session>();
+	private final Map<String, Session> sessions = new HashMap<String, Session>();
 
 	public Config getLBConfig() {
 		return config;
@@ -297,15 +297,15 @@ public class LogBlock extends JavaPlugin
 		}
 	}
 
-	public Map<Integer, Session> getSessions() {
-		return sessions;
+	public Session getSession(String playerName) {
+		return getSession(playerName, true);
 	}
 
-	public Session getSession(String playerName) {
-		Session session = sessions.get(playerName.hashCode());
-		if (session == null) {
+	public Session getSession(String playerName, boolean create) {
+		Session session = sessions.get(playerName.toLowerCase());
+		if (session == null && create) {
 			session = new Session(this, getServer().getPlayer(playerName));
-			sessions.put(playerName.hashCode(), session);
+			sessions.put(playerName.toLowerCase(), session);
 		}
 		return session;
 	}

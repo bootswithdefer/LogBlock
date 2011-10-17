@@ -101,7 +101,7 @@ class LBToolListener extends PlayerListener
 	@Override
 	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
 		final Player player = event.getPlayer();
-		final Session session = logblock.getSessions().get(player.getName().hashCode());
+		final Session session = logblock.getSession(player.getName(), false);
 		if (session != null)
 			for (final Entry<Tool, ToolData> entry : session.toolData.entrySet()) {
 				final Tool tool = entry.getKey();
