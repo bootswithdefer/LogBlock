@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.permissions.PermissionDefault;
 
@@ -47,7 +47,7 @@ public class Config
 	}
 
 	Config(LogBlock logblock) throws DataFormatException, IOException {
-		final FileConfiguration config = logblock.getConfig();
+		final ConfigurationSection config = logblock.getConfig();
 		final Map<String, Object> def = new HashMap<String, Object>();
 		def.put("version", logblock.getDescription().getVersion());
 		def.put("loggedWorlds", Arrays.asList("world", "world_nether"));
@@ -103,7 +103,7 @@ public class Config
 			if (!config.contains(e.getKey()))
 				config.set(e.getKey(), e.getValue());
 		logblock.saveConfig();
-		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getString("mysql.port") + "/" + config.getString("mysql.database");
+		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + config.getString("mysql.database");
 		user = config.getString("mysql.user");
 		password = config.getString("mysql.password");
 		delayBetweenRuns = config.getInt("consumer.delayBetweenRuns", 6);
