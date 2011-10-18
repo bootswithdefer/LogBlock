@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.logging.Level;
+import org.bukkit.ChatColor;
 import org.bukkit.World;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
@@ -43,7 +45,7 @@ public class LogBlock extends JavaPlugin
 	private Updater updater = null;
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
-	private boolean errorAtLoading = false, connected = true;
+	private boolean errorAtLoading = false, noDb = false, connected = true;
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
 
 	public Config getLBConfig() {
@@ -77,8 +79,10 @@ public class LogBlock extends JavaPlugin
 			getLogger().info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new MySQLConnectionPool(config.url, config.user, config.password);
 			final Connection conn = getConnection();
-			if (conn == null)
-				throw new SQLException("No MySQL connection");
+			if (conn == null) {
+				noDb = true;
+				return;
+			}
 			conn.close();
 			if (updater.update())
 				config = new Config(this);
@@ -142,6 +146,8 @@ public class LogBlock extends JavaPlugin
 			pm.disablePlugin(this);
 			return;
 		}
+		if (noDb)
+			return;
 		if (pm.getPlugin("WorldEdit") == null && !new File("lib/WorldEdit.jar").exists() && !new File("WorldEdit.jar").exists())
 			try {
 				download(getLogger(), new URL("http://diddiz.insane-architects.net/download/WorldEdit.jar"), new File("lib/WorldEdit.jar"));
@@ -263,35 +269,44 @@ public class LogBlock extends JavaPlugin
 		if (timer != null)
 			timer.cancel();
 		getServer().getScheduler().cancelTasks(this);
-		if (config.logPlayerInfo && getServer().getOnlinePlayers() != null)
-			for (final Player player : getServer().getOnlinePlayers())
-				consumer.queueLeave(player);
-		if (consumer != null && consumer.getQueueSize() > 0) {
-			getLogger().info("[LogBlock] Waiting for consumer ...");
-			int lastSize = -1, fails = 0;
-			while (consumer.getQueueSize() > 0) {
-				getLogger().info("[LogBlock] Remaining queue size: " + consumer.getQueueSize());
-				if (lastSize == consumer.getQueueSize()) {
-					fails++;
-					getLogger().info("[LogBlock] Remaining tries: " + (10 - fails));
-				} else
-					fails = 0;
-				if (fails == 10) {
-					getLogger().info("Unable to save queue to database. Trying to write to a local file.");
-					try {
-						consumer.writeToFile();
-					} catch (final FileNotFoundException ex) {
-						getLogger().info("Failed to write. Given up.");
-						break;
+		if (consumer != null) {
+			if (config.logPlayerInfo && getServer().getOnlinePlayers() != null)
+				for (final Player player : getServer().getOnlinePlayers())
+					consumer.queueLeave(player);
+			if (consumer.getQueueSize() > 0) {
+				getLogger().info("[LogBlock] Waiting for consumer ...");
+				int lastSize = -1, fails = 0;
+				while (consumer.getQueueSize() > 0) {
+					getLogger().info("[LogBlock] Remaining queue size: " + consumer.getQueueSize());
+					if (lastSize == consumer.getQueueSize()) {
+						fails++;
+						getLogger().info("[LogBlock] Remaining tries: " + (10 - fails));
+					} else
+						fails = 0;
+					if (fails == 10) {
+						getLogger().info("Unable to save queue to database. Trying to write to a local file.");
+						try {
+							consumer.writeToFile();
+						} catch (final FileNotFoundException ex) {
+							getLogger().info("Failed to write. Given up.");
+							break;
+						}
 					}
+					lastSize = consumer.getQueueSize();
+					consumer.run();
 				}
-				lastSize = consumer.getQueueSize();
-				consumer.run();
 			}
 		}
 		if (pool != null)
 			pool.close();
 		getLogger().info("LogBlock disabled.");
+	}
+
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
+		if (noDb)
+			sender.sendMessage(ChatColor.RED + "No database connected. Check your MySQL user/pw and database for typos. Start/restart your MySQL server.");
+		return true;
 	}
 
 	boolean hasPermission(CommandSender sender, String permission) {
