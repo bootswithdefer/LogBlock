@@ -150,19 +150,20 @@ public class Config
 		installSpout = config.getBoolean("updater.installSpout", true);
 		checkVersion = config.getBoolean("updater.checkVersion", true);
 		final List<Tool> tools = new ArrayList<Tool>();
-		for (final String toolName : config.getConfigurationSection("tools").getKeys(false))
+		final ConfigurationSection toolsSec = config.getConfigurationSection("tools");
+		for (final String toolName : toolsSec.getKeys(false))
 			try {
-				final String path = "tools." + toolName;
-				final List<String> aliases = toStringList(config.getList(path + ".aliases"));
-				final ToolBehavior leftClickBehavior = ToolBehavior.valueOf(config.getString(path + ".leftClickBehavior").toUpperCase());
-				final ToolBehavior rightClickBehavior = ToolBehavior.valueOf(config.getString(path + ".rightClickBehavior").toUpperCase());
-				final boolean defaultEnabled = config.getBoolean(path + ".defaultEnabled", false);
-				final int item = config.getInt(path + ".item", 0);
+				final ConfigurationSection tSec = toolsSec.getConfigurationSection(toolName);
+				final List<String> aliases = toStringList(tSec.getList("aliases"));
+				final ToolBehavior leftClickBehavior = ToolBehavior.valueOf(tSec.getString("leftClickBehavior").toUpperCase());
+				final ToolBehavior rightClickBehavior = ToolBehavior.valueOf(tSec.getString("rightClickBehavior").toUpperCase());
+				final boolean defaultEnabled = tSec.getBoolean("defaultEnabled", false);
+				final int item = tSec.getInt("item", 0);
 				final QueryParams params = new QueryParams(logblock);
 				params.prepareToolQuery = true;
-				params.parseArgs(Bukkit.getConsoleSender(), Arrays.asList(config.getString(path + ".params").split(" ")));
-				final ToolMode mode = ToolMode.valueOf(config.getString(path + ".mode").toUpperCase());
-				final PermissionDefault pdef = PermissionDefault.valueOf(config.getString(path + ".permissionDefault").toUpperCase());
+				params.parseArgs(Bukkit.getConsoleSender(), Arrays.asList(tSec.getString("params").split(" ")));
+				final ToolMode mode = ToolMode.valueOf(tSec.getString("mode").toUpperCase());
+				final PermissionDefault pdef = PermissionDefault.valueOf(tSec.getString("permissionDefault").toUpperCase());
 				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode, pdef));
 			} catch (final Exception ex) {
 				getLogger().log(Level.WARNING, "Error at parsing tool '" + toolName + "': ", ex);
