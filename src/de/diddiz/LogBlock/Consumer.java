@@ -346,7 +346,7 @@ public class Consumer extends TimerTask
 	}
 
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
-		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || typeBefore > 127 || typeAfter > 127 || hiddenPlayers.contains(playerName.hashCode()) || !worlds.containsKey(loc.getWorld().getName().hashCode()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
+		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || typeBefore > 255 || typeAfter > 255 || hiddenPlayers.contains(playerName.hashCode()) || !worlds.containsKey(loc.getWorld().getName().hashCode()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
 			return;
 		playerName = playerName.replaceAll("[^a-zA-Z0-9_]", "");
 		if (signtext != null)
