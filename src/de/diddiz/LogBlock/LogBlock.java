@@ -43,9 +43,8 @@ public class LogBlock extends JavaPlugin
 	private Updater updater = null;
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
-	private boolean errorAtLoading = false;
+	private boolean errorAtLoading = false, connected = true;
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
-	private boolean connected = true;
 
 	public Config getLBConfig() {
 		return config;
@@ -264,7 +263,7 @@ public class LogBlock extends JavaPlugin
 		if (timer != null)
 			timer.cancel();
 		getServer().getScheduler().cancelTasks(this);
-		if (config.logPlayerInfo)
+		if (config.logPlayerInfo && getServer().getOnlinePlayers() != null)
 			for (final Player player : getServer().getOnlinePlayers())
 				consumer.queueLeave(player);
 		if (consumer != null && consumer.getQueueSize() > 0) {
