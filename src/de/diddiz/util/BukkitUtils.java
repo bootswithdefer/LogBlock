@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -24,7 +26,8 @@ import org.bukkit.material.MaterialData;
 
 public class BukkitUtils
 {
-	private final static Set<Set<Integer>> blockEquivalents;
+	private static final Set<Set<Integer>> blockEquivalents;
+	private static final Map<Integer, String> materialNames;
 
 	static {
 		blockEquivalents = new HashSet<Set<Integer>>(7);
@@ -35,6 +38,12 @@ public class BukkitUtils
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(73, 74)));
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(75, 76)));
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(93, 94)));
+		materialNames = new HashMap<Integer, String>(256);
+		for (int i = 0; i < 256; i++) {
+			final Material mat = Material.getMaterial(i);
+			if (mat != null)
+				materialNames.put(i, mat.toString().replace('_', ' ').toLowerCase());
+		}
 	}
 
 	public static ItemStack[] compareInventories(ItemStack[] items1, ItemStack[] items2) {
@@ -122,21 +131,20 @@ public class BukkitUtils
 	}
 
 	public static String materialName(int type) {
-		final Material mat = Material.getMaterial(type);
-		return mat != null ? mat.toString().replace('_', ' ').toLowerCase() : String.valueOf(type);
+		return materialNames.containsKey(type) ? materialNames.get(type) : String.valueOf(type);
 	}
 
 	public static String materialName(int type, byte rawData) {
-		final Material mat = Material.getMaterial(type);
-		if (mat != null) {
-			if ((type == 6 || type == 17 || type == 18) && rawData > 0 || type == 35 || type == 43 || type == 44) {
-				final MaterialData data = mat.getNewData(rawData);
-				if (data != null)
-					return data.toString().toLowerCase().replace('_', ' ').replaceAll("[^a-z ]", "");
-			}
-			return mat.toString().replace('_', ' ').toLowerCase();
+		if ((type == 6 || type == 17 || type == 18) && rawData > 0 || type == 35 || type == 43 || type == 44) {
+			final MaterialData data = Material.getMaterial(type).getNewData(rawData);
+			if (data != null)
+				return data.toString().toLowerCase().replace('_', ' ').replaceAll("[^a-z ]", "");
 		}
-		return String.valueOf(type);
+		return materialName(type);
+	}
+
+	public static void overrideMaterialNames(Map<Integer, String> materialNames) {
+		BukkitUtils.materialNames.putAll(materialNames);
 	}
 
 	public static String senderName(CommandSender sender) {
