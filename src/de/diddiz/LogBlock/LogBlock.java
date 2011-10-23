@@ -226,25 +226,23 @@ public class LogBlock extends JavaPlugin
 					consumer.queueLeave(player);
 			if (consumer.getQueueSize() > 0) {
 				getLogger().info("[LogBlock] Waiting for consumer ...");
-				int lastSize = -1, fails = 0;
+				int tries = 10;
 				while (consumer.getQueueSize() > 0) {
 					getLogger().info("[LogBlock] Remaining queue size: " + consumer.getQueueSize());
-					if (lastSize == consumer.getQueueSize()) {
-						fails++;
-						getLogger().info("[LogBlock] Remaining tries: " + (10 - fails));
-					} else
-						fails = 0;
-					if (fails == 10) {
+					if (tries > 0)
+						getLogger().info("[LogBlock] Remaining tries: " + tries);
+					else {
 						getLogger().info("Unable to save queue to database. Trying to write to a local file.");
 						try {
 							consumer.writeToFile();
+							getLogger().info("Successfully dumped queue.");
 						} catch (final FileNotFoundException ex) {
 							getLogger().info("Failed to write. Given up.");
 							break;
 						}
 					}
-					lastSize = consumer.getQueueSize();
 					consumer.run();
+					tries--;
 				}
 			}
 		}
