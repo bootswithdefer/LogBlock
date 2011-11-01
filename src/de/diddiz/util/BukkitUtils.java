@@ -39,11 +39,8 @@ public class BukkitUtils
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(75, 76)));
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(93, 94)));
 		materialNames = new HashMap<Integer, String>(256);
-		for (int i = 0; i < 256; i++) {
-			final Material mat = Material.getMaterial(i);
-			if (mat != null)
-				materialNames.put(i, mat.toString().replace('_', ' ').toLowerCase());
-		}
+		for (final Material mat : Material.values())
+			materialNames.put(mat.getId(), mat.toString().replace('_', ' ').toLowerCase());
 	}
 
 	public static ItemStack[] compareInventories(ItemStack[] items1, ItemStack[] items2) {
@@ -135,7 +132,7 @@ public class BukkitUtils
 	}
 
 	public static String materialName(int type, byte rawData) {
-		if ((type == 6 || type == 17 || type == 18) && rawData > 0 || type == 35 || type == 43 || type == 44) {
+		if ((type == 6 || type == 17 || type == 18) && rawData > 0 || type == 35 || type == 43 || type == 44 || type == 351) {
 			final MaterialData data = Material.getMaterial(type).getNewData(rawData);
 			if (data != null)
 				return data.toString().toLowerCase().replace('_', ' ').replaceAll("[^a-z ]", "");
