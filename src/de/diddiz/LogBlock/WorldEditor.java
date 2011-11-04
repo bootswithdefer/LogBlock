@@ -1,8 +1,8 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.equalTypes;
-import static de.diddiz.util.BukkitUtils.materialName;
 import static de.diddiz.util.BukkitUtils.modifyContainer;
+import static de.diddiz.util.MaterialName.materialName;
 import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
 import java.io.PrintWriter;

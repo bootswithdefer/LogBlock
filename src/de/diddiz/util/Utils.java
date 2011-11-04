@@ -62,6 +62,14 @@ public class Utils
 		return false;
 	}
 
+	public static boolean isByte(String str) {
+		try {
+			Byte.parseByte(str);
+			return true;
+		} catch (final NumberFormatException ex) {}
+		return false;
+	}
+
 	public static String listing(String[] entries, String delimiter, String finalDelimiter) {
 		final int len = entries.length;
 		if (len == 0)

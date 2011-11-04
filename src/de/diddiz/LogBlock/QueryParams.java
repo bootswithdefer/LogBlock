@@ -2,8 +2,8 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
-import static de.diddiz.util.BukkitUtils.materialName;
 import static de.diddiz.util.BukkitUtils.senderName;
+import static de.diddiz.util.MaterialName.materialName;
 import static de.diddiz.util.Utils.isInt;
 import static de.diddiz.util.Utils.join;
 import static de.diddiz.util.Utils.listing;

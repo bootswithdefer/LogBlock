@@ -20,8 +20,6 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.permissions.PermissionDefault;
-import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.Utils;
 
 public class Config
 {
@@ -220,16 +218,6 @@ public class Config
 			if (wcfg.logEndermen)
 				logEndermen = true;
 		}
-		final File matFile = new File(logblock.getDataFolder(), "materials.yml");
-		final YamlConfiguration matCfg = YamlConfiguration.loadConfiguration(matFile);
-		matCfg.options().header("Add block names you want to be overridden or names for custom blocks");
-		final Map<Integer, String> materials = new HashMap<Integer, String>();
-		for (final String material : matCfg.getKeys(false))
-			if (Utils.isInt(material))
-				materials.put(Integer.valueOf(material), matCfg.getString(material));
-		if (materials.size() > 0)
-			BukkitUtils.overrideMaterialNames(materials);
-		matCfg.save(matFile);
 	}
 
 	public static List<String> toStringList(List<?> list) {

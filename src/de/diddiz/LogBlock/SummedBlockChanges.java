@@ -1,6 +1,6 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.util.BukkitUtils.materialName;
+import static de.diddiz.util.MaterialName.materialName;
 import static de.diddiz.util.Utils.spaces;
 import java.sql.ResultSet;
 import java.sql.SQLException;
