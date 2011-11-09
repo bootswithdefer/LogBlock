@@ -39,7 +39,7 @@ public class Consumer extends TimerTask
 	private final Set<Integer> hiddenPlayers, hiddenBlocks;
 	private final Set<String> failedPlayers = new HashSet<String>();
 	private final LogBlock logblock;
-	private final Map<Integer, Integer> players = new HashMap<Integer, Integer>();
+	private final Map<String, Integer> playerIds = new HashMap<String, Integer>();
 	private final Lock lock = new ReentrantLock();
 
 	Consumer(LogBlock logblock) {
@@ -263,7 +263,7 @@ public class Consumer extends TimerTask
 				if (r == null)
 					continue;
 				for (final String player : r.getPlayers())
-					if (!players.containsKey(player.hashCode()))
+					if (!playerIds.containsKey(player))
 						if (!addPlayer(state, player)) {
 							if (!failedPlayers.contains(player)) {
 								failedPlayers.add(player);
@@ -298,7 +298,7 @@ public class Consumer extends TimerTask
 
 	public void writeToFile() throws FileNotFoundException {
 		final long time = System.currentTimeMillis();
-		final Set<Integer> insertedPlayers = new HashSet<Integer>();
+		final Set<String> insertedPlayers = new HashSet<String>();
 		int counter = 0;
 		new File("plugins/LogBlock/import/").mkdirs();
 		PrintWriter writer = new PrintWriter(new File("plugins/LogBlock/import/queue-" + time + "-0.sql"));
@@ -307,9 +307,9 @@ public class Consumer extends TimerTask
 			if (r == null)
 				continue;
 			for (final String player : r.getPlayers())
-				if (!players.containsKey(player.hashCode()) && !insertedPlayers.contains(player.hashCode())) {
+				if (!playerIds.containsKey(player) && !insertedPlayers.contains(player)) {
 					writer.println("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + player + "');");
-					insertedPlayers.add(player.hashCode());
+					insertedPlayers.add(player);
 				}
 			for (final String insert : r.getInserts())
 				writer.println(insert);
@@ -340,9 +340,9 @@ public class Consumer extends TimerTask
 		state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "')");
 		final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE playername = '" + playerName + "'");
 		if (rs.next())
-			players.put(playerName.hashCode(), rs.getInt(1));
+			playerIds.put(playerName, rs.getInt(1));
 		rs.close();
-		return players.containsKey(playerName.hashCode());
+		return playerIds.containsKey(playerName);
 	}
 
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
@@ -357,7 +357,7 @@ public class Consumer extends TimerTask
 	private String playerID(String playerName) {
 		if (playerName == null)
 			return "NULL";
-		final Integer id = players.get(playerName.hashCode());
+		final Integer id = playerIds.get(playerName);
 		if (id != null)
 			return id.toString();
 		return "(SELECT playerid FROM `lb-players` WHERE playername = '" + playerName + "')";
