@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.logging.Level;
 import org.bukkit.ChatColor;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -25,7 +24,6 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
-import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.util.MySQLConnectionPool;
 
 public class LogBlock extends JavaPlugin
@@ -131,20 +129,8 @@ public class LogBlock extends JavaPlugin
 			getLogger().info("[LogBlock] Permissions plugin found.");
 		} else
 			getLogger().info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
-		if (config.keepLogDays >= 0) {
-			final QueryParams params = new QueryParams(this);
-			params.before = config.keepLogDays * 1440;
-			params.bct = BlockChangeType.ALL;
-			for (final World world : getServer().getWorlds())
-				if (config.worlds.containsKey(world.getName().hashCode())) {
-					params.world = world;
-					try {
-						commandsHandler.new CommandClearLog(getServer().getConsoleSender(), params.clone(), true);
-					} catch (final Exception ex) {
-						getLogger().log(Level.SEVERE, "Failed to schedule ClearLog: ", ex);
-					}
-				}
-		}
+		if (config.enableAutoClearLog)
+			getServer().getScheduler().scheduleAsyncDelayedTask(this, new AutoClearLog(this));
 		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
 		final LBBlockListener lbBlockListener = new LBBlockListener(this);
 		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);

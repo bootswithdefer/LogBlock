@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.parseTimeSpec;
+import static org.bukkit.Bukkit.getConsoleSender;
 import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +16,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.zip.DataFormatException;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -27,7 +27,8 @@ public class Config
 	public final String url, user, password;
 	public final int delayBetweenRuns, forceToProcessAtLeast, timePerRun;
 	public final boolean useBukkitScheduler;
-	public final int keepLogDays;
+	public final boolean enableAutoClearLog;
+	public final List<String> autoClearLog;
 	public final boolean dumpDeletedLog;
 	public boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes, logEndermen;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese, logPlayerInfo;
@@ -62,7 +63,8 @@ public class Config
 		def.put("consumer.timePerRun", 200);
 		def.put("consumer.useBukkitScheduler", true);
 		def.put("clearlog.dumpDeletedLog", false);
-		def.put("clearlog.keepLogDays", -1);
+		def.put("clearlog.enableAutoClearLog", false);
+		def.put("clearlog.auto", Arrays.asList("world \"world\" before 365 days all", "world \"world\" player lavaflow waterflow leavesdecay before 7 days all", "world world_nether before 365 days all", "world world_nether player lavaflow before 7 days all"));
 		def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		def.put("logging.logKillsLevel", "PLAYERS");
 		def.put("logging.logPlayerInfo", true);
@@ -111,9 +113,8 @@ public class Config
 		forceToProcessAtLeast = config.getInt("consumer.forceToProcessAtLeast", 0);
 		timePerRun = config.getInt("consumer.timePerRun", 100);
 		useBukkitScheduler = config.getBoolean("consumer.useBukkitScheduler", true);
-		keepLogDays = config.getInt("clearlog.keepLogDays", -1);
-		if (keepLogDays * 86400000L > System.currentTimeMillis())
-			throw new DataFormatException("Too large timespan for keepLogDays. Must be shorter than " + (int)(System.currentTimeMillis() / 86400000L) + " days.");
+		enableAutoClearLog = config.getBoolean("clearlog.enableAutoClearLog");
+		autoClearLog = toStringList(config.getList("clearlog.auto"));
 		dumpDeletedLog = config.getBoolean("clearlog.dumpDeletedLog", false);
 		logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		logPlayerInfo = config.getBoolean("logging.logPlayerInfo", true);
@@ -161,7 +162,7 @@ public class Config
 				final int item = tSec.getInt("item", 0);
 				final QueryParams params = new QueryParams(logblock);
 				params.prepareToolQuery = true;
-				params.parseArgs(Bukkit.getConsoleSender(), Arrays.asList(tSec.getString("params").split(" ")));
+				params.parseArgs(getConsoleSender(), Arrays.asList(tSec.getString("params").split(" ")));
 				final ToolMode mode = ToolMode.valueOf(tSec.getString("mode").toUpperCase());
 				final PermissionDefault pdef = PermissionDefault.valueOf(tSec.getString("permissionDefault").toUpperCase());
 				tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, params, mode, pdef));
