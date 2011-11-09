@@ -1,5 +1,7 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.Session.getSession;
+import static de.diddiz.LogBlock.Session.hasSession;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.bukkit.ChatColor;
@@ -38,7 +40,7 @@ class LBToolListener extends PlayerListener
 			final Player player = event.getPlayer();
 			if (tool != null && (action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_BLOCK) && worlds.containsKey(player.getWorld().getName().hashCode()) && logblock.hasPermission(player, "logblock.tools." + tool.name)) {
 				final ToolBehavior behavior = action == Action.RIGHT_CLICK_BLOCK ? tool.rightClickBehavior : tool.leftClickBehavior;
-				final ToolData toolData = logblock.getSession(player.getName()).toolData.get(tool);
+				final ToolData toolData = getSession(player).toolData.get(tool);
 				if (behavior != ToolBehavior.NONE && toolData.enabled) {
 					final Block block = event.getClickedBlock();
 					final QueryParams params = toolData.params;
@@ -101,8 +103,8 @@ class LBToolListener extends PlayerListener
 	@Override
 	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
 		final Player player = event.getPlayer();
-		final Session session = logblock.getSession(player.getName(), false);
-		if (session != null)
+		if (hasSession(player)) {
+			final Session session = getSession(player);
 			for (final Entry<Tool, ToolData> entry : session.toolData.entrySet()) {
 				final Tool tool = entry.getKey();
 				final ToolData toolData = entry.getValue();
@@ -112,5 +114,6 @@ class LBToolListener extends PlayerListener
 					player.sendMessage(ChatColor.GREEN + "Tool disabled.");
 				}
 			}
+		}
 	}
 }

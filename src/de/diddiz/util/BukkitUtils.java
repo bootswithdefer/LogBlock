@@ -13,8 +13,6 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ContainerBlock;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
@@ -118,14 +116,6 @@ public class BukkitUtils
 		if (entity instanceof TNTPrimed)
 			return "TNT";
 		return entity.getClass().getSimpleName().substring(5);
-	}
-
-	public static String senderName(CommandSender sender) {
-		if (sender instanceof Player)
-			return ((Player)sender).getName();
-		if (sender instanceof ConsoleCommandSender)
-			return "console";
-		return sender.getClass().getSimpleName();
 	}
 
 	public static void giveTool(Player player, int type) {

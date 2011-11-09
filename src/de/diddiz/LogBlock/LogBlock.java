@@ -10,9 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.logging.Level;
 import org.bukkit.ChatColor;
@@ -41,7 +39,6 @@ public class LogBlock extends JavaPlugin
 	private Timer timer = null;
 	private PermissionHandler permissions = null;
 	private boolean errorAtLoading = false, noDb = false, connected = true;
-	private final Map<String, Session> sessions = new HashMap<String, Session>();
 
 	public static LogBlock getInstance() {
 		return logblock;
@@ -286,19 +283,6 @@ public class LogBlock extends JavaPlugin
 				getLogger().severe("[LogBlock] MySQL connection lost");
 			return null;
 		}
-	}
-
-	public Session getSession(String playerName) {
-		return getSession(playerName, true);
-	}
-
-	public Session getSession(String playerName, boolean create) {
-		Session session = sessions.get(playerName.toLowerCase());
-		if (session == null && create) {
-			session = new Session(this, getServer().getPlayer(playerName));
-			sessions.put(playerName.toLowerCase(), session);
-		}
-		return session;
 	}
 
 	/**

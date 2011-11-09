@@ -1,8 +1,8 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.Session.getSession;
 import static de.diddiz.util.BukkitUtils.giveTool;
 import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
-import static de.diddiz.util.BukkitUtils.senderName;
 import static de.diddiz.util.Utils.isInt;
 import static org.bukkit.Bukkit.getLogger;
 import java.io.Closeable;
@@ -137,7 +137,7 @@ public class CommandsHandler implements CommandExecutor
 				} else if (config.toolsByName.get(command) != null) {
 					if (sender instanceof Player) {
 						final Player player = (Player)sender;
-						final Session session = logblock.getSession(player.getName());
+						final Session session = Session.getSession(player.getName());
 						final Tool tool = config.toolsByName.get(command);
 						final ToolData toolData = session.toolData.get(tool);
 						if (args.length == 1) {
@@ -203,9 +203,9 @@ public class CommandsHandler implements CommandExecutor
 					else
 						sender.sendMessage(ChatColor.RED + "You have to specify a page");
 				} else if (command.equals("next") || command.equals("+"))
-					showPage(sender, logblock.getSession(senderName(sender)).page + 1);
+					showPage(sender, getSession(sender).page + 1);
 				else if (command.equals("prev") || command.equals("-"))
-					showPage(sender, logblock.getSession(senderName(sender)).page - 1);
+					showPage(sender, getSession(sender).page - 1);
 				else if (args[0].equalsIgnoreCase("savequeue")) {
 					if (logblock.hasPermission(sender, "logblock.rollback"))
 						new CommandSaveQueue(sender, null, true);
@@ -270,7 +270,7 @@ public class CommandsHandler implements CommandExecutor
 							if (args.length == 2 || isInt(args[1])) {
 								final int pos = Integer.parseInt(args[1]) - 1;
 								final Player player = (Player)sender;
-								final Session session = logblock.getSession(player.getName());
+								final Session session = getSession(player);
 								if (session.lookupCache != null)
 									if (pos >= 0 && pos < session.lookupCache.length) {
 										final Location loc = session.lookupCache[pos].getLocation();
@@ -308,7 +308,7 @@ public class CommandsHandler implements CommandExecutor
 	}
 
 	private void showPage(CommandSender sender, int page) {
-		final Session session = logblock.getSession(senderName(sender));
+		final Session session = getSession(sender);
 		if (session.lookupCache != null && session.lookupCache.length > 0) {
 			final int startpos = (page - 1) * config.linesPerPage;
 			if (page > 0 && startpos <= session.lookupCache.length - 1) {
@@ -409,7 +409,7 @@ public class CommandsHandler implements CommandExecutor
 					final LookupCacheElementFactory factory = new LookupCacheElementFactory(params, sender instanceof Player ? 2 / 3f : 1);
 					while (rs.next())
 						blockchanges.add(factory.getLookupCacheElement(rs));
-					logblock.getSession(senderName(sender)).lookupCache = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
+					getSession(sender).lookupCache = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
 					if (blockchanges.size() > config.linesPerPage)
 						sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
 					if (params.sum != SummarizationMode.NONE)
@@ -417,7 +417,7 @@ public class CommandsHandler implements CommandExecutor
 					showPage(sender, 1);
 				} else {
 					sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
-					logblock.getSession(senderName(sender)).lookupCache = null;
+					getSession(sender).lookupCache = null;
 				}
 			} catch (final Exception ex) {
 				sender.sendMessage(ChatColor.RED + "Exception, check error log");
@@ -594,7 +594,7 @@ public class CommandsHandler implements CommandExecutor
 					return;
 				}
 				editor.start();
-				logblock.getSession(senderName(sender)).lookupCache = editor.errors;
+				getSession(sender).lookupCache = editor.errors;
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
 				if (!params.silent && config.askClearLogAfterRollback && logblock.hasPermission(sender, "logblock.clearlog") && questioner != null && sender instanceof Player) {
 					Thread.sleep(1000);

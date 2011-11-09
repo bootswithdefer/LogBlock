@@ -1,8 +1,8 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.Session.getSession;
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
-import static de.diddiz.util.BukkitUtils.senderName;
 import static de.diddiz.util.MaterialName.materialName;
 import static de.diddiz.util.Utils.isInt;
 import static de.diddiz.util.Utils.join;
@@ -264,7 +264,7 @@ public class QueryParams implements Cloneable
 		if (args == null || args.size() == 0)
 			throw new IllegalArgumentException("No parameters specified.");
 		final Player player = sender instanceof Player ? (Player)sender : null;
-		final Session session = prepareToolQuery ? null : logblock.getSession(senderName(sender));
+		final Session session = prepareToolQuery ? null : getSession(sender);
 		if (player != null && world == null)
 			world = player.getWorld();
 		for (int i = 0; i < args.size(); i++) {
