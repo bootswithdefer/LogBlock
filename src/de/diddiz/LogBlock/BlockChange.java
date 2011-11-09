@@ -56,7 +56,7 @@ public class BlockChange implements LookupCacheElement
 				msg.append(action + materialName(type != 0 ? type : replaced) + " [" + signtext.replace("\0", "] [") + "]");
 		} else if (type == replaced) {
 			if (type == 0)
-				msg.append("did a unspecified action");
+				msg.append("did an unspecified action");
 			else if (ca != null) {
 				if (ca.itemType == 0 || ca.itemAmount == 0)
 					msg.append("looked inside " + materialName(type));
