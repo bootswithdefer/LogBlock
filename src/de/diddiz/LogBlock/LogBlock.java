@@ -32,6 +32,7 @@ import de.diddiz.util.MySQLConnectionPool;
 
 public class LogBlock extends JavaPlugin
 {
+	private static LogBlock logblock = null;
 	private Config config;
 	private MySQLConnectionPool pool;
 	private Consumer consumer = null;
@@ -41,6 +42,10 @@ public class LogBlock extends JavaPlugin
 	private PermissionHandler permissions = null;
 	private boolean errorAtLoading = false, noDb = false, connected = true;
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
+
+	public static LogBlock getInstance() {
+		return logblock;
+	}
 
 	public Config getLBConfig() {
 		return config;
@@ -60,6 +65,7 @@ public class LogBlock extends JavaPlugin
 
 	@Override
 	public void onLoad() {
+		logblock = this;
 		try {
 			updater = new Updater(this);
 			config = new Config(this);
