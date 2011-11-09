@@ -77,6 +77,11 @@ class Updater
 			}
 			config.set("version", "1.32");
 		}
+		if (config.getString("version").compareTo("1.40") < 0) {
+			getLogger().info("[LogBlock] Updating config to 1.40 ...");
+			config.set("clearlog.keepLogDays", null);
+			config.set("version", "1.40");
+		}
 		logblock.saveConfig();
 		return true;
 	}
