@@ -451,7 +451,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "' WHERE playerid = " + playerID(playerName) + ";"};
+			return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "' WHERE " + (playerIds.containsKey(playerName) ? "playerid = " + playerIds.get(playerName) : "playerName = '" + playerName + "'") + ";"};
 		}
 
 		@Override
@@ -472,7 +472,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"UPDATE `lb-players` SET onlinetime = ADDTIME(onlinetime, TIMEDIFF(FROM_UNIXTIME(" + leaveTime + "), lastlogin)) WHERE playerid = " + playerID(playerName) + ";"};
+			return new String[]{"UPDATE `lb-players` SET onlinetime = ADDTIME(onlinetime, TIMEDIFF(FROM_UNIXTIME(" + leaveTime + "), lastlogin)) WHERE " + (playerIds.containsKey(playerName) ? "playerid = " + playerIds.get(playerName) : "playerName = '" + playerName + "'") + ";"};
 		}
 
 		@Override
