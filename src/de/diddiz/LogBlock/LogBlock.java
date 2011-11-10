@@ -196,11 +196,12 @@ public class LogBlock extends JavaPlugin
 			timer.scheduleAtFixedRate(consumer, config.delayBetweenRuns * 1000, config.delayBetweenRuns * 1000);
 			getLogger().info("[LogBlock] Scheduled consumer with timer.");
 		}
-		for (final Tool tool : config.toolsByType.values()) {
-			final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
-			pm.addPermission(perm);
-			// perm.addParent("logblock.*", true);
-		}
+		for (final Tool tool : config.toolsByType.values())
+			if (pm.getPermission("logblock.tools." + tool.name) == null) {
+				final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
+				pm.addPermission(perm);
+			}
+		// perm.addParent("logblock.*", true);
 		getLogger().info("LogBlock v" + getDescription().getVersion() + " by DiddiZ enabled.");
 	}
 
