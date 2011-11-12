@@ -135,57 +135,60 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.GOLD + msg.substring(2));
 					}
 				} else if (config.toolsByName.get(command) != null) {
-					if (sender instanceof Player) {
-						final Player player = (Player)sender;
-						final Session session = Session.getSession(player.getName());
-						final Tool tool = config.toolsByName.get(command);
-						final ToolData toolData = session.toolData.get(tool);
-						if (args.length == 1) {
-							if (logblock.hasPermission(player, "logblock.spawnTools")) {
-								giveTool(player, tool.item);
-								session.toolData.get(tool).enabled = true;
-							} else
-								sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-						} else if (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("on")) {
-							toolData.enabled = true;
-							player.sendMessage(ChatColor.GREEN + "Tool enabled.");
-						} else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
-							toolData.enabled = false;
-							player.getInventory().removeItem(new ItemStack(tool.item, 1));
-							player.sendMessage(ChatColor.GREEN + "Tool disabled.");
-						} else if (args[1].equalsIgnoreCase("mode")) {
-							if (args.length == 3) {
-								final ToolMode mode;
-								try {
-									mode = ToolMode.valueOf(args[2].toUpperCase());
-								} catch (final IllegalArgumentException ex) {
-									sender.sendMessage(ChatColor.RED + "Can't find mode " + args[2]);
-									return true;
-								}
-								if (logblock.hasPermission(player, mode.getPermission())) {
-									toolData.mode = mode;
-									sender.sendMessage(ChatColor.GREEN + "Tool mode set to " + args[2]);
+					final Tool tool = config.toolsByName.get(command);
+					if (logblock.hasPermission(sender, "logblock.tools." + tool.name)) {
+						if (sender instanceof Player) {
+							final Player player = (Player)sender;
+							final Session session = Session.getSession(player.getName());
+							final ToolData toolData = session.toolData.get(tool);
+							if (args.length == 1) {
+								if (logblock.hasPermission(player, "logblock.spawnTools")) {
+									giveTool(player, tool.item);
+									session.toolData.get(tool).enabled = true;
 								} else
-									sender.sendMessage(ChatColor.RED + "You aren't allowed to use mode " + args[2]);
-							} else
-								player.sendMessage(ChatColor.RED + "No mode specified");
-						} else if (args[1].equalsIgnoreCase("default")) {
-							toolData.params = tool.params.clone();
-							toolData.mode = tool.mode;
-							sender.sendMessage(ChatColor.GREEN + "Tool set to default.");
-						} else if (logblock.hasPermission(player, "logblock.lookup"))
-							try {
-								final QueryParams params = tool.params.clone();
-								params.parseArgs(sender, argsToList(args, 1));
-								toolData.params = params;
-								sender.sendMessage(ChatColor.GREEN + "Set tool query to: " + params.getTitle());
-							} catch (final Exception ex) {
-								sender.sendMessage(ChatColor.RED + ex.getMessage());
-							}
-						else
-							sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+									sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+							} else if (args[1].equalsIgnoreCase("enable") || args[1].equalsIgnoreCase("on")) {
+								toolData.enabled = true;
+								player.sendMessage(ChatColor.GREEN + "Tool enabled.");
+							} else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
+								toolData.enabled = false;
+								player.getInventory().removeItem(new ItemStack(tool.item, 1));
+								player.sendMessage(ChatColor.GREEN + "Tool disabled.");
+							} else if (args[1].equalsIgnoreCase("mode")) {
+								if (args.length == 3) {
+									final ToolMode mode;
+									try {
+										mode = ToolMode.valueOf(args[2].toUpperCase());
+									} catch (final IllegalArgumentException ex) {
+										sender.sendMessage(ChatColor.RED + "Can't find mode " + args[2]);
+										return true;
+									}
+									if (logblock.hasPermission(player, mode.getPermission())) {
+										toolData.mode = mode;
+										sender.sendMessage(ChatColor.GREEN + "Tool mode set to " + args[2]);
+									} else
+										sender.sendMessage(ChatColor.RED + "You aren't allowed to use mode " + args[2]);
+								} else
+									player.sendMessage(ChatColor.RED + "No mode specified");
+							} else if (args[1].equalsIgnoreCase("default")) {
+								toolData.params = tool.params.clone();
+								toolData.mode = tool.mode;
+								sender.sendMessage(ChatColor.GREEN + "Tool set to default.");
+							} else if (logblock.hasPermission(player, "logblock.lookup"))
+								try {
+									final QueryParams params = tool.params.clone();
+									params.parseArgs(sender, argsToList(args, 1));
+									toolData.params = params;
+									sender.sendMessage(ChatColor.GREEN + "Set tool query to: " + params.getTitle());
+								} catch (final Exception ex) {
+									sender.sendMessage(ChatColor.RED + ex.getMessage());
+								}
+							else
+								sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
+						} else
+							sender.sendMessage(ChatColor.RED + "You have to be a player.");
 					} else
-						sender.sendMessage(ChatColor.RED + "You have to be a player.");
+						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else if (command.equals("hide")) {
 					if (sender instanceof Player) {
 						if (logblock.hasPermission(sender, "logblock.hide")) {
