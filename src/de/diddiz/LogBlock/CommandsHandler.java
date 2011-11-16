@@ -243,8 +243,9 @@ public class CommandsHandler implements CommandExecutor
 							final Player player = (Player)sender;
 							final QueryParams params = new QueryParams(logblock);
 							params.setPlayer(player.getName());
-							params.sum = SummarizationMode.TYPES;
 							params.world = player.getWorld();
+							player.sendMessage("Total block changes: " + logblock.getCount(params));
+							params.sum = SummarizationMode.TYPES;
 							new CommandLookup(sender, params, true);
 						} else
 							sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");

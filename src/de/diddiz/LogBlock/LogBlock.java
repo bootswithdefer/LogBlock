@@ -302,9 +302,11 @@ public class LogBlock extends JavaPlugin
 			throw new SQLException("No connection");
 		try {
 			state = conn.createStatement();
-			params.needCount = true;
-			final ResultSet rs = state.executeQuery(params.getQuery());
-			rs.next();
+			final QueryParams p = params.clone();
+			p.needCount = true;
+			final ResultSet rs = state.executeQuery(p.getQuery());
+			if (!rs.next())
+				return 0;
 			return rs.getInt(1);
 		} finally {
 			if (state != null)
