@@ -37,7 +37,7 @@ public class QueryParams implements Cloneable
 	public List<Integer> types = new ArrayList<Integer>();
 	public World world = null;
 	public String match = null;
-	public boolean needId = false, needDate = false, needType = false, needData = false, needPlayer = false, needCoords = false, needSignText = false, needChestAccess = false, needMessage = false;
+	public boolean needCount = false, needId = false, needDate = false, needType = false, needData = false, needPlayer = false, needCoords = false, needSignText = false, needChestAccess = false, needMessage = false;
 	private final LogBlock logblock;
 
 	public QueryParams(LogBlock logblock) {
@@ -60,45 +60,56 @@ public class QueryParams implements Cloneable
 	public String getQuery() {
 		if (bct == BlockChangeType.CHAT) {
 			String select = "SELECT ";
+			if (needCount)
+				select += "COUNT(*) AS count";
+			else {
+				if (needId)
+					select += "id, ";
+				if (needDate)
+					select += "date, ";
+				if (needPlayer)
+					select += "playername, ";
+				if (needMessage)
+					select += "message, ";
+				select = select.substring(0, select.length() - 2);
+			}
 			String from = "FROM `lb-chat` ";
-			if (needId)
-				select += "id, ";
-			if (needDate)
-				select += "date, ";
-			if (needPlayer)
-				select += "playername, ";
+
 			if (needPlayer || players.size() > 0)
 				from += "INNER JOIN `lb-players` USING (playerid) ";
-			if (needMessage)
-				select += "message, ";
-			return select.substring(0, select.length() - 2) + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
+			return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
 		}
 		if (sum == SummarizationMode.NONE) {
 			String select = "SELECT ";
+			if (needCount)
+				select += "COUNT(*) AS count";
+			else {
+				if (needId)
+					select += "`" + getTable() + "`.id, ";
+				if (needDate)
+					select += "date, ";
+				if (needType)
+					select += "replaced, type, ";
+				if (needData)
+					select += "data, ";
+				if (needPlayer)
+					select += "playername, ";
+				if (needCoords)
+					select += "x, y, z, ";
+				if (needSignText)
+					select += "signtext, ";
+				if (needChestAccess)
+					select += "itemtype, itemamount, itemdata, ";
+				select = select.substring(0, select.length() - 2);
+			}
 			String from = "FROM `" + getTable() + "` ";
-			if (needId)
-				select += "`" + getTable() + "`.id, ";
-			if (needDate)
-				select += "date, ";
-			if (needType)
-				select += "replaced, type, ";
-			if (needData)
-				select += "data, ";
-			if (needPlayer)
-				select += "playername, ";
 			if (needPlayer || players.size() > 0)
 				from += "INNER JOIN `lb-players` USING (playerid) ";
-			if (needCoords)
-				select += "x, y, z, ";
-			if (needSignText) {
-				select += "signtext, ";
+			if (needSignText)
 				from += "LEFT JOIN `" + getTable() + "-sign` USING (id) ";
-			}
-			if (needChestAccess) {
-				select += "itemtype, itemamount, itemdata, ";
+			if (needChestAccess)
 				from += "LEFT JOIN `" + getTable() + "-chest` USING (id) ";
-			}
-			return select.substring(0, select.length() - 2) + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
+			return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
 		} else if (sum == SummarizationMode.TYPES)
 			return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(type) AS created, 0 AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(replaced) AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
 		else

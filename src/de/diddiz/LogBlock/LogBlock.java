@@ -279,16 +279,33 @@ public class LogBlock extends JavaPlugin
 	public List<BlockChange> getBlockChanges(QueryParams params) throws SQLException {
 		final Connection conn = getConnection();
 		Statement state = null;
-		ResultSet rs = null;
 		if (conn == null)
 			throw new SQLException("No connection");
 		try {
 			state = conn.createStatement();
-			rs = state.executeQuery(params.getQuery());
+			final ResultSet rs = state.executeQuery(params.getQuery());
 			final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
 			while (rs.next())
 				blockchanges.add(new BlockChange(rs, params));
 			return blockchanges;
+		} finally {
+			if (state != null)
+				state.close();
+			conn.close();
+		}
+	}
+
+	public int getCount(QueryParams params) throws SQLException {
+		final Connection conn = getConnection();
+		Statement state = null;
+		if (conn == null)
+			throw new SQLException("No connection");
+		try {
+			state = conn.createStatement();
+			params.needCount = true;
+			final ResultSet rs = state.executeQuery(params.getQuery());
+			rs.next();
+			return rs.getInt(1);
 		} finally {
 			if (state != null)
 				state.close();
