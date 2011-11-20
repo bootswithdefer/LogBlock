@@ -60,22 +60,33 @@ class LBEntityListener extends EntityListener
 	@Override
 	public void onEntityExplode(EntityExplodeEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getLocation().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.EXPLOSION)) {
+		if (!event.isCancelled() && wcfg != null) {
 			final String name;
-			if (event.getEntity() == null)
+			if (event.getEntity() == null) {
+				if (!wcfg.isLogging(Logging.MISCEXPLOSION))
+					return;
 				name = "Explosion";
-			else if (event.getEntity() instanceof TNTPrimed)
+			} else if (event.getEntity() instanceof TNTPrimed) {
+				if (!wcfg.isLogging(Logging.TNTEXPLOSION))
+					return;
 				name = "TNT";
-			else if (event.getEntity() instanceof Creeper) {
+			} else if (event.getEntity() instanceof Creeper) {
+				if (!wcfg.isLogging(Logging.CREEPEREXPLOSION))
+					return;
 				if (logCreeperExplosionsAsPlayer) {
 					final Entity target = ((Creeper)event.getEntity()).getTarget();
 					name = target instanceof Player ? ((Player)target).getName() : "Creeper";
 				} else
 					name = "Creeper";
-			} else if (event.getEntity() instanceof Fireball)
+			} else if (event.getEntity() instanceof Fireball) {
+				if (!wcfg.isLogging(Logging.GHASTFIREBALLEXPLOSION))
+					return;
 				name = "Ghast";
-			else
+			} else {
+				if (!wcfg.isLogging(Logging.MISCEXPLOSION))
+					return;
 				name = "Explosion";
+			}
 			for (final Block block : event.blockList()) {
 				final int type = block.getTypeId();
 				if (wcfg.isLogging(Logging.SIGNTEXT) & (type == 63 || type == 68))
