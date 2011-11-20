@@ -40,7 +40,7 @@ class LBEntityListener extends EntityListener
 	@Override
 	public void onEntityDamage(EntityDamageEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getEntity().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logKills && event instanceof EntityDamageByEntityEvent && event.getEntity() instanceof LivingEntity) {
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.KILL) && event instanceof EntityDamageByEntityEvent && event.getEntity() instanceof LivingEntity) {
 			final LivingEntity victim = (LivingEntity)event.getEntity();
 			final Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
 			if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0)
@@ -60,7 +60,7 @@ class LBEntityListener extends EntityListener
 	@Override
 	public void onEntityExplode(EntityExplodeEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getLocation().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logExplosions) {
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.EXPLOSION)) {
 			final String name;
 			if (event.getEntity() == null)
 				name = "Explosion";
@@ -78,9 +78,9 @@ class LBEntityListener extends EntityListener
 				name = "Explosion";
 			for (final Block block : event.blockList()) {
 				final int type = block.getTypeId();
-				if (wcfg.logSignTexts & (type == 63 || type == 68))
+				if (wcfg.isLogging(Logging.SIGNTEXT) & (type == 63 || type == 68))
 					consumer.queueSignBreak(name, (Sign)block.getState());
-				else if (wcfg.logChestAccess && (type == 23 || type == 54 || type == 61))
+				else if (wcfg.isLogging(Logging.CHESTACCESS) && (type == 23 || type == 54 || type == 61))
 					consumer.queueContainerBreak(name, block.getState());
 				else
 					consumer.queueBlockBreak(name, block.getState());
@@ -91,14 +91,14 @@ class LBEntityListener extends EntityListener
 	@Override
 	public void onEndermanPickup(EndermanPickupEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logEndermen)
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.ENDERMEN))
 			consumer.queueBlockBreak("Enderman", event.getBlock().getState());
 	}
 
 	@Override
 	public void onEndermanPlace(EndermanPlaceEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getLocation().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logEndermen && event.getEntity() instanceof Enderman) {
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.ENDERMEN) && event.getEntity() instanceof Enderman) {
 			final EntityEnderman enderman = ((CraftEnderman)event.getEntity()).getHandle();
 			consumer.queueBlockPlace("Enderman", event.getLocation(), enderman.getCarriedId(), (byte)enderman.getCarriedData());
 		}

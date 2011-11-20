@@ -1,0 +1,7 @@
+package de.diddiz.LogBlock;
+
+public enum Logging {
+	BLOCKPLACE, BLOCKBREAK, SIGNTEXT, EXPLOSION, FIRE, LEAVESDECAY, LAVAFLOW, WATERFLOW, CHESTACCESS, KILL, CHAT, SNOWFORM, SNOWFADE, DOORINTERACT, SWITCHINTERACT, CAKEEAT, ENDERMEN;
+
+	public static int length = Logging.values().length;
+}

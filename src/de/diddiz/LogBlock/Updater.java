@@ -25,7 +25,7 @@ class Updater
 			return false;
 		if (config.getString("version").compareTo("1.27") < 0) {
 			getLogger().info("[LogBlock] Updating tables to 1.27 ...");
-			if (logblock.getLBConfig().logChat) {
+			if (logblock.getLBConfig().isLogging(Logging.CHAT)) {
 				final Connection conn = logblock.getConnection();
 				try {
 					conn.setAutoCommit(true);
@@ -94,13 +94,13 @@ class Updater
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
 		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime TIME NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
-		if (logblock.getLBConfig().logChat)
+		if (logblock.getLBConfig().isLogging(Logging.CHAT))
 			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM");
 		for (final WorldConfig wcfg : logblock.getLBConfig().worlds.values()) {
 			createTable(dbm, state, wcfg.table, "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
 			createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id))");
 			createTable(dbm, state, wcfg.table + "-chest", "(id INT UNSIGNED NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
-			if (wcfg.logKills)
+			if (wcfg.isLogging(Logging.KILL))
 				createTable(dbm, state, wcfg.table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer SMALLINT UNSIGNED, victim SMALLINT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
 		}
 		state.close();

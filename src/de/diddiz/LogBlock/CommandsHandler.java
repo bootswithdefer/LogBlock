@@ -4,6 +4,7 @@ import static de.diddiz.LogBlock.Session.getSession;
 import static de.diddiz.util.BukkitUtils.giveTool;
 import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
 import static de.diddiz.util.Utils.isInt;
+import static de.diddiz.util.Utils.listing;
 import static org.bukkit.Bukkit.getLogger;
 import java.io.Closeable;
 import java.io.File;
@@ -107,32 +108,11 @@ public class CommandsHandler implements CommandExecutor
 						final String world = ((Player)sender).getWorld().getName();
 						final WorldConfig wcfg = config.worlds.get(world.hashCode());
 						sender.sendMessage(ChatColor.DARK_AQUA + "Currently logging in " + world + ":");
-						String msg = "";
-						if (wcfg.logBlockPlacings)
-							msg += ", BlockPlacings";
-						if (wcfg.logBlockBreaks)
-							msg += ", BlockBreaks";
-						if (wcfg.logSignTexts)
-							msg += ", SignTexts";
-						if (wcfg.logExplosions)
-							msg += ", Explosions";
-						if (wcfg.logFire)
-							msg += ", Fire";
-						if (wcfg.logLeavesDecay)
-							msg += ", LeavesDecay";
-						if (wcfg.logLavaFlow)
-							msg += ", LavaFlow";
-						if (wcfg.logWaterFlow)
-							msg += ", WaterFlow";
-						if (wcfg.logChestAccess)
-							msg += ", ChestAccess";
-						if (wcfg.logButtonsAndLevers)
-							msg += ", ButtonsAndLevers";
-						if (wcfg.logKills)
-							msg += ", Kills";
-						if (wcfg.logChat)
-							msg += ", Chat";
-						sender.sendMessage(ChatColor.GOLD + msg.substring(2));
+						final List<String> logging = new ArrayList<String>();
+						for (final Logging l : Logging.values())
+							if (wcfg.isLogging(l))
+								logging.add(l.toString());
+						sender.sendMessage(ChatColor.GOLD + listing(logging, ", ", " and "));
 					}
 				} else if (config.toolsByName.get(command) != null) {
 					final Tool tool = config.toolsByName.get(command);

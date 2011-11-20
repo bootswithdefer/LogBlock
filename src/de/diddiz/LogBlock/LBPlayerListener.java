@@ -25,14 +25,14 @@ class LBPlayerListener extends PlayerListener
 	@Override
 	public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logBlockPlacings)
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.BLOCKPLACE))
 			consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), event.getBucket() == Material.WATER_BUCKET ? 9 : 11, (byte)0);
 	}
 
 	@Override
 	public void onPlayerBucketFill(PlayerBucketFillEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logBlockBreaks)
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.BLOCKBREAK))
 			consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlockClicked().getState());
 	}
 
@@ -41,11 +41,11 @@ class LBPlayerListener extends PlayerListener
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
 			final int type = event.getClickedBlock().getTypeId();
-			if (wcfg.logButtonsAndLevers && (type == 69 || type == 77))
+			if (wcfg.isLogging(Logging.SWITCHINTERACT) && (type == 69 || type == 77))
 				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
-			else if (wcfg.logDoors && (type == 64 || type == 96 || type == 107 && event.getAction() == Action.RIGHT_CLICK_BLOCK))
+			else if (wcfg.isLogging(Logging.DOORINTERACT) && (type == 64 || type == 96 || type == 107 && event.getAction() == Action.RIGHT_CLICK_BLOCK))
 				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)((event.getClickedBlock().getData() & 4) / 4));
-			else if (wcfg.logCakes && type == 92 && event.getPlayer().getHealth() < 20)
+			else if (wcfg.isLogging(Logging.CAKEEAT) && type == 92 && event.getPlayer().getHealth() < 20)
 				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
 		}
 	}
@@ -53,14 +53,14 @@ class LBPlayerListener extends PlayerListener
 	@Override
 	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (wcfg != null && wcfg.logChat)
+		if (wcfg != null && wcfg.isLogging(Logging.CHAT))
 			consumer.queueChat(event.getPlayer().getName(), event.getMessage());
 	}
 
 	@Override
 	public void onPlayerChat(PlayerChatEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
-		if (wcfg != null && wcfg.logChat)
+		if (wcfg != null && wcfg.isLogging(Logging.CHAT))
 			consumer.queueChat(event.getPlayer().getName(), event.getMessage());
 	}
 

@@ -2,6 +2,8 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.parseTimeSpec;
+import static de.diddiz.util.Utils.toIntList;
+import static de.diddiz.util.Utils.toStringList;
 import static org.bukkit.Bukkit.getConsoleSender;
 import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
@@ -21,7 +23,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.permissions.PermissionDefault;
 
-public class Config
+public class Config extends LoggingEnabledMapping
 {
 	public final Map<Integer, WorldConfig> worlds;
 	public final String url, user, password;
@@ -30,7 +32,6 @@ public class Config
 	public final boolean enableAutoClearLog;
 	public final List<String> autoClearLog;
 	public final boolean dumpDeletedLog;
-	public boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes, logEndermen;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese, logPlayerInfo;
 	public final LogKillsLevel logKillsLevel;
 	public final Set<Integer> dontRollback, replaceAnyway;
@@ -183,120 +184,43 @@ public class Config
 			throw new DataFormatException("No worlds configured");
 		for (final String world : worldNames)
 			worlds.put(world.hashCode(), new WorldConfig(new File("plugins/LogBlock/" + friendlyWorldname(world) + ".yml")));
-		for (final WorldConfig wcfg : worlds.values()) {
-			if (wcfg.logBlockPlacings)
-				logBlockPlacings = true;
-			if (wcfg.logBlockBreaks)
-				logBlockBreaks = true;
-			if (wcfg.logSignTexts)
-				logSignTexts = true;
-			if (wcfg.logExplosions)
-				logExplosions = true;
-			if (wcfg.logFire)
-				logFire = true;
-			if (wcfg.logLeavesDecay)
-				logLeavesDecay = true;
-			if (wcfg.logLavaFlow)
-				logLavaFlow = true;
-			if (wcfg.logWaterFlow)
-				logWaterFlow = true;
-			if (wcfg.logChestAccess)
-				logChestAccess = true;
-			if (wcfg.logButtonsAndLevers)
-				logButtonsAndLevers = true;
-			if (wcfg.logKills)
-				logKills = true;
-			if (wcfg.logChat)
-				logChat = true;
-			if (wcfg.logSnowForm)
-				logSnowForm = true;
-			if (wcfg.logSnowFade)
-				logSnowFade = true;
-			if (wcfg.logDoors)
-				logDoors = true;
-			if (wcfg.logCakes)
-				logCakes = true;
-			if (wcfg.logEndermen)
-				logEndermen = true;
-		}
-	}
+		for (final WorldConfig wcfg : worlds.values())
+			for (final Logging l : Logging.values())
+				if (wcfg.isLogging(l))
+					setLogging(l, true);
 
-	public static List<String> toStringList(List<?> list) {
-		if (list == null)
-			return new ArrayList<String>();
-		final List<String> strs = new ArrayList<String>(list.size());
-		for (final Object obj : list)
-			if (obj instanceof String)
-				strs.add((String)obj);
-			else
-				strs.add(String.valueOf(obj));
-		return strs;
-	}
-
-	public static List<Integer> toIntList(List<?> list) {
-		if (list == null)
-			return new ArrayList<Integer>();
-		final List<Integer> ints = new ArrayList<Integer>(list.size());
-		for (final Object obj : list)
-			if (obj instanceof Integer)
-				ints.add((Integer)obj);
-			else
-				try {
-					ints.add(Integer.valueOf(String.valueOf(obj)));
-				} catch (final NumberFormatException ex) {
-					getLogger().warning("[LogBlock] Config error: '" + obj + "' is not a number");
-				}
-		return ints;
 	}
 }
 
-class WorldConfig
+class WorldConfig extends LoggingEnabledMapping
 {
 	public final String table;
-	public final boolean logBlockPlacings, logBlockBreaks, logSignTexts, logExplosions, logFire, logLeavesDecay, logLavaFlow, logWaterFlow, logChestAccess, logButtonsAndLevers, logKills, logChat, logSnowForm, logSnowFade, logDoors, logCakes, logEndermen;
 
 	public WorldConfig(File file) throws IOException {
 		final Map<String, Object> def = new HashMap<String, Object>();
 		def.put("table", "lb-" + file.getName().substring(0, file.getName().length() - 4));
-		def.put("logBlockCreations", true);
-		def.put("logBlockDestroyings", true);
-		def.put("logSignTexts", true);
-		def.put("logExplosions", true);
-		def.put("logFire", true);
-		def.put("logLeavesDecay", false);
-		def.put("logLavaFlow", false);
-		def.put("logWaterFlow", false);
-		def.put("logChestAccess", false);
-		def.put("logButtonsAndLevers", false);
-		def.put("logKills", false);
-		def.put("logChat", false);
-		def.put("logSnowForm", false);
-		def.put("logSnowFade", false);
-		def.put("logDoors", false);
-		def.put("logCakes", false);
-		def.put("logEndermen", false);
+		for (final Logging l : Logging.values())
+			def.put("logging." + l.toString(), false);
 		final YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 		for (final Entry<String, Object> e : def.entrySet())
 			if (config.get(e.getKey()) == null)
 				config.set(e.getKey(), e.getValue());
 		config.save(file);
 		table = config.getString("table");
-		logBlockPlacings = config.getBoolean("logBlockCreations", true);
-		logBlockBreaks = config.getBoolean("logBlockDestroyings", true);
-		logSignTexts = config.getBoolean("logSignTexts", false);
-		logExplosions = config.getBoolean("logExplosions", false);
-		logFire = config.getBoolean("logFire", false);
-		logLeavesDecay = config.getBoolean("logLeavesDecay", false);
-		logLavaFlow = config.getBoolean("logLavaFlow", false);
-		logWaterFlow = config.getBoolean("logWaterFlow", false);
-		logChestAccess = config.getBoolean("logChestAccess", false);
-		logButtonsAndLevers = config.getBoolean("logButtonsAndLevers", false);
-		logKills = config.getBoolean("logKills", false);
-		logChat = config.getBoolean("logChat", false);
-		logSnowForm = config.getBoolean("logSnowForm", false);
-		logSnowFade = config.getBoolean("logSnowFade", false);
-		logDoors = config.getBoolean("logDoors", false);
-		logCakes = config.getBoolean("logCakes", false);
-		logEndermen = config.getBoolean("logEndermen", false);
+		for (final Logging l : Logging.values())
+			setLogging(l, config.getBoolean("logging." + l.toString()));
+	}
+}
+
+abstract class LoggingEnabledMapping
+{
+	private final boolean[] logging = new boolean[Logging.length];
+
+	public void setLogging(Logging l, boolean enabled) {
+		logging[l.ordinal()] = enabled;
+	}
+
+	public boolean isLogging(Logging l) {
+		return logging[l.ordinal()];
 	}
 }

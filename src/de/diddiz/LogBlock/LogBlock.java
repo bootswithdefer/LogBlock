@@ -108,18 +108,18 @@ public class LogBlock extends JavaPlugin
 			} catch (final Exception ex) {
 				getLogger().warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
 			}
-		if (config.logChestAccess && pm.getPlugin("Spout") == null)
+		if (config.isLogging(Logging.CHESTACCESS) && pm.getPlugin("Spout") == null)
 			if (config.installSpout)
 				try {
 					download(getLogger(), new URL("http://ci.getspout.org/job/Spout/Recommended/artifact/target/spout-dev-SNAPSHOT.jar"), new File("plugins/Spout.jar"));
 					pm.loadPlugin(new File("plugins/Spout.jar"));
 					pm.enablePlugin(pm.getPlugin("Spout"));
 				} catch (final Exception ex) {
-					config.logChestAccess = false;
+					config.setLogging(Logging.CHESTACCESS, false);
 					getLogger().warning("[LogBlock] Failed to install Spout, you may have to restart your server or install it manually.");
 				}
 			else {
-				config.logChestAccess = false;
+				config.setLogging(Logging.CHESTACCESS, false);
 				getLogger().warning("[LogBlock] Spout is not installed. Disabling chest logging.");
 			}
 		commandsHandler = new CommandsHandler(this);
@@ -140,42 +140,42 @@ public class LogBlock extends JavaPlugin
 		pm.registerEvent(Type.PLAYER_CHANGED_WORLD, lbToolListener, Priority.Normal, this);
 		if (config.askRollbackAfterBan)
 			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbToolListener, Priority.Normal, this);
-		if (config.logBlockPlacings) {
+		if (config.isLogging(Logging.BLOCKPLACE)) {
 			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Priority.Monitor, this);
 		}
-		if (config.logBlockBreaks) {
+		if (config.isLogging(Logging.BLOCKBREAK)) {
 			pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Priority.Monitor, this);
 			pm.registerEvent(Type.BLOCK_FROMTO, lbBlockListener, Priority.Monitor, this);
 		}
-		if (config.logSignTexts)
+		if (config.isLogging(Logging.SIGNTEXT))
 			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Priority.Monitor, this);
-		if (config.logFire)
+		if (config.isLogging(Logging.FIRE))
 			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Priority.Monitor, this);
-		if (config.logSnowForm)
+		if (config.isLogging(Logging.SNOWFORM))
 			pm.registerEvent(Type.BLOCK_FORM, lbBlockListener, Priority.Monitor, this);
-		if (config.logSnowFade)
+		if (config.isLogging(Logging.SNOWFADE))
 			pm.registerEvent(Type.BLOCK_FADE, lbBlockListener, Priority.Monitor, this);
-		if (config.logExplosions)
+		if (config.isLogging(Logging.EXPLOSION))
 			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Priority.Monitor, this);
-		if (config.logLeavesDecay)
+		if (config.isLogging(Logging.LEAVESDECAY))
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
-		if (config.logChestAccess)
-			if (pm.getPlugin("Spout") != null)
+		if (config.isLogging(Logging.CHESTACCESS))
+			if (pm.isPluginEnabled("Spout"))
 				pm.registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
 			else
-				getLogger().warning("[LogBlock] BukkitContrib not found. Can't log chest accesses.");
-		if (config.logButtonsAndLevers || config.logDoors || config.logCakes)
+				getLogger().warning("[LogBlock] Spout not found. Can't log chest accesses.");
+		if (config.isLogging(Logging.SWITCHINTERACT) || config.isLogging(Logging.DOORINTERACT) || config.isLogging(Logging.CAKEEAT))
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
-		if (config.logKills)
+		if (config.isLogging(Logging.KILL))
 			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Priority.Monitor, this);
-		if (config.logChat) {
+		if (config.isLogging(Logging.CHAT)) {
 			pm.registerEvent(Type.PLAYER_CHAT, lbPlayerListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbPlayerListener, Priority.Monitor, this);
 			pm.registerEvent(Type.SERVER_COMMAND, new LBServerListener(this), Priority.Monitor, this);
 		}
-		if (config.logEndermen) {
+		if (config.isLogging(Logging.ENDERMEN)) {
 			pm.registerEvent(Type.ENDERMAN_PICKUP, lbEntityListener, Priority.Monitor, this);
 			pm.registerEvent(Type.ENDERMAN_PLACE, lbEntityListener, Priority.Monitor, this);
 		}

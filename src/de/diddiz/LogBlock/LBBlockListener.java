@@ -41,15 +41,15 @@ class LBBlockListener extends BlockListener
 	@Override
 	public void onBlockBreak(BlockBreakEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logBlockBreaks) {
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.BLOCKBREAK)) {
 			final int type = event.getBlock().getTypeId();
 			if (type == 0) {
 				final Location loc = event.getBlock().getLocation();
 				addError(dateFormat.format(System.currentTimeMillis()) + " Bukkit provided no block type for the block broken by " + event.getPlayer().getName() + " at " + loc.getWorld().getName() + ":" + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + ".");
 			}
-			if (wcfg.logSignTexts && (type == 63 || type == 68))
+			if (wcfg.isLogging(Logging.SIGNTEXT) && (type == 63 || type == 68))
 				consumer.queueSignBreak(event.getPlayer().getName(), (Sign)event.getBlock().getState());
-			else if (wcfg.logChestAccess && (type == 23 || type == 54 || type == 61))
+			else if (wcfg.isLogging(Logging.CHESTACCESS) && (type == 23 || type == 54 || type == 61))
 				consumer.queueContainerBreak(event.getPlayer().getName(), event.getBlock().getState());
 			else if (type == 79)
 				consumer.queueBlockReplace(event.getPlayer().getName(), event.getBlock().getState(), 9, (byte)0);
@@ -61,7 +61,7 @@ class LBBlockListener extends BlockListener
 	@Override
 	public void onBlockBurn(BlockBurnEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logFire)
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.FIRE))
 			consumer.queueBlockBreak("Fire", event.getBlock().getState());
 	}
 
@@ -73,7 +73,7 @@ class LBBlockListener extends BlockListener
 			final int typeTo = event.getToBlock().getTypeId();
 			if (typeFrom == 10 || typeFrom == 11) {
 				if (typeTo == 0) {
-					if (wcfg.logLavaFlow)
+					if (wcfg.isLogging(Logging.LAVAFLOW))
 						consumer.queueBlockPlace("LavaFlow", event.getToBlock().getLocation(), 10, (byte)(event.getBlock().getData() + 1));
 				} else if (nonFluidProofBlocks.contains(typeTo))
 					consumer.queueBlockReplace("LavaFlow", event.getToBlock().getState(), 10, (byte)(event.getBlock().getData() + 1));
@@ -85,7 +85,7 @@ class LBBlockListener extends BlockListener
 			} else if (typeFrom == 8 || typeFrom == 9)
 				if (typeTo == 0 || nonFluidProofBlocks.contains(typeTo)) {
 					if (typeTo == 0) {
-						if (wcfg.logWaterFlow)
+						if (wcfg.isLogging(Logging.WATERFLOW))
 							consumer.queueBlockPlace("WaterFlow", event.getToBlock().getLocation(), 8, (byte)(event.getBlock().getData() + 1));
 					} else
 						consumer.queueBlockReplace("WaterFlow", event.getToBlock().getState(), 8, (byte)(event.getBlock().getData() + 1));
@@ -99,7 +99,7 @@ class LBBlockListener extends BlockListener
 	@Override
 	public void onBlockPlace(BlockPlaceEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logBlockPlacings) {
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.BLOCKPLACE)) {
 			final int type = event.getBlock().getTypeId();
 			final BlockState before = event.getBlockReplacedState();
 			final BlockState after = event.getBlockPlaced().getState();
@@ -111,7 +111,7 @@ class LBBlockListener extends BlockListener
 				after.setTypeId(event.getItemInHand().getTypeId());
 				after.setData(new MaterialData(event.getItemInHand().getTypeId()));
 			}
-			if (wcfg.logSignTexts && (type == 63 || type == 68))
+			if (wcfg.isLogging(Logging.SIGNTEXT) && (type == 63 || type == 68))
 				return;
 			if (before.getTypeId() == 0)
 				consumer.queueBlockPlace(event.getPlayer().getName(), after);
@@ -123,14 +123,14 @@ class LBBlockListener extends BlockListener
 	@Override
 	public void onLeavesDecay(LeavesDecayEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logLeavesDecay)
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.LEAVESDECAY))
 			consumer.queueBlockBreak("LeavesDecay", event.getBlock().getState());
 	}
 
 	@Override
 	public void onSignChange(SignChangeEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
-		if (!event.isCancelled() && wcfg != null && wcfg.logSignTexts)
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.SIGNTEXT))
 			consumer.queueSignPlace(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), event.getLines());
 	}
 
@@ -139,7 +139,7 @@ class LBBlockListener extends BlockListener
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null) {
 			final int type = event.getNewState().getTypeId();
-			if (wcfg.logSnowForm && (type == 78 || type == 79))
+			if (wcfg.isLogging(Logging.SNOWFORM) && (type == 78 || type == 79))
 				consumer.queueBlockReplace("SnowForm", event.getBlock().getState(), event.getNewState());
 		}
 	}
@@ -149,7 +149,7 @@ class LBBlockListener extends BlockListener
 		final WorldConfig wcfg = worlds.get(event.getBlock().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null) {
 			final int type = event.getBlock().getTypeId();
-			if (wcfg.logSnowFade && (type == 78 || type == 79))
+			if (wcfg.isLogging(Logging.SNOWFADE) && (type == 78 || type == 79))
 				consumer.queueBlockReplace("SnowFade", event.getBlock().getState(), event.getNewState());
 		}
 	}
