@@ -6,6 +6,7 @@ import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
 import static de.diddiz.util.Utils.isInt;
 import static de.diddiz.util.Utils.listing;
 import static org.bukkit.Bukkit.getLogger;
+import static org.bukkit.Bukkit.getServer;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -104,16 +106,24 @@ public class CommandsHandler implements CommandExecutor
 						if (logblock.hasPermission(sender, "logblock.tools." + tool.name))
 							sender.sendMessage(ChatColor.GOLD + "logblock.tools." + tool.name);
 				} else if (command.equals("logging")) {
-					if (sender instanceof Player) {
-						final String world = ((Player)sender).getWorld().getName();
-						final WorldConfig wcfg = config.worlds.get(world.hashCode());
-						sender.sendMessage(ChatColor.DARK_AQUA + "Currently logging in " + world + ":");
-						final List<String> logging = new ArrayList<String>();
-						for (final Logging l : Logging.values())
-							if (wcfg.isLogging(l))
-								logging.add(l.toString());
-						sender.sendMessage(ChatColor.GOLD + listing(logging, ", ", " and "));
-					}
+					if (logblock.hasPermission(sender, "logblock.lookup")) {
+						World world = null;
+						if (args.length > 1)
+							world = getServer().getWorld(args[1]);
+						else if (sender instanceof Player)
+							world = ((Player)sender).getWorld();
+						if (world != null) {
+							final WorldConfig wcfg = config.worlds.get(world.getName().hashCode());
+							sender.sendMessage(ChatColor.DARK_AQUA + "Currently logging in " + world.getName() + ":");
+							final List<String> logging = new ArrayList<String>();
+							for (final Logging l : Logging.values())
+								if (wcfg.isLogging(l))
+									logging.add(l.toString());
+							sender.sendMessage(ChatColor.GOLD + listing(logging, ", ", " and "));
+						} else
+							sender.sendMessage(ChatColor.RED + "No world specified");
+					} else
+						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 				} else if (config.toolsByName.get(command) != null) {
 					final Tool tool = config.toolsByName.get(command);
 					if (logblock.hasPermission(sender, "logblock.tools." + tool.name)) {
