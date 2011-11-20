@@ -286,7 +286,7 @@ public class QueryParams implements Cloneable
 					throw new IllegalArgumentException("This is your first command, you can't use last.");
 				merge(session.lastQuery);
 			} else if (param.equals("player")) {
-				if (values == null || values.length < 1)
+				if (values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
 				for (final String playerName : values)
 					if (playerName.length() > 0) {
@@ -302,7 +302,7 @@ public class QueryParams implements Cloneable
 						}
 					}
 			} else if (param.equals("block") || param.equals("type")) {
-				if (values == null || values.length < 1)
+				if (values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
 				for (final String blockName : values) {
 					final Material mat = Material.matchMaterial(blockName);
@@ -313,7 +313,7 @@ public class QueryParams implements Cloneable
 			} else if (param.equals("area")) {
 				if (player == null && !prepareToolQuery)
 					throw new IllegalArgumentException("You have to ba a player to use area");
-				if (values == null) {
+				if (values.length == 0) {
 					radius = logblock.getLBConfig().defaultDist;
 					if (!prepareToolQuery)
 						loc = player.getLocation();
@@ -351,7 +351,7 @@ public class QueryParams implements Cloneable
 				if (before == -1)
 					throw new IllegalArgumentException("Faile to parse time spec for '" + param + "'");
 			} else if (param.equals("sum")) {
-				if (values == null || values.length != 1)
+				if (values.length != 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
 				if (values[0].startsWith("p"))
 					sum = SummarizationMode.PLAYERS;
@@ -398,8 +398,7 @@ public class QueryParams implements Cloneable
 				match = join(values, " ").replace("\\", "\\\\").replace("'", "\\'");
 			} else
 				throw new IllegalArgumentException("Not a valid argument: '" + param + "'");
-			if (values != null)
-				i += values.length;
+			i += values.length;
 		}
 		if (types.size() > 0)
 			for (final Set<Integer> equivalent : getBlockEquivalents()) {
