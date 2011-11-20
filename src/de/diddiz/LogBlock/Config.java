@@ -183,7 +183,7 @@ public class Config extends LoggingEnabledMapping
 		if (worldNames.size() == 0)
 			throw new DataFormatException("No worlds configured");
 		for (final String world : worldNames)
-			worlds.put(world.hashCode(), new WorldConfig(new File("plugins/LogBlock/" + friendlyWorldname(world) + ".yml")));
+			worlds.put(world.hashCode(), new WorldConfig(new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml")));
 		for (final WorldConfig wcfg : worlds.values())
 			for (final Logging l : Logging.values())
 				if (wcfg.isLogging(l))

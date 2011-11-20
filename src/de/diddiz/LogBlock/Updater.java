@@ -1,7 +1,11 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.readURL;
+import static de.diddiz.util.Utils.toStringList;
 import static org.bukkit.Bukkit.getLogger;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -10,6 +14,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 class Updater
 {
@@ -81,6 +86,57 @@ class Updater
 			getLogger().info("[LogBlock] Updating config to 1.40 ...");
 			config.set("clearlog.keepLogDays", null);
 			config.set("version", "1.40");
+		}
+		if (config.getString("version").compareTo("1.42") < 0) {
+			getLogger().info("[LogBlock] Updating config to 1.42 ...");
+			for (final String world : toStringList(config.getList("loggedWorlds"))) {
+				final File file = new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml");
+				final YamlConfiguration wcfg = YamlConfiguration.loadConfiguration(file);
+				wcfg.set("logging.BLOCKPLACE", wcfg.getBoolean("logBlockCreations"));
+				wcfg.set("logging.BLOCKBREAK", wcfg.getBoolean("logBlockDestroyings"));
+				wcfg.set("logging.SIGNTEXT", wcfg.getBoolean("logSignTexts"));
+				wcfg.set("logging.FIRE", wcfg.getBoolean("logFire"));
+				wcfg.set("logging.LEAVESDECAY", wcfg.getBoolean("logLeavesDecay"));
+				wcfg.set("logging.LAVAFLOW", wcfg.getBoolean("logLavaFlow"));
+				wcfg.set("logging.WATERFLOW", wcfg.getBoolean("logWaterFlow"));
+				wcfg.set("logging.CHESTACCESS", wcfg.getBoolean("logChestAccess"));
+				wcfg.set("logging.SWITCHINTERACT", wcfg.getBoolean("logButtonsAndLevers"));
+				wcfg.set("logging.KILL", wcfg.getBoolean("logKills"));
+				wcfg.set("logging.CHAT", wcfg.getBoolean("logChat"));
+				wcfg.set("logging.SNOWFORM", wcfg.getBoolean("logSnowForm"));
+				wcfg.set("logging.SNOWFADE", wcfg.getBoolean("logSnowFade"));
+				wcfg.set("logging.DOORINTERACT", wcfg.getBoolean("logDoors"));
+				wcfg.set("logging.CAKEEAT", wcfg.getBoolean("logCakes"));
+				wcfg.set("logging.ENDERMEN", wcfg.getBoolean("logEndermen"));
+				wcfg.set("logging.TNTEXPLOSION", wcfg.getBoolean("logExplosions"));
+				wcfg.set("logging.MISCEXPLOSION", wcfg.getBoolean("logExplosions"));
+				wcfg.set("logging.CREEPEREXPLOSION", wcfg.getBoolean("logExplosions"));
+				wcfg.set("logging.GHASTFIREBALLEXPLOSION", wcfg.getBoolean("logExplosions"));
+				wcfg.set("logBlockCreations", null);
+				wcfg.set("logBlockDestroyings", null);
+				wcfg.set("logSignTexts", null);
+				wcfg.set("logExplosions", null);
+				wcfg.set("logFire", null);
+				wcfg.set("logLeavesDecay", null);
+				wcfg.set("logLavaFlow", null);
+				wcfg.set("logWaterFlow", null);
+				wcfg.set("logChestAccess", null);
+				wcfg.set("logButtonsAndLevers", null);
+				wcfg.set("logKills", null);
+				wcfg.set("logChat", null);
+				wcfg.set("logSnowForm", null);
+				wcfg.set("logSnowFade", null);
+				wcfg.set("logDoors", null);
+				wcfg.set("logCakes", null);
+				wcfg.set("logEndermen", null);
+				try {
+					wcfg.save(file);
+				} catch (final IOException ex) {
+					Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+				}
+			}
+			config.set("clearlog.keepLogDays", null);
+			config.set("version", "1.42");
 		}
 		logblock.saveConfig();
 		return true;
