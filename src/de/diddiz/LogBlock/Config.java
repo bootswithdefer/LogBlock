@@ -50,7 +50,10 @@ public class Config extends LoggingEnabledMapping
 	}
 
 	Config(LogBlock logblock) throws DataFormatException, IOException {
-		final ConfigurationSection config = logblock.getConfig();
+		// TODO Reimplement when Bukkit fixed getConfig()
+		// final ConfigurationSection config = logblock.getConfig();
+		final File cfgFile = new File(logblock.getDataFolder(), "config.yml");
+		final YamlConfiguration config = YamlConfiguration.loadConfiguration(cfgFile);
 		final Map<String, Object> def = new HashMap<String, Object>();
 		def.put("version", logblock.getDescription().getVersion());
 		def.put("loggedWorlds", Arrays.asList("world", "world_nether"));
@@ -106,7 +109,9 @@ public class Config extends LoggingEnabledMapping
 		for (final Entry<String, Object> e : def.entrySet())
 			if (!config.contains(e.getKey()))
 				config.set(e.getKey(), e.getValue());
-		logblock.saveConfig();
+		// TODO Reimplement when Bukkit fixed getConfig()
+		// logblock.saveConfig();
+		config.save(cfgFile);
 		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + config.getString("mysql.database");
 		user = config.getString("mysql.user");
 		password = config.getString("mysql.password");

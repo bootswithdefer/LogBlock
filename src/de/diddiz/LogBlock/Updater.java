@@ -13,7 +13,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 class Updater
@@ -25,7 +24,10 @@ class Updater
 	}
 
 	boolean update() {
-		final ConfigurationSection config = logblock.getConfig();
+		// TODO Reimplement when Bukkit fixed getConfig()
+		// final ConfigurationSection config = logblock.getConfig();
+		final File cfgFile = new File(logblock.getDataFolder(), "config.yml");
+		final YamlConfiguration config = YamlConfiguration.loadConfiguration(cfgFile);
 		if (config.getString("version").compareTo(logblock.getDescription().getVersion()) >= 0)
 			return false;
 		if (config.getString("version").compareTo("1.27") < 0) {
@@ -138,7 +140,13 @@ class Updater
 			config.set("clearlog.keepLogDays", null);
 			config.set("version", "1.42");
 		}
-		logblock.saveConfig();
+		// TODO Reimplement when Bukkit fixed getConfig()
+		// logblock.saveConfig();
+		try {
+			config.save(cfgFile);
+		} catch (final IOException ex) {
+			Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+		}
 		return true;
 	}
 
