@@ -82,6 +82,8 @@ public class LogBlock extends JavaPlugin
 			if (updater.update())
 				config = new Config(this);
 			updater.checkTables();
+		} catch (final NullPointerException ex) {
+			getLogger().log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
 		} catch (final Exception ex) {
 			getLogger().severe("[LogBlock] Error while loading: " + ex.getMessage());
 			errorAtLoading = true;
