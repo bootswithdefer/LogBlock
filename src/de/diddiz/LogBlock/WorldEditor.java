@@ -82,7 +82,7 @@ public class WorldEditor implements Runnable
 	public synchronized void run() {
 		final List<WorldEditorException> errorList = new ArrayList<WorldEditorException>();
 		int counter = 0;
-		while (!edits.isEmpty() && counter < 1000) {
+		while (!edits.isEmpty() && counter < 100) {
 			try {
 				switch (edits.poll().perform()) {
 					case SUCCESS:
