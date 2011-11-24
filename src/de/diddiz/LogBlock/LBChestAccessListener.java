@@ -6,37 +6,90 @@ import static de.diddiz.util.BukkitUtils.rawData;
 import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.ContainerBlock;
+import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
-import org.getspout.spoutapi.event.inventory.InventoryCloseEvent;
-import org.getspout.spoutapi.event.inventory.InventoryListener;
-import org.getspout.spoutapi.event.inventory.InventoryOpenEvent;
 
-class LBChestAccessListener extends InventoryListener
+class LBChestAccessListener extends PlayerListener
 {
 	private final Consumer consumer;
-	private final Map<Integer, ItemStack[]> containers = new HashMap<Integer, ItemStack[]>();
+	private final Map<Player, ContainerState> containers = new HashMap<Player, ContainerState>();
 
 	LBChestAccessListener(LogBlock logblock) {
 		consumer = logblock.getConsumer();
 	}
 
-	@Override
-	public void onInventoryClose(InventoryCloseEvent event) {
-		if (!event.isCancelled() && event.getLocation() != null && containers.containsKey(event.getPlayer().getName().hashCode())) {
-			final String playerName = event.getPlayer().getName();
-			final Location loc = event.getLocation();
-			final ItemStack[] before = containers.get(playerName.hashCode());
-			final ItemStack[] after = compressInventory(event.getInventory().getContents());
+	public void checkInventoryClose(Player player) {
+		final ContainerState cont = containers.get(player);
+		if (cont != null) {
+			final ItemStack[] before = cont.items;
+			final BlockState state = cont.loc.getBlock().getState();
+			if (!(state instanceof ContainerBlock))
+				return;
+			final ItemStack[] after = compressInventory(((ContainerBlock)state).getInventory().getContents());
 			final ItemStack[] diff = compareInventories(before, after);
 			for (final ItemStack item : diff)
-				consumer.queueChestAccess(playerName, loc, loc.getWorld().getBlockTypeIdAt(loc), (short)item.getTypeId(), (short)item.getAmount(), rawData(item));
-			containers.remove(playerName.hashCode());
+				consumer.queueChestAccess(player.getName(), cont.loc, state.getTypeId(), (short)item.getTypeId(), (short)item.getAmount(), rawData(item));
+			containers.remove(player);
 		}
 	}
 
+	public void checkInventoryOpen(Player player, Block block) {
+		final BlockState state = block.getState();
+		if (!(state instanceof ContainerBlock))
+			return;
+		containers.put(player, new ContainerState(block.getLocation(), compressInventory(((ContainerBlock)state).getInventory().getContents())));
+	}
+
 	@Override
-	public void onInventoryOpen(InventoryOpenEvent event) {
-		if (!event.isCancelled() && event.getLocation() != null && event.getLocation().getBlock().getTypeId() != 58)
-			containers.put(event.getPlayer().getName().hashCode(), compressInventory(event.getInventory().getContents()));
+	public void onPlayerChat(PlayerChatEvent event) {
+		checkInventoryClose(event.getPlayer());
+	}
+
+	@Override
+	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
+		checkInventoryClose(event.getPlayer());
+	}
+
+	@Override
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		checkInventoryClose(event.getPlayer());
+	}
+
+	@Override
+	public void onPlayerTeleport(PlayerTeleportEvent event) {
+		checkInventoryClose(event.getPlayer());
+	}
+
+	@Override
+	public void onPlayerInteract(PlayerInteractEvent event) {
+		final Player player = event.getPlayer();
+		checkInventoryClose(player);
+		if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+			final Block block = event.getClickedBlock();
+			final int type = block.getTypeId();
+			if (type == 23 || type == 54 || type == 61 || type == 62)
+				checkInventoryOpen(player, block);
+		}
+	}
+
+	private static class ContainerState
+	{
+		public final ItemStack[] items;
+		public final Location loc;
+
+		private ContainerState(Location loc, ItemStack[] items) {
+			this.items = items;
+			this.loc = loc;
+		}
 	}
 }

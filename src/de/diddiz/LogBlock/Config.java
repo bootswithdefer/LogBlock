@@ -42,7 +42,7 @@ public class Config extends LoggingEnabledMapping
 	public final int linesPerPage, linesLimit;
 	public final boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback, askRollbackAfterBan;
 	public final String banPermission;
-	public final boolean installSpout, checkVersion;
+	public final boolean checkVersion;
 	public final Set<Integer> hiddenPlayers, hiddenBlocks;
 
 	public static enum LogKillsLevel {
@@ -88,7 +88,6 @@ public class Config extends LoggingEnabledMapping
 		def.put("questioner.askClearLogAfterRollback", true);
 		def.put("questioner.askRollbackAfterBan", false);
 		def.put("questioner.banPermission", "mcbans.ban.local");
-		def.put("updater.installSpout", true);
 		def.put("updater.checkVersion", true);
 		def.put("tools.tool.aliases", Arrays.asList("t"));
 		def.put("tools.tool.leftClickBehavior", "NONE");
@@ -154,7 +153,6 @@ public class Config extends LoggingEnabledMapping
 		askClearLogAfterRollback = config.getBoolean("questioner.askClearLogAfterRollback", true);
 		askRollbackAfterBan = config.getBoolean("questioner.askRollbackAfterBan", false);
 		banPermission = config.getString("questioner.banPermission");
-		installSpout = config.getBoolean("updater.installSpout", true);
 		checkVersion = config.getBoolean("updater.checkVersion", true);
 		final List<Tool> tools = new ArrayList<Tool>();
 		final ConfigurationSection toolsSec = config.getConfigurationSection("tools");

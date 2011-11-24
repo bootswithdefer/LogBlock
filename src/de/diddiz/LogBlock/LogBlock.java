@@ -19,6 +19,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
+import org.bukkit.event.Listener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -110,20 +111,6 @@ public class LogBlock extends JavaPlugin
 			} catch (final Exception ex) {
 				getLogger().warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
 			}
-		if (config.isLogging(Logging.CHESTACCESS) && pm.getPlugin("Spout") == null)
-			if (config.installSpout)
-				try {
-					download(getLogger(), new URL("http://ci.getspout.org/job/Spout/Recommended/artifact/target/spout-dev-SNAPSHOT.jar"), new File("plugins/Spout.jar"));
-					pm.loadPlugin(new File("plugins/Spout.jar"));
-					pm.enablePlugin(pm.getPlugin("Spout"));
-				} catch (final Exception ex) {
-					config.setLogging(Logging.CHESTACCESS, false);
-					getLogger().warning("[LogBlock] Failed to install Spout, you may have to restart your server or install it manually.");
-				}
-			else {
-				config.setLogging(Logging.CHESTACCESS, false);
-				getLogger().warning("[LogBlock] Spout is not installed. Disabling chest logging.");
-			}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
 		if (pm.getPlugin("Permissions") != null) {
@@ -134,10 +121,10 @@ public class LogBlock extends JavaPlugin
 		if (config.enableAutoClearLog)
 			getServer().getScheduler().scheduleAsyncDelayedTask(this, new AutoClearLog(this));
 		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
-		final LBBlockListener lbBlockListener = new LBBlockListener(this);
-		final LBPlayerListener lbPlayerListener = new LBPlayerListener(this);
-		final LBEntityListener lbEntityListener = new LBEntityListener(this);
-		final LBToolListener lbToolListener = new LBToolListener(this);
+		final Listener lbBlockListener = new LBBlockListener(this);
+		final Listener lbPlayerListener = new LBPlayerListener(this);
+		final Listener lbEntityListener = new LBEntityListener(this);
+		final Listener lbToolListener = new LBToolListener(this);
 		pm.registerEvent(Type.PLAYER_INTERACT, lbToolListener, Priority.Normal, this);
 		pm.registerEvent(Type.PLAYER_CHANGED_WORLD, lbToolListener, Priority.Normal, this);
 		if (config.askRollbackAfterBan)
@@ -164,10 +151,18 @@ public class LogBlock extends JavaPlugin
 		if (config.isLogging(Logging.LEAVESDECAY))
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
 		if (config.isLogging(Logging.CHESTACCESS))
-			if (pm.isPluginEnabled("Spout"))
-				pm.registerEvent(Type.CUSTOM_EVENT, new LBChestAccessListener(this), Priority.Monitor, this);
-			else
-				getLogger().warning("[LogBlock] Spout not found. Can't log chest accesses.");
+			if (pm.isPluginEnabled("Spout")) {
+				pm.registerEvent(Type.CUSTOM_EVENT, new LBSpoutChestAccessListener(this), Priority.Monitor, this);
+				getLogger().info("[LogBlock] Using Spout as chest access API");
+			} else {
+				final Listener chestAccessListener = new LBChestAccessListener(this);
+				pm.registerEvent(Type.PLAYER_INTERACT, chestAccessListener, Priority.Monitor, this);
+				pm.registerEvent(Type.PLAYER_CHAT, chestAccessListener, Priority.Monitor, this);
+				pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, chestAccessListener, Priority.Monitor, this);
+				pm.registerEvent(Type.PLAYER_TELEPORT, chestAccessListener, Priority.Monitor, this);
+				pm.registerEvent(Type.PLAYER_QUIT, chestAccessListener, Priority.Monitor, this);
+				getLogger().info("[LogBlock] Using own chest access API");
+			}
 		if (config.isLogging(Logging.SWITCHINTERACT) || config.isLogging(Logging.DOORINTERACT) || config.isLogging(Logging.CAKEEAT))
 			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
 		if (config.isLogging(Logging.KILL))
