@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import java.util.Map;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
@@ -41,12 +42,13 @@ class LBPlayerListener extends PlayerListener
 		final WorldConfig wcfg = worlds.get(event.getPlayer().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
 			final int type = event.getClickedBlock().getTypeId();
+			final Player player = event.getPlayer();
 			if (wcfg.isLogging(Logging.SWITCHINTERACT) && (type == 69 || type == 77))
-				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
+				consumer.queueBlock(player.getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
 			else if (wcfg.isLogging(Logging.DOORINTERACT) && (type == 64 || type == 96 || type == 107 && event.getAction() == Action.RIGHT_CLICK_BLOCK))
-				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)((event.getClickedBlock().getData() & 4) / 4));
-			else if (wcfg.isLogging(Logging.CAKEEAT) && type == 92 && event.getPlayer().getHealth() < 20)
-				consumer.queueBlock(event.getPlayer().getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
+				consumer.queueBlock(player.getName(), event.getClickedBlock().getLocation(), type, type, (byte)((event.getClickedBlock().getData() & 4) / 4));
+			else if (wcfg.isLogging(Logging.CAKEEAT) && type == 92 && player.getHealth() < player.getMaxHealth())
+				consumer.queueBlock(player.getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
 		}
 	}
 
