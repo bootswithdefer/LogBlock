@@ -198,7 +198,7 @@ class WorldConfig extends LoggingEnabledMapping
 		final Map<String, Object> def = new HashMap<String, Object>();
 		def.put("table", "lb-" + file.getName().substring(0, file.getName().length() - 4));
 		for (final Logging l : Logging.values())
-			def.put("logging." + l.toString(), false);
+			def.put("logging." + l.toString(), l.isDefaultEnabled());
 		final YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 		for (final Entry<String, Object> e : def.entrySet())
 			if (config.get(e.getKey()) == null)
