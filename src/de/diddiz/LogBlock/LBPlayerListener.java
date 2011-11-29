@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import java.util.Map;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
@@ -43,12 +44,35 @@ class LBPlayerListener extends PlayerListener
 		if (!event.isCancelled() && wcfg != null && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
 			final int type = event.getClickedBlock().getTypeId();
 			final Player player = event.getPlayer();
-			if (wcfg.isLogging(Logging.SWITCHINTERACT) && (type == 69 || type == 77))
-				consumer.queueBlock(player.getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
-			else if (wcfg.isLogging(Logging.DOORINTERACT) && (type == 64 || type == 96 || type == 107 && event.getAction() == Action.RIGHT_CLICK_BLOCK))
-				consumer.queueBlock(player.getName(), event.getClickedBlock().getLocation(), type, type, (byte)((event.getClickedBlock().getData() & 4) / 4));
-			else if (wcfg.isLogging(Logging.CAKEEAT) && type == 92 && player.getHealth() < player.getMaxHealth())
-				consumer.queueBlock(player.getName(), event.getClickedBlock().getLocation(), type, type, (byte)0);
+			final Location loc = event.getClickedBlock().getLocation();
+			switch (type) {
+				case 69:
+				case 77:
+					if (wcfg.isLogging(Logging.SWITCHINTERACT))
+						consumer.queueBlock(player.getName(), loc, type, type, (byte)0);
+					break;
+				case 107:
+					if (event.getAction() != Action.RIGHT_CLICK_BLOCK)
+						break;
+				case 64:
+				case 96:
+					if (wcfg.isLogging(Logging.DOORINTERACT))
+						consumer.queueBlock(player.getName(), loc, type, type, (byte)((event.getClickedBlock().getData() & 4) / 4));
+					break;
+				case 92:
+					if (wcfg.isLogging(Logging.CAKEEAT) && player.getFoodLevel() < 20)
+						consumer.queueBlock(player.getName(), loc, 92, 92, (byte)0);
+					break;
+				case 25:
+					if (wcfg.isLogging(Logging.NOTEBLOCKINTERACT))
+						consumer.queueBlock(player.getName(), loc, 25, 25, (byte)0);
+					break;
+				case 93:
+				case 94:
+					if (wcfg.isLogging(Logging.DIODEINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK)
+						consumer.queueBlock(player.getName(), loc, type, type, (byte)0);
+					break;
+			}
 		}
 	}
 
