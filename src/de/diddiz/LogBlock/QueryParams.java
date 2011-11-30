@@ -111,9 +111,9 @@ public class QueryParams implements Cloneable
 				from += "LEFT JOIN `" + getTable() + "-chest` USING (id) ";
 			return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
 		} else if (sum == SummarizationMode.TYPES)
-			return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(type) AS created, 0 AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(replaced) AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
+			return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
 		else
-			return "SELECT playername, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(type) AS created, 0 AS destroyed FROM `" + getTable() + "` " + getWhere(BlockChangeType.CREATED) + "GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(replaced) AS destroyed FROM `" + getTable() + "` " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
+			return "SELECT playername, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "` " + getWhere(BlockChangeType.CREATED) + "GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "` " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
 	}
 
 	public String getTable() {
@@ -200,7 +200,6 @@ public class QueryParams implements Cloneable
 					}
 					break;
 				case BOTH:
-					where.append("type <> replaced AND ");
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final int type : types)
@@ -208,9 +207,9 @@ public class QueryParams implements Cloneable
 						where.delete(where.length() - 4, where.length());
 						where.append(") AND ");
 					}
+					where.append("type != replaced AND ");
 					break;
 				case CREATED:
-					where.append("type <> replaced AND ");
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final int type : types)
@@ -218,10 +217,10 @@ public class QueryParams implements Cloneable
 						where.delete(where.length() - 4, where.length());
 						where.append(") AND ");
 					} else
-						where.append("type > 0 AND ");
+						where.append("type != 0 AND ");
+					where.append("type != replaced AND ");
 					break;
 				case DESTROYED:
-					where.append("type <> replaced AND ");
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final int type : types)
@@ -229,10 +228,11 @@ public class QueryParams implements Cloneable
 						where.delete(where.length() - 4, where.length());
 						where.append(") AND ");
 					} else
-						where.append("replaced > 0 AND ");
+						where.append("replaced != 0 AND ");
+					where.append("type != replaced AND ");
 					break;
 				case CHESTACCESS:
-					where.append("type = replaced AND (type = 23 OR type = 54 OR type = 61 OR type = 62) AND ");
+					where.append("(type = 23 OR type = 54 OR type = 61 OR type = 62) AND type = replaced AND ");
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final int type : types)
