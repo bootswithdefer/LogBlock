@@ -1,6 +1,7 @@
 package de.diddiz.util;
 
 import static de.diddiz.util.MaterialName.materialName;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,8 +103,7 @@ public class BukkitUtils
 	}
 
 	public static String friendlyWorldname(String worldName) {
-		worldName = worldName.substring(worldName.lastIndexOf('/') + 1);
-		return worldName.substring(worldName.lastIndexOf('\\') + 1);
+		return new File(worldName).getName();
 	}
 
 	public static Set<Set<Integer>> getBlockEquivalents() {

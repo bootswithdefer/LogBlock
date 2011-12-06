@@ -194,9 +194,7 @@ public class Consumer extends TimerTask
 	public void queueKill(World world, String killerName, String victimName, int weapon) {
 		if (victimName == null || !worlds.containsKey(world.getName().hashCode()))
 			return;
-		killerName = killerName.replaceAll("[^a-zA-Z0-9_]", "");
-		victimName = victimName.replaceAll("[^a-zA-Z0-9_]", "");
-		queue.add(new KillRow(world.getName().hashCode(), killerName, victimName, weapon));
+		queue.add(new KillRow(world.getName().hashCode(), killerName.replaceAll("[^a-zA-Z0-9_]", ""), victimName.replaceAll("[^a-zA-Z0-9_]", ""), weapon));
 	}
 
 	/**
@@ -348,10 +346,7 @@ public class Consumer extends TimerTask
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
 		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || typeBefore > 255 || typeAfter > 255 || hiddenPlayers.contains(playerName.hashCode()) || !worlds.containsKey(loc.getWorld().getName().hashCode()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
 			return;
-		playerName = playerName.replaceAll("[^a-zA-Z0-9_]", "");
-		if (signtext != null)
-			signtext = signtext.replace("\\", "\\\\").replace("'", "\\'");
-		queue.add(new BlockRow(loc, playerName, typeBefore, typeAfter, data, signtext, ca));
+		queue.add(new BlockRow(loc, playerName.replaceAll("[^a-zA-Z0-9_]", ""), typeBefore, typeAfter, data, signtext != null ? signtext.replace("\\", "\\\\").replace("'", "\\'") : null, ca));
 	}
 
 	private String playerID(String playerName) {
