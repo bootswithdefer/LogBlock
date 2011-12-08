@@ -146,7 +146,7 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.BLOCK_FORM, lbBlockListener, Priority.Monitor, this);
 		if (config.isLogging(Logging.SNOWFADE))
 			pm.registerEvent(Type.BLOCK_FADE, lbBlockListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.CREEPEREXPLOSION) || config.isLogging(Logging.TNTEXPLOSION) || config.isLogging(Logging.GHASTFIREBALLEXPLOSION) || config.isLogging(Logging.MISCEXPLOSION))
+		if (config.isLogging(Logging.CREEPEREXPLOSION) || config.isLogging(Logging.TNTEXPLOSION) || config.isLogging(Logging.GHASTFIREBALLEXPLOSION) || config.isLogging(Logging.ENDERDRAGON) || config.isLogging(Logging.MISCEXPLOSION))
 			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Priority.Monitor, this);
 		if (config.isLogging(Logging.LEAVESDECAY))
 			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);

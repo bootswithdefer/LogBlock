@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.craftbukkit.entity.CraftEnderman;
 import org.bukkit.entity.Creeper;
+import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
@@ -61,6 +62,7 @@ class LBEntityListener extends EntityListener
 	public void onEntityExplode(EntityExplodeEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getLocation().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null) {
+			System.out.println("Explosion: " + event.getEntity().getClass().getSimpleName());
 			final String name;
 			if (event.getEntity() == null) {
 				if (!wcfg.isLogging(Logging.MISCEXPLOSION))
@@ -82,6 +84,10 @@ class LBEntityListener extends EntityListener
 				if (!wcfg.isLogging(Logging.GHASTFIREBALLEXPLOSION))
 					return;
 				name = "Ghast";
+			} else if (event.getEntity() instanceof EnderDragon) {
+				if (!wcfg.isLogging(Logging.ENDERDRAGON))
+					return;
+				name = "EnderDragon";
 			} else {
 				if (!wcfg.isLogging(Logging.MISCEXPLOSION))
 					return;
