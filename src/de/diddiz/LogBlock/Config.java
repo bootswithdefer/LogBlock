@@ -6,6 +6,7 @@ import static de.diddiz.util.Utils.toIntList;
 import static de.diddiz.util.Utils.toStringList;
 import static org.bukkit.Bukkit.getConsoleSender;
 import static org.bukkit.Bukkit.getLogger;
+import static org.bukkit.Bukkit.getWorlds;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.permissions.PermissionDefault;
@@ -53,7 +55,10 @@ public class Config extends LoggingEnabledMapping
 		final ConfigurationSection config = logblock.getConfig();
 		final Map<String, Object> def = new HashMap<String, Object>();
 		def.put("version", logblock.getDescription().getVersion());
-		def.put("loggedWorlds", Arrays.asList("world", "world_nether"));
+		final List<String> worldNames = new ArrayList<String>();
+		for (final World world : getWorlds())
+			worldNames.add(world.getName());
+		def.put("loggedWorlds", worldNames);
 		def.put("mysql.host", "localhost");
 		def.put("mysql.port", 3306);
 		def.put("mysql.database", "minecraft");
@@ -176,11 +181,11 @@ public class Config extends LoggingEnabledMapping
 			for (final String alias : tool.aliases)
 				toolsByName.put(alias, tool);
 		}
-		final List<String> worldNames = toStringList(config.getList("loggedWorlds"));
+		final List<String> loggedWorlds = toStringList(config.getList("loggedWorlds"));
 		worlds = new HashMap<Integer, WorldConfig>();
 		if (worldNames.size() == 0)
 			throw new DataFormatException("No worlds configured");
-		for (final String world : worldNames)
+		for (final String world : loggedWorlds)
 			worlds.put(world.hashCode(), new WorldConfig(new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml")));
 		for (final WorldConfig wcfg : worlds.values())
 			for (final Logging l : Logging.values())
