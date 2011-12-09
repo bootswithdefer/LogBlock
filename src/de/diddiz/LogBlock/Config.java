@@ -183,7 +183,7 @@ public class Config extends LoggingEnabledMapping
 		}
 		final List<String> loggedWorlds = toStringList(config.getList("loggedWorlds"));
 		worlds = new HashMap<Integer, WorldConfig>();
-		if (worldNames.size() == 0)
+		if (loggedWorlds.size() == 0)
 			throw new DataFormatException("No worlds configured");
 		for (final String world : loggedWorlds)
 			worlds.put(world.hashCode(), new WorldConfig(new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml")));
