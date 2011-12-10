@@ -176,6 +176,8 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvent(Type.ENDERMAN_PICKUP, lbEntityListener, Priority.Monitor, this);
 			pm.registerEvent(Type.ENDERMAN_PLACE, lbEntityListener, Priority.Monitor, this);
 		}
+		if (config.isLogging(Logging.NATURALSTRUCTUREGROW) || config.isLogging(Logging.BONEMEALSTRUCTUREGROW))
+			pm.registerEvent(Type.STRUCTURE_GROW, new LBWorldListener(this), Priority.Monitor, this);
 		if (config.logPlayerInfo) {
 			pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Monitor, this);
 			pm.registerEvent(Type.PLAYER_QUIT, lbPlayerListener, Priority.Monitor, this);
