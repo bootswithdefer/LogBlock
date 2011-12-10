@@ -62,7 +62,6 @@ class LBEntityListener extends EntityListener
 	public void onEntityExplode(EntityExplodeEvent event) {
 		final WorldConfig wcfg = worlds.get(event.getLocation().getWorld().getName().hashCode());
 		if (!event.isCancelled() && wcfg != null) {
-			System.out.println("Explosion: " + event.getEntity().getClass().getSimpleName());
 			final String name;
 			if (event.getEntity() == null) {
 				if (!wcfg.isLogging(Logging.MISCEXPLOSION))
