@@ -114,9 +114,12 @@ public class Config extends LoggingEnabledMapping
 			if (!config.contains(e.getKey()))
 				config.set(e.getKey(), e.getValue());
 		logblock.saveConfig();
-		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + config.getString("mysql.database");
-		user = config.getString("mysql.user");
-		password = config.getString("mysql.password");
+		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + getStringIncludingInts(config, "mysql.database");
+		String username = config.getString("mysql.user");
+		if (username == null)
+			username = String.valueOf(config.getInt("mysql.user"));
+		user = getStringIncludingInts(config, "mysql.user");
+		password = getStringIncludingInts(config, "mysql.password");
 		delayBetweenRuns = config.getInt("consumer.delayBetweenRuns", 6);
 		forceToProcessAtLeast = config.getInt("consumer.forceToProcessAtLeast", 0);
 		timePerRun = config.getInt("consumer.timePerRun", 100);
@@ -194,7 +197,15 @@ public class Config extends LoggingEnabledMapping
 			for (final Logging l : Logging.values())
 				if (wcfg.isLogging(l))
 					setLogging(l, true);
+	}
 
+	private static String getStringIncludingInts(ConfigurationSection cfg, String key) {
+		String str = cfg.getString(key);
+		if (str == null)
+			str = String.valueOf(cfg.getInt(key));
+		if (str == null)
+			str = "No value set for '" + key + "'";
+		return str;
 	}
 }
 
