@@ -56,6 +56,11 @@ public class Config extends LoggingEnabledMapping
 		final List<String> worldNames = new ArrayList<String>();
 		for (final World world : getWorlds())
 			worldNames.add(world.getName());
+		if (worldNames.isEmpty()) {
+			worldNames.add("world");
+			worldNames.add("world_nether");
+			worldNames.add("world_the_end");
+		}
 		def.put("loggedWorlds", worldNames);
 		def.put("mysql.host", "localhost");
 		def.put("mysql.port", 3306);
