@@ -2,7 +2,6 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.readURL;
-import static de.diddiz.util.Utils.toStringList;
 import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
 import java.io.IOException;
@@ -89,7 +88,7 @@ class Updater
 		}
 		if (config.getString("version").compareTo("1.42") < 0) {
 			getLogger().info("[LogBlock] Updating config to 1.42 ...");
-			for (final String world : toStringList(config.getList("loggedWorlds"))) {
+			for (final String world : config.getStringList("loggedWorlds")) {
 				final File file = new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml");
 				final YamlConfiguration wcfg = YamlConfiguration.loadConfiguration(file);
 				wcfg.set("logging.BLOCKPLACE", wcfg.getBoolean("logBlockCreations"));

@@ -2,8 +2,6 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.parseTimeSpec;
-import static de.diddiz.util.Utils.toIntList;
-import static de.diddiz.util.Utils.toStringList;
 import static org.bukkit.Bukkit.getConsoleSender;
 import static org.bukkit.Bukkit.getLogger;
 import static org.bukkit.Bukkit.getWorlds;
@@ -119,7 +117,7 @@ public class Config extends LoggingEnabledMapping
 		timePerRun = config.getInt("consumer.timePerRun", 100);
 		useBukkitScheduler = config.getBoolean("consumer.useBukkitScheduler", true);
 		enableAutoClearLog = config.getBoolean("clearlog.enableAutoClearLog");
-		autoClearLog = toStringList(config.getList("clearlog.auto"));
+		autoClearLog = config.getStringList("clearlog.auto");
 		dumpDeletedLog = config.getBoolean("clearlog.dumpDeletedLog", false);
 		logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		logPlayerInfo = config.getBoolean("logging.logPlayerInfo", true);
@@ -139,8 +137,8 @@ public class Config extends LoggingEnabledMapping
 			else
 				throw new DataFormatException("Not a valid material: '" + blocktype + "'");
 		}
-		dontRollback = new HashSet<Integer>(toIntList(config.getList("rollback.dontRollback")));
-		replaceAnyway = new HashSet<Integer>(toIntList(config.getList("rollback.replaceAnyway")));
+		dontRollback = new HashSet<Integer>(config.getIntegerList("rollback.dontRollback"));
+		replaceAnyway = new HashSet<Integer>(config.getIntegerList("rollback.replaceAnyway"));
 		rollbackMaxTime = parseTimeSpec(config.getString("rollback.maxTime").split(" "));
 		rollbackMaxArea = config.getInt("rollback.maxArea", 50);
 		defaultDist = config.getInt("lookup.defaultDist", 20);
@@ -159,7 +157,7 @@ public class Config extends LoggingEnabledMapping
 		for (final String toolName : toolsSec.getKeys(false))
 			try {
 				final ConfigurationSection tSec = toolsSec.getConfigurationSection(toolName);
-				final List<String> aliases = toStringList(tSec.getList("aliases"));
+				final List<String> aliases = tSec.getStringList("aliases");
 				final ToolBehavior leftClickBehavior = ToolBehavior.valueOf(tSec.getString("leftClickBehavior").toUpperCase());
 				final ToolBehavior rightClickBehavior = ToolBehavior.valueOf(tSec.getString("rightClickBehavior").toUpperCase());
 				final boolean defaultEnabled = tSec.getBoolean("defaultEnabled", false);
@@ -181,7 +179,7 @@ public class Config extends LoggingEnabledMapping
 			for (final String alias : tool.aliases)
 				toolsByName.put(alias, tool);
 		}
-		final List<String> loggedWorlds = toStringList(config.getList("loggedWorlds"));
+		final List<String> loggedWorlds = config.getStringList("loggedWorlds");
 		worlds = new HashMap<Integer, WorldConfig>();
 		if (loggedWorlds.size() == 0)
 			throw new DataFormatException("No worlds configured");

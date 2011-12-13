@@ -1,6 +1,5 @@
 package de.diddiz.util;
 
-import static org.bukkit.Bukkit.getLogger;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,7 +12,6 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -181,33 +179,5 @@ public class Utils
 		public boolean accept(File dir, String name) {
 			return name.toLowerCase().endsWith(ext);
 		}
-	}
-
-	public static List<String> toStringList(List<?> list) {
-		if (list == null)
-			return new ArrayList<String>();
-		final List<String> strs = new ArrayList<String>(list.size());
-		for (final Object obj : list)
-			if (obj instanceof String)
-				strs.add((String)obj);
-			else
-				strs.add(String.valueOf(obj));
-		return strs;
-	}
-
-	public static List<Integer> toIntList(List<?> list) {
-		if (list == null)
-			return new ArrayList<Integer>();
-		final List<Integer> ints = new ArrayList<Integer>(list.size());
-		for (final Object obj : list)
-			if (obj instanceof Integer)
-				ints.add((Integer)obj);
-			else
-				try {
-					ints.add(Integer.valueOf(String.valueOf(obj)));
-				} catch (final NumberFormatException ex) {
-					getLogger().warning("[LogBlock] Config error: '" + obj + "' is not a number");
-				}
-		return ints;
 	}
 }
