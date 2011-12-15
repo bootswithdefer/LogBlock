@@ -294,6 +294,8 @@ public class CommandsHandler implements CommandExecutor
 				} else
 					sender.sendMessage(ChatColor.RED + "Unknown command '" + args[0] + "'");
 			}
+		} catch (final IllegalArgumentException ex) {
+			sender.sendMessage(ChatColor.RED + ex.getMessage());
 		} catch (final Exception ex) {
 			sender.sendMessage(ChatColor.RED + "Error, check log");
 			getLogger().log(Level.WARNING, "[LogBlock] Exception in commands handler: ", ex);
