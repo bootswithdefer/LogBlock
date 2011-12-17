@@ -114,12 +114,17 @@ public class CommandsHandler implements CommandExecutor
 							world = ((Player)sender).getWorld();
 						if (world != null) {
 							final WorldConfig wcfg = config.worlds.get(world.getName().hashCode());
-							sender.sendMessage(ChatColor.DARK_AQUA + "Currently logging in " + world.getName() + ":");
-							final List<String> logging = new ArrayList<String>();
-							for (final Logging l : Logging.values())
-								if (wcfg.isLogging(l))
-									logging.add(l.toString());
-							sender.sendMessage(ChatColor.GOLD + listing(logging, ", ", " and "));
+							if (wcfg != null) {
+								sender.sendMessage(ChatColor.DARK_AQUA + "Currently logging in " + world.getName() + ":");
+								final List<String> logging = new ArrayList<String>();
+								for (final Logging l : Logging.values())
+									if (wcfg.isLogging(l))
+										logging.add(l.toString());
+								sender.sendMessage(ChatColor.GOLD + listing(logging, ", ", " and "));
+							} else {
+								sender.sendMessage(ChatColor.RED + "World not logged: '" + world.getName() + "'");
+								sender.sendMessage(ChatColor.LIGHT_PURPLE + "Make the world name is listed at loggedWorlds in config. World names are case sensitive and must contains the path (if any), exactly like in the message above.");
+							}
 						} else
 							sender.sendMessage(ChatColor.RED + "No world specified");
 					} else
