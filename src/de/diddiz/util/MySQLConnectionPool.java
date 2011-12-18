@@ -18,6 +18,7 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
@@ -85,9 +86,12 @@ public class MySQLConnectionPool implements Closeable
 	private void reapConnections() {
 		lock.lock();
 		final long stale = System.currentTimeMillis() - timeToLive;
-		for (final JDCConnection conn : connections)
+		final Iterator<JDCConnection> itr = connections.iterator();
+		while (itr.hasNext()) {
+			final JDCConnection conn = itr.next();
 			if (conn.inUse() && stale > conn.getLastUse() && !conn.isValid())
-				connections.remove(conn);
+				itr.remove();
+		}
 		lock.unlock();
 	}
 
