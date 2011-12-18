@@ -138,24 +138,21 @@ class Updater
 			config.set("version", "1.42");
 		}
 		if (config.getString("version").compareTo("1.51" /* FIXME: Needs correct version number */) < 0) {
-			getLogger().info("[LogBlock] Updating tables to 1.51 ...");//FIXME: Needs correct version number
+			getLogger().info("[LogBlock] Updating tables to 1.51 ...");// FIXME: Needs correct version number
 			final Connection conn = logblock.getConnection();
 			try {
 				conn.setAutoCommit(true);
 				final Statement st = conn.createStatement();
-				for (final WorldConfig wcfg : logblock.getLBConfig().worlds.values()) {
+				for (final WorldConfig wcfg : logblock.getLBConfig().worlds.values())
 					if (wcfg.isLogging(Logging.KILL))
-					{
 						st.execute("ALTER TABLE `" + wcfg.table + "-kills` ADD (x SMALLINT NOT NULL DEFAULT 0, y TINYINT UNSIGNED NOT NULL DEFAULT 0, z SMALLINT NOT NULL DEFAULT 0)");
-					}
-				}
 				st.close();
 				conn.close();
 			} catch (final SQLException ex) {
 				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
 				return false;
 			}
-			config.set("version", "1.51" /* FIXME: Needs correct version number */);
+			config.set("version", "1.51");
 		}
 		logblock.saveConfig();
 		return true;
