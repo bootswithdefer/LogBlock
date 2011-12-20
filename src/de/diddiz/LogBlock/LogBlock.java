@@ -67,11 +67,6 @@ public class LogBlock extends JavaPlugin
 			config = new Config(this);
 			if (config.checkVersion)
 				getLogger().info("[LogBlock] Version check: " + updater.checkVersion());
-			final File file = new File("lib/mysql-connector-java-bin.jar");
-			if (!file.exists() || file.length() == 0)
-				download(getLogger(), new URL("http://diddiz.insane-architects.net/download/mysql-connector-java-bin.jar"), file);
-			if (!file.exists() || file.length() == 0)
-				throw new FileNotFoundException(file.getAbsolutePath() + file.getName());
 			getLogger().info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
 			pool = new MySQLConnectionPool(config.url, config.user, config.password);
 			final Connection conn = getConnection();
