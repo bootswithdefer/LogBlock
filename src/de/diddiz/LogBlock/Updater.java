@@ -91,26 +91,45 @@ class Updater
 			for (final String world : config.getStringList("loggedWorlds")) {
 				final File file = new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml");
 				final YamlConfiguration wcfg = YamlConfiguration.loadConfiguration(file);
-				wcfg.set("logging.BLOCKPLACE", wcfg.getBoolean("logBlockCreations"));
-				wcfg.set("logging.BLOCKBREAK", wcfg.getBoolean("logBlockDestroyings"));
-				wcfg.set("logging.SIGNTEXT", wcfg.getBoolean("logSignTexts"));
-				wcfg.set("logging.FIRE", wcfg.getBoolean("logFire"));
-				wcfg.set("logging.LEAVESDECAY", wcfg.getBoolean("logLeavesDecay"));
-				wcfg.set("logging.LAVAFLOW", wcfg.getBoolean("logLavaFlow"));
-				wcfg.set("logging.WATERFLOW", wcfg.getBoolean("logWaterFlow"));
-				wcfg.set("logging.CHESTACCESS", wcfg.getBoolean("logChestAccess"));
-				wcfg.set("logging.SWITCHINTERACT", wcfg.getBoolean("logButtonsAndLevers"));
-				wcfg.set("logging.KILL", wcfg.getBoolean("logKills"));
-				wcfg.set("logging.CHAT", wcfg.getBoolean("logChat"));
-				wcfg.set("logging.SNOWFORM", wcfg.getBoolean("logSnowForm"));
-				wcfg.set("logging.SNOWFADE", wcfg.getBoolean("logSnowFade"));
-				wcfg.set("logging.DOORINTERACT", wcfg.getBoolean("logDoors"));
-				wcfg.set("logging.CAKEEAT", wcfg.getBoolean("logCakes"));
-				wcfg.set("logging.ENDERMEN", wcfg.getBoolean("logEndermen"));
-				wcfg.set("logging.TNTEXPLOSION", wcfg.getBoolean("logExplosions"));
-				wcfg.set("logging.MISCEXPLOSION", wcfg.getBoolean("logExplosions"));
-				wcfg.set("logging.CREEPEREXPLOSION", wcfg.getBoolean("logExplosions"));
-				wcfg.set("logging.GHASTFIREBALLEXPLOSION", wcfg.getBoolean("logExplosions"));
+				if (wcfg.contains("logBlockCreations"))
+					wcfg.set("logging.BLOCKPLACE", wcfg.getBoolean("logBlockCreations"));
+				if (wcfg.contains("logBlockDestroyings"))
+					wcfg.set("logging.BLOCKBREAK", wcfg.getBoolean("logBlockDestroyings"));
+				if (wcfg.contains("logSignTexts"))
+					wcfg.set("logging.SIGNTEXT", wcfg.getBoolean("logSignTexts"));
+				if (wcfg.contains("logFire"))
+					wcfg.set("logging.FIRE", wcfg.getBoolean("logFire"));
+				if (wcfg.contains("logLeavesDecay"))
+					wcfg.set("logging.LEAVESDECAY", wcfg.getBoolean("logLeavesDecay"));
+				if (wcfg.contains("logLavaFlow"))
+					wcfg.set("logging.LAVAFLOW", wcfg.getBoolean("logLavaFlow"));
+				if (wcfg.contains("logWaterFlow"))
+					wcfg.set("logging.WATERFLOW", wcfg.getBoolean("logWaterFlow"));
+				if (wcfg.contains("logChestAccess"))
+					wcfg.set("logging.CHESTACCESS", wcfg.getBoolean("logChestAccess"));
+				if (wcfg.contains("logButtonsAndLevers"))
+					wcfg.set("logging.SWITCHINTERACT", wcfg.getBoolean("logButtonsAndLevers"));
+				if (wcfg.contains("logKills"))
+					wcfg.set("logging.KILL", wcfg.getBoolean("logKills"));
+				if (wcfg.contains("logChat"))
+					wcfg.set("logging.CHAT", wcfg.getBoolean("logChat"));
+				if (wcfg.contains("logSnowForm"))
+					wcfg.set("logging.SNOWFORM", wcfg.getBoolean("logSnowForm"));
+				if (wcfg.contains("logSnowFade"))
+					wcfg.set("logging.SNOWFADE", wcfg.getBoolean("logSnowFade"));
+				if (wcfg.contains("logDoors"))
+					wcfg.set("logging.DOORINTERACT", wcfg.getBoolean("logDoors"));
+				if (wcfg.contains("logCakes"))
+					wcfg.set("logging.CAKEEAT", wcfg.getBoolean("logCakes"));
+				if (wcfg.contains("logEndermen"))
+					wcfg.set("logging.ENDERMEN", wcfg.getBoolean("logEndermen"));
+				if (wcfg.contains("logExplosions")) {
+					final boolean logExplosions = wcfg.getBoolean("logExplosions");
+					wcfg.set("logging.TNTEXPLOSION", logExplosions);
+					wcfg.set("logging.MISCEXPLOSION", logExplosions);
+					wcfg.set("logging.CREEPEREXPLOSION", logExplosions);
+					wcfg.set("logging.GHASTFIREBALLEXPLOSION", logExplosions);
+				}
 				wcfg.set("logBlockCreations", null);
 				wcfg.set("logBlockDestroyings", null);
 				wcfg.set("logSignTexts", null);
@@ -137,8 +156,8 @@ class Updater
 			config.set("clearlog.keepLogDays", null);
 			config.set("version", "1.42");
 		}
-		if (config.getString("version").compareTo("1.51" /* FIXME: Needs correct version number */) < 0) {
-			getLogger().info("[LogBlock] Updating tables to 1.51 ...");// FIXME: Needs correct version number
+		if (config.getString("version").compareTo("1.51") < 0) {
+			getLogger().info("[LogBlock] Updating tables to 1.51 ...");
 			final Connection conn = logblock.getConnection();
 			try {
 				conn.setAutoCommit(true);
