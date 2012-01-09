@@ -31,6 +31,7 @@ public class Config extends LoggingEnabledMapping
 	public final boolean useBukkitScheduler;
 	public final boolean enableAutoClearLog;
 	public final List<String> autoClearLog;
+	public final int autoClearLogDelay;
 	public final boolean dumpDeletedLog;
 	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese, logPlayerInfo;
 	public final LogKillsLevel logKillsLevel;
@@ -74,6 +75,7 @@ public class Config extends LoggingEnabledMapping
 		def.put("clearlog.dumpDeletedLog", false);
 		def.put("clearlog.enableAutoClearLog", false);
 		def.put("clearlog.auto", Arrays.asList("world \"world\" before 365 days all", "world \"world\" player lavaflow waterflow leavesdecay before 7 days all", "world world_nether before 365 days all", "world world_nether player lavaflow before 7 days all"));
+		def.put("clearlog.clearlog.autoClearLogDelay", "1h");
 		def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		def.put("logging.logKillsLevel", "PLAYERS");
 		def.put("logging.logPlayerInfo", true);
@@ -127,6 +129,7 @@ public class Config extends LoggingEnabledMapping
 		enableAutoClearLog = config.getBoolean("clearlog.enableAutoClearLog");
 		autoClearLog = config.getStringList("clearlog.auto");
 		dumpDeletedLog = config.getBoolean("clearlog.dumpDeletedLog", false);
+		autoClearLogDelay = parseTimeSpec(config.getString("clearlog.autoClearLogDelay").split(" "));
 		logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		logPlayerInfo = config.getBoolean("logging.logPlayerInfo", true);
 		try {
