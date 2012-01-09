@@ -114,7 +114,7 @@ public class LogBlock extends JavaPlugin
 		} else
 			getLogger().info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
 		if (config.enableAutoClearLog && config.autoClearLogDelay > 0)
-			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), config.autoClearLogDelay * 20, config.autoClearLogDelay * 20);
+			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), 6000, config.autoClearLogDelay * 20);
 		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
 		final Listener lbBlockListener = new LBBlockListener(this);
 		final Listener lbPlayerListener = new LBPlayerListener(this);

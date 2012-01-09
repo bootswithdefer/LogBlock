@@ -75,7 +75,7 @@ public class Config extends LoggingEnabledMapping
 		def.put("clearlog.dumpDeletedLog", false);
 		def.put("clearlog.enableAutoClearLog", false);
 		def.put("clearlog.auto", Arrays.asList("world \"world\" before 365 days all", "world \"world\" player lavaflow waterflow leavesdecay before 7 days all", "world world_nether before 365 days all", "world world_nether player lavaflow before 7 days all"));
-		def.put("clearlog.clearlog.autoClearLogDelay", "1h");
+		def.put("clearlog.clearlog.autoClearLogDelay", "6h");
 		def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		def.put("logging.logKillsLevel", "PLAYERS");
 		def.put("logging.logPlayerInfo", true);
