@@ -25,7 +25,7 @@ import com.sk89q.worldedit.bukkit.selections.Selection;
 
 public class QueryParams implements Cloneable
 {
-	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode(), "chat".hashCode(), "search".hashCode(), "match".hashCode()));
+	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode(), "chat".hashCode(), "search".hashCode(), "match".hashCode(), "loc".hashCode(), "location".hashCode()));
 	public BlockChangeType bct = BlockChangeType.BOTH;
 	public int limit = -1, before = 0, since = 0, radius = -1;
 	public Location loc = null;
@@ -396,6 +396,15 @@ public class QueryParams implements Cloneable
 				if (values.length == 0)
 					throw new IllegalArgumentException("No arguments for '" + param + "'");
 				match = join(values, " ").replace("\\", "\\\\").replace("'", "\\'");
+			} else if (param.equals("loc") || param.equals("location")) {
+				final String[] vectors = values.length == 1 ? values[0].split(":") : values;
+				if (vectors.length != 3)
+					throw new IllegalArgumentException("Wrong count arguments for '" + param + "'");
+				for (final String vec : vectors)
+					if (!isInt(vec))
+						throw new IllegalArgumentException("Not a number: '" + vec + "'");
+				loc = new Location(null, Integer.valueOf(vectors[0]), Integer.valueOf(vectors[1]), Integer.valueOf(vectors[2]));
+				radius = 0;
 			} else
 				throw new IllegalArgumentException("Not a valid argument: '" + param + "'");
 			i += values.length;
