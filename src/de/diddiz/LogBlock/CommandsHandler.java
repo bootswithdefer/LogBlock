@@ -393,7 +393,7 @@ public class CommandsHandler implements CommandExecutor
 					params.needPlayer = true;
 					if (params.types.size() == 0 || params.types.contains(63) || params.types.contains(68))
 						params.needSignText = true;
-					if (params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
+					if (params.bct == BlockChangeType.CHESTACCESS || params.types.size() == 0 || params.types.contains(23) || params.types.contains(54) || params.types.contains(61) || params.types.contains(62))
 						params.needChestAccess = true;
 				}
 				conn = logblock.getConnection();
