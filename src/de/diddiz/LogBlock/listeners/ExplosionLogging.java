@@ -10,6 +10,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
@@ -21,6 +23,7 @@ public class ExplosionLogging extends LoggingListener
 		super(lb);
 	}
 
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onEntityExplode(EntityExplodeEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getLocation().getWorld());
 		if (!event.isCancelled() && wcfg != null) {
