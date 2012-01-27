@@ -1,44 +1,48 @@
-package de.diddiz.LogBlock;
+package de.diddiz.LogBlock.listeners;
 
 import static de.diddiz.LogBlock.Session.getSession;
 import static de.diddiz.LogBlock.Session.hasSession;
-import java.util.Map;
+import static de.diddiz.LogBlock.config.Config.isLogged;
+import static de.diddiz.LogBlock.config.Config.toolsByType;
 import java.util.Map.Entry;
 import org.bukkit.ChatColor;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerListener;
 import org.bukkit.inventory.ItemStack;
 import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
+import de.diddiz.LogBlock.CommandsHandler;
+import de.diddiz.LogBlock.LogBlock;
+import de.diddiz.LogBlock.QueryParams;
+import de.diddiz.LogBlock.Session;
+import de.diddiz.LogBlock.Tool;
+import de.diddiz.LogBlock.ToolBehavior;
+import de.diddiz.LogBlock.ToolData;
+import de.diddiz.LogBlock.ToolMode;
 
-class LBToolListener extends PlayerListener
+public class ToolListener implements Listener
 {
 	private final CommandsHandler handler;
 	private final LogBlock logblock;
-	private final Map<Integer, Tool> toolsByType;
-	private final Map<Integer, WorldConfig> worlds;
 
-	LBToolListener(LogBlock logblock) {
+	public ToolListener(LogBlock logblock) {
 		this.logblock = logblock;
 		handler = logblock.getCommandsHandler();
-		worlds = logblock.getLBConfig().worlds;
-		toolsByType = logblock.getLBConfig().toolsByType;
 	}
 
-	@Override
+	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		if (!event.isCancelled() && event.getMaterial() != null) {
 			final Action action = event.getAction();
 			final int type = event.getMaterial().getId();
 			final Tool tool = toolsByType.get(type);
 			final Player player = event.getPlayer();
-			if (tool != null && (action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_BLOCK) && worlds.containsKey(player.getWorld().getName().hashCode()) && logblock.hasPermission(player, "logblock.tools." + tool.name)) {
+			if (tool != null && (action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_BLOCK) && isLogged(player.getWorld()) && logblock.hasPermission(player, "logblock.tools." + tool.name)) {
 				final ToolBehavior behavior = action == Action.RIGHT_CLICK_BLOCK ? tool.rightClickBehavior : tool.leftClickBehavior;
 				final ToolData toolData = getSession(player).toolData.get(tool);
 				if (behavior != ToolBehavior.NONE && toolData.enabled) {
@@ -77,30 +81,7 @@ class LBToolListener extends PlayerListener
 		}
 	}
 
-	@Override
-	public void onPlayerCommandPreprocess(final PlayerCommandPreprocessEvent event) {
-		final String[] split = event.getMessage().split(" ");
-		if (split.length > 1 && split[0].equalsIgnoreCase("/ban") && logblock.hasPermission(event.getPlayer(), logblock.getLBConfig().banPermission)) {
-			final QueryParams p = new QueryParams(logblock);
-			p.setPlayer(split[1].equalsIgnoreCase("g") ? split[2] : split[1]);
-			p.since = 0;
-			p.silent = false;
-			logblock.getServer().getScheduler().scheduleAsyncDelayedTask(logblock, new Runnable() {
-				@Override
-				public void run() {
-					for (final World world : logblock.getServer().getWorlds())
-						if (worlds.get(world.getName().hashCode()) != null) {
-							p.world = world;
-							try {
-								handler.new CommandRollback(event.getPlayer(), p, false);
-							} catch (final Exception ex) {}
-						}
-				}
-			});
-		}
-	}
-
-	@Override
+	@EventHandler
 	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
 		final Player player = event.getPlayer();
 		if (hasSession(player)) {

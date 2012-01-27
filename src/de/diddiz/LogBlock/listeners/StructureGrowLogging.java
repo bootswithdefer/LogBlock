@@ -1,23 +1,23 @@
-package de.diddiz.LogBlock;
+package de.diddiz.LogBlock.listeners;
 
-import java.util.Map;
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import org.bukkit.block.BlockState;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.world.StructureGrowEvent;
-import org.bukkit.event.world.WorldListener;
+import de.diddiz.LogBlock.LogBlock;
+import de.diddiz.LogBlock.Logging;
+import de.diddiz.LogBlock.config.WorldConfig;
 
-public class LBWorldListener extends WorldListener
+public class StructureGrowLogging extends LoggingListener
 {
-	private final Consumer consumer;
-	private final Map<Integer, WorldConfig> worlds;
-
-	LBWorldListener(LogBlock logblock) {
-		consumer = logblock.getConsumer();
-		worlds = logblock.getLBConfig().worlds;
+	public StructureGrowLogging(LogBlock lb) {
+		super(lb);
 	}
 
-	@Override
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onStructureGrow(StructureGrowEvent event) {
-		final WorldConfig wcfg = worlds.get(event.getWorld().getName().hashCode());
+		final WorldConfig wcfg = getWorldConfig(event.getWorld());
 		if (!event.isCancelled() && wcfg != null) {
 			final String playerName;
 			if (event.getPlayer() != null) {

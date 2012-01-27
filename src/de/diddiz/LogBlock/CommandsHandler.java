@@ -1,6 +1,20 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.LogBlock.Session.getSession;
+import static de.diddiz.LogBlock.config.Config.askClearLogAfterRollback;
+import static de.diddiz.LogBlock.config.Config.askClearLogs;
+import static de.diddiz.LogBlock.config.Config.askRedos;
+import static de.diddiz.LogBlock.config.Config.askRollbacks;
+import static de.diddiz.LogBlock.config.Config.checkVersion;
+import static de.diddiz.LogBlock.config.Config.defaultTime;
+import static de.diddiz.LogBlock.config.Config.dumpDeletedLog;
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+import static de.diddiz.LogBlock.config.Config.linesLimit;
+import static de.diddiz.LogBlock.config.Config.linesPerPage;
+import static de.diddiz.LogBlock.config.Config.rollbackMaxArea;
+import static de.diddiz.LogBlock.config.Config.rollbackMaxTime;
+import static de.diddiz.LogBlock.config.Config.toolsByName;
+import static de.diddiz.LogBlock.config.Config.toolsByType;
 import static de.diddiz.util.BukkitUtils.giveTool;
 import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
 import static de.diddiz.util.Utils.isInt;
@@ -31,18 +45,17 @@ import org.bukkit.scheduler.BukkitScheduler;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
+import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
 
 public class CommandsHandler implements CommandExecutor
 {
 	private final LogBlock logblock;
-	private final Config config;
 	private final BukkitScheduler scheduler;
 	private final LogBlockQuestioner questioner;
 
 	CommandsHandler(LogBlock logblock) {
 		this.logblock = logblock;
-		config = logblock.getLBConfig();
 		scheduler = logblock.getServer().getScheduler();
 		questioner = (LogBlockQuestioner)logblock.getServer().getPluginManager().getPlugin("LogBlockQuestioner");
 	}
@@ -52,7 +65,7 @@ public class CommandsHandler implements CommandExecutor
 		try {
 			if (args.length == 0) {
 				sender.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + logblock.getDescription().getVersion() + " by DiddiZ");
-				if (config.checkVersion)
+				if (checkVersion)
 					sender.sendMessage(ChatColor.LIGHT_PURPLE + logblock.getUpdater().checkVersion());
 				sender.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
 			} else {
@@ -102,7 +115,7 @@ public class CommandsHandler implements CommandExecutor
 					for (final String permission : new String[]{"me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions", "spawnTools"})
 						if (logblock.hasPermission(sender, "logblock." + permission))
 							sender.sendMessage(ChatColor.GOLD + "logblock." + permission);
-					for (final Tool tool : config.toolsByType.values())
+					for (final Tool tool : toolsByType.values())
 						if (logblock.hasPermission(sender, "logblock.tools." + tool.name))
 							sender.sendMessage(ChatColor.GOLD + "logblock.tools." + tool.name);
 				} else if (command.equals("logging")) {
@@ -113,7 +126,7 @@ public class CommandsHandler implements CommandExecutor
 						else if (sender instanceof Player)
 							world = ((Player)sender).getWorld();
 						if (world != null) {
-							final WorldConfig wcfg = config.worlds.get(world.getName().hashCode());
+							final WorldConfig wcfg = getWorldConfig(world.getName());
 							if (wcfg != null) {
 								sender.sendMessage(ChatColor.DARK_AQUA + "Currently logging in " + world.getName() + ":");
 								final List<String> logging = new ArrayList<String>();
@@ -129,8 +142,8 @@ public class CommandsHandler implements CommandExecutor
 							sender.sendMessage(ChatColor.RED + "No world specified");
 					} else
 						sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
-				} else if (config.toolsByName.get(command) != null) {
-					final Tool tool = config.toolsByName.get(command);
+				} else if (toolsByName.get(command) != null) {
+					final Tool tool = toolsByName.get(command);
 					if (logblock.hasPermission(sender, "logblock.tools." + tool.name)) {
 						if (sender instanceof Player) {
 							final Player player = (Player)sender;
@@ -187,7 +200,7 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("hide")) {
 					if (sender instanceof Player) {
 						if (logblock.hasPermission(sender, "logblock.hide")) {
-							if (logblock.getConsumer().hide((Player)sender))
+							if (Consumer.hide((Player)sender))
 								sender.sendMessage(ChatColor.GREEN + "You are now hidden and aren't logged. Type '/lb hide' again to unhide");
 							else
 								sender.sendMessage(ChatColor.GREEN + "You aren't hidden anylonger.");
@@ -217,7 +230,7 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("rollback") || command.equals("undo") || command.equals("rb")) {
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
-						params.since = config.defaultTime;
+						params.since = defaultTime;
 						params.bct = BlockChangeType.ALL;
 						params.parseArgs(sender, argsToList(args, 1));
 						new CommandRollback(sender, params, true);
@@ -226,7 +239,7 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("redo")) {
 					if (logblock.hasPermission(sender, "logblock.rollback")) {
 						final QueryParams params = new QueryParams(logblock);
-						params.since = config.defaultTime;
+						params.since = defaultTime;
 						params.bct = BlockChangeType.ALL;
 						params.parseArgs(sender, argsToList(args, 1));
 						new CommandRedo(sender, params, true);
@@ -308,13 +321,13 @@ public class CommandsHandler implements CommandExecutor
 		return true;
 	}
 
-	private void showPage(CommandSender sender, int page) {
+	private static void showPage(CommandSender sender, int page) {
 		final Session session = getSession(sender);
 		if (session.lookupCache != null && session.lookupCache.length > 0) {
-			final int startpos = (page - 1) * config.linesPerPage;
+			final int startpos = (page - 1) * linesPerPage;
 			if (page > 0 && startpos <= session.lookupCache.length - 1) {
-				final int stoppos = startpos + config.linesPerPage >= session.lookupCache.length ? session.lookupCache.length - 1 : startpos + config.linesPerPage - 1;
-				final int numberOfPages = (int)Math.ceil(session.lookupCache.length / (double)config.linesPerPage);
+				final int stoppos = startpos + linesPerPage >= session.lookupCache.length ? session.lookupCache.length - 1 : startpos + linesPerPage - 1;
+				final int numberOfPages = (int)Math.ceil(session.lookupCache.length / (double)linesPerPage);
 				if (numberOfPages != 1)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Page " + page + "/" + numberOfPages);
 				for (int i = startpos; i <= stoppos; i++)
@@ -329,12 +342,12 @@ public class CommandsHandler implements CommandExecutor
 	private boolean checkRestrictions(CommandSender sender, QueryParams params) {
 		if (sender.isOp() || logblock.hasPermission(sender, "logblock.ignoreRestrictions"))
 			return true;
-		if (config.rollbackMaxTime > 0 && (params.before > 0 || params.since > config.rollbackMaxTime)) {
-			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback more than " + config.rollbackMaxTime + " minutes");
+		if (rollbackMaxTime > 0 && (params.before > 0 || params.since > rollbackMaxTime)) {
+			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback more than " + rollbackMaxTime + " minutes");
 			return false;
 		}
-		if (config.rollbackMaxArea > 0 && (params.sel == null && params.loc == null || params.radius > config.rollbackMaxArea || params.sel != null && (params.sel.getLength() > config.rollbackMaxArea || params.sel.getWidth() > config.rollbackMaxArea))) {
-			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback an area larger than " + config.rollbackMaxArea + " blocks");
+		if (rollbackMaxArea > 0 && (params.sel == null && params.loc == null || params.radius > rollbackMaxArea || params.sel != null && (params.sel.getLength() > rollbackMaxArea || params.sel.getWidth() > rollbackMaxArea))) {
+			sender.sendMessage(ChatColor.RED + "You are not allowed to rollback an area larger than " + rollbackMaxArea + " blocks");
 			return false;
 		}
 		return true;
@@ -411,8 +424,8 @@ public class CommandsHandler implements CommandExecutor
 					while (rs.next())
 						blockchanges.add(factory.getLookupCacheElement(rs));
 					getSession(sender).lookupCache = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
-					if (blockchanges.size() > config.linesPerPage)
-						sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == config.linesLimit ? " Use 'limit -1' to see all changes." : ""));
+					if (blockchanges.size() > linesPerPage)
+						sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == linesLimit ? " Use 'limit -1' to see all changes." : ""));
 					if (params.sum != SummarizationMode.NONE)
 						sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player"));
 					showPage(sender, 1);
@@ -431,7 +444,7 @@ public class CommandsHandler implements CommandExecutor
 
 	public class CommandWriteLogFile extends AbstractCommand
 	{
-		CommandWriteLogFile(CommandSender sender, QueryParams params, boolean async) throws Exception {
+		public CommandWriteLogFile(CommandSender sender, QueryParams params, boolean async) throws Exception {
 			super(sender, params, async);
 		}
 
@@ -590,14 +603,14 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
-				if (!params.silent && config.askRollbacks && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+				if (!params.silent && askRollbacks && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Rollback aborted");
 					return;
 				}
 				editor.start();
 				getSession(sender).lookupCache = editor.errors;
 				sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
-				if (!params.silent && config.askClearLogAfterRollback && logblock.hasPermission(sender, "logblock.clearlog") && questioner != null && sender instanceof Player) {
+				if (!params.silent && askClearLogAfterRollback && logblock.hasPermission(sender, "logblock.clearlog") && questioner != null && sender instanceof Player) {
 					Thread.sleep(1000);
 					if (questioner.ask((Player)sender, "Do you want to delete the rollbacked log?", "yes", "no").equals("yes")) {
 						params.silent = true;
@@ -652,7 +665,7 @@ public class CommandsHandler implements CommandExecutor
 						sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
-				if (!params.silent && config.askRedos && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+				if (!params.silent && askRedos && questioner != null && sender instanceof Player && !questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
 					sender.sendMessage(ChatColor.RED + "Redo aborted");
 					return;
 				}
@@ -694,7 +707,7 @@ public class CommandsHandler implements CommandExecutor
 				rs = state.executeQuery("SELECT count(*) FROM `" + table + "` " + join + params.getWhere());
 				rs.next();
 				if ((deleted = rs.getInt(1)) > 0) {
-					if (!params.silent && config.askClearLogs && sender instanceof Player && questioner != null) {
+					if (!params.silent && askClearLogs && sender instanceof Player && questioner != null) {
 						sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 						sender.sendMessage(ChatColor.GREEN.toString() + deleted + " blocks found.");
 						if (!questioner.ask((Player)sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
@@ -702,7 +715,7 @@ public class CommandsHandler implements CommandExecutor
 							return;
 						}
 					}
-					if (config.dumpDeletedLog)
+					if (dumpDeletedLog)
 						try {
 							state.execute("SELECT * FROM `" + table + "` " + join + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, time + " " + table + " " + params.getTitle().replace(":", ".") + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 						} catch (final SQLException ex) {
@@ -716,7 +729,7 @@ public class CommandsHandler implements CommandExecutor
 				rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL");
 				rs.next();
 				if ((deleted = rs.getInt(1)) > 0) {
-					if (config.dumpDeletedLog)
+					if (dumpDeletedLog)
 						state.execute("SELECT id, signtext FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, time + " " + table + "-sign " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 					state.execute("DELETE `" + table + "-sign` FROM `" + table + "-sign` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
 					sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-sign. Deleted " + deleted + " entries.");
@@ -724,7 +737,7 @@ public class CommandsHandler implements CommandExecutor
 				rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL");
 				rs.next();
 				if ((deleted = rs.getInt(1)) > 0) {
-					if (config.dumpDeletedLog)
+					if (dumpDeletedLog)
 						state.execute("SELECT id, itemtype, itemamount, itemdata FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, time + " " + table + "-chest " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
 					state.execute("DELETE `" + table + "-chest` FROM `" + table + "-chest` LEFT JOIN `" + table + "` USING (id) WHERE `" + table + "`.id IS NULL;");
 					sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-chest. Deleted " + deleted + " entries.");

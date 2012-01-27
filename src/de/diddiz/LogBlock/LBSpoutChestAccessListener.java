@@ -9,19 +9,17 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.getspout.spoutapi.event.inventory.InventoryCloseEvent;
-import org.getspout.spoutapi.event.inventory.InventoryListener;
 import org.getspout.spoutapi.event.inventory.InventoryOpenEvent;
+import de.diddiz.LogBlock.listeners.LoggingListener;
 
-class LBSpoutChestAccessListener extends InventoryListener
+class LBSpoutChestAccessListener extends LoggingListener
 {
-	private final Consumer consumer;
 	private final Map<Player, ItemStack[]> containers = new HashMap<Player, ItemStack[]>();
 
-	LBSpoutChestAccessListener(LogBlock logblock) {
-		consumer = logblock.getConsumer();
+	private LBSpoutChestAccessListener(LogBlock lb) {
+		super(lb);
 	}
 
-	@Override
 	public void onInventoryClose(InventoryCloseEvent event) {
 		if (!event.isCancelled() && event.getLocation() != null) {
 			final Player player = event.getPlayer();
@@ -37,7 +35,6 @@ class LBSpoutChestAccessListener extends InventoryListener
 		}
 	}
 
-	@Override
 	public void onInventoryOpen(InventoryOpenEvent event) {
 		if (!event.isCancelled() && event.getLocation() != null && event.getLocation().getBlock().getTypeId() != 58)
 			containers.put(event.getPlayer(), compressInventory(event.getInventory().getContents()));

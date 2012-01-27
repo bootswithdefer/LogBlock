@@ -1,7 +1,19 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.config.Config.askRollbackAfterBan;
+import static de.diddiz.LogBlock.config.Config.autoClearLogDelay;
+import static de.diddiz.LogBlock.config.Config.checkVersion;
+import static de.diddiz.LogBlock.config.Config.delayBetweenRuns;
+import static de.diddiz.LogBlock.config.Config.enableAutoClearLog;
+import static de.diddiz.LogBlock.config.Config.isLogging;
+import static de.diddiz.LogBlock.config.Config.load;
+import static de.diddiz.LogBlock.config.Config.logPlayerInfo;
+import static de.diddiz.LogBlock.config.Config.password;
+import static de.diddiz.LogBlock.config.Config.toolsByType;
+import static de.diddiz.LogBlock.config.Config.url;
+import static de.diddiz.LogBlock.config.Config.useBukkitScheduler;
+import static de.diddiz.LogBlock.config.Config.user;
 import static de.diddiz.util.Utils.download;
-import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URL;
@@ -17,20 +29,35 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.event.Event.Type;
-import org.bukkit.event.Listener;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
+import de.diddiz.LogBlock.config.Config;
+import de.diddiz.LogBlock.listeners.BanListener;
+import de.diddiz.LogBlock.listeners.BlockBreakLogging;
+import de.diddiz.LogBlock.listeners.BlockBurnLogging;
+import de.diddiz.LogBlock.listeners.BlockPlaceLogging;
+import de.diddiz.LogBlock.listeners.ChatLogging;
+import de.diddiz.LogBlock.listeners.ChestAccessLogging;
+import de.diddiz.LogBlock.listeners.EndermenLogging;
+import de.diddiz.LogBlock.listeners.ExplosionLogging;
+import de.diddiz.LogBlock.listeners.FluidFlowLogging;
+import de.diddiz.LogBlock.listeners.InteractLogging;
+import de.diddiz.LogBlock.listeners.KillLogging;
+import de.diddiz.LogBlock.listeners.LeavesDecayLogging;
+import de.diddiz.LogBlock.listeners.PlayerInfoLogging;
+import de.diddiz.LogBlock.listeners.SignChangeLogging;
+import de.diddiz.LogBlock.listeners.SnowFadeLogging;
+import de.diddiz.LogBlock.listeners.SnowFormLogging;
+import de.diddiz.LogBlock.listeners.StructureGrowLogging;
+import de.diddiz.LogBlock.listeners.ToolListener;
 import de.diddiz.util.MySQLConnectionPool;
 
 public class LogBlock extends JavaPlugin
 {
 	private static LogBlock logblock = null;
-	private Config config;
 	private MySQLConnectionPool pool;
 	private Consumer consumer = null;
 	private CommandsHandler commandsHandler;
@@ -41,10 +68,6 @@ public class LogBlock extends JavaPlugin
 
 	public static LogBlock getInstance() {
 		return logblock;
-	}
-
-	public Config getLBConfig() {
-		return config;
 	}
 
 	public Consumer getConsumer() {
@@ -64,11 +87,11 @@ public class LogBlock extends JavaPlugin
 		logblock = this;
 		try {
 			updater = new Updater(this);
-			config = new Config(this);
-			if (config.checkVersion)
+			Config.load(this);
+			if (checkVersion)
 				getLogger().info("[LogBlock] Version check: " + updater.checkVersion());
-			getLogger().info("[LogBlock] Connecting to " + config.user + "@" + config.url + "...");
-			pool = new MySQLConnectionPool(config.url, config.user, config.password);
+			getLogger().info("[LogBlock] Connecting to " + user + "@" + url + "...");
+			pool = new MySQLConnectionPool(url, user, password);
 			final Connection conn = getConnection();
 			if (conn == null) {
 				noDb = true;
@@ -76,7 +99,7 @@ public class LogBlock extends JavaPlugin
 			}
 			conn.close();
 			if (updater.update())
-				config = new Config(this);
+				load(this);
 			updater.checkTables();
 		} catch (final NullPointerException ex) {
 			getLogger().log(Level.SEVERE, "[LogBlock] Error while loading: ", ex);
@@ -113,84 +136,64 @@ public class LogBlock extends JavaPlugin
 			getLogger().info("[LogBlock] Permissions plugin found.");
 		} else
 			getLogger().info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
-		if (config.enableAutoClearLog && config.autoClearLogDelay > 0)
-			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), 6000, config.autoClearLogDelay * 60 * 20);
+		if (enableAutoClearLog && autoClearLogDelay > 0)
+			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
 		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
-		final Listener lbBlockListener = new LBBlockListener(this);
-		final Listener lbPlayerListener = new LBPlayerListener(this);
-		final Listener lbEntityListener = new LBEntityListener(this);
-		final Listener lbToolListener = new LBToolListener(this);
-		pm.registerEvent(Type.PLAYER_INTERACT, lbToolListener, Priority.Normal, this);
-		pm.registerEvent(Type.PLAYER_CHANGED_WORLD, lbToolListener, Priority.Normal, this);
-		if (config.askRollbackAfterBan)
-			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbToolListener, Priority.Normal, this);
-		if (config.isLogging(Logging.BLOCKPLACE)) {
-			pm.registerEvent(Type.BLOCK_PLACE, lbBlockListener, Priority.Monitor, this);
-			pm.registerEvent(Type.PLAYER_BUCKET_EMPTY, lbPlayerListener, Priority.Monitor, this);
-		}
-		if (config.isLogging(Logging.BLOCKBREAK)) {
-			pm.registerEvent(Type.BLOCK_BREAK, lbBlockListener, Priority.Monitor, this);
-			pm.registerEvent(Type.PLAYER_BUCKET_FILL, lbPlayerListener, Priority.Monitor, this);
-			pm.registerEvent(Type.BLOCK_FROMTO, lbBlockListener, Priority.Monitor, this);
-		}
-		if (config.isLogging(Logging.SIGNTEXT))
-			pm.registerEvent(Type.SIGN_CHANGE, lbBlockListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.FIRE))
-			pm.registerEvent(Type.BLOCK_BURN, lbBlockListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.SNOWFORM))
-			pm.registerEvent(Type.BLOCK_FORM, lbBlockListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.SNOWFADE))
-			pm.registerEvent(Type.BLOCK_FADE, lbBlockListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.CREEPEREXPLOSION) || config.isLogging(Logging.TNTEXPLOSION) || config.isLogging(Logging.GHASTFIREBALLEXPLOSION) || config.isLogging(Logging.ENDERDRAGON) || config.isLogging(Logging.MISCEXPLOSION))
-			pm.registerEvent(Type.ENTITY_EXPLODE, lbEntityListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.LEAVESDECAY))
-			pm.registerEvent(Type.LEAVES_DECAY, lbBlockListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.CHESTACCESS))
-			if (pm.isPluginEnabled("Spout")) {
-				pm.registerEvent(Type.CUSTOM_EVENT, new LBSpoutChestAccessListener(this), Priority.Monitor, this);
-				getLogger().info("[LogBlock] Using Spout as chest access API");
-			} else {
-				final Listener chestAccessListener = new LBChestAccessListener(this);
-				pm.registerEvent(Type.PLAYER_INTERACT, chestAccessListener, Priority.Monitor, this);
-				pm.registerEvent(Type.PLAYER_CHAT, chestAccessListener, Priority.Monitor, this);
-				pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, chestAccessListener, Priority.Monitor, this);
-				pm.registerEvent(Type.PLAYER_TELEPORT, chestAccessListener, Priority.Monitor, this);
-				pm.registerEvent(Type.PLAYER_QUIT, chestAccessListener, Priority.Monitor, this);
-				getLogger().info("[LogBlock] Using own chest access API");
-			}
-		if (config.isLogging(Logging.SWITCHINTERACT) || config.isLogging(Logging.DOORINTERACT) || config.isLogging(Logging.CAKEEAT))
-			pm.registerEvent(Type.PLAYER_INTERACT, lbPlayerListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.KILL))
-			pm.registerEvent(Type.ENTITY_DAMAGE, lbEntityListener, Priority.Monitor, this);
-		if (config.isLogging(Logging.CHAT)) {
-			pm.registerEvent(Type.PLAYER_CHAT, lbPlayerListener, Priority.Monitor, this);
-			pm.registerEvent(Type.PLAYER_COMMAND_PREPROCESS, lbPlayerListener, Priority.Monitor, this);
-			pm.registerEvent(Type.SERVER_COMMAND, new LBServerListener(this), Priority.Monitor, this);
-		}
-		if (config.isLogging(Logging.ENDERMEN)) {
-			pm.registerEvent(Type.ENDERMAN_PICKUP, lbEntityListener, Priority.Monitor, this);
-			pm.registerEvent(Type.ENDERMAN_PLACE, lbEntityListener, Priority.Monitor, this);
-		}
-		if (config.isLogging(Logging.NATURALSTRUCTUREGROW) || config.isLogging(Logging.BONEMEALSTRUCTUREGROW))
-			pm.registerEvent(Type.STRUCTURE_GROW, new LBWorldListener(this), Priority.Monitor, this);
-		if (config.logPlayerInfo) {
-			pm.registerEvent(Type.PLAYER_JOIN, lbPlayerListener, Priority.Monitor, this);
-			pm.registerEvent(Type.PLAYER_QUIT, lbPlayerListener, Priority.Monitor, this);
-		}
-		if (config.useBukkitScheduler) {
-			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, config.delayBetweenRuns * 20, config.delayBetweenRuns * 20) > 0)
+		pm.registerEvents(new ToolListener(this), this);
+		if (askRollbackAfterBan)
+			pm.registerEvents(new BanListener(this), this);
+		if (isLogging(Logging.BLOCKPLACE))
+			pm.registerEvents(new BlockPlaceLogging(this), this);
+		if (isLogging(Logging.BLOCKPLACE) || isLogging(Logging.LAVAFLOW) || isLogging(Logging.WATERFLOW))
+			pm.registerEvents(new FluidFlowLogging(this), this);
+		if (isLogging(Logging.BLOCKBREAK))
+			pm.registerEvents(new BlockBreakLogging(this), this);
+		if (isLogging(Logging.SIGNTEXT))
+			pm.registerEvents(new SignChangeLogging(this), this);
+		if (isLogging(Logging.FIRE))
+			pm.registerEvents(new BlockBurnLogging(this), this);
+		if (isLogging(Logging.SNOWFORM))
+			pm.registerEvents(new SnowFormLogging(this), this);
+		if (isLogging(Logging.SNOWFADE))
+			pm.registerEvents(new SnowFadeLogging(this), this);
+		if (isLogging(Logging.CREEPEREXPLOSION) || isLogging(Logging.TNTEXPLOSION) || isLogging(Logging.GHASTFIREBALLEXPLOSION) || isLogging(Logging.ENDERDRAGON) || isLogging(Logging.MISCEXPLOSION))
+			pm.registerEvents(new ExplosionLogging(this), this);
+		if (isLogging(Logging.LEAVESDECAY))
+			pm.registerEvents(new LeavesDecayLogging(this), this);
+		if (isLogging(Logging.CHESTACCESS))
+			// if (pm.isPluginEnabled("Spout")) { //TODO
+			// pm.registerEvents(Type.CUSTOM_EVENT, new LBSpoutChestAccessListener(this), Priority.Monitor, this);
+			// getLogger().info("[LogBlock] Using Spout as chest access API");
+			// } else {
+			pm.registerEvents(new ChestAccessLogging(this), this);
+		getLogger().info("[LogBlock] Using own chest access API");
+		// }
+		if (isLogging(Logging.SWITCHINTERACT) || isLogging(Logging.DOORINTERACT) || isLogging(Logging.CAKEEAT) || isLogging(Logging.DIODEINTERACT) || isLogging(Logging.NOTEBLOCKINTERACT))
+			pm.registerEvents(new InteractLogging(this), this);
+		if (isLogging(Logging.KILL))
+			pm.registerEvents(new KillLogging(this), this);
+		if (isLogging(Logging.CHAT))
+			pm.registerEvents(new ChatLogging(this), this);
+		if (isLogging(Logging.ENDERMEN))
+			pm.registerEvents(new EndermenLogging(this), this);
+		if (isLogging(Logging.NATURALSTRUCTUREGROW) || isLogging(Logging.BONEMEALSTRUCTUREGROW))
+			pm.registerEvents(new StructureGrowLogging(this), this);
+		if (logPlayerInfo)
+			pm.registerEvents(new PlayerInfoLogging(this), this);
+		if (useBukkitScheduler) {
+			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, delayBetweenRuns * 20, delayBetweenRuns * 20) > 0)
 				getLogger().info("[LogBlock] Scheduled consumer with bukkit scheduler.");
 			else {
 				getLogger().warning("[LogBlock] Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
 				timer = new Timer();
-				timer.scheduleAtFixedRate(consumer, config.delayBetweenRuns * 1000, config.delayBetweenRuns * 1000);
+				timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
 			}
 		} else {
 			timer = new Timer();
-			timer.scheduleAtFixedRate(consumer, config.delayBetweenRuns * 1000, config.delayBetweenRuns * 1000);
+			timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
 			getLogger().info("[LogBlock] Scheduled consumer with timer.");
 		}
-		for (final Tool tool : config.toolsByType.values())
+		for (final Tool tool : toolsByType.values())
 			if (pm.getPermission("logblock.tools." + tool.name) == null) {
 				final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
 				pm.addPermission(perm);
@@ -205,7 +208,7 @@ public class LogBlock extends JavaPlugin
 			timer.cancel();
 		getServer().getScheduler().cancelTasks(this);
 		if (consumer != null) {
-			if (config.logPlayerInfo && getServer().getOnlinePlayers() != null)
+			if (logPlayerInfo && getServer().getOnlinePlayers() != null)
 				for (final Player player : getServer().getOnlinePlayers())
 					consumer.queueLeave(player);
 			if (consumer.getQueueSize() > 0) {
@@ -242,7 +245,7 @@ public class LogBlock extends JavaPlugin
 		return true;
 	}
 
-	boolean hasPermission(CommandSender sender, String permission) {
+	public boolean hasPermission(CommandSender sender, String permission) {
 		if (permissions != null && sender instanceof Player)
 			return permissions.has((Player)sender, permission);
 		return sender.hasPermission(permission);

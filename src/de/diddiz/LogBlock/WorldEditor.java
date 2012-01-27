@@ -1,5 +1,7 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.config.Config.dontRollback;
+import static de.diddiz.LogBlock.config.Config.replaceAnyway;
 import static de.diddiz.util.BukkitUtils.equalTypes;
 import static de.diddiz.util.BukkitUtils.modifyContainer;
 import static de.diddiz.util.MaterialName.materialName;
@@ -27,7 +29,6 @@ import org.bukkit.material.PistonExtensionMaterial;
 public class WorldEditor implements Runnable
 {
 	private final LogBlock logblock;
-	private final Config config;
 	private final Queue<Edit> edits = new LinkedBlockingQueue<Edit>();
 	private final World world;
 	private int taskID;
@@ -37,7 +38,6 @@ public class WorldEditor implements Runnable
 
 	public WorldEditor(LogBlock logblock, World world) {
 		this.logblock = logblock;
-		config = logblock.getLBConfig();
 		this.world = world;
 	}
 
@@ -126,7 +126,7 @@ public class WorldEditor implements Runnable
 		}
 
 		PerformResult perform() throws WorldEditorException {
-			if (config.dontRollback.contains(replaced))
+			if (dontRollback.contains(replaced))
 				return PerformResult.BLACKLISTED;
 			final Block block = loc.getBlock();
 			if (replaced == 0 && block.getTypeId() == 0)
@@ -157,7 +157,7 @@ public class WorldEditor implements Runnable
 					return PerformResult.NO_ACTION;
 				return PerformResult.SUCCESS;
 			}
-			if (!(equalTypes(block.getTypeId(), type) || config.replaceAnyway.contains(block.getTypeId())))
+			if (!(equalTypes(block.getTypeId(), type) || replaceAnyway.contains(block.getTypeId())))
 				return PerformResult.NO_ACTION;
 			if (state instanceof ContainerBlock) {
 				((ContainerBlock)state).getInventory().clear();

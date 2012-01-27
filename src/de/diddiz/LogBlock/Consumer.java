@@ -1,5 +1,11 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.config.Config.forceToProcessAtLeast;
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+import static de.diddiz.LogBlock.config.Config.hiddenBlocks;
+import static de.diddiz.LogBlock.config.Config.hiddenPlayers;
+import static de.diddiz.LogBlock.config.Config.isLogged;
+import static de.diddiz.LogBlock.config.Config.timePerRun;
 import static de.diddiz.util.BukkitUtils.compressInventory;
 import static de.diddiz.util.BukkitUtils.entityName;
 import static de.diddiz.util.BukkitUtils.rawData;
@@ -34,9 +40,6 @@ import org.bukkit.inventory.ItemStack;
 public class Consumer extends TimerTask
 {
 	private final Queue<Row> queue = new LinkedBlockingQueue<Row>();
-	private final Config config;
-	private final Map<Integer, WorldConfig> worlds;
-	private final Set<Integer> hiddenPlayers, hiddenBlocks;
 	private final Set<String> failedPlayers = new HashSet<String>();
 	private final LogBlock logblock;
 	private final Map<String, Integer> playerIds = new HashMap<String, Integer>();
@@ -44,10 +47,6 @@ public class Consumer extends TimerTask
 
 	Consumer(LogBlock logblock) {
 		this.logblock = logblock;
-		config = logblock.getLBConfig();
-		hiddenPlayers = config.hiddenPlayers;
-		hiddenBlocks = config.hiddenBlocks;
-		worlds = config.worlds;
 	}
 
 	/**
@@ -194,12 +193,7 @@ public class Consumer extends TimerTask
 	 */
 	@Deprecated
 	public void queueKill(World world, String killerName, String victimName, int weapon) {
-		queueKill(
-			new Location(world,0,0,0),
-			killerName,
-			victimName,
-			weapon
-			);
+		queueKill(new Location(world, 0, 0, 0), killerName, victimName, weapon);
 	}
 
 	/**
@@ -213,7 +207,7 @@ public class Consumer extends TimerTask
 	 * Item id of the weapon. 0 for no weapon.
 	 */
 	public void queueKill(Location location, String killerName, String victimName, int weapon) {
-		if (victimName == null || !worlds.containsKey(location.getWorld().getName().hashCode()))
+		if (victimName == null || !isLogged(location.getWorld()))
 			return;
 		queue.add(new KillRow(location, killerName == null ? null : killerName.replaceAll("[^a-zA-Z0-9_]", ""), victimName.replaceAll("[^a-zA-Z0-9_]", ""), weapon));
 	}
@@ -277,7 +271,7 @@ public class Consumer extends TimerTask
 			state = conn.createStatement();
 			final long start = System.currentTimeMillis();
 			int count = 0;
-			process: while (!queue.isEmpty() && (System.currentTimeMillis() - start < config.timePerRun || count < config.forceToProcessAtLeast)) {
+			process: while (!queue.isEmpty() && (System.currentTimeMillis() - start < timePerRun || count < forceToProcessAtLeast)) {
 				final Row r = queue.poll();
 				if (r == null)
 					continue;
@@ -345,13 +339,13 @@ public class Consumer extends TimerTask
 		return queue.size();
 	}
 
-	boolean hide(Player player) {
-		final int hash = player.getName().hashCode();
-		if (hiddenPlayers.contains(hash)) {
-			hiddenPlayers.remove(hash);
+	static boolean hide(Player player) {
+		final String playerName = player.getName();
+		if (hiddenPlayers.contains(playerName)) {
+			hiddenPlayers.remove(playerName);
 			return false;
 		}
-		hiddenPlayers.add(hash);
+		hiddenPlayers.add(playerName);
 		return true;
 	}
 
@@ -365,7 +359,7 @@ public class Consumer extends TimerTask
 	}
 
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
-		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || typeBefore > 255 || typeAfter > 255 || hiddenPlayers.contains(playerName.hashCode()) || !worlds.containsKey(loc.getWorld().getName().hashCode()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
+		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || typeBefore > 255 || typeAfter > 255 || hiddenPlayers.contains(playerName) || !isLogged(loc.getWorld()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
 			return;
 		queue.add(new BlockRow(loc, playerName.replaceAll("[^a-zA-Z0-9_]", ""), typeBefore, typeAfter, data, signtext != null ? signtext.replace("\\", "\\\\").replace("'", "\\'") : null, ca));
 	}
@@ -394,7 +388,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			final String table = worlds.get(loc.getWorld().getName().hashCode()).table;
+			final String table = getWorldConfig(loc.getWorld()).table;
 			final String[] inserts = new String[ca != null || signtext != null ? 2 : 1];
 			inserts[0] = "INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(playerName) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + loc.getBlockY() + ", '" + loc.getBlockZ() + "');";
 			if (signtext != null)
@@ -427,7 +421,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"INSERT INTO `" + worlds.get(loc.getWorld().getName().hashCode()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ");"};
+			return new String[]{"INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ");"};
 		}
 
 		@Override

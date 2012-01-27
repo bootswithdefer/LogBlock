@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.config.Config.toolsByType;
 import static org.bukkit.Bukkit.getServer;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +19,7 @@ public class Session
 		toolData = new HashMap<Tool, ToolData>();
 		final LogBlock logblock = LogBlock.getInstance();
 		if (player != null)
-			for (final Tool tool : logblock.getLBConfig().toolsByType.values())
+			for (final Tool tool : toolsByType.values())
 				toolData.put(tool, new ToolData(tool, logblock, player));
 	}
 
@@ -41,18 +42,5 @@ public class Session
 			sessions.put(playerName.toLowerCase(), session);
 		}
 		return session;
-	}
-}
-
-class ToolData
-{
-	boolean enabled;
-	QueryParams params;
-	ToolMode mode;
-
-	ToolData(Tool tool, LogBlock logblock, Player player) {
-		enabled = tool.defaultEnabled && logblock.hasPermission(player, "logblock.tools." + tool.name);
-		params = tool.params.clone();
-		mode = tool.mode;
 	}
 }

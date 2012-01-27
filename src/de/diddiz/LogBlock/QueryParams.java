@@ -1,6 +1,10 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.LogBlock.Session.getSession;
+import static de.diddiz.LogBlock.config.Config.defaultDist;
+import static de.diddiz.LogBlock.config.Config.defaultTime;
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+import static de.diddiz.LogBlock.config.Config.isLogged;
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
 import static de.diddiz.util.MaterialName.materialName;
@@ -117,7 +121,7 @@ public class QueryParams implements Cloneable
 	}
 
 	public String getTable() {
-		return logblock.getLBConfig().worlds.get(world.getName().hashCode()).table;
+		return getWorldConfig(world).table;
 	}
 
 	public String getTitle() {
@@ -314,7 +318,7 @@ public class QueryParams implements Cloneable
 				if (player == null && !prepareToolQuery)
 					throw new IllegalArgumentException("You have to ba a player to use area");
 				if (values.length == 0) {
-					radius = logblock.getLBConfig().defaultDist;
+					radius = defaultDist;
 					if (!prepareToolQuery)
 						loc = player.getLocation();
 				} else {
@@ -337,17 +341,11 @@ public class QueryParams implements Cloneable
 					throw new IllegalArgumentException("You have to define a cuboid selection");
 				setSelection(selection);
 			} else if (param.equals("time") || param.equals("since")) {
-				if (values.length == 0)
-					since = logblock.getLBConfig().defaultTime;
-				else
-					since = parseTimeSpec(values);
+				since = values.length > 0 ? parseTimeSpec(values) : defaultTime;
 				if (since == -1)
 					throw new IllegalArgumentException("Failed to parse time spec for '" + param + "'");
 			} else if (param.equals("before")) {
-				if (values.length == 0)
-					before = logblock.getLBConfig().defaultTime;
-				else
-					before = parseTimeSpec(values);
+				before = values.length > 0 ? parseTimeSpec(values) : defaultTime;
 				if (before == -1)
 					throw new IllegalArgumentException("Faile to parse time spec for '" + param + "'");
 			} else if (param.equals("sum")) {
@@ -425,7 +423,7 @@ public class QueryParams implements Cloneable
 		if (!prepareToolQuery && bct != BlockChangeType.CHAT) {
 			if (world == null)
 				throw new IllegalArgumentException("No world specified");
-			if (!logblock.getLBConfig().worlds.containsKey(world.getName().hashCode()))
+			if (!isLogged(world))
 				throw new IllegalArgumentException("This world ('" + world.getName() + "') isn't logged");
 		}
 		if (session != null)
@@ -478,7 +476,7 @@ public class QueryParams implements Cloneable
 		loc = p.loc;
 		radius = p.radius;
 		sel = p.sel;
-		if (p.since != 0 || since != logblock.getLBConfig().defaultTime)
+		if (p.since != 0 || since != defaultTime)
 			since = p.since;
 		before = p.before;
 		sum = p.sum;

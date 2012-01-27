@@ -26,7 +26,3 @@ public class Tool
 		this.permissionDefault = permissionDefault;
 	}
 }
-
-enum ToolBehavior {
-	TOOL, BLOCK, NONE
-}

@@ -1,4 +1,4 @@
-package de.diddiz.LogBlock;
+package de.diddiz.LogBlock.config;
 
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.parseTimeSpec;
@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,37 +21,44 @@ import java.util.zip.DataFormatException;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.permissions.PermissionDefault;
+import de.diddiz.LogBlock.LogBlock;
+import de.diddiz.LogBlock.Logging;
+import de.diddiz.LogBlock.QueryParams;
+import de.diddiz.LogBlock.Tool;
+import de.diddiz.LogBlock.ToolBehavior;
+import de.diddiz.LogBlock.ToolMode;
 
-public class Config extends LoggingEnabledMapping
+public class Config
 {
-	public final Map<Integer, WorldConfig> worlds;
-	public final String url, user, password;
-	public final int delayBetweenRuns, forceToProcessAtLeast, timePerRun;
-	public final boolean useBukkitScheduler;
-	public final boolean enableAutoClearLog;
-	public final List<String> autoClearLog;
-	public final int autoClearLogDelay;
-	public final boolean dumpDeletedLog;
-	public final boolean logCreeperExplosionsAsPlayerWhoTriggeredThese, logPlayerInfo;
-	public final LogKillsLevel logKillsLevel;
-	public final Set<Integer> dontRollback, replaceAnyway;
-	public final int rollbackMaxTime, rollbackMaxArea;
-	public final Map<String, Tool> toolsByName;
-	public final Map<Integer, Tool> toolsByType;
-	public final int defaultDist, defaultTime;
-	public final int linesPerPage, linesLimit;
-	public final boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback, askRollbackAfterBan;
-	public final String banPermission;
-	public final boolean checkVersion;
-	public final Set<Integer> hiddenPlayers, hiddenBlocks;
+	private static LoggingEnabledMapping superWorldConfig;
+	private static Map<String, WorldConfig> worldConfigs;
+	public static String url, user, password;
+	public static int delayBetweenRuns, forceToProcessAtLeast, timePerRun;
+	public static boolean useBukkitScheduler;
+	public static boolean enableAutoClearLog;
+	public static List<String> autoClearLog;
+	public static int autoClearLogDelay;
+	public static boolean dumpDeletedLog;
+	public static boolean logCreeperExplosionsAsPlayerWhoTriggeredThese, logPlayerInfo;
+	public static LogKillsLevel logKillsLevel;
+	public static Set<Integer> dontRollback, replaceAnyway;
+	public static int rollbackMaxTime, rollbackMaxArea;
+	public static Map<String, Tool> toolsByName;
+	public static Map<Integer, Tool> toolsByType;
+	public static int defaultDist, defaultTime;
+	public static int linesPerPage, linesLimit;
+	public static boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback, askRollbackAfterBan;
+	public static String banPermission;
+	public static boolean checkVersion;
+	public static Set<Integer> hiddenBlocks;
+	public static Set<String> hiddenPlayers;
 
 	public static enum LogKillsLevel {
 		PLAYERS, MONSTERS, ANIMALS;
 	}
 
-	Config(LogBlock logblock) throws DataFormatException, IOException {
+	public static void load(LogBlock logblock) throws DataFormatException, IOException {
 		final ConfigurationSection config = logblock.getConfig();
 		final Map<String, Object> def = new HashMap<String, Object>();
 		def.put("version", logblock.getDescription().getVersion());
@@ -137,9 +145,9 @@ public class Config extends LoggingEnabledMapping
 		} catch (final IllegalArgumentException ex) {
 			throw new DataFormatException("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
-		hiddenPlayers = new HashSet<Integer>();
-		for (final Object playerName : config.getList("logging.hiddenPlayers"))
-			hiddenPlayers.add(playerName.hashCode());
+		hiddenPlayers = new HashSet<String>();
+		for (final String playerName : config.getStringList("logging.hiddenPlayers"))
+			hiddenPlayers.add(playerName);
 		hiddenBlocks = new HashSet<Integer>();
 		for (final Object blocktype : config.getList("logging.hiddenBlocks")) {
 			final Material mat = Material.matchMaterial(String.valueOf(blocktype));
@@ -191,15 +199,16 @@ public class Config extends LoggingEnabledMapping
 				toolsByName.put(alias, tool);
 		}
 		final List<String> loggedWorlds = config.getStringList("loggedWorlds");
-		worlds = new HashMap<Integer, WorldConfig>();
+		worldConfigs = new HashMap<String, WorldConfig>();
 		if (loggedWorlds.size() == 0)
 			throw new DataFormatException("No worlds configured");
 		for (final String world : loggedWorlds)
-			worlds.put(world.hashCode(), new WorldConfig(new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml")));
-		for (final WorldConfig wcfg : worlds.values())
+			worldConfigs.put(world, new WorldConfig(new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml")));
+		superWorldConfig = new LoggingEnabledMapping();
+		for (final WorldConfig wcfg : worldConfigs.values())
 			for (final Logging l : Logging.values())
 				if (wcfg.isLogging(l))
-					setLogging(l, true);
+					superWorldConfig.setLogging(l, true);
 	}
 
 	private static String getStringIncludingInts(ConfigurationSection cfg, String key) {
@@ -210,29 +219,34 @@ public class Config extends LoggingEnabledMapping
 			str = "No value set for '" + key + "'";
 		return str;
 	}
-}
 
-class WorldConfig extends LoggingEnabledMapping
-{
-	public final String table;
+	public static boolean isLogging(World world, Logging l) {
+		final WorldConfig wcfg = worldConfigs.get(world.getName());
+		return wcfg != null && wcfg.isLogging(l);
+	}
 
-	public WorldConfig(File file) throws IOException {
-		final Map<String, Object> def = new HashMap<String, Object>();
-		def.put("table", "lb-" + file.getName().substring(0, file.getName().length() - 4));
-		for (final Logging l : Logging.values())
-			def.put("logging." + l.toString(), l.isDefaultEnabled());
-		final YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-		for (final Entry<String, Object> e : def.entrySet())
-			if (config.get(e.getKey()) == null)
-				config.set(e.getKey(), e.getValue());
-		config.save(file);
-		table = config.getString("table");
-		for (final Logging l : Logging.values())
-			setLogging(l, config.getBoolean("logging." + l.toString()));
+	public static boolean isLogged(World world) {
+		return worldConfigs.containsKey(world.getName());
+	}
+
+	public static WorldConfig getWorldConfig(World world) {
+		return worldConfigs.get(world.getName());
+	}
+
+	public static WorldConfig getWorldConfig(String world) {
+		return worldConfigs.get(world);
+	}
+
+	public static boolean isLogging(Logging l) {
+		return superWorldConfig.isLogging(l);
+	}
+
+	public static Collection<WorldConfig> getLoggedWorlds() {
+		return worldConfigs.values();
 	}
 }
 
-abstract class LoggingEnabledMapping
+class LoggingEnabledMapping
 {
 	private final boolean[] logging = new boolean[Logging.length];
 

@@ -1,5 +1,7 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.config.Config.getLoggedWorlds;
+import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.readURL;
 import static org.bukkit.Bukkit.getLogger;
@@ -14,6 +16,7 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import de.diddiz.LogBlock.config.WorldConfig;
 
 class Updater
 {
@@ -29,7 +32,7 @@ class Updater
 			return false;
 		if (config.getString("version").compareTo("1.27") < 0) {
 			getLogger().info("[LogBlock] Updating tables to 1.27 ...");
-			if (logblock.getLBConfig().isLogging(Logging.CHAT)) {
+			if (isLogging(Logging.CHAT)) {
 				final Connection conn = logblock.getConnection();
 				try {
 					conn.setAutoCommit(true);
@@ -162,7 +165,7 @@ class Updater
 			try {
 				conn.setAutoCommit(true);
 				final Statement st = conn.createStatement();
-				for (final WorldConfig wcfg : logblock.getLBConfig().worlds.values())
+				for (final WorldConfig wcfg : getLoggedWorlds())
 					if (wcfg.isLogging(Logging.KILL))
 						st.execute("ALTER TABLE `" + wcfg.table + "-kills` ADD (x SMALLINT NOT NULL DEFAULT 0, y TINYINT UNSIGNED NOT NULL DEFAULT 0, z SMALLINT NOT NULL DEFAULT 0)");
 				st.close();
@@ -185,9 +188,9 @@ class Updater
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
 		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime TIME NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
-		if (logblock.getLBConfig().isLogging(Logging.CHAT))
+		if (isLogging(Logging.CHAT))
 			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM");
-		for (final WorldConfig wcfg : logblock.getLBConfig().worlds.values()) {
+		for (final WorldConfig wcfg : getLoggedWorlds()) {
 			createTable(dbm, state, wcfg.table, "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
 			createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id))");
 			createTable(dbm, state, wcfg.table + "-chest", "(id INT UNSIGNED NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
