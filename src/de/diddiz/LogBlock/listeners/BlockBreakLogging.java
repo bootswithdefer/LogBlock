@@ -20,7 +20,7 @@ public class BlockBreakLogging extends LoggingListener
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onBlockBreak(BlockBreakEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
-		if (!event.isCancelled() && wcfg.isLogging(Logging.BLOCKBREAK)) {
+		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.BLOCKBREAK)) {
 			final int type = event.getBlock().getTypeId();
 			if (wcfg.isLogging(Logging.SIGNTEXT) && (type == 63 || type == 68))
 				consumer.queueSignBreak(event.getPlayer().getName(), (Sign)event.getBlock().getState());
