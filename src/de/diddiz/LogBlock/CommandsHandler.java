@@ -45,6 +45,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
+import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
 
@@ -249,12 +250,15 @@ public class CommandsHandler implements CommandExecutor
 					if (sender instanceof Player) {
 						if (logblock.hasPermission(sender, "logblock.me")) {
 							final Player player = (Player)sender;
-							final QueryParams params = new QueryParams(logblock);
-							params.setPlayer(player.getName());
-							params.world = player.getWorld();
-							player.sendMessage("Total block changes: " + logblock.getCount(params));
-							params.sum = SummarizationMode.TYPES;
-							new CommandLookup(sender, params, true);
+							if (Config.isLogged(player.getWorld())) {
+								final QueryParams params = new QueryParams(logblock);
+								params.setPlayer(player.getName());
+								params.world = player.getWorld();
+								player.sendMessage("Total block changes: " + logblock.getCount(params));
+								params.sum = SummarizationMode.TYPES;
+								new CommandLookup(sender, params, true);
+							} else
+								sender.sendMessage(ChatColor.RED + "This world isn't logged");
 						} else
 							sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 					} else
