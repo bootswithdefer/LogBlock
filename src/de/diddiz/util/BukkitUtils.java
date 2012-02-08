@@ -121,7 +121,7 @@ public class BukkitUtils
 	public static void giveTool(Player player, int type) {
 		final Inventory inv = player.getInventory();
 		if (inv.contains(type))
-			player.sendMessage(ChatColor.RED + "You have alredy a " + materialName(type));
+			player.sendMessage(ChatColor.RED + "You have already a " + materialName(type));
 		else {
 			final int free = inv.firstEmpty();
 			if (free >= 0) {
