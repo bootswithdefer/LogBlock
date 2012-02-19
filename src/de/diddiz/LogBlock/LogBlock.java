@@ -14,6 +14,7 @@ import static de.diddiz.LogBlock.config.Config.url;
 import static de.diddiz.LogBlock.config.Config.useBukkitScheduler;
 import static de.diddiz.LogBlock.config.Config.user;
 import static de.diddiz.util.Utils.download;
+import static org.bukkit.Bukkit.getPluginManager;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URL;
@@ -113,7 +114,7 @@ public class LogBlock extends JavaPlugin
 
 	@Override
 	public void onEnable() {
-		final PluginManager pm = getServer().getPluginManager();
+		final PluginManager pm = getPluginManager();
 		if (errorAtLoading) {
 			pm.disablePlugin(this);
 			return;
@@ -139,6 +140,35 @@ public class LogBlock extends JavaPlugin
 		if (enableAutoClearLog && autoClearLogDelay > 0)
 			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
 		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
+		registerEvents();
+		if (useBukkitScheduler) {
+			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, delayBetweenRuns * 20, delayBetweenRuns * 20) > 0)
+				getLogger().info("[LogBlock] Scheduled consumer with bukkit scheduler.");
+			else {
+				getLogger().warning("[LogBlock] Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
+				timer = new Timer();
+				timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
+			}
+		} else {
+			timer = new Timer();
+			timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
+			getLogger().info("[LogBlock] Scheduled consumer with timer.");
+		}
+		for (final Tool tool : toolsByType.values())
+			if (pm.getPermission("logblock.tools." + tool.name) == null) {
+				final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
+				pm.addPermission(perm);
+			}
+		// perm.addParent("logblock.*", true);
+		getLogger().info("LogBlock v" + getDescription().getVersion() + " by DiddiZ enabled.");
+	}
+
+	public void reload() {
+		// TODO
+	}
+
+	private void registerEvents() {
+		final PluginManager pm = getPluginManager();
 		pm.registerEvents(new ToolListener(this), this);
 		if (askRollbackAfterBan)
 			pm.registerEvents(new BanListener(this), this);
@@ -160,14 +190,14 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvents(new ExplosionLogging(this), this);
 		if (isLogging(Logging.LEAVESDECAY))
 			pm.registerEvents(new LeavesDecayLogging(this), this);
-		if (isLogging(Logging.CHESTACCESS))
+		if (isLogging(Logging.CHESTACCESS)) {
 			// if (pm.isPluginEnabled("Spout")) { //TODO
 			// pm.registerEvents(Type.CUSTOM_EVENT, new LBSpoutChestAccessListener(this), Priority.Monitor, this);
 			// getLogger().info("[LogBlock] Using Spout as chest access API");
 			// } else {
 			pm.registerEvents(new ChestAccessLogging(this), this);
-		getLogger().info("[LogBlock] Using own chest access API");
-		// }
+			getLogger().info("[LogBlock] Using own chest access API");
+		}
 		if (isLogging(Logging.SWITCHINTERACT) || isLogging(Logging.DOORINTERACT) || isLogging(Logging.CAKEEAT) || isLogging(Logging.DIODEINTERACT) || isLogging(Logging.NOTEBLOCKINTERACT))
 			pm.registerEvents(new InteractLogging(this), this);
 		if (isLogging(Logging.KILL))
@@ -180,26 +210,6 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvents(new StructureGrowLogging(this), this);
 		if (logPlayerInfo)
 			pm.registerEvents(new PlayerInfoLogging(this), this);
-		if (useBukkitScheduler) {
-			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, delayBetweenRuns * 20, delayBetweenRuns * 20) > 0)
-				getLogger().info("[LogBlock] Scheduled consumer with bukkit scheduler.");
-			else {
-				getLogger().warning("[LogBlock] Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
-				timer = new Timer();
-				timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
-			}
-		} else {
-			timer = new Timer();
-			timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
-			getLogger().info("[LogBlock] Scheduled consumer with timer.");
-		}
-		for (final Tool tool : toolsByType.values())
-			if (pm.getPermission("logblock.tools." + tool.name) == null) {
-				final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
-				pm.addPermission(perm);
-			}
-		// perm.addParent("logblock.*", true);
-		getLogger().info("LogBlock v" + getDescription().getVersion() + " by DiddiZ enabled.");
 	}
 
 	@Override
