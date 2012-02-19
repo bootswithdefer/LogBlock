@@ -319,7 +319,7 @@ public class CommandsHandler implements CommandExecutor
 		} catch (final IllegalArgumentException ex) {
 			sender.sendMessage(ChatColor.RED + ex.getMessage());
 		} catch (final Exception ex) {
-			sender.sendMessage(ChatColor.RED + "Error, check log");
+			sender.sendMessage(ChatColor.RED + "Error, check server.log");
 			getLogger().log(Level.WARNING, "[LogBlock] Exception in commands handler: ", ex);
 		}
 		return true;
