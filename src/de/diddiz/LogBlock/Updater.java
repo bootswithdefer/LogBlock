@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
@@ -176,6 +177,28 @@ class Updater
 			}
 			config.set("version", "1.51");
 		}
+		if (config.getString("version").compareTo("1.52") < 0) {
+			getLogger().info("[LogBlock] Updating tables to 1.52 ...");
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				final ResultSet rs = st.executeQuery("SHOW COLUMNS FROM minecraft.`lb-players` WHERE field = 'onlinetime'");
+				if (rs.next() && rs.getString("Type").equalsIgnoreCase("time")) {
+					st.execute("ALTER TABLE `lb-players` ADD onlinetime2 INT UNSIGNED NOT NULL");
+					st.execute("UPDATE `lb-players` SET onlinetime2 = HOUR(onlinetime) * 3600 + MINUTE(onlinetime) * 60 + SECOND(onlinetime)");
+					st.execute("ALTER TABLE `lb-players` DROP onlinetime");
+					st.execute("ALTER TABLE `lb-players` CHANGE onlinetime2 onlinetime INT UNSIGNED NOT NULL");
+				} else
+					getLogger().info("[LogBlock] Column lb-players was alredy modified, skipping it.");
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
+				return false;
+			}
+			config.set("version", "1.52");
+		}
 		logblock.saveConfig();
 		return true;
 	}
@@ -187,7 +210,7 @@ class Updater
 		final Statement state = conn.createStatement();
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
-		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime TIME NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
+		createTable(dbm, state, "lb-players", "(playerid SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
 		if (isLogging(Logging.CHAT))
 			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid SMALLINT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM");
 		for (final WorldConfig wcfg : getLoggedWorlds()) {

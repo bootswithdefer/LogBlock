@@ -485,7 +485,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"UPDATE `lb-players` SET onlinetime = ADDTIME(onlinetime, TIMEDIFF(FROM_UNIXTIME(" + leaveTime + "), lastlogin)) WHERE " + (playerIds.containsKey(playerName) ? "playerid = " + playerIds.get(playerName) : "playerName = '" + playerName + "'") + ";"};
+			return new String[]{"UPDATE `lb-players` SET onlinetime = onlinetime + TIMESTAMPDIFF(SECOND, lastlogin, FROM_UNIXTIME('" + leaveTime + "')) WHERE lastlogin > 0 && " + (playerIds.containsKey(playerName) ? "playerid = " + playerIds.get(playerName) : "playerName = '" + playerName + "'") + ";"};
 		}
 
 		@Override

@@ -86,7 +86,7 @@ public class Config
 		def.put("clearlog.autoClearLogDelay", "6h");
 		def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		def.put("logging.logKillsLevel", "PLAYERS");
-		def.put("logging.logPlayerInfo", true);
+		def.put("logging.logPlayerInfo", false);
 		def.put("logging.hiddenPlayers", new ArrayList<String>());
 		def.put("logging.hiddenBlocks", Arrays.asList(0));
 		def.put("rollback.dontRollback", Arrays.asList(10, 11, 46, 51));
