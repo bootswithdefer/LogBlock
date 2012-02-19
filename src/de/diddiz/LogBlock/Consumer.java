@@ -47,6 +47,9 @@ public class Consumer extends TimerTask
 
 	Consumer(LogBlock logblock) {
 		this.logblock = logblock;
+		try {
+			Class.forName("PlayerLeaveRow");
+		} catch (final ClassNotFoundException ex) {}
 	}
 
 	/**
