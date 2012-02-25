@@ -183,7 +183,7 @@ class Updater
 			try {
 				conn.setAutoCommit(true);
 				final Statement st = conn.createStatement();
-				final ResultSet rs = st.executeQuery("SHOW COLUMNS FROM lb-players WHERE field = 'onlinetime'");
+				final ResultSet rs = st.executeQuery("SHOW COLUMNS FROM `lb-players` WHERE field = 'onlinetime'");
 				if (rs.next() && rs.getString("Type").equalsIgnoreCase("time")) {
 					st.execute("ALTER TABLE `lb-players` ADD onlinetime2 INT UNSIGNED NOT NULL");
 					st.execute("UPDATE `lb-players` SET onlinetime2 = HOUR(onlinetime) * 3600 + MINUTE(onlinetime) * 60 + SECOND(onlinetime)");
