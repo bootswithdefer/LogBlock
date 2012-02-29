@@ -37,9 +37,6 @@ permissions:
     logblock.tp:
         description: 'Allows to use /lb tp'
         default: op
-    logblock.tp:
-        description: 'Allows to use /lb tp'
-        default: op
     logblock.me:
         description: 'Allows to see oneselfs stats with /lb me'
         default: true
