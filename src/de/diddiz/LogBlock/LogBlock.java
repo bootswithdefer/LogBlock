@@ -33,8 +33,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import com.nijiko.permissions.PermissionHandler;
-import com.nijikokun.bukkit.Permissions.Permissions;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.listeners.BanListener;
 import de.diddiz.LogBlock.listeners.BlockBreakLogging;
@@ -64,7 +62,6 @@ public class LogBlock extends JavaPlugin
 	private CommandsHandler commandsHandler;
 	private Updater updater = null;
 	private Timer timer = null;
-	private PermissionHandler permissions = null;
 	private boolean errorAtLoading = false, noDb = false, connected = true;
 
 	public static LogBlock getInstance() {
@@ -131,13 +128,9 @@ public class LogBlock extends JavaPlugin
 				getLogger().warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
 			}
 		commandsHandler = new CommandsHandler(this);
-		getCommand("lb").setExecutor(commandsHandler);
-		if (pm.getPlugin("Permissions") != null) {
-			permissions = ((Permissions)pm.getPlugin("Permissions")).getHandler();
-			getLogger().info("[LogBlock] Permissions plugin found.");
-		} else
-			getLogger().info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
-		if (enableAutoClearLog && autoClearLogDelay > 0)
+        getCommand("lb").setExecutor(commandsHandler);
+        getLogger().info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
+        if (enableAutoClearLog && autoClearLogDelay > 0)
 			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
 		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
 		registerEvents();
@@ -256,8 +249,6 @@ public class LogBlock extends JavaPlugin
 	}
 
 	public boolean hasPermission(CommandSender sender, String permission) {
-		if (permissions != null && sender instanceof Player)
-			return permissions.has((Player)sender, permission);
 		return sender.hasPermission(permission);
 	}
 
