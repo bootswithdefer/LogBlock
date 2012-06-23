@@ -452,7 +452,8 @@ public class QueryParams implements Cloneable
 			params.players = new ArrayList<String>(players);
 			params.types = new ArrayList<Integer>(types);
 			return params;
-		} catch (final CloneNotSupportedException ex) {}
+		} catch (final CloneNotSupportedException ex) {
+		}
 		return null;
 	}
 
@@ -487,15 +488,18 @@ public class QueryParams implements Cloneable
 		match = p.match;
 	}
 
-	public static enum BlockChangeType {
+	public static enum BlockChangeType
+	{
 		ALL, BOTH, CHESTACCESS, CREATED, DESTROYED, CHAT
 	}
 
-	public static enum Order {
+	public static enum Order
+	{
 		ASC, DESC
 	}
 
-	public static enum SummarizationMode {
+	public static enum SummarizationMode
+	{
 		NONE, PLAYERS, TYPES
 	}
 }

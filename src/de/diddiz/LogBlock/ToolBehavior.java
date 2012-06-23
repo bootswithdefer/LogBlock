@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
-public enum ToolBehavior {
+public enum ToolBehavior
+{
 	TOOL, BLOCK, NONE
 }

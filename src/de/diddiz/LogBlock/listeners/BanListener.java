@@ -29,7 +29,8 @@ public class BanListener implements Listener
 			p.setPlayer(split[1].equalsIgnoreCase("g") ? split[2] : split[1]);
 			p.since = 0;
 			p.silent = false;
-			getScheduler().scheduleAsyncDelayedTask(logblock, new Runnable() {
+			getScheduler().scheduleAsyncDelayedTask(logblock, new Runnable()
+			{
 				@Override
 				public void run() {
 					for (final World world : logblock.getServer().getWorlds())
@@ -37,7 +38,8 @@ public class BanListener implements Listener
 							p.world = world;
 							try {
 								handler.new CommandRollback(event.getPlayer(), p, false);
-							} catch (final Exception ex) {}
+							} catch (final Exception ex) {
+							}
 						}
 				}
 			});

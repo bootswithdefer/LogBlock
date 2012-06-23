@@ -102,7 +102,8 @@ public class MySQLConnectionPool implements Closeable
 			while (true) {
 				try {
 					Thread.sleep(300000);
-				} catch (final InterruptedException e) {}
+				} catch (final InterruptedException e) {
+				}
 				reapConnections();
 			}
 		}
@@ -428,7 +429,8 @@ public class MySQLConnectionPool implements Closeable
 		void terminate() {
 			try {
 				conn.close();
-			} catch (final SQLException ex) {}
+			} catch (final SQLException ex) {
+			}
 		}
 	}
 }

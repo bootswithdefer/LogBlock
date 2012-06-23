@@ -19,8 +19,8 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.block.Sign;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Bed;
 import org.bukkit.material.PistonBaseMaterial;
@@ -109,13 +109,15 @@ public class WorldEditor implements Runnable
 					for (final LookupCacheElement err : errorList)
 						writer.println(err.getMessage());
 					writer.close();
-				} catch (final Exception ex) {}
+				} catch (final Exception ex) {
+				}
 			errors = errorList.toArray(new WorldEditorException[errorList.size()]);
 			notify();
 		}
 	}
 
-	private static enum PerformResult {
+	private static enum PerformResult
+	{
 		SUCCESS, BLACKLISTED, NO_ACTION
 	}
 

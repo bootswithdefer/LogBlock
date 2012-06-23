@@ -62,7 +62,8 @@ public class DumpedLogImporter implements Runnable
 				if (conn != null)
 					try {
 						conn.close();
-					} catch (final SQLException ex) {}
+					} catch (final SQLException ex) {
+					}
 			}
 		}
 	}

@@ -59,7 +59,8 @@ public class Utils
 		try {
 			Integer.parseInt(str);
 			return true;
-		} catch (final NumberFormatException ex) {}
+		} catch (final NumberFormatException ex) {
+		}
 		return false;
 	}
 
@@ -67,7 +68,8 @@ public class Utils
 		try {
 			Byte.parseByte(str);
 			return true;
-		} catch (final NumberFormatException ex) {}
+		} catch (final NumberFormatException ex) {
+		}
 		return false;
 	}
 

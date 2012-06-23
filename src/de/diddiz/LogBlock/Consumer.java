@@ -30,11 +30,11 @@ import java.util.logging.Level;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 public class Consumer extends TimerTask
@@ -49,7 +49,8 @@ public class Consumer extends TimerTask
 		this.logblock = logblock;
 		try {
 			Class.forName("PlayerLeaveRow");
-		} catch (final ClassNotFoundException ex) {}
+		} catch (final ClassNotFoundException ex) {
+		}
 	}
 
 	/**
@@ -274,7 +275,8 @@ public class Consumer extends TimerTask
 			state = conn.createStatement();
 			final long start = System.currentTimeMillis();
 			int count = 0;
-			process: while (!queue.isEmpty() && (System.currentTimeMillis() - start < timePerRun || count < forceToProcessAtLeast)) {
+			process:
+			while (!queue.isEmpty() && (System.currentTimeMillis() - start < timePerRun || count < forceToProcessAtLeast)) {
 				final Row r = queue.poll();
 				if (r == null)
 					continue;

@@ -54,7 +54,8 @@ public class Config
 	public static Set<Integer> hiddenBlocks;
 	public static Set<String> hiddenPlayers;
 
-	public static enum LogKillsLevel {
+	public static enum LogKillsLevel
+	{
 		PLAYERS, MONSTERS, ANIMALS;
 	}
 
