@@ -2,16 +2,20 @@ package de.diddiz.LogBlock.listeners;
 
 import static de.diddiz.util.BukkitUtils.compareInventories;
 import static de.diddiz.util.BukkitUtils.compressInventory;
+import static de.diddiz.util.BukkitUtils.getInventoryHolderType;
+import static de.diddiz.util.BukkitUtils.getInventoryHolderLocation;
 import static de.diddiz.util.BukkitUtils.rawData;
 import java.util.HashMap;
 import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import de.diddiz.LogBlock.LogBlock;
 
@@ -25,13 +29,14 @@ public class ChestAccessLogging extends LoggingListener
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onInventoryClose(InventoryCloseEvent event) {
-		if (event.getInventory().getHolder() instanceof BlockState) {
+		InventoryHolder holder = event.getInventory().getHolder();
+		if (holder instanceof BlockState || holder instanceof DoubleChest) {
 			final HumanEntity player = event.getPlayer();
 			final ItemStack[] before = containers.get(player);
 			if (before != null) {
 				final ItemStack[] after = compressInventory(event.getInventory().getContents());
 				final ItemStack[] diff = compareInventories(before, after);
-				final Location loc = ((BlockState)event.getInventory().getHolder()).getLocation();
+				final Location loc = getInventoryHolderLocation(holder);
 				for (final ItemStack item : diff) {
 					consumer.queueChestAccess(player.getName(), loc, loc.getWorld().getBlockTypeIdAt(loc), (short)item.getTypeId(), (short)item.getAmount(), rawData(item));
 				}
@@ -42,9 +47,9 @@ public class ChestAccessLogging extends LoggingListener
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onInventoryOpen(InventoryOpenEvent event) {
-		if (event.getInventory().getHolder() instanceof BlockState) {
-			BlockState block = (BlockState)event.getInventory().getHolder();
-			if (block.getTypeId() != 58) {
+		InventoryHolder holder = event.getInventory().getHolder();
+		if (holder instanceof BlockState || holder instanceof DoubleChest) {
+			if (getInventoryHolderType(holder) != 58) {
 				containers.put(event.getPlayer(), compressInventory(event.getInventory().getContents()));
 			}
 		}

@@ -13,6 +13,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
@@ -33,6 +34,26 @@ public class BukkitUtils
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(73, 74)));
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(75, 76)));
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(93, 94)));
+	}
+
+	public static int getInventoryHolderType(InventoryHolder holder) {
+		if (holder instanceof BlockState) {
+			return ((BlockState)holder).getTypeId();
+		} else if (holder instanceof DoubleChest) {
+			return ((DoubleChest)holder).getLocation().getBlock().getTypeId();
+		} else {
+			return -1;
+		}
+	}
+
+	public static Location getInventoryHolderLocation(InventoryHolder holder) {
+		if (holder instanceof BlockState) {
+			return ((BlockState)holder).getLocation();
+		} else if (holder instanceof DoubleChest) {
+			return ((DoubleChest)holder).getLocation();
+		} else {
+			return null;
+		}
 	}
 
 	public static ItemStack[] compareInventories(ItemStack[] items1, ItemStack[] items2) {
