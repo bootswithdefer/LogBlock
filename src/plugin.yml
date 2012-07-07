@@ -4,7 +4,7 @@ author: DiddiZ
 website: http://www.diddiz.de/minecraft/
 main: de.diddiz.LogBlock.LogBlock
 description: Logs blocks.
-softdepend: [Spout, LogBlockQuestioner, Permissions, WorldEdit]
+softdepend: [LogBlockQuestioner, WorldEdit]
 commands:
   lb:
     description: 'LogBlock commands.'
