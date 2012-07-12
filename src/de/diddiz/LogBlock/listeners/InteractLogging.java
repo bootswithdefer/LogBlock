@@ -17,10 +17,10 @@ public class InteractLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getPlayer().getWorld());
-		if (!event.isCancelled() && wcfg != null && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+		if (wcfg != null && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
 			final int type = event.getClickedBlock().getTypeId();
 			final Player player = event.getPlayer();
 			final Location loc = event.getClickedBlock().getLocation();

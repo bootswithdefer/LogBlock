@@ -129,7 +129,6 @@ public class LogBlock extends JavaPlugin
 			}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
-		getLogger().info("[LogBlock] Permissions plugin not found. Using Bukkit Permissions.");
 		if (enableAutoClearLog && autoClearLogDelay > 0)
 			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
 		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
@@ -152,12 +151,6 @@ public class LogBlock extends JavaPlugin
 				final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
 				pm.addPermission(perm);
 			}
-		// perm.addParent("logblock.*", true);
-		getLogger().info("LogBlock v" + getDescription().getVersion() + " by DiddiZ enabled.");
-	}
-
-	public void reload() {
-		// TODO
 	}
 
 	private void registerEvents() {

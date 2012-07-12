@@ -13,9 +13,9 @@ public class SnowFadeLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onBlockFade(BlockFadeEvent event) {
-		if (!event.isCancelled() && isLogging(event.getBlock().getWorld(), Logging.SNOWFADE)) {
+		if (isLogging(event.getBlock().getWorld(), Logging.SNOWFADE)) {
 			final int type = event.getBlock().getTypeId();
 			if (type == 78 || type == 79)
 				consumer.queueBlockReplace("SnowFade", event.getBlock().getState(), event.getNewState());

@@ -21,10 +21,10 @@ public class FluidFlowLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onBlockFromTo(BlockFromToEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
-		if (!event.isCancelled() && wcfg != null) {
+		if (wcfg != null) {
 			final Block to = event.getToBlock();
 			final int typeFrom = event.getBlock().getTypeId();
 			final int typeTo = to.getTypeId();

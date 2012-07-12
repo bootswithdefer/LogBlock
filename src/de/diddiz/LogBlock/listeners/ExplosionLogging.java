@@ -23,10 +23,10 @@ public class ExplosionLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onEntityExplode(EntityExplodeEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getLocation().getWorld());
-		if (!event.isCancelled() && wcfg != null) {
+		if (wcfg != null) {
 			final String name;
 			if (event.getEntity() == null) {
 				if (!wcfg.isLogging(Logging.MISCEXPLOSION))

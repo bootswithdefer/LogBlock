@@ -13,9 +13,9 @@ public class LeavesDecayLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onLeavesDecay(LeavesDecayEvent event) {
-		if (!event.isCancelled() && isLogging(event.getBlock().getWorld(), Logging.LEAVESDECAY))
+		if (isLogging(event.getBlock().getWorld(), Logging.LEAVESDECAY))
 			consumer.queueBlockBreak("LeavesDecay", event.getBlock().getState());
 	}
 }

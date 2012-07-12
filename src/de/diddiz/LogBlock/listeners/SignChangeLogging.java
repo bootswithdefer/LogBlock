@@ -13,9 +13,9 @@ public class SignChangeLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onSignChange(SignChangeEvent event) {
-		if (!event.isCancelled() && isLogging(event.getBlock().getWorld(), Logging.SIGNTEXT))
+		if (isLogging(event.getBlock().getWorld(), Logging.SIGNTEXT))
 			consumer.queueSignPlace(event.getPlayer().getName(), event.getBlock().getLocation(), event.getBlock().getTypeId(), event.getBlock().getData(), event.getLines());
 	}
 }

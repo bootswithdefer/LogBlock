@@ -312,7 +312,7 @@ public class QueryParams implements Cloneable
 	}
 
 	public void parseArgs(CommandSender sender, List<String> args) throws IllegalArgumentException {
-		if (args == null || args.size() == 0)
+		if (args == null || args.isEmpty())
 			throw new IllegalArgumentException("No parameters specified.");
 		final Player player = sender instanceof Player ? (Player)sender : null;
 		final Session session = prepareToolQuery ? null : getSession(sender);

@@ -19,10 +19,10 @@ public class BlockPlaceLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onBlockPlace(BlockPlaceEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
-		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.BLOCKPLACE)) {
+		if (wcfg != null && wcfg.isLogging(Logging.BLOCKPLACE)) {
 			final int type = event.getBlock().getTypeId();
 			final BlockState before = event.getBlockReplacedState();
 			final BlockState after = event.getBlockPlaced().getState();
@@ -56,9 +56,9 @@ public class BlockPlaceLogging extends LoggingListener
 		}
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
-		if (!event.isCancelled() && isLogging(event.getPlayer().getWorld(), Logging.BLOCKPLACE))
+		if (isLogging(event.getPlayer().getWorld(), Logging.BLOCKPLACE))
 			consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), event.getBucket() == Material.WATER_BUCKET ? 9 : 11, (byte)0);
 	}
 }

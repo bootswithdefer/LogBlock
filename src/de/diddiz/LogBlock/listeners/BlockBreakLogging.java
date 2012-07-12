@@ -17,10 +17,10 @@ public class BlockBreakLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onBlockBreak(BlockBreakEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
-		if (!event.isCancelled() && wcfg != null && wcfg.isLogging(Logging.BLOCKBREAK)) {
+		if (wcfg != null && wcfg.isLogging(Logging.BLOCKBREAK)) {
 			final int type = event.getBlock().getTypeId();
 			if (wcfg.isLogging(Logging.SIGNTEXT) && (type == 63 || type == 68))
 				consumer.queueSignBreak(event.getPlayer().getName(), (Sign)event.getBlock().getState());
@@ -33,9 +33,9 @@ public class BlockBreakLogging extends LoggingListener
 		}
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerBucketFill(PlayerBucketFillEvent event) {
-		if (!event.isCancelled() && isLogging(event.getPlayer().getWorld(), Logging.BLOCKBREAK))
+		if (isLogging(event.getPlayer().getWorld(), Logging.BLOCKBREAK))
 			consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlockClicked().getState());
 	}
 }

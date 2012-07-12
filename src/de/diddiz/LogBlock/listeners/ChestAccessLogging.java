@@ -2,8 +2,8 @@ package de.diddiz.LogBlock.listeners;
 
 import static de.diddiz.util.BukkitUtils.compareInventories;
 import static de.diddiz.util.BukkitUtils.compressInventory;
-import static de.diddiz.util.BukkitUtils.getInventoryHolderType;
 import static de.diddiz.util.BukkitUtils.getInventoryHolderLocation;
+import static de.diddiz.util.BukkitUtils.getInventoryHolderType;
 import static de.diddiz.util.BukkitUtils.rawData;
 import java.util.HashMap;
 import java.util.Map;

@@ -13,9 +13,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.material.MaterialData;
 
-/**
- * @author DiddiZ
- */
 public class MaterialName
 {
 	private static final Map<Integer, String> materialNames = new HashMap<Integer, String>();

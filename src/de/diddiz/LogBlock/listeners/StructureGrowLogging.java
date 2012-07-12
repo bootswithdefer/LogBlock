@@ -15,10 +15,10 @@ public class StructureGrowLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onStructureGrow(StructureGrowEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getWorld());
-		if (!event.isCancelled() && wcfg != null) {
+		if (wcfg != null) {
 			final String playerName;
 			if (event.getPlayer() != null) {
 				if (!wcfg.isLogging(Logging.BONEMEALSTRUCTUREGROW))

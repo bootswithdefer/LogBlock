@@ -25,9 +25,9 @@ public class KillLogging extends LoggingListener
 		super(lb);
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onEntityDamage(EntityDamageEvent event) {
-		if (!event.isCancelled() && isLogging(event.getEntity().getWorld(), Logging.KILL) && event instanceof EntityDamageByEntityEvent && event.getEntity() instanceof LivingEntity) {
+		if (isLogging(event.getEntity().getWorld(), Logging.KILL) && event instanceof EntityDamageByEntityEvent && event.getEntity() instanceof LivingEntity) {
 			final LivingEntity victim = (LivingEntity)event.getEntity();
 			final Entity killer = ((EntityDamageByEntityEvent)event).getDamager();
 			if (victim.getHealth() - event.getDamage() > 0 || victim.getHealth() <= 0)
