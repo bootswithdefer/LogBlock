@@ -5,7 +5,6 @@ import static de.diddiz.LogBlock.config.Config.askClearLogAfterRollback;
 import static de.diddiz.LogBlock.config.Config.askClearLogs;
 import static de.diddiz.LogBlock.config.Config.askRedos;
 import static de.diddiz.LogBlock.config.Config.askRollbacks;
-import static de.diddiz.LogBlock.config.Config.checkVersion;
 import static de.diddiz.LogBlock.config.Config.defaultTime;
 import static de.diddiz.LogBlock.config.Config.dumpDeletedLog;
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
@@ -67,8 +66,6 @@ public class CommandsHandler implements CommandExecutor
 		try {
 			if (args.length == 0) {
 				sender.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + logblock.getDescription().getVersion() + " by DiddiZ");
-				if (checkVersion)
-					sender.sendMessage(ChatColor.LIGHT_PURPLE + logblock.getUpdater().checkVersion());
 				sender.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
 			} else {
 				final String command = args[0].toLowerCase();

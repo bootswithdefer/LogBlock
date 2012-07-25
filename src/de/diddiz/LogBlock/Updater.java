@@ -232,12 +232,4 @@ class Updater
 				throw new SQLException("Table " + table + " not found and failed to create");
 		}
 	}
-
-	String checkVersion() {
-		try {
-			return readURL(new URL("http://diddiz.insane-architects.net/lbuptodate.php?v=" + logblock.getDescription().getVersion()));
-		} catch (final Exception ex) {
-			return "Can't check version";
-		}
-	}
 }

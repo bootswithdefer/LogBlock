@@ -2,7 +2,6 @@ package de.diddiz.LogBlock;
 
 import static de.diddiz.LogBlock.config.Config.askRollbackAfterBan;
 import static de.diddiz.LogBlock.config.Config.autoClearLogDelay;
-import static de.diddiz.LogBlock.config.Config.checkVersion;
 import static de.diddiz.LogBlock.config.Config.delayBetweenRuns;
 import static de.diddiz.LogBlock.config.Config.enableAutoClearLog;
 import static de.diddiz.LogBlock.config.Config.isLogging;
@@ -17,6 +16,7 @@ import static de.diddiz.util.Utils.download;
 import static org.bukkit.Bukkit.getPluginManager;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -86,8 +86,6 @@ public class LogBlock extends JavaPlugin
 		try {
 			updater = new Updater(this);
 			Config.load(this);
-			if (checkVersion)
-				getLogger().info("[LogBlock] Version check: " + updater.checkVersion());
 			getLogger().info("[LogBlock] Connecting to " + user + "@" + url + "...");
 			pool = new MySQLConnectionPool(url, user, password);
 			final Connection conn = getConnection();
@@ -151,6 +149,12 @@ public class LogBlock extends JavaPlugin
 				final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
 				pm.addPermission(perm);
 			}
+		try {
+			Metrics metrics = new Metrics(this);
+			metrics.start();
+		} catch (IOException ex) {
+			getLogger().info("Could not start metrics: " + ex.getMessage());
+		}
 	}
 
 	private void registerEvents() {

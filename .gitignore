@@ -4,6 +4,7 @@
 /.settings
 
 # netbeans
+/nbbuild.xml
 /nbproject
 
 # we use maven!
