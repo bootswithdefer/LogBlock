@@ -28,7 +28,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import de.diddiz.util.Block;
 
-public class QueryParams implements Cloneable
+public final class QueryParams implements Cloneable
 {
 	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode(), "chat".hashCode(), "search".hashCode(), "match".hashCode(), "loc".hashCode(), "location".hashCode()));
 	public BlockChangeType bct = BlockChangeType.BOTH;
@@ -136,7 +136,7 @@ public class QueryParams implements Cloneable
 				final String[] blocknames = new String[types.size()];
 				for (int i = 0; i < types.size(); i++)
 					blocknames[i] = materialName(types.get(i).getBlock());
-				title.append(listing(blocknames, ", ", " and ") + " ");
+				title.append(listing(blocknames, ", ", " and ")).append(" ");
 			} else
 				title.append("block ");
 			if (bct == BlockChangeType.CREATED)
@@ -147,33 +147,33 @@ public class QueryParams implements Cloneable
 				title.append("changes ");
 		}
 		if (players.size() > 10)
-			title.append((excludePlayersMode ? "without" : "from") + " many players ");
+			title.append(excludePlayersMode ? "without" : "from").append(" many players ");
 		else if (!players.isEmpty())
-			title.append((excludePlayersMode ? "without" : "from") + " player" + (players.size() != 1 ? "s" : "") + " " + listing(players.toArray(new String[players.size()]), ", ", " and ") + " ");
+			title.append(excludePlayersMode ? "without" : "from").append(" player").append(players.size() != 1 ? "s" : "").append(" ").append(listing(players.toArray(new String[players.size()]), ", ", " and ")).append(" ");
 		if (match != null && match.length() > 0)
-			title.append("matching '" + match + "' ");
+			title.append("matching '").append(match).append("' ");
 		if (before > 0 && since > 0)
-			title.append("between " + since + " and " + before + " minutes ago ");
+			title.append("between ").append(since).append(" and ").append(before).append(" minutes ago ");
 		else if (since > 0)
-			title.append("in the last " + since + " minutes ");
+			title.append("in the last ").append(since).append(" minutes ");
 		else if (before > 0)
-			title.append("more than " + before * -1 + " minutes ago ");
+			title.append("more than ").append(before * -1).append(" minutes ago ");
 		if (loc != null) {
 			if (radius > 0)
-				title.append("within " + radius + " blocks of " + (prepareToolQuery ? "clicked block" : "you") + " ");
+				title.append("within ").append(radius).append(" blocks of ").append(prepareToolQuery ? "clicked block" : "you").append(" ");
 			else if (radius == 0)
-				title.append("at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ() + " ");
+				title.append("at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ()).append(" ");
 		} else if (sel != null)
 			title.append(prepareToolQuery ? "at double chest " : "inside selection ");
 		else if (prepareToolQuery)
 			if (radius > 0)
-				title.append("within " + radius + " blocks of clicked block ");
+				title.append("within ").append(radius).append(" blocks of clicked block ");
 			else if (radius == 0)
 				title.append("at clicked block ");
 		if (world != null && !(sel != null && prepareToolQuery))
-			title.append("in " + friendlyWorldname(world.getName()) + " ");
+			title.append("in ").append(friendlyWorldname(world.getName())).append(" ");
 		if (sum != SummarizationMode.NONE)
-			title.append("summed up by " + (sum == SummarizationMode.TYPES ? "blocks" : "players") + " ");
+			title.append("summed up by ").append(sum == SummarizationMode.TYPES ? "blocks" : "players").append(" ");
 		title.deleteCharAt(title.length() - 1);
 		title.setCharAt(0, String.valueOf(title.charAt(0)).toUpperCase().toCharArray()[0]);
 		return title.toString();
@@ -189,9 +189,9 @@ public class QueryParams implements Cloneable
 			if (match != null && match.length() > 0) {
 				final boolean unlike = match.startsWith("-");
 				if (match.length() > 3 && !unlike || match.length() > 4)
-					where.append("MATCH (message) AGAINST ('" + match + "' IN BOOLEAN MODE) AND ");
+					where.append("MATCH (message) AGAINST ('").append(match).append("' IN BOOLEAN MODE) AND ");
 				else
-					where.append("message " + (unlike ? "NOT " : "") + "LIKE '%" + (unlike ? match.substring(1) : match) + "%' AND ");
+					where.append("message ").append(unlike ? "NOT " : "").append("LIKE '%").append(unlike ? match.substring(1) : match).append("%' AND ");
 			}
 		} else {
 			switch (blockChangeType) {
@@ -199,9 +199,9 @@ public class QueryParams implements Cloneable
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final Block block : types) {
-							where.append("((type = " + block.getBlock() + " OR replaced = " + block.getBlock());
+							where.append("((type = ").append(block.getBlock()).append(" OR replaced = ").append(block.getBlock());
 							if (block.getData() != -1) {
-								where.append(") AND data = " + block.getData());
+								where.append(") AND data = ").append(block.getData());
 							} else {
 								where.append(")");
 							}
@@ -215,9 +215,9 @@ public class QueryParams implements Cloneable
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final Block block : types) {
-							where.append("((type = " + block.getBlock() + " OR replaced = " + block.getBlock());
+							where.append("((type = ").append(block.getBlock()).append(" OR replaced = ").append(block.getBlock());
 							if (block.getData() != -1) {
-								where.append(") AND data = " + block.getData());
+								where.append(") AND data = ").append(block.getData());
 							} else {
 								where.append(")");
 							}
@@ -232,9 +232,9 @@ public class QueryParams implements Cloneable
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final Block block : types) {
-							where.append("((type = " + block.getBlock());
+							where.append("((type = ").append(block.getBlock());
 							if (block.getData() != -1) {
-								where.append(") AND data = " + block.getData());
+								where.append(") AND data = ").append(block.getData());
 							} else {
 								where.append(")");
 							}
@@ -250,9 +250,9 @@ public class QueryParams implements Cloneable
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final Block block : types) {
-							where.append("((replaced = " + block.getBlock());
+							where.append("((replaced = ").append(block.getBlock());
 							if (block.getData() != -1) {
-								where.append(") AND data = " + block.getData());
+								where.append(") AND data = ").append(block.getData());
 							} else {
 								where.append(")");
 							}
@@ -269,9 +269,9 @@ public class QueryParams implements Cloneable
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final Block block : types) {
-							where.append("((itemtype = " + block.getBlock());
+							where.append("((itemtype = ").append(block.getBlock());
 							if (block.getData() != -1) {
-								where.append(") AND itemdata = " + block.getData());
+								where.append(") AND itemdata = ").append(block.getData());
 							} else {
 								where.append(")");
 							}
@@ -284,26 +284,26 @@ public class QueryParams implements Cloneable
 			}
 			if (loc != null) {
 				if (radius == 0)
-					where.append("x = '" + loc.getBlockX() + "' AND y = '" + loc.getBlockY() + "' AND z = '" + loc.getBlockZ() + "' AND ");
+					where.append("x = '").append(loc.getBlockX()).append("' AND y = '").append(loc.getBlockY()).append("' AND z = '").append(loc.getBlockZ()).append("' AND ");
 				else if (radius > 0)
-					where.append("x > '" + (loc.getBlockX() - radius) + "' AND x < '" + (loc.getBlockX() + radius) + "' AND z > '" + (loc.getBlockZ() - radius) + "' AND z < '" + (loc.getBlockZ() + radius) + "' AND ");
+					where.append("x > '").append(loc.getBlockX() - radius).append("' AND x < '").append(loc.getBlockX() + radius).append("' AND z > '").append(loc.getBlockZ() - radius).append("' AND z < '").append(loc.getBlockZ() + radius).append("' AND ");
 			} else if (sel != null)
-				where.append("x >= '" + sel.getMinimumPoint().getBlockX() + "' AND x <= '" + sel.getMaximumPoint().getBlockX() + "' AND y >= '" + sel.getMinimumPoint().getBlockY() + "' AND y <= '" + sel.getMaximumPoint().getBlockY() + "' AND z >= '" + sel.getMinimumPoint().getBlockZ() + "' AND z <= '" + sel.getMaximumPoint().getBlockZ() + "' AND ");
+				where.append("x >= '").append(sel.getMinimumPoint().getBlockX()).append("' AND x <= '").append(sel.getMaximumPoint().getBlockX()).append("' AND y >= '").append(sel.getMinimumPoint().getBlockY()).append("' AND y <= '").append(sel.getMaximumPoint().getBlockY()).append("' AND z >= '").append(sel.getMinimumPoint().getBlockZ()).append("' AND z <= '").append(sel.getMaximumPoint().getBlockZ()).append("' AND ");
 		}
 		if (!players.isEmpty() && sum != SummarizationMode.PLAYERS)
 			if (!excludePlayersMode) {
 				where.append('(');
 				for (final String playerName : players)
-					where.append("playername = '" + playerName + "' OR ");
+					where.append("playername = '").append(playerName).append("' OR ");
 				where.delete(where.length() - 4, where.length());
 				where.append(") AND ");
 			} else
 				for (final String playerName : players)
-					where.append("playername != '" + playerName + "' AND ");
+					where.append("playername != '").append(playerName).append("' AND ");
 		if (since > 0)
-			where.append("date > date_sub(now(), INTERVAL " + since + " MINUTE) AND ");
+			where.append("date > date_sub(now(), INTERVAL ").append(since).append(" MINUTE) AND ");
 		if (before > 0)
-			where.append("date < date_sub(now(), INTERVAL " + before + " MINUTE) AND ");
+			where.append("date < date_sub(now(), INTERVAL ").append(before).append(" MINUTE) AND ");
 		if (where.length() > 6)
 			where.delete(where.length() - 4, where.length());
 		else

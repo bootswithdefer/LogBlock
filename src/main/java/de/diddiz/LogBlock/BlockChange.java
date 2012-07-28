@@ -45,45 +45,45 @@ public class BlockChange implements LookupCacheElement
 	public String toString() {
 		final StringBuilder msg = new StringBuilder();
 		if (date > 0)
-			msg.append(formatter.format(date) + " ");
+			msg.append(formatter.format(date)).append(" ");
 		if (playerName != null)
-			msg.append(playerName + " ");
+			msg.append(playerName).append(" ");
 		if (signtext != null) {
 			final String action = type == 0 ? "destroyed " : "created ";
 			if (!signtext.contains("\0"))
-				msg.append(action + signtext);
+				msg.append(action).append(signtext);
 			else
-				msg.append(action + materialName(type != 0 ? type : replaced) + " [" + signtext.replace("\0", "] [") + "]");
+				msg.append(action).append(materialName(type != 0 ? type : replaced)).append(" [").append(signtext.replace("\0", "] [")).append("]");
 		} else if (type == replaced) {
 			if (type == 0)
 				msg.append("did an unspecified action");
 			else if (ca != null) {
 				if (ca.itemType == 0 || ca.itemAmount == 0)
-					msg.append("looked inside " + materialName(type));
+					msg.append("looked inside ").append(materialName(type));
 				else if (ca.itemAmount < 0)
-					msg.append("took " + -ca.itemAmount + "x " + materialName(ca.itemType, ca.itemData));
+					msg.append("took ").append(-ca.itemAmount).append("x ").append(materialName(ca.itemType, ca.itemData));
 				else
-					msg.append("put in " + ca.itemAmount + "x " + materialName(ca.itemType, ca.itemData));
+					msg.append("put in ").append(ca.itemAmount).append("x ").append(materialName(ca.itemType, ca.itemData));
 			} else if (type == 23 || type == 54 || type == 61 || type == 62)
-				msg.append("opened " + materialName(type));
+				msg.append("opened ").append(materialName(type));
 			else if (type == 64 || type == 71 || type == 96 || type == 107)
-				msg.append((data == 0 ? "opened" : "closed") + " " + materialName(type));
+				msg.append(data == 0 ? "opened" : "closed").append(" ").append(materialName(type));
 			else if (type == 69)
-				msg.append("switched " + materialName(type));
+				msg.append("switched ").append(materialName(type));
 			else if (type == 77)
-				msg.append("pressed " + materialName(type));
+				msg.append("pressed ").append(materialName(type));
 			else if (type == 92)
-				msg.append("ate a piece of " + materialName(type));
+				msg.append("ate a piece of ").append(materialName(type));
 			else if (type == 25 || type == 93 || type == 94)
-				msg.append("changed " + materialName(type));
+				msg.append("changed ").append(materialName(type));
 		} else if (type == 0)
-			msg.append("destroyed " + materialName(replaced, data));
+			msg.append("destroyed ").append(materialName(replaced, data));
 		else if (replaced == 0)
-			msg.append("created " + materialName(type, data));
+			msg.append("created ").append(materialName(type, data));
 		else
-			msg.append("replaced " + materialName(replaced, (byte)0) + " with " + materialName(type, data));
+			msg.append("replaced ").append(materialName(replaced, (byte)0)).append(" with ").append(materialName(type, data));
 		if (loc != null)
-			msg.append(" at " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
+			msg.append(" at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ());
 		return msg.toString();
 	}
 

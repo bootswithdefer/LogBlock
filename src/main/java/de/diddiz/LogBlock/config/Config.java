@@ -126,9 +126,6 @@ public class Config
 				config.set(e.getKey(), e.getValue());
 		logblock.saveConfig();
 		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + getStringIncludingInts(config, "mysql.database");
-		String username = config.getString("mysql.user");
-		if (username == null)
-			username = String.valueOf(config.getInt("mysql.user"));
 		user = getStringIncludingInts(config, "mysql.user");
 		password = getStringIncludingInts(config, "mysql.password");
 		delayBetweenRuns = config.getInt("consumer.delayBetweenRuns", 6);
@@ -201,7 +198,7 @@ public class Config
 		}
 		final List<String> loggedWorlds = config.getStringList("loggedWorlds");
 		worldConfigs = new HashMap<String, WorldConfig>();
-		if (loggedWorlds.size() == 0)
+		if (loggedWorlds.isEmpty())
 			throw new DataFormatException("No worlds configured");
 		for (final String world : loggedWorlds)
 			worldConfigs.put(world, new WorldConfig(new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml")));

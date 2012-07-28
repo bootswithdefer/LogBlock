@@ -81,8 +81,8 @@ public class Utils
 			return entries[0];
 		final StringBuilder builder = new StringBuilder(entries[0]);
 		for (int i = 1; i < len - 1; i++)
-			builder.append(delimiter + entries[i]);
-		builder.append(finalDelimiter + entries[len - 1]);
+			builder.append(delimiter).append(entries[i]);
+		builder.append(finalDelimiter).append(entries[len - 1]);
 		return builder.toString();
 	}
 
@@ -94,8 +94,8 @@ public class Utils
 			return entries.get(0).toString();
 		final StringBuilder builder = new StringBuilder(entries.get(0).toString());
 		for (int i = 1; i < len - 1; i++)
-			builder.append(delimiter + entries.get(i).toString());
-		builder.append(finalDelimiter + entries.get(len - 1).toString());
+			builder.append(delimiter).append(entries.get(i).toString());
+		builder.append(finalDelimiter).append(entries.get(len - 1).toString());
 		return builder.toString();
 	}
 
