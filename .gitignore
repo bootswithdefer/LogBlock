@@ -4,6 +4,7 @@
 /.settings
 
 # netbeans
+/nb-configuration.xml
 /nbbuild.xml
 /nbproject
 

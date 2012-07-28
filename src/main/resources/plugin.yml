@@ -1,9 +1,9 @@
-name: LogBlock
+name: ${project.name}
 version: '1.54'
 author: DiddiZ
 website: http://www.diddiz.de/minecraft/
 main: de.diddiz.LogBlock.LogBlock
-description: Logs blocks.
+description: ${project.description}
 softdepend: [LogBlockQuestioner, WorldEdit]
 commands:
   lb:
