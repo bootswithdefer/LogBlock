@@ -52,6 +52,7 @@ public class Config
 	public static String banPermission;
 	public static Set<Integer> hiddenBlocks;
 	public static Set<String> hiddenPlayers;
+	public static Set<String> ignoredChat;
 
 	public static enum LogKillsLevel
 	{
@@ -89,6 +90,7 @@ public class Config
 		def.put("logging.logPlayerInfo", false);
 		def.put("logging.hiddenPlayers", new ArrayList<String>());
 		def.put("logging.hiddenBlocks", Arrays.asList(0));
+		def.put("logging.ignoredChat", Arrays.asList("/register", "/login"));
 		def.put("rollback.dontRollback", Arrays.asList(10, 11, 46, 51));
 		def.put("rollback.replaceAnyway", Arrays.asList(8, 9, 10, 11, 51));
 		def.put("rollback.maxTime", "2 days");
@@ -153,6 +155,10 @@ public class Config
 				hiddenBlocks.add(mat.getId());
 			else
 				throw new DataFormatException("Not a valid material: '" + blocktype + "'");
+		}
+		ignoredChat = new HashSet<String>();
+		for (String chatCommand : config.getStringList("logging.ignoredChat")) {
+			ignoredChat.add(chatCommand);
 		}
 		dontRollback = new HashSet<Integer>(config.getIntegerList("rollback.dontRollback"));
 		replaceAnyway = new HashSet<Integer>(config.getIntegerList("rollback.replaceAnyway"));

@@ -36,6 +36,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import de.diddiz.LogBlock.config.Config;
 
 public class Consumer extends TimerTask
 {
@@ -249,6 +250,11 @@ public class Consumer extends TimerTask
 	}
 
 	public void queueChat(String player, String message) {
+		for (String ignored : Config.ignoredChat) {
+			if (message.startsWith(ignored)) {
+				return;
+			}
+		}
 		queue.add(new ChatRow(player, message.replace("\\", "\\\\").replace("'", "\\'")));
 	}
 
