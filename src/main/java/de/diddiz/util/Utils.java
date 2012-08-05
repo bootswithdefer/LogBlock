@@ -8,6 +8,8 @@ import java.util.List;
 
 public class Utils
 {
+	public static String newline = System.getProperty("line.separator");
+
 	public static boolean isInt(String str) {
 		try {
 			Integer.parseInt(str);
