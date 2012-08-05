@@ -114,8 +114,11 @@ public class LogBlock extends JavaPlugin
 		}
 		if (noDb)
 			return;
-		if (pm.getPlugin("WorldEdit") == null)
+		if (pm.getPlugin("WorldEdit") == null) {
 			new Exception("WorldEdit is not installed please download and install").printStackTrace();
+			pm.disablePlugin(this);
+			return;
+		}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
 		if (enableAutoClearLog && autoClearLogDelay > 0)
