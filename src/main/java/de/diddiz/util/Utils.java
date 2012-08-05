@@ -1,60 +1,13 @@
 package de.diddiz.util;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class Utils
 {
-	public static String newline = System.getProperty("line.separator");
-
-	public static void download(Logger log, URL url, File file) throws IOException {
-		if (!file.getParentFile().exists())
-			file.getParentFile().mkdir();
-		if (file.exists())
-			file.delete();
-		file.createNewFile();
-		final int size = url.openConnection().getContentLength();
-		log.info("Downloading " + file.getName() + " (" + size / 1024 + "kb) ...");
-		final InputStream in = url.openStream();
-		final OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-		final byte[] buffer = new byte[1024];
-		int len, downloaded = 0, msgs = 0;
-		final long start = System.currentTimeMillis();
-		while ((len = in.read(buffer)) >= 0) {
-			out.write(buffer, 0, len);
-			downloaded += len;
-			if ((int)((System.currentTimeMillis() - start) / 500) > msgs) {
-				log.info((int)(downloaded / (double)size * 100d) + "%");
-				msgs++;
-			}
-		}
-		in.close();
-		out.close();
-		log.info("Download finished");
-	}
-
-	public static String readURL(URL url) throws IOException {
-		final StringBuilder content = new StringBuilder();
-		final BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-		String inputLine;
-		while ((inputLine = in.readLine()) != null)
-			content.append(inputLine);
-		in.close();
-		return content.toString();
-	}
-
 	public static boolean isInt(String str) {
 		try {
 			Integer.parseInt(str);

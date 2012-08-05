@@ -12,12 +12,10 @@ import static de.diddiz.LogBlock.config.Config.toolsByType;
 import static de.diddiz.LogBlock.config.Config.url;
 import static de.diddiz.LogBlock.config.Config.useBukkitScheduler;
 import static de.diddiz.LogBlock.config.Config.user;
-import static de.diddiz.util.Utils.download;
 import static org.bukkit.Bukkit.getPluginManager;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -116,15 +114,8 @@ public class LogBlock extends JavaPlugin
 		}
 		if (noDb)
 			return;
-		if (pm.getPlugin("WorldEdit") == null && !new File("lib/WorldEdit.jar").exists() && !new File("WorldEdit.jar").exists())
-			try {
-				download(getLogger(), new URL("http://diddiz.insane-architects.net/download/WorldEdit.jar"), new File("lib/WorldEdit.jar"));
-				getLogger().info("[LogBlock] You've to restart/reload your server now.");
-				pm.disablePlugin(this);
-				return;
-			} catch (final Exception ex) {
-				getLogger().warning("[LogBlock] Failed to download WorldEdit. You may have to download it manually. You don't have to install it, just place the jar in the lib folder.");
-			}
+		if (pm.getPlugin("WorldEdit") == null)
+			new Exception("WorldEdit is not installed please download and install").printStackTrace();
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
 		if (enableAutoClearLog && autoClearLogDelay > 0)
