@@ -113,7 +113,7 @@ public class Config
 		def.put("tools.tool.canDrop", true);
 		def.put("tools.tool.params", "area 0 all sum none limit 15 desc silent");
 		def.put("tools.tool.mode", "LOOKUP");
-		def.put("tools.tool.permissionDefault", "FALSE");
+		def.put("tools.tool.permissionDefault", "OP");
 		def.put("tools.toolblock.aliases", Arrays.asList("tb"));
 		def.put("tools.toolblock.leftClickBehavior", "TOOL");
 		def.put("tools.toolblock.rightClickBehavior", "BLOCK");
@@ -122,7 +122,7 @@ public class Config
 		def.put("tools.toolblock.canDrop", false);
 		def.put("tools.toolblock.params", "area 0 all sum none limit 15 desc silent");
 		def.put("tools.toolblock.mode", "LOOKUP");
-		def.put("tools.toolblock.permissionDefault", "FALSE");
+		def.put("tools.toolblock.permissionDefault", "OP");
 		for (final Entry<String, Object> e : def.entrySet())
 			if (!config.contains(e.getKey()))
 				config.set(e.getKey(), e.getValue());
