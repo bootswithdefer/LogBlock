@@ -1,5 +1,5 @@
 name: ${project.name}
-version: '1.57'
+version: '1.58'
 author: DiddiZ
 website: http://www.diddiz.de/minecraft/
 main: de.diddiz.LogBlock.LogBlock

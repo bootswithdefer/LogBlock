@@ -197,25 +197,6 @@ class Updater
 			}
 			config.set("version", "1.52");
 		}
-		if (config.getString("version").compareTo("1.57") < 0) {
-			getLogger().info("[LogBlock] Updating tables to 1.57 ...");
-			final Connection conn = logblock.getConnection();
-			try {
-				conn.setAutoCommit(true);
-				for (final WorldConfig wcfg : getLoggedWorlds()) {
-					final Statement st = conn.createStatement();
-					st.execute("ALTER TABLE `" + wcfg.table + "` MODIFY x MEDIUMINT NOT NULL");
-					st.execute("ALTER TABLE `" + wcfg.table + "` MODIFY y SMALLINT NOT NULL");
-					st.execute("ALTER TABLE `" + wcfg.table + "` MODIFY z MEDIUMINT NOT NULL");
-					st.close();
-				}
-				conn.close();
-			} catch (final SQLException ex) {
-				Bukkit.getLogger().log(Level.SEVERE, "[LogBlock Updater] Error: ", ex);
-				return false;
-			}
-			config.set("version", "1.57");
-		}
 		logblock.saveConfig();
 		return true;
 	}
