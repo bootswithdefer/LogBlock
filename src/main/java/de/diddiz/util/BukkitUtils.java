@@ -12,6 +12,7 @@ import java.util.Set;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -38,13 +39,13 @@ public class BukkitUtils
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(73, 74)));
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(75, 76)));
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(93, 94)));
-		
+
 		relativeBreakable = new HashSet<Integer>(2);
 		relativeBreakable.add(63); // Sign
 		relativeBreakable.add(68); // Sign
 		relativeBreakable.add(65); // Ladder
 		relativeBreakable.add(77); // Button
-		
+
 		relativeTopBreakable = new HashSet<Integer>(19);
 		relativeTopBreakable.add(6);   ////Vegetation start////
 		relativeTopBreakable.add(31);  //                  
@@ -66,7 +67,7 @@ public class BukkitUtils
 		relativeTopBreakable.add(93);  // Redstone repeater
 		relativeTopBreakable.add(94);  // Redstone repeater
 	}
-	
+
 	/**
 	 * Returns a list of block locations around the block that are of the type specified by the integer list parameter
 	 * 
@@ -76,15 +77,15 @@ public class BukkitUtils
 	 */
 	public static List<Location> getBlocksNearby(org.bukkit.block.Block block, Set<Integer> type) {
 		ArrayList<Location> blocks = new ArrayList<Location>();
-		if(type.contains(block.getRelative(BlockFace.EAST).getTypeId()))
+		if (type.contains(block.getRelative(BlockFace.EAST).getTypeId()))
 			blocks.add(block.getRelative(BlockFace.EAST).getLocation());
-		if(type.contains(block.getRelative(BlockFace.WEST).getTypeId()))
+		if (type.contains(block.getRelative(BlockFace.WEST).getTypeId()))
 			blocks.add(block.getRelative(BlockFace.WEST).getLocation());
-		if(type.contains(block.getRelative(BlockFace.NORTH).getTypeId()))
+		if (type.contains(block.getRelative(BlockFace.NORTH).getTypeId()))
 			blocks.add(block.getRelative(BlockFace.NORTH).getLocation());
-		if(type.contains(block.getRelative(BlockFace.SOUTH).getTypeId()))
+		if (type.contains(block.getRelative(BlockFace.SOUTH).getTypeId()))
 			blocks.add(block.getRelative(BlockFace.SOUTH).getLocation());
-		if(type.contains(block.getRelative(BlockFace.UP).getTypeId()))
+		if (type.contains(block.getRelative(BlockFace.UP).getTypeId()))
 			blocks.add(block.getRelative(BlockFace.UP).getLocation());
 		return blocks;
 	}
@@ -183,11 +184,11 @@ public class BukkitUtils
 	public static Set<Set<Integer>> getBlockEquivalents() {
 		return blockEquivalents;
 	}
-	
+
 	public static Set<Integer> getRelativeBreakables() {
 		return relativeBreakable;
 	}
-	
+
 	public static Set<Integer> getRelativeTopBreakabls() {
 		return relativeTopBreakable;
 	}
@@ -250,6 +251,20 @@ public class BukkitUtils
 			}
 		}
 		return 0;
+	}
+
+	public static boolean canFall(World world, int x, int y, int z) {
+		Material mat = world.getBlockAt(x, y, z).getType();
+
+		// Air
+		if (mat == Material.AIR) {
+			return true;
+		} else if (mat == Material.WATER || mat == Material.STATIONARY_WATER || mat == Material.LAVA || mat == Material.STATIONARY_LAVA) { // Fluids
+			return true;
+		} else if (mat == Material.SIGN || mat == Material.FIRE) { // Misc.
+			return true;
+		}
+		return false;
 	}
 
 	public static class ItemStackComparator implements Comparator<ItemStack>
