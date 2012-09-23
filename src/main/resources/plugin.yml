@@ -1,15 +1,17 @@
 name: ${project.name}
 version: '1.60'
 author: DiddiZ
-website: http://www.diddiz.de/minecraft/
+authors: [md_5, ammar2]
+website: http://dev.bukkit.org/server-mods/logblock/
 main: de.diddiz.LogBlock.LogBlock
 description: ${project.description}
-softdepend: [LogBlockQuestioner, WorldEdit]
+softdepend: [LogBlockQuestioner]
+depend: [WorldEdit]
 commands:
   lb:
-    description: 'LogBlock commands.'
+    description: 'LogBlock plugin commands'
     usage: 'Usage: /<command> help'
-    aliases: []
+    aliases: [logblock]
 permissions:
   logblock.*:
     description: Gives access to all LogBlock commands
@@ -28,23 +30,23 @@ permissions:
     description: 'Grants access to /lb lookup commands and allows defining custom tool queries'
     default: op
   logblock.rollback:
-    description: 'Allows rollback, redo and write logfiles'
+    description: 'Allows rollback, redo and writing of logfiles'
     default: op
   logblock.clearlog:
-     description: 'Allows to use /lb clearlog'
+     description: 'Allows clearing of the logs via /lb clearlog'
      default: op
   logblock.hide:
-    description: 'Allows to hide from logging'
+    description: 'Allows hiding players from logging'
     default: op
   logblock.tp:
-    description: 'Allows to use /lb tp'
+    description: 'Allows the use of /lb tp'
     default: op
   logblock.me:
-    description: 'Allows to see oneselfs stats with /lb me'
+    description: 'Allows seeing of your own stats with /lb me'
     default: true
   logblock.ignoreRestrictions:
     description: 'Allows to ignore the rollback restrictions rollback.maxTime and rollback.maxArea'
     default: op
   logblock.spawnTools:
-    description: 'Allows to spawn tools'
+    description: 'Allows lookup tools to be spawned'
     default: true
