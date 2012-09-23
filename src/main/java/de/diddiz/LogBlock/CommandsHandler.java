@@ -90,7 +90,7 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.GOLD + "/lb prev|next -- Browse lookup result pages");
 					sender.sendMessage(ChatColor.GOLD + "/lb page -- Shows a specific lookup result page");
 					sender.sendMessage(ChatColor.GOLD + "/lb me -- Displays your stats");
-					sender.sendMessage(ChatColor.GOLD + "Look at github.com/DiddiZ/LogBlock/wiki/Commands for the full commands reference");
+					sender.sendMessage(ChatColor.GOLD + "Look at github.com/LogBlock/LogBlock/wiki/Commands for the full commands reference");
 				} else if (command.equals("params")) {
 					sender.sendMessage(ChatColor.DARK_AQUA + "LogBlock Query Parameters:");
 					sender.sendMessage(ChatColor.GOLD + "Use doublequotes to escape a keyword: world \"world\"");
@@ -537,6 +537,9 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			try {
 				params.needCoords = true;
+				if (params.bct == BlockChangeType.CHESTACCESS || params.types.isEmpty() || Block.inList(params.types, 23) || Block.inList(params.types, 54) || Block.inList(params.types, 61) || Block.inList(params.types, 62)) {
+					params.needChestAccess = true;
+				}
 				params.limit = 1;
 				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
