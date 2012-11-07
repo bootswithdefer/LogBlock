@@ -544,7 +544,6 @@ public final class QueryParams implements Cloneable
 						value += args.get(j) + " ";
 					}
 					
-					continue;
 				} else {
 					// The value ends with a double quote
 					

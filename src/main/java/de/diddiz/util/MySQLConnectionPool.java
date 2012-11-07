@@ -28,10 +28,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class MySQLConnectionPool implements Closeable
 {
-	private final static int poolsize = 10;
+	private final static int poolSize = 10;
 	private final static long timeToLive = 300000;
 	private final Vector<JDCConnection> connections;
-	private final ConnectionReaper reaper;
 	private final String url, user, password;
 	private final Lock lock = new ReentrantLock();
 
@@ -40,9 +39,9 @@ public class MySQLConnectionPool implements Closeable
 		this.url = url;
 		this.user = user;
 		this.password = password;
-		connections = new Vector<JDCConnection>(poolsize);
-		reaper = new ConnectionReaper();
-		reaper.start();
+		connections = new Vector<JDCConnection>(poolSize);
+        ConnectionReaper reaper = new ConnectionReaper();
+		new Thread(reaper, "MySQL Connection Reaper Thread - LogBlock").start();
 	}
 
 	@Override
@@ -95,7 +94,7 @@ public class MySQLConnectionPool implements Closeable
 		lock.unlock();
 	}
 
-	private class ConnectionReaper extends Thread
+	private class ConnectionReaper implements Runnable
 	{
 		@Override
 		public void run() {
@@ -112,14 +111,14 @@ public class MySQLConnectionPool implements Closeable
 	private class JDCConnection implements Connection
 	{
 		private final Connection conn;
-		private boolean inuse;
+		private boolean inUse;
 		private long timestamp;
 		private int networkTimeout;
 		private String schema;
 
 		JDCConnection(Connection conn) {
 			this.conn = conn;
-			inuse = false;
+			inUse = false;
 			timestamp = 0;
 			networkTimeout = 30;
 			schema = "default";
@@ -132,12 +131,12 @@ public class MySQLConnectionPool implements Closeable
 
 		@Override
 		public void close() {
-			inuse = false;
+			inUse = false;
 			try {
 				if (!conn.getAutoCommit())
 					conn.setAutoCommit(true);
 			} catch (final SQLException ex) {
-				connections.remove(conn);
+				connections.remove(this);
 				terminate();
 			}
 		}
@@ -407,7 +406,7 @@ public class MySQLConnectionPool implements Closeable
 		}
 
 		boolean inUse() {
-			return inuse;
+			return inUse;
 		}
 
 		boolean isValid() {
@@ -419,9 +418,9 @@ public class MySQLConnectionPool implements Closeable
 		}
 
 		synchronized boolean lease() {
-			if (inuse)
+			if (inUse)
 				return false;
-			inuse = true;
+			inUse = true;
 			timestamp = System.currentTimeMillis();
 			return true;
 		}

@@ -118,10 +118,10 @@ public class Utils
 		if (s == null || s.length == 0)
 			return "";
 		final int len = s.length;
-		final StringBuffer buffer = new StringBuffer(s[0]);
+		final StringBuilder builder = new StringBuilder(s[0]);
 		for (int i = 1; i < len; i++)
-			buffer.append(delimiter).append(s[i]);
-		return buffer.toString();
+			builder.append(delimiter).append(s[i]);
+		return builder.toString();
 	}
 
 	public static class ExtensionFilenameFilter implements FilenameFilter

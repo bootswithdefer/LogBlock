@@ -38,7 +38,7 @@ public class DumpedLogImporter implements Runnable
 				for (final File sqlFile : imports) {
 					getLogger().info("Trying to import " + sqlFile.getName() + " ...");
 					final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
-					String line = null;
+					String line;
 					while ((line = reader.readLine()) != null)
 						try {
 							st.execute(line);
