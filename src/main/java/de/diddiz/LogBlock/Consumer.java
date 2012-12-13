@@ -1,32 +1,6 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.LogBlock.config.Config.forceToProcessAtLeast;
-import static de.diddiz.LogBlock.config.Config.getWorldConfig;
-import static de.diddiz.LogBlock.config.Config.hiddenBlocks;
-import static de.diddiz.LogBlock.config.Config.hiddenPlayers;
-import static de.diddiz.LogBlock.config.Config.isLogged;
-import static de.diddiz.LogBlock.config.Config.timePerRun;
-import static de.diddiz.util.BukkitUtils.compressInventory;
-import static de.diddiz.util.BukkitUtils.entityName;
-import static de.diddiz.util.BukkitUtils.rawData;
-import static org.bukkit.Bukkit.getLogger;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
+import de.diddiz.LogBlock.config.Config;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
@@ -36,7 +10,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import de.diddiz.LogBlock.config.Config;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.sql.*;
+import java.sql.Date;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+
+import static de.diddiz.LogBlock.config.Config.*;
+import static de.diddiz.util.BukkitUtils.*;
+import static org.bukkit.Bukkit.getLogger;
 
 public class Consumer extends TimerTask
 {
@@ -255,7 +243,7 @@ public class Consumer extends TimerTask
 				return;
 			}
 		}
-		queue.add(new ChatRow(player, message.replace("\\", "\\\\").replace("'", "\\'")));
+		queue.add(new ChatRow(player, message));
 	}
 
 	public void queueJoin(Player player) {
@@ -286,8 +274,8 @@ public class Consumer extends TimerTask
 				final Row r = queue.poll();
 				if (r == null)
 					continue;
-				for (final String player : r.getPlayers())
-					if (!playerIds.containsKey(player))
+				for (final String player : r.getPlayers()) {
+					if (!playerIds.containsKey(player)) {
 						if (!addPlayer(state, player)) {
 							if (!failedPlayers.contains(player)) {
 								failedPlayers.add(player);
@@ -295,13 +283,27 @@ public class Consumer extends TimerTask
 							}
 							continue process;
 						}
-				for (final String insert : r.getInserts())
-					try {
-						state.execute(insert);
-					} catch (final SQLException ex) {
-						getLogger().log(Level.SEVERE, "[Consumer] SQL exception on " + insert + ": ", ex);
-						break process;
-					}
+                    }
+                }
+                if (r instanceof PreparedStatementRow) {
+                    PreparedStatementRow PSRow = (PreparedStatementRow) r;
+                    PSRow.setConnection(conn);
+                    try {
+                        PSRow.executeStatements();
+                    } catch (final SQLException ex) {
+                        getLogger().log(Level.SEVERE, "[Consumer] SQL exception on insertion: ", ex);
+                        break;
+                    }
+                } else {
+                    for (final String insert : r.getInserts())
+                        try {
+                            state.execute(insert);
+                        } catch (final SQLException ex) {
+                            getLogger().log(Level.SEVERE, "[Consumer] SQL exception on " + insert + ": ", ex);
+                            break process;
+                        }
+                }
+
 				count++;
 			}
 			conn.commit();
@@ -372,7 +374,7 @@ public class Consumer extends TimerTask
 	private void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
 		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || typeBefore > 255 || typeAfter > 255 || hiddenPlayers.contains(playerName) || !isLogged(loc.getWorld()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter))
 			return;
-		queue.add(new BlockRow(loc, playerName.replaceAll("[^a-zA-Z0-9_]", ""), typeBefore, typeAfter, data, signtext != null ? signtext.replace("\\", "\\\\").replace("'", "\\'") : null, ca));
+		queue.add(new BlockRow(loc, playerName.replaceAll("[^a-zA-Z0-9_]", ""), typeBefore, typeAfter, data, signtext, ca));
 	}
 
 	private String playerID(String playerName) {
@@ -384,6 +386,13 @@ public class Consumer extends TimerTask
 		return "(SELECT playerid FROM `lb-players` WHERE playername = '" + playerName + "')";
 	}
 
+    private Integer playerIDAsInt(String playerName) {
+        if (playerName == null) {
+            return null;
+        }
+        return playerIds.get(playerName);
+    }
+
 	private static interface Row
 	{
 		String[] getInserts();
@@ -391,8 +400,18 @@ public class Consumer extends TimerTask
 		String[] getPlayers();
 	}
 
-	private class BlockRow extends BlockChange implements Row
+    private interface PreparedStatementRow extends Row
+    {
+
+        abstract void setConnection(Connection connection);
+        abstract void executeStatements() throws SQLException;
+
+    }
+
+	private class BlockRow extends BlockChange implements PreparedStatementRow
 	{
+        private Connection connection;
+
 		public BlockRow(Location loc, String playerName, int replaced, int type, byte data, String signtext, ChestAccess ca) {
 			super(System.currentTimeMillis() / 1000, loc, playerName, replaced, type, data, signtext, ca);
 		}
@@ -413,6 +432,45 @@ public class Consumer extends TimerTask
 		public String[] getPlayers() {
 			return new String[]{playerName};
 		}
+
+        @Override
+        public void setConnection(Connection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public void executeStatements() throws SQLException {
+            final String table = getWorldConfig(loc.getWorld()).table;
+
+            PreparedStatement ps1 = connection.prepareStatement("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES(?, " + playerID(playerName) + ", ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+            ps1.setDate(1, new Date(date));
+            ps1.setInt(2, replaced);
+            ps1.setInt(3, type);
+            ps1.setInt(4, data);
+            ps1.setInt(5, loc.getBlockX());
+            ps1.setInt(6, loc.getBlockY());
+            ps1.setInt(7, loc.getBlockZ());
+            ps1.executeUpdate();
+
+            int id;
+            ResultSet rs = ps1.getGeneratedKeys();
+            rs.next();
+            id = rs.getInt(1);
+
+            if (signtext != null) {
+                PreparedStatement ps = connection.prepareStatement("INSERT INTO `" + table + "-sign` (signtext, id) VALUES(?, ?)");
+                ps.setString(1, signtext);
+                ps.setInt(2, id);
+                ps.executeUpdate();
+            } else if (ca != null) {
+                PreparedStatement ps = connection.prepareStatement("INSERT INTO `" + table + "-chest` (itemtype, itemamount, itemdata, id) values (?, ?, ?, ?)");
+                ps.setInt(1, ca.itemType);
+                ps.setInt(2, ca.itemAmount);
+                ps.setInt(3, ca.itemData);
+                ps.setInt(4, id);
+                ps.executeUpdate();
+            }
+        }
 	}
 
 	private class KillRow implements Row
@@ -441,8 +499,10 @@ public class Consumer extends TimerTask
 		}
 	}
 
-	private class ChatRow extends ChatMessage implements Row
+	private class ChatRow extends ChatMessage implements PreparedStatementRow
 	{
+        private Connection connection;
+
 		ChatRow(String player, String message) {
 			super(player, message);
 		}
@@ -456,6 +516,35 @@ public class Consumer extends TimerTask
 		public String[] getPlayers() {
 			return new String[]{playerName};
 		}
+
+        @Override
+        public void setConnection(Connection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public void executeStatements() throws SQLException {
+            boolean noID = false;
+            Integer id;
+
+            String sql = "INSERT INTO `lb-chat` (date, playerid, message) VALUES (?, ";
+            if ((id = playerIDAsInt(playerName)) == null) {
+                noID = true;
+                sql += playerID(playerName) + ", ";
+            } else {
+                sql += "?, ";
+            }
+            sql += "?)";
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setDate(1, new Date(date));
+            if (!noID) {
+                ps.setInt(2, id);
+                ps.setString(3, message);
+            } else {
+                ps.setString(2, message);
+            }
+            ps.execute();
+        }
 	}
 
 	private class PlayerJoinRow implements Row
