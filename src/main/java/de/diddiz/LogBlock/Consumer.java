@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.*;
-import java.sql.Date;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Lock;
@@ -413,8 +412,8 @@ public class Consumer extends TimerTask
         private Connection connection;
 
 		public BlockRow(Location loc, String playerName, int replaced, int type, byte data, String signtext, ChestAccess ca) {
-			super(System.currentTimeMillis() / 1000, loc, playerName, replaced, type, data, signtext, ca);
-		}
+            super(System.currentTimeMillis() / 1000, loc, playerName, replaced, type, data, signtext, ca);
+        }
 
 		@Override
 		public String[] getInserts() {
@@ -443,7 +442,7 @@ public class Consumer extends TimerTask
             final String table = getWorldConfig(loc.getWorld()).table;
 
             PreparedStatement ps1 = connection.prepareStatement("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES(?, " + playerID(playerName) + ", ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
-            ps1.setDate(1, new Date(date));
+            ps1.setTimestamp(1, new Timestamp(date * 1000));
             ps1.setInt(2, replaced);
             ps1.setInt(3, type);
             ps1.setInt(4, data);
@@ -536,7 +535,7 @@ public class Consumer extends TimerTask
             }
             sql += "?)";
             PreparedStatement ps = connection.prepareStatement(sql);
-            ps.setDate(1, new Date(date));
+            ps.setTimestamp(1, new Timestamp(date * 1000));
             if (!noID) {
                 ps.setInt(2, id);
                 ps.setString(3, message);
