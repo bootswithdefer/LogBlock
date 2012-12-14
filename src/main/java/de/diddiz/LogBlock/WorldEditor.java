@@ -1,11 +1,19 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.LogBlock.config.Config.dontRollback;
-import static de.diddiz.LogBlock.config.Config.replaceAnyway;
-import static de.diddiz.util.BukkitUtils.equalTypes;
-import static de.diddiz.util.BukkitUtils.modifyContainer;
-import static de.diddiz.util.MaterialName.materialName;
-import static org.bukkit.Bukkit.getLogger;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Sign;
+import org.bukkit.command.CommandSender;
+import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Bed;
+import org.bukkit.material.PistonBaseMaterial;
+import org.bukkit.material.PistonExtensionMaterial;
+
 import java.io.File;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
@@ -14,23 +22,24 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
-import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Bed;
-import org.bukkit.material.PistonBaseMaterial;
-import org.bukkit.material.PistonExtensionMaterial;
+
+import static de.diddiz.LogBlock.config.Config.dontRollback;
+import static de.diddiz.LogBlock.config.Config.replaceAnyway;
+import static de.diddiz.util.BukkitUtils.equalTypes;
+import static de.diddiz.util.BukkitUtils.modifyContainer;
+import static de.diddiz.util.MaterialName.materialName;
+import static org.bukkit.Bukkit.getLogger;
 
 public class WorldEditor implements Runnable
 {
 	private final LogBlock logblock;
 	private final Queue<Edit> edits = new LinkedBlockingQueue<Edit>();
 	private final World world;
+
+    /**
+     * The player responsible for editing the world, used to report progress
+     */
+    private CommandSender sender;
 	private int taskID;
 	private int successes = 0, blacklistCollisions = 0;
 	private long elapsedTime = 0;
@@ -57,6 +66,11 @@ public class WorldEditor implements Runnable
 		return blacklistCollisions;
 	}
 
+
+    public void setSender(CommandSender sender) {
+        this.sender = sender;
+    }
+
 	public void queueEdit(int x, int y, int z, int replaced, int type, byte data, String signtext, short itemType, short itemAmount, byte itemData) {
 		edits.add(new Edit(0, new Location(world, x, y, z), null, replaced, type, data, signtext, new ChestAccess(itemType, itemAmount, itemData)));
 	}
@@ -82,6 +96,7 @@ public class WorldEditor implements Runnable
 	public synchronized void run() {
 		final List<WorldEditorException> errorList = new ArrayList<WorldEditorException>();
 		int counter = 0;
+        float size = edits.size();
 		while (!edits.isEmpty() && counter < 100) {
 			try {
 				switch (edits.poll().perform()) {
@@ -98,6 +113,13 @@ public class WorldEditor implements Runnable
 				getLogger().log(Level.WARNING, "[WorldEditor] Exeption: ", ex);
 			}
 			counter++;
+            if (sender != null) {
+                float percentage = ((size - edits.size()) / size) * 100.0F;
+                if (percentage % 20 == 0) {
+                    sender.sendMessage(ChatColor.GOLD + "[LogBlock]" + ChatColor.YELLOW + " Rollback progress: " + percentage + "%" +
+                            " Blocks edited: " + counter);
+                }
+            }
 		}
 		if (edits.isEmpty()) {
 			logblock.getServer().getScheduler().cancelTask(taskID);

@@ -1,25 +1,22 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.LogBlock.Session.getSession;
-import static de.diddiz.LogBlock.config.Config.askClearLogAfterRollback;
-import static de.diddiz.LogBlock.config.Config.askClearLogs;
-import static de.diddiz.LogBlock.config.Config.askRedos;
-import static de.diddiz.LogBlock.config.Config.askRollbacks;
-import static de.diddiz.LogBlock.config.Config.defaultTime;
-import static de.diddiz.LogBlock.config.Config.dumpDeletedLog;
-import static de.diddiz.LogBlock.config.Config.getWorldConfig;
-import static de.diddiz.LogBlock.config.Config.linesLimit;
-import static de.diddiz.LogBlock.config.Config.linesPerPage;
-import static de.diddiz.LogBlock.config.Config.rollbackMaxArea;
-import static de.diddiz.LogBlock.config.Config.rollbackMaxTime;
-import static de.diddiz.LogBlock.config.Config.toolsByName;
-import static de.diddiz.LogBlock.config.Config.toolsByType;
-import static de.diddiz.util.BukkitUtils.giveTool;
-import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
-import static de.diddiz.util.Utils.isInt;
-import static de.diddiz.util.Utils.listing;
-import static org.bukkit.Bukkit.getLogger;
-import static org.bukkit.Bukkit.getServer;
+import de.diddiz.LogBlock.QueryParams.BlockChangeType;
+import de.diddiz.LogBlock.QueryParams.Order;
+import de.diddiz.LogBlock.QueryParams.SummarizationMode;
+import de.diddiz.LogBlock.config.Config;
+import de.diddiz.LogBlock.config.WorldConfig;
+import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
+import de.diddiz.util.Block;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitScheduler;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
@@ -32,22 +29,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitScheduler;
-import de.diddiz.LogBlock.QueryParams.BlockChangeType;
-import de.diddiz.LogBlock.QueryParams.Order;
-import de.diddiz.LogBlock.QueryParams.SummarizationMode;
-import de.diddiz.LogBlock.config.Config;
-import de.diddiz.LogBlock.config.WorldConfig;
-import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
-import de.diddiz.util.Block;
+
+import static de.diddiz.LogBlock.Session.getSession;
+import static de.diddiz.LogBlock.config.Config.*;
+import static de.diddiz.util.BukkitUtils.giveTool;
+import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
+import static de.diddiz.util.Utils.isInt;
+import static de.diddiz.util.Utils.listing;
+import static org.bukkit.Bukkit.getLogger;
+import static org.bukkit.Bukkit.getServer;
 
 public class CommandsHandler implements CommandExecutor
 {
@@ -616,10 +606,14 @@ public class CommandsHandler implements CommandExecutor
 				if (!params.silent)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 				rs = state.executeQuery(params.getQuery());
-				final WorldEditor editor = new WorldEditor(logblock, params.world);
+                final WorldEditor editor = new WorldEditor(logblock, params.world);
+
 				while (rs.next())
 					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
 				final int changes = editor.getSize();
+                if (changes > 10000) {
+                    editor.setSender(sender);
+                }
 				if (!params.silent)
 					sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
 				if (changes == 0) {
