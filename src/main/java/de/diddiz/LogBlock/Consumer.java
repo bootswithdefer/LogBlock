@@ -353,7 +353,7 @@ public class Consumer extends TimerTask
 	}
 
 	static boolean hide(Player player) {
-		final String playerName = player.getName();
+		final String playerName = player.getName().toLowerCase();
 		if (hiddenPlayers.contains(playerName)) {
 			hiddenPlayers.remove(playerName);
 			return false;
@@ -389,7 +389,7 @@ public class Consumer extends TimerTask
 			ca = event.getChestAccess();
 		}
 		// Do this last so LogBlock still has final say in what is being added
-		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || typeBefore > 255 || typeAfter > 255 || hiddenPlayers.contains(playerName) || !isLogged(loc.getWorld()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter)) return;
+		if (playerName == null || loc == null || typeBefore < 0 || typeAfter < 0 || typeBefore > 255 || typeAfter > 255 || hiddenPlayers.contains(playerName.toLowerCase()) || !isLogged(loc.getWorld()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter)) return;
 		queue.add(new BlockRow(loc, playerName.replaceAll("[^a-zA-Z0-9_]", ""), typeBefore, typeAfter, data, signtext, ca));
 	}
 

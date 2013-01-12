@@ -146,7 +146,7 @@ public class Config
 		}
 		hiddenPlayers = new HashSet<String>();
 		for (final String playerName : config.getStringList("logging.hiddenPlayers"))
-			hiddenPlayers.add(playerName);
+			hiddenPlayers.add(playerName.toLowerCase().trim());
 		hiddenBlocks = new HashSet<Integer>();
 		for (final Object blocktype : config.getList("logging.hiddenBlocks")) {
 			final Material mat = Material.matchMaterial(String.valueOf(blocktype));
