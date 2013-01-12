@@ -1,18 +1,17 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.LogBlock.config.Config.askRollbackAfterBan;
-import static de.diddiz.LogBlock.config.Config.autoClearLogDelay;
-import static de.diddiz.LogBlock.config.Config.delayBetweenRuns;
-import static de.diddiz.LogBlock.config.Config.enableAutoClearLog;
-import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.LogBlock.config.Config.load;
-import static de.diddiz.LogBlock.config.Config.logPlayerInfo;
-import static de.diddiz.LogBlock.config.Config.password;
-import static de.diddiz.LogBlock.config.Config.toolsByType;
-import static de.diddiz.LogBlock.config.Config.url;
-import static de.diddiz.LogBlock.config.Config.useBukkitScheduler;
-import static de.diddiz.LogBlock.config.Config.user;
-import static org.bukkit.Bukkit.getPluginManager;
+import de.diddiz.LogBlock.config.Config;
+import de.diddiz.LogBlock.listeners.*;
+import de.diddiz.util.MySQLConnectionPool;
+import de.diddiz.worldedit.LogBlockEditSessionFactory;
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Connection;
@@ -23,34 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.logging.Level;
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.permissions.Permission;
-import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.java.JavaPlugin;
-import de.diddiz.LogBlock.config.Config;
-import de.diddiz.LogBlock.listeners.BanListener;
-import de.diddiz.LogBlock.listeners.BlockBreakLogging;
-import de.diddiz.LogBlock.listeners.BlockBurnLogging;
-import de.diddiz.LogBlock.listeners.BlockPlaceLogging;
-import de.diddiz.LogBlock.listeners.ChatLogging;
-import de.diddiz.LogBlock.listeners.ChestAccessLogging;
-import de.diddiz.LogBlock.listeners.EndermenLogging;
-import de.diddiz.LogBlock.listeners.ExplosionLogging;
-import de.diddiz.LogBlock.listeners.FluidFlowLogging;
-import de.diddiz.LogBlock.listeners.InteractLogging;
-import de.diddiz.LogBlock.listeners.KillLogging;
-import de.diddiz.LogBlock.listeners.LeavesDecayLogging;
-import de.diddiz.LogBlock.listeners.PlayerInfoLogging;
-import de.diddiz.LogBlock.listeners.SignChangeLogging;
-import de.diddiz.LogBlock.listeners.SnowFadeLogging;
-import de.diddiz.LogBlock.listeners.SnowFormLogging;
-import de.diddiz.LogBlock.listeners.StructureGrowLogging;
-import de.diddiz.LogBlock.listeners.ToolListener;
-import de.diddiz.LogBlock.listeners.WitherLogging;
-import de.diddiz.util.MySQLConnectionPool;
+
+import static de.diddiz.LogBlock.config.Config.*;
+import static org.bukkit.Bukkit.getPluginManager;
 
 public class LogBlock extends JavaPlugin
 {
@@ -118,6 +92,8 @@ public class LogBlock extends JavaPlugin
 			new Exception("WorldEdit is not installed please download and install").printStackTrace();
 			pm.disablePlugin(this);
 			return;
+		} else {
+			LogBlockEditSessionFactory.initialize();
 		}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);

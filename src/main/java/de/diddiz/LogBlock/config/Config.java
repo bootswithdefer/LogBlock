@@ -228,6 +228,11 @@ public class Config
 		return wcfg != null && wcfg.isLogging(l);
 	}
 
+	public static boolean isLogging(String worldName, Logging l) {
+		final WorldConfig wcfg = worldConfigs.get(worldName);
+		return wcfg != null && wcfg.isLogging(l);
+	}
+
 	public static boolean isLogged(World world) {
 		return worldConfigs.containsKey(world.getName());
 	}
