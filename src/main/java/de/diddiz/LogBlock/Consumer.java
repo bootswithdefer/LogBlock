@@ -458,33 +458,61 @@ public class Consumer extends TimerTask
 		public void executeStatements() throws SQLException {
 			final String table = getWorldConfig(loc.getWorld()).table;
 
-			PreparedStatement ps1 = connection.prepareStatement("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES(?, " + playerID(playerName) + ", ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
-			ps1.setTimestamp(1, new Timestamp(date * 1000));
-			ps1.setInt(2, replaced);
-			ps1.setInt(3, type);
-			ps1.setInt(4, data);
-			ps1.setInt(5, loc.getBlockX());
-			ps1.setInt(6, loc.getBlockY());
-			ps1.setInt(7, loc.getBlockZ());
-			ps1.executeUpdate();
-
-			int id;
-			ResultSet rs = ps1.getGeneratedKeys();
-			rs.next();
-			id = rs.getInt(1);
-
-			if (signtext != null) {
-				PreparedStatement ps = connection.prepareStatement("INSERT INTO `" + table + "-sign` (signtext, id) VALUES(?, ?)");
-				ps.setString(1, signtext);
-				ps.setInt(2, id);
-				ps.executeUpdate();
-			} else if (ca != null) {
-				PreparedStatement ps = connection.prepareStatement("INSERT INTO `" + table + "-chest` (itemtype, itemamount, itemdata, id) values (?, ?, ?, ?)");
-				ps.setInt(1, ca.itemType);
-				ps.setInt(2, ca.itemAmount);
-				ps.setInt(3, ca.itemData);
-				ps.setInt(4, id);
-				ps.executeUpdate();
+			PreparedStatement ps1 = null;
+			PreparedStatement ps = null;
+			try {
+				ps1 = connection.prepareStatement("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES(?, " + playerID(playerName) + ", ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+				ps1.setTimestamp(1, new Timestamp(date * 1000));
+				ps1.setInt(2, replaced);
+				ps1.setInt(3, type);
+				ps1.setInt(4, data);
+				ps1.setInt(5, loc.getBlockX());
+				ps1.setInt(6, loc.getBlockY());
+				ps1.setInt(7, loc.getBlockZ());
+				ps1.executeUpdate();
+	
+				int id;
+				ResultSet rs = ps1.getGeneratedKeys();
+				rs.next();
+				id = rs.getInt(1);
+	
+				if (signtext != null) {
+					ps = connection.prepareStatement("INSERT INTO `" + table + "-sign` (signtext, id) VALUES(?, ?)");
+					ps.setString(1, signtext);
+					ps.setInt(2, id);
+					ps.executeUpdate();
+				} else if (ca != null) {
+					ps = connection.prepareStatement("INSERT INTO `" + table + "-chest` (itemtype, itemamount, itemdata, id) values (?, ?, ?, ?)");
+					ps.setInt(1, ca.itemType);
+					ps.setInt(2, ca.itemAmount);
+					ps.setInt(3, ca.itemData);
+					ps.setInt(4, id);
+					ps.executeUpdate();
+				}
+			}
+			// we intentionally do not catch SQLException, it is thrown to the caller
+			finally {
+				// individual try/catch here, though ugly, prevents resource leaks
+				if( ps1 != null ) {
+					try {
+						ps1.close();
+					}
+					catch(SQLException e) {
+						// ideally should log to logger, none is available in this class
+						// at the time of this writing, so I'll leave that to the plugin
+						// maintainers to integrate if they wish
+						e.printStackTrace();
+					}
+				}
+				
+				if( ps != null ) {
+					try {
+						ps.close();
+					}
+					catch(SQLException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 	}
@@ -551,15 +579,31 @@ public class Consumer extends TimerTask
 				sql += "?, ";
 			}
 			sql += "?)";
-			PreparedStatement ps = connection.prepareStatement(sql);
-			ps.setTimestamp(1, new Timestamp(date * 1000));
-			if (!noID) {
-				ps.setInt(2, id);
-				ps.setString(3, message);
-			} else {
-				ps.setString(2, message);
+			
+			PreparedStatement ps = null;
+			try {
+				ps = connection.prepareStatement(sql);
+				ps.setTimestamp(1, new Timestamp(date * 1000));
+				if (!noID) {
+					ps.setInt(2, id);
+					ps.setString(3, message);
+				} else {
+					ps.setString(2, message);
+				}
+				ps.execute();
 			}
-			ps.execute();
+			// we intentionally do not catch SQLException, it is thrown to the caller
+			finally {
+				if( ps != null ) {
+					try {
+						ps.close();
+					}
+					catch(SQLException e) {
+						// should print to a Logger instead if one is ever added to this class
+						e.printStackTrace();
+					}
+				}
+			}
 		}
 	}
 
