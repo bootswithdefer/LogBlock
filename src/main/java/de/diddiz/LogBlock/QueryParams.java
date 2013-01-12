@@ -1,26 +1,7 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.LogBlock.Session.getSession;
-import static de.diddiz.LogBlock.config.Config.defaultDist;
-import static de.diddiz.LogBlock.config.Config.defaultTime;
-import static de.diddiz.LogBlock.config.Config.getWorldConfig;
-import static de.diddiz.LogBlock.config.Config.isLogged;
-import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.util.BukkitUtils.friendlyWorldname;
-import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
-import static de.diddiz.util.MaterialName.materialName;
-import static de.diddiz.util.Utils.isInt;
-import static de.diddiz.util.Utils.join;
-import static de.diddiz.util.Utils.listing;
-import static de.diddiz.util.Utils.parseTimeSpec;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
-import com.sk89q.worldedit.bukkit.selections.Selection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import de.diddiz.util.Block;
+import de.diddiz.worldedit.RegionContainer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -28,8 +9,18 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import de.diddiz.LogBlock.config.Config;
-import de.diddiz.util.Block;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static de.diddiz.LogBlock.Session.getSession;
+import static de.diddiz.LogBlock.config.Config.*;
+import static de.diddiz.util.BukkitUtils.friendlyWorldname;
+import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
+import static de.diddiz.util.MaterialName.materialName;
+import static de.diddiz.util.Utils.*;
 
 public final class QueryParams implements Cloneable
 {
@@ -42,7 +33,7 @@ public final class QueryParams implements Cloneable
 	public List<String> killers = new ArrayList<String>();
 	public List<String> victims = new ArrayList<String>();
 	public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, prepareToolQuery = false, silent = false;
-	public Selection sel = null;
+	public RegionContainer sel = null;
 	public SummarizationMode sum = SummarizationMode.NONE;
 	public List<Block> types = new ArrayList<Block>();
 	public World world = null;
@@ -285,7 +276,9 @@ public final class QueryParams implements Cloneable
 				else if (radius > 0)
 					where.append("x > '").append(loc.getBlockX() - radius).append("' AND x < '").append(loc.getBlockX() + radius).append("' AND y > '").append(loc.getBlockY() - radius).append("' AND y < '").append(loc.getBlockY() + radius).append("' AND z > '").append(loc.getBlockZ() - radius).append("' AND z < '").append(loc.getBlockZ() + radius).append("' AND ");
 			} else if (sel != null)
-				where.append("x >= '").append(sel.getMinimumPoint().getBlockX()).append("' AND x <= '").append(sel.getMaximumPoint().getBlockX()).append("' AND y >= '").append(sel.getMinimumPoint().getBlockY()).append("' AND y <= '").append(sel.getMaximumPoint().getBlockY()).append("' AND z >= '").append(sel.getMinimumPoint().getBlockZ()).append("' AND z <= '").append(sel.getMaximumPoint().getBlockZ()).append("' AND ");
+				where.append("x >= '").append(sel.getSelection().getMinimumPoint().getBlockX()).append("' AND x <= '").append(sel.getSelection().getMaximumPoint().getBlockX())
+						.append("' AND y >= '").append(sel.getSelection().getMinimumPoint().getBlockY()).append("' AND y <= '").append(sel.getSelection().getMaximumPoint().getBlockY())
+						.append("' AND z >= '").append(sel.getSelection().getMinimumPoint().getBlockZ()).append("' AND z <= '").append(sel.getSelection().getMaximumPoint().getBlockZ()).append("' AND ");
 		} else {
 			switch (blockChangeType) {
 				case ALL:
@@ -381,7 +374,9 @@ public final class QueryParams implements Cloneable
 				else if (radius > 0)
 					where.append("x > '").append(loc.getBlockX() - radius).append("' AND x < '").append(loc.getBlockX() + radius).append("' AND y > '").append(loc.getBlockY() - radius).append("' AND y < '").append(loc.getBlockY() + radius).append("' AND z > '").append(loc.getBlockZ() - radius).append("' AND z < '").append(loc.getBlockZ() + radius).append("' AND ");
 			} else if (sel != null)
-				where.append("x >= '").append(sel.getMinimumPoint().getBlockX()).append("' AND x <= '").append(sel.getMaximumPoint().getBlockX()).append("' AND y >= '").append(sel.getMinimumPoint().getBlockY()).append("' AND y <= '").append(sel.getMaximumPoint().getBlockY()).append("' AND z >= '").append(sel.getMinimumPoint().getBlockZ()).append("' AND z <= '").append(sel.getMaximumPoint().getBlockZ()).append("' AND ");
+				where.append("x >= '").append(sel.getSelection().getMinimumPoint().getBlockX()).append("' AND x <= '").append(sel.getSelection().getMaximumPoint().getBlockX())
+						.append("' AND y >= '").append(sel.getSelection().getMinimumPoint().getBlockY()).append("' AND y <= '").append(sel.getSelection().getMaximumPoint().getBlockY()).
+						append("' AND z >= '").append(sel.getSelection().getMinimumPoint().getBlockZ()).append("' AND z <= '").append(sel.getSelection().getMaximumPoint().getBlockZ()).append("' AND ");
 		}
 		if (!players.isEmpty() && sum != SummarizationMode.PLAYERS && blockChangeType != BlockChangeType.KILLS)
 			if (!excludePlayersMode) {
@@ -526,14 +521,11 @@ public final class QueryParams implements Cloneable
 				if (player == null)
 					throw new IllegalArgumentException("You have to ba a player to use selection");
 				final Plugin we = player.getServer().getPluginManager().getPlugin("WorldEdit");
-				if (we == null)
-					throw new IllegalArgumentException("WorldEdit plugin not found");
-				final Selection selection = ((WorldEditPlugin)we).getSelection(player);
-				if (selection == null)
-					throw new IllegalArgumentException("No selection defined");
-				if (!(selection instanceof CuboidSelection))
-					throw new IllegalArgumentException("You have to define a cuboid selection");
-				setSelection(selection);
+				if (we != null) {
+					setSelection(RegionContainer.fromPlayerSelection(player, we));
+				} else {
+					throw new IllegalArgumentException("WorldEdit not found!");
+				}
 			} else if (param.equals("time") || param.equals("since")) {
 				since = values.length > 0 ? parseTimeSpec(values) : defaultTime;
 				if (since == -1)
@@ -634,9 +626,9 @@ public final class QueryParams implements Cloneable
 		world = loc.getWorld();
 	}
 
-	public void setSelection(Selection sel) {
-		this.sel = sel;
-		world = sel.getWorld();
+	public void setSelection(RegionContainer container) {
+		this.sel = container;
+		world = sel.getSelection().getWorld();
 	}
 
 	public void setPlayer(String playerName) {

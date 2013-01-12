@@ -88,11 +88,7 @@ public class LogBlock extends JavaPlugin
 		}
 		if (noDb)
 			return;
-		if (pm.getPlugin("WorldEdit") == null) {
-			new Exception("WorldEdit is not installed please download and install").printStackTrace();
-			pm.disablePlugin(this);
-			return;
-		} else {
+		if (pm.getPlugin("WorldEdit") != null) {
 			LogBlockEditSessionFactory.initialize();
 		}
 		commandsHandler = new CommandsHandler(this);

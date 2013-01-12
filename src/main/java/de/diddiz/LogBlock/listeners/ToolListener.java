@@ -1,11 +1,14 @@
 package de.diddiz.LogBlock.listeners;
 
-import static de.diddiz.LogBlock.Session.getSession;
-import static de.diddiz.LogBlock.Session.hasSession;
-import static de.diddiz.LogBlock.config.Config.isLogged;
-import static de.diddiz.LogBlock.config.Config.toolsByType;
-import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
-import java.util.Map.Entry;
+import de.diddiz.LogBlock.CommandsHandler;
+import de.diddiz.LogBlock.LogBlock;
+import de.diddiz.LogBlock.QueryParams;
+import de.diddiz.LogBlock.Session;
+import de.diddiz.LogBlock.Tool;
+import de.diddiz.LogBlock.ToolBehavior;
+import de.diddiz.LogBlock.ToolData;
+import de.diddiz.LogBlock.ToolMode;
+import de.diddiz.worldedit.RegionContainer;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -17,14 +20,13 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import de.diddiz.LogBlock.CommandsHandler;
-import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.LogBlock.QueryParams;
-import de.diddiz.LogBlock.Session;
-import de.diddiz.LogBlock.Tool;
-import de.diddiz.LogBlock.ToolBehavior;
-import de.diddiz.LogBlock.ToolData;
-import de.diddiz.LogBlock.ToolMode;
+
+import java.util.Map.Entry;
+
+import static de.diddiz.LogBlock.Session.getSession;
+import static de.diddiz.LogBlock.Session.hasSession;
+import static de.diddiz.LogBlock.config.Config.isLogged;
+import static de.diddiz.LogBlock.config.Config.toolsByType;
 
 public class ToolListener implements Listener
 {
@@ -56,11 +58,17 @@ public class ToolListener implements Listener
 					else if (block.getTypeId() != 54 || tool.params.radius != 0)
 						params.setLocation(block.getLocation());
 					else {
-						for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
-							if (block.getRelative(face).getTypeId() == 54)
-								params.setSelection(new CuboidSelection(event.getPlayer().getWorld(), block.getLocation(), block.getRelative(face).getLocation()));
-						if (params.sel == null)
-							params.setLocation(block.getLocation());
+						if (logblock.getServer().getPluginManager().isPluginEnabled("WorldEdit")) {
+							for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
+								if (block.getRelative(face).getTypeId() == 54) {
+									params.setSelection(RegionContainer.fromCorners(event.getPlayer().getWorld(),
+											block.getLocation(), block.getRelative(face).getLocation()));
+								}
+							}
+							if (params.sel == null) {
+								params.setLocation(block.getLocation());
+							}
+						}
 					}
 					try {
 						if (toolData.mode == ToolMode.ROLLBACK)
