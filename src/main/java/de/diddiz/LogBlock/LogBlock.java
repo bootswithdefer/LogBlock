@@ -89,7 +89,7 @@ public class LogBlock extends JavaPlugin
 		if (noDb)
 			return;
 		if (pm.getPlugin("WorldEdit") != null) {
-			LogBlockEditSessionFactory.initialize();
+			LogBlockEditSessionFactory.initialize(this);
 		}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
