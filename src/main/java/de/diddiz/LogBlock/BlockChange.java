@@ -70,7 +70,7 @@ public class BlockChange implements LookupCacheElement
 				msg.append(data == 0 ? "opened" : "closed").append(" ").append(materialName(type));
 			else if (type == 69)
 				msg.append("switched ").append(materialName(type));
-			else if (type == 77)
+			else if (type == 77 || type == 143)
 				msg.append("pressed ").append(materialName(type));
 			else if (type == 92)
 				msg.append("ate a piece of ").append(materialName(type));
