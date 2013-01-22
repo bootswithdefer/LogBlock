@@ -30,6 +30,7 @@ public class InteractLogging extends LoggingListener
 
 			switch (type) {
 				case LEVER:
+				case WOOD_BUTTON:
 				case STONE_BUTTON:
 					if (wcfg.isLogging(Logging.SWITCHINTERACT))
 						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
