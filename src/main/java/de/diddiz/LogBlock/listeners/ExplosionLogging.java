@@ -1,13 +1,15 @@
 package de.diddiz.LogBlock.listeners;
 
-import static de.diddiz.LogBlock.config.Config.getWorldConfig;
-import static de.diddiz.LogBlock.config.Config.logCreeperExplosionsAsPlayerWhoTriggeredThese;
+import de.diddiz.LogBlock.LogBlock;
+import de.diddiz.LogBlock.Logging;
+import de.diddiz.LogBlock.config.WorldConfig;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
+import org.bukkit.entity.Ghast;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.entity.Wither;
@@ -15,9 +17,9 @@ import org.bukkit.entity.WitherSkull;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.LogBlock.Logging;
-import de.diddiz.LogBlock.config.WorldConfig;
+
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+import static de.diddiz.LogBlock.config.Config.logCreeperExplosionsAsPlayerWhoTriggeredThese;
 
 public class ExplosionLogging extends LoggingListener
 {
@@ -29,7 +31,7 @@ public class ExplosionLogging extends LoggingListener
 	public void onEntityExplode(EntityExplodeEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getLocation().getWorld());
 		if (wcfg != null) {
-			final String name;
+			String name = "Unknown";
 			if (event.getEntity() == null) {
 				if (!wcfg.isLogging(Logging.MISCEXPLOSION))
 					return;
@@ -47,9 +49,22 @@ public class ExplosionLogging extends LoggingListener
 				} else
 					name = "Creeper";
 			} else if (event.getEntity() instanceof Fireball) {
-				if (!wcfg.isLogging(Logging.GHASTFIREBALLEXPLOSION))
+				Fireball fireball = (Fireball) event.getEntity();
+				Entity shooter = fireball.getShooter();
+				if (shooter == null) {
 					return;
-				name = "Ghast";
+				}
+				if (shooter instanceof Ghast) {
+					if (!wcfg.isLogging(Logging.GHASTFIREBALLEXPLOSION)) {
+						return;
+					}
+					name = "Ghast";
+				} else if (shooter instanceof Wither) {
+					if (!wcfg.isLogging(Logging.WITHER)) {
+						return;
+					}
+					name = "Wither";
+				}
 			} else if (event.getEntity() instanceof EnderDragon) {
 				if (!wcfg.isLogging(Logging.ENDERDRAGON))
 					return;
