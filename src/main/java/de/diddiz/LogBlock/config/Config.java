@@ -45,6 +45,7 @@ public class Config
 	public static Set<String> hiddenPlayers;
 	public static Set<String> ignoredChat;
 	public static SimpleDateFormat formatter;
+	public static boolean safetyIdCheck;
 
 	public static enum LogKillsLevel
 	{
@@ -123,6 +124,7 @@ public class Config
 		def.put("tools.toolblock.params", "area 0 all sum none limit 15 desc silent");
 		def.put("tools.toolblock.mode", "LOOKUP");
 		def.put("tools.toolblock.permissionDefault", "OP");
+		def.put("safety.id.check", true);
 		for (final Entry<String, Object> e : def.entrySet())
 			if (!config.contains(e.getKey()))
 				config.set(e.getKey(), e.getValue());
@@ -175,6 +177,7 @@ public class Config
 		askClearLogs = config.getBoolean("questioner.askClearLogs", true);
 		askClearLogAfterRollback = config.getBoolean("questioner.askClearLogAfterRollback", true);
 		askRollbackAfterBan = config.getBoolean("questioner.askRollbackAfterBan", false);
+		safetyIdCheck = config.getBoolean("safety.id.check", true);
 		banPermission = config.getString("questioner.banPermission");
 		final List<Tool> tools = new ArrayList<Tool>();
 		final ConfigurationSection toolsSec = config.getConfigurationSection("tools");
