@@ -60,6 +60,19 @@ public class InteractLogging extends LoggingListener
 						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
 					}
 					break;
+				case WOOD_PLATE:
+				case STONE_PLATE:
+				case IRON_PLATE:
+				case GOLD_PLATE:
+					if (wcfg.isLogging(Logging.PRESUREPLATEINTERACT) && event.getAction() == Action.PHYSICAL) {
+						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
+					}
+					break;
+				case TRIPWIRE:
+					if (wcfg.isLogging(Logging.TRIPWIREINTERACT) && event.getAction() == Action.PHYSICAL) {
+						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
+					}
+					break;
 			}
 		}
 	}

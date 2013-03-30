@@ -76,6 +76,10 @@ public class BlockChange implements LookupCacheElement
 				msg.append("ate a piece of ").append(materialName(type));
 			else if (type == 25 || type == 93 || type == 94 || type == 149 || type == 150)
 				msg.append("changed ").append(materialName(type));
+			else if (type == 70 || type == 72 || type == 147 || type == 148)
+				msg.append("stepped on ").append(materialName(type));
+			else if (type == 132)
+				msg.append("ran into ").append(materialName(type));
 		} else if (type == 0)
 			msg.append("destroyed ").append(materialName(replaced, data));
 		else if (replaced == 0)
