@@ -32,6 +32,8 @@ public class BukkitUtils
 	private static final Set<Material> relativeTopFallables;
 	private static final Set<Material> fallingEntityKillers;
 
+	private static final Set<Material> cropBlocks;
+
 	static {
 		blockEquivalents = new HashSet<Set<Integer>>(7);
 		blockEquivalents.add(new HashSet<Integer>(Arrays.asList(2, 3, 60)));
@@ -130,6 +132,14 @@ public class BukkitUtils
 		fallingEntityKillers.add(Material.REDSTONE_COMPARATOR_ON);
 		fallingEntityKillers.add(Material.REDSTONE_COMPARATOR_OFF);
 		fallingEntityKillers.add(Material.DAYLIGHT_DETECTOR);
+
+		// Crop Blocks
+		cropBlocks = new HashSet<Material>(5);
+		cropBlocks.add(Material.CROPS);
+		cropBlocks.add(Material.MELON_STEM);
+		cropBlocks.add(Material.PUMPKIN_STEM);
+		cropBlocks.add(Material.CARROT);
+		cropBlocks.add(Material.POTATO);
 	}
 
 	private static final BlockFace[] relativeBlockFaces = new BlockFace[] {
@@ -262,6 +272,10 @@ public class BukkitUtils
 
 	public static Set<Material> getFallingEntityKillers() {
 		return fallingEntityKillers;
+	}
+
+	public static Set<Material> getCropBlocks() {
+		return cropBlocks;
 	}
 
 	public static String entityName(Entity entity) {

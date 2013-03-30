@@ -1,8 +1,12 @@
 package de.diddiz.LogBlock.listeners;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+
+import de.diddiz.util.BukkitUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,11 +26,12 @@ public class InteractLogging extends LoggingListener
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getPlayer().getWorld());
 		if (wcfg != null) {
-			final Material type = event.getClickedBlock().getType();
+			final Block clicked = event.getClickedBlock();
+			final Material type = clicked.getType();
 			final int typeId = type.getId();
-			final byte blockData = event.getClickedBlock().getData();
+			final byte blockData = clicked.getData();
 			final Player player = event.getPlayer();
-			final Location loc = event.getClickedBlock().getLocation();
+			final Location loc = clicked.getLocation();
 
 			switch (type) {
 				case LEVER:
@@ -71,6 +76,17 @@ public class InteractLogging extends LoggingListener
 				case TRIPWIRE:
 					if (wcfg.isLogging(Logging.TRIPWIREINTERACT) && event.getAction() == Action.PHYSICAL) {
 						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
+					}
+					break;
+				case SOIL:
+					if (wcfg.isLogging(Logging.CROPTRAMPLE) && event.getAction() == Action.PHYSICAL) {
+						// 3 = Dirt ID
+						consumer.queueBlock(player.getName(), loc, typeId, 3, blockData);
+						// Log the crop on top as being broken
+						Block trampledCrop = clicked.getRelative(BlockFace.UP);
+						if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
+							consumer.queueBlockBreak(player.getName(), trampledCrop.getState());
+						}
 					}
 					break;
 			}
