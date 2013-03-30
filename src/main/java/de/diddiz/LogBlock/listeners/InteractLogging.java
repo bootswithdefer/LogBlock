@@ -21,7 +21,7 @@ public class InteractLogging extends LoggingListener
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		final WorldConfig wcfg = getWorldConfig(event.getPlayer().getWorld());
-		if (wcfg != null && (event.getAction() == Action.LEFT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+		if (wcfg != null) {
 			final Material type = event.getClickedBlock().getType();
 			final int typeId = type.getId();
 			final byte blockData = event.getClickedBlock().getData();
@@ -32,29 +32,33 @@ public class InteractLogging extends LoggingListener
 				case LEVER:
 				case WOOD_BUTTON:
 				case STONE_BUTTON:
-					if (wcfg.isLogging(Logging.SWITCHINTERACT))
+					if (wcfg.isLogging(Logging.SWITCHINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK)
 						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
 					break;
 				case FENCE_GATE:
-					if (event.getAction() != Action.RIGHT_CLICK_BLOCK)
-						break;
 				case WOODEN_DOOR:
 				case TRAP_DOOR:
-					if (wcfg.isLogging(Logging.DOORINTERACT))
+					if (wcfg.isLogging(Logging.DOORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK)
 						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
 					break;
 				case CAKE_BLOCK:
-					if (wcfg.isLogging(Logging.CAKEEAT) && player.getFoodLevel() < 20)
+					if (wcfg.isLogging(Logging.CAKEEAT) && event.getAction() == Action.RIGHT_CLICK_BLOCK && player.getFoodLevel() < 20)
 						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
 					break;
 				case NOTE_BLOCK:
-					if (wcfg.isLogging(Logging.NOTEBLOCKINTERACT))
+					if (wcfg.isLogging(Logging.NOTEBLOCKINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK)
 						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
 					break;
 				case DIODE_BLOCK_OFF:
 				case DIODE_BLOCK_ON:
 					if (wcfg.isLogging(Logging.DIODEINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK)
 						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
+					break;
+				case REDSTONE_COMPARATOR_OFF:
+				case REDSTONE_COMPARATOR_ON:
+					if (wcfg.isLogging(Logging.COMPARATORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+						consumer.queueBlock(player.getName(), loc, typeId, typeId, blockData);
+					}
 					break;
 			}
 		}
