@@ -33,6 +33,7 @@ public class BukkitUtils
 	private static final Set<Material> fallingEntityKillers;
 
 	private static final Set<Material> cropBlocks;
+	private static final Set<Material> containerBlocks;
 
 	static {
 		blockEquivalents = new HashSet<Set<Integer>>(7);
@@ -140,6 +141,17 @@ public class BukkitUtils
 		cropBlocks.add(Material.PUMPKIN_STEM);
 		cropBlocks.add(Material.CARROT);
 		cropBlocks.add(Material.POTATO);
+
+		// Container Blocks
+		containerBlocks = new HashSet<Material>(6);
+		containerBlocks.add(Material.CHEST);
+		containerBlocks.add(Material.TRAPPED_CHEST);
+		containerBlocks.add(Material.DISPENSER);
+		containerBlocks.add(Material.DROPPER);
+		containerBlocks.add(Material.HOPPER);
+		containerBlocks.add(Material.BREWING_STAND);
+		// Doesn't actually have a block inventory
+		// containerBlocks.add(Material.ENDER_CHEST);
 	}
 
 	private static final BlockFace[] relativeBlockFaces = new BlockFace[] {
@@ -276,6 +288,10 @@ public class BukkitUtils
 
 	public static Set<Material> getCropBlocks() {
 		return cropBlocks;
+	}
+
+	public static Set<Material> getContainerBlocks() {
+		return containerBlocks;
 	}
 
 	public static String entityName(Entity entity) {
