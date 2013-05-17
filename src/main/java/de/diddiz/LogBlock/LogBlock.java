@@ -164,6 +164,8 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvents(new WitherLogging(this), this);
 		if (isLogging(Logging.NATURALSTRUCTUREGROW) || isLogging(Logging.BONEMEALSTRUCTUREGROW))
 			pm.registerEvents(new StructureGrowLogging(this), this);
+		if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD))
+			pm.registerEvents(new BlockSpreadLogging(this), this);
 		if (logPlayerInfo)
 			pm.registerEvents(new PlayerInfoLogging(this), this);
 	}
