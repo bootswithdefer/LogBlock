@@ -32,7 +32,7 @@ public class LoggingUtil {
 		Block checkBlock = origin.getRelative(BlockFace.UP);
 		int up = 0;
 		final int highestBlock = checkBlock.getWorld().getHighestBlockYAt(checkBlock.getLocation());
-		while (BukkitUtils.getRelativeTopFallables().contains(checkBlock.getTypeId())) {
+		while (BukkitUtils.getRelativeTopFallables().contains(checkBlock.getType())) {
 
 			// Record this block as falling
 			consumer.queueBlockBreak(playerName, checkBlock.getState());
@@ -49,9 +49,9 @@ public class LoggingUtil {
 			if (y != 0) {
 				Location finalLoc = new Location(loc.getWorld(), x, y, z);
 				// Run this check to avoid false positives
-				if (!BukkitUtils.getFallingEntityKillers().contains(finalLoc.getBlock().getTypeId())) {
+				if (!BukkitUtils.getFallingEntityKillers().contains(finalLoc.getBlock().getType())) {
 					finalLoc.add(0, up, 0); // Add this here after checking for block breakers
-					if (finalLoc.getBlock().getType() == Material.AIR || BukkitUtils.getRelativeTopFallables().contains(finalLoc.getBlock().getTypeId())) {
+					if (finalLoc.getBlock().getType() == Material.AIR || BukkitUtils.getRelativeTopFallables().contains(finalLoc.getBlock().getType())) {
 						consumer.queueBlockPlace(playerName, finalLoc, checkBlock.getTypeId(), checkBlock.getData());
 					} else {
 						consumer.queueBlockReplace(playerName, finalLoc, finalLoc.getBlock().getTypeId(), finalLoc.getBlock().getData(), checkBlock.getTypeId(), checkBlock.getData());
@@ -70,9 +70,21 @@ public class LoggingUtil {
 		if (wcfg == null) return;
 
 		Block checkBlock = origin.getRelative(BlockFace.UP);
-		if (BukkitUtils.getRelativeTopBreakabls().contains(checkBlock.getTypeId())) {
+		if (BukkitUtils.getRelativeTopBreakabls().contains(checkBlock.getType())) {
 			if (wcfg.isLogging(Logging.SIGNTEXT) && checkBlock.getType() == Material.SIGN_POST) {
 				consumer.queueSignBreak(playerName, (Sign) checkBlock.getState());
+			} else if (checkBlock.getType() == Material.IRON_DOOR || checkBlock.getType() == Material.WOOD_DOOR) {
+				Block doorBlock = checkBlock;
+				// If the doorBlock is the top half a door the player simply punched a door
+				// this will be handled later.
+				if (doorBlock.getData() != 8 && doorBlock.getData() != 9) {
+					doorBlock = doorBlock.getRelative(BlockFace.UP);
+					// Fall back check just in case the top half wasn't a door
+					if (doorBlock.getType() == Material.IRON_DOOR || doorBlock.getType() == Material.WOOD_DOOR) {
+						consumer.queueBlockBreak(playerName, doorBlock.getState());
+					}
+					consumer.queueBlockBreak(playerName, checkBlock.getState());
+				}
 			} else {
 				consumer.queueBlockBreak(playerName, checkBlock.getState());
 			}
@@ -142,6 +154,23 @@ public class LoggingUtil {
 				}
 			}
 		}
+
+		// Special door check
+		if (origin.getType() == Material.IRON_DOOR || origin.getType() == Material.WOOD_DOOR) {
+			Block doorBlock = origin;
+
+			// Up or down?
+			if (origin.getData() != 8 && origin.getData() != 9) {
+				doorBlock = doorBlock.getRelative(BlockFace.UP);
+			} else {
+				doorBlock = doorBlock.getRelative(BlockFace.DOWN);
+			}
+
+			if (doorBlock.getType() == Material.IRON_DOOR || doorBlock.getType() == Material.WOOD_DOOR) {
+				consumer.queueBlockBreak(playerName, doorBlock.getState());
+			}
+		}
+
 		// Do this down here so that the block is added after blocks sitting on it
 		consumer.queueBlockBreak(playerName, origin.getState());
 	}
