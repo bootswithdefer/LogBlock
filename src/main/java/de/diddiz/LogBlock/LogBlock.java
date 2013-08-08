@@ -1,7 +1,27 @@
 package de.diddiz.LogBlock;
 
 import de.diddiz.LogBlock.config.Config;
-import de.diddiz.LogBlock.listeners.*;
+import de.diddiz.LogBlock.listeners.BanListener;
+import de.diddiz.LogBlock.listeners.BlockBreakLogging;
+import de.diddiz.LogBlock.listeners.BlockBurnLogging;
+import de.diddiz.LogBlock.listeners.BlockPlaceLogging;
+import de.diddiz.LogBlock.listeners.BlockSpreadLogging;
+import de.diddiz.LogBlock.listeners.ChatLogging;
+import de.diddiz.LogBlock.listeners.ChestAccessLogging;
+import de.diddiz.LogBlock.listeners.CreatureInteractLogging;
+import de.diddiz.LogBlock.listeners.EndermenLogging;
+import de.diddiz.LogBlock.listeners.ExplosionLogging;
+import de.diddiz.LogBlock.listeners.FluidFlowLogging;
+import de.diddiz.LogBlock.listeners.InteractLogging;
+import de.diddiz.LogBlock.listeners.KillLogging;
+import de.diddiz.LogBlock.listeners.LeavesDecayLogging;
+import de.diddiz.LogBlock.listeners.PlayerInfoLogging;
+import de.diddiz.LogBlock.listeners.SignChangeLogging;
+import de.diddiz.LogBlock.listeners.SnowFadeLogging;
+import de.diddiz.LogBlock.listeners.SnowFormLogging;
+import de.diddiz.LogBlock.listeners.StructureGrowLogging;
+import de.diddiz.LogBlock.listeners.ToolListener;
+import de.diddiz.LogBlock.listeners.WitherLogging;
 import de.diddiz.util.MySQLConnectionPool;
 import de.diddiz.worldedit.LogBlockEditSessionFactory;
 import org.bukkit.ChatColor;
@@ -94,11 +114,11 @@ public class LogBlock extends JavaPlugin
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
 		if (enableAutoClearLog && autoClearLogDelay > 0)
-			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
-		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
+			getServer().getScheduler().runTaskTimerAsynchronously(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
+		getServer().getScheduler().runTaskAsynchronously(this, new DumpedLogImporter(this));
 		registerEvents();
 		if (useBukkitScheduler) {
-			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, delayBetweenRuns * 20, delayBetweenRuns * 20) > 0)
+			if (getServer().getScheduler().runTaskTimerAsynchronously(this, consumer, delayBetweenRuns * 20, delayBetweenRuns * 20).getTaskId() > 0)
 				getLogger().info("Scheduled consumer with bukkit scheduler.");
 			else {
 				getLogger().warning("Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
@@ -110,6 +130,7 @@ public class LogBlock extends JavaPlugin
 			timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
 			getLogger().info("Scheduled consumer with timer.");
 		}
+		getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
 		for (final Tool tool : toolsByType.values())
 			if (pm.getPermission("logblock.tools." + tool.name) == null) {
 				final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);

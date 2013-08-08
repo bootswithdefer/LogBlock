@@ -1,9 +1,10 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.LogBlock.config.Config.getLoggedWorlds;
-import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.util.BukkitUtils.friendlyWorldname;
-import static org.bukkit.Bukkit.getLogger;
+import de.diddiz.LogBlock.config.WorldConfig;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -12,10 +13,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
-import de.diddiz.LogBlock.config.WorldConfig;
+
+import static de.diddiz.LogBlock.config.Config.getLoggedWorlds;
+import static de.diddiz.LogBlock.config.Config.isLogging;
+import static de.diddiz.util.BukkitUtils.friendlyWorldname;
+import static org.bukkit.Bukkit.getLogger;
 
 class Updater
 {
@@ -197,26 +199,6 @@ class Updater
 			}
 			config.set("version", "1.52");
 		}
-		this.logblock.getServer().getScheduler().runTaskAsynchronously(this.logblock, new Thread() {
-
-			@Override
-			public void run() {
-				final Connection conn = logblock.getConnection();
-				try {
-					conn.setAutoCommit(true);
-					final Statement st = conn.createStatement();
-					ResultSet rs = st.executeQuery("SELECT auto_increment FROM information_schema.columns AS col join information_schema.tables AS tab ON (col.table_schema=tab.table_schema AND col.table_name=tab.table_name) WHERE col.table_name = 'lb-players' AND col.column_name = 'playerid' AND col.data_type = 'smallint' AND col.table_schema = DATABASE() AND auto_increment > 65000;");
-					if (rs.next()) {
-						logblock.getLogger().warning("Your server reached 65000 players. You should soon update your database table schema - see FAQ: https://github.com/LogBlock/LogBlock/wiki/FAQ#logblock-your-server-reached-65000-players-");
-					}
-					st.close();
-					conn.close();
-				} catch (final SQLException ex) {
-					logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
-				}
-			}
-			
-		});
 		logblock.saveConfig();
 		return true;
 	}
@@ -248,6 +230,34 @@ class Updater
 			state.execute("CREATE TABLE `" + table + "` " + query);
 			if (!dbm.getTables(null, null, table, null).next())
 				throw new SQLException("Table " + table + " not found and failed to create");
+		}
+	}
+
+	public static class PlayerCountChecker implements Runnable {
+
+		private LogBlock logblock;
+
+		public PlayerCountChecker(LogBlock logblock) {
+			this.logblock = logblock;
+		}
+
+		@Override
+		public void run() {
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				ResultSet rs = st.executeQuery("SELECT auto_increment FROM information_schema.columns AS col join information_schema.tables AS tab ON (col.table_schema=tab.table_schema AND col.table_name=tab.table_name) WHERE col.table_name = 'lb-players' AND col.column_name = 'playerid' AND col.data_type = 'smallint' AND col.table_schema = DATABASE() AND auto_increment > 65000;");
+				if (rs.next()) {
+					for (int i = 0; i < 6; i++) {
+						logblock.getLogger().warning("Your server reached 65000 players. You should soon update your database table schema - see FAQ: https://github.com/LogBlock/LogBlock/wiki/FAQ#logblock-your-server-reached-65000-players-");
+					}
+				}
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+			}
 		}
 	}
 }
