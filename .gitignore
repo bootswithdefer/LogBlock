@@ -1,34 +1,35 @@
-# Compiled source #
-###################
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
-*.gpj
+# Eclipse stuff
+/.classpath
+/.project
+/.settings
 
-# Packages #
-############
-# it's better to unpack these files and commit the raw source
-# git has its own built in compression methods
-*.7z
-*.dmg
-*.gz
-*.iso
-*.rar
-*.tar
-*.zip
+# netbeans
+/nb-configuration.xml
+/nbbuild.xml
+/nbproject
 
-# Logs and databases #
-######################
-*.log
-*.sql
-*.sqlite
+# we use maven!
+/build.xml
 
-# OS generated files #
-######################
-.DS_Store?
-ehthumbs.db
-Icon?
-Thumbs.db
+# maven
+/target
+
+# vim
+.*.sw[a-p]
+
+# various other potential build files
+/build
+/bin
+/release
+/agitar
+/dist
+/manifest.mf
+
+# Mac filesystem dust
+/.DS_Store
+
+# intellij
+*.iml
+*.ipr
+*.iws
+.idea/
