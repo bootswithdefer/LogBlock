@@ -246,6 +246,10 @@ class Updater
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
 		createTable(dbm, state, "lb-players", "(playerid INT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
+		// Players table must not be empty or inserts won't work - bug #492
+		final ResultSet rs = state.executeQuery("SELECT NULL FROM `lb-players` LIMIT 1;");
+		if (!rs.next())
+			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('dummy_record')");
 		if (isLogging(Logging.CHAT))
 			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM DEFAULT CHARSET utf8");
 		for (final WorldConfig wcfg : getLoggedWorlds()) {
