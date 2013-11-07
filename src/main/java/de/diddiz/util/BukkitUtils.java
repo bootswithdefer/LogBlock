@@ -152,6 +152,8 @@ public class BukkitUtils
 		containerBlocks.add(Material.DROPPER);
 		containerBlocks.add(Material.HOPPER);
 		containerBlocks.add(Material.BREWING_STAND);
+		containerBlocks.add(Material.FURNACE);
+		containerBlocks.add(Material.BEACON);
 		// Doesn't actually have a block inventory
 		// containerBlocks.add(Material.ENDER_CHEST);
 	}
