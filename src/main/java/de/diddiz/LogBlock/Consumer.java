@@ -336,7 +336,8 @@ public class Consumer extends TimerTask
 				continue;
 			for (final String player : r.getPlayers())
 				if (!playerIds.containsKey(player) && !insertedPlayers.contains(player)) {
-					writer.println("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + player + "');");
+					// Odd query contruction is to work around innodb auto increment behaviour - bug #492
+					writer.println("INSERT IGNORE INTO `lb-players` (playername) SELECT '" + player + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE playername = '" + player + "') LIMIT 1;");
 					insertedPlayers.add(player);
 				}
 			for (final String insert : r.getInserts())
@@ -365,7 +366,8 @@ public class Consumer extends TimerTask
 	}
 
 	private boolean addPlayer(Statement state, String playerName) throws SQLException {
-		state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "')");
+		// Odd query contruction is to work around innodb auto increment behaviour - bug #492
+		state.execute("INSERT IGNORE INTO `lb-players` (playername) SELECT '" + playerName + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE playername = '" + playerName + "') LIMIT 1;");
 		final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE playername = '" + playerName + "'");
 		if (rs.next())
 			playerIds.put(playerName, rs.getInt(1));
