@@ -120,7 +120,7 @@ public class Consumer extends TimerTask
 
 	/**
 	 * @param container
-	 * The respective container. Must be an instance of Chest, Dispencer or Furnace.
+	 * The respective container. Must be an instance of an InventoryHolder.
 	 */
 	public void queueChestAccess(String playerName, BlockState container, short itemType, short itemAmount, byte itemData) {
 		if (!(container instanceof InventoryHolder))
@@ -130,7 +130,7 @@ public class Consumer extends TimerTask
 
 	/**
 	 * @param type
-	 * Type id of the container. Must be 63 or 68.
+	 * Type id of the container.
 	 */
 	public void queueChestAccess(String playerName, Location loc, int type, short itemType, short itemAmount, byte itemData) {
 		queueBlock(playerName, loc, type, type, (byte)0, null, new ChestAccess(itemType, itemAmount, itemData));
@@ -140,7 +140,7 @@ public class Consumer extends TimerTask
 	 * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
 	 *
 	 * @param container
-	 * Must be instanceof InventoryHolder
+	 * Must be an instance of InventoryHolder
 	 */
 	public void queueContainerBreak(String playerName, BlockState container) {
 		if (!(container instanceof InventoryHolder))

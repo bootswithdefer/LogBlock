@@ -406,7 +406,7 @@ public class CommandsHandler implements CommandExecutor
 					params.needPlayer = true;
 					if (params.types.isEmpty() || Block.inList(params.types, 63) || Block.inList(params.types, 68))
 						params.needSignText = true;
-					if (params.bct == BlockChangeType.CHESTACCESS || params.types.isEmpty() || Block.inList(params.types, 23) || Block.inList(params.types, 54) || Block.inList(params.types, 61) || Block.inList(params.types, 62))
+					if (params.bct == BlockChangeType.CHESTACCESS || params.bct == BlockChangeType.ALL)
 						params.needChestAccess = true;
 				}
 				conn = logblock.getConnection();
@@ -466,7 +466,7 @@ public class CommandsHandler implements CommandExecutor
 					params.needPlayer = true;
 					if (params.types.isEmpty() || Block.inList(params.types, 63) || Block.inList(params.types, 68))
 						params.needSignText = true;
-					if (params.types.isEmpty() || Block.inList(params.types, 23) || Block.inList(params.types, 54) || Block.inList(params.types, 61) || Block.inList(params.types, 62))
+					if (params.bct == BlockChangeType.CHESTACCESS || params.bct == BlockChangeType.ALL)
 						params.needChestAccess = true;
 				}
 				conn = logblock.getConnection();
@@ -538,9 +538,8 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			try {
 				params.needCoords = true;
-				if (params.bct == BlockChangeType.CHESTACCESS || params.types.isEmpty() || Block.inList(params.types, 23) || Block.inList(params.types, 54) || Block.inList(params.types, 61) || Block.inList(params.types, 62)) {
+				if (params.bct == BlockChangeType.CHESTACCESS || params.bct == BlockChangeType.ALL)
 					params.needChestAccess = true;
-				}
 				params.limit = 1;
 				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();

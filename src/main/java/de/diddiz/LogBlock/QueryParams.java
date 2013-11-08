@@ -141,7 +141,12 @@ public final class QueryParams implements Cloneable
 			if (needSignText)
 				from += "LEFT JOIN `" + getTable() + "-sign` USING (id) ";
 			if (needChestAccess)
-				from += "LEFT JOIN `" + getTable() + "-chest` USING (id) ";
+				// If BlockChangeType is CHESTACCESS, we can use more efficient query
+				if (bct == BlockChangeType.CHESTACCESS) {
+					from += "RIGHT JOIN `" + getTable() + "-chest` USING (id) ";
+				} else {
+					from += "LEFT JOIN `" + getTable() + "-chest` USING (id) ";
+				}
 			return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
 		} else if (sum == SummarizationMode.TYPES)
 			return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
@@ -367,7 +372,6 @@ public final class QueryParams implements Cloneable
 					where.append("type != replaced AND ");
 					break;
 				case CHESTACCESS:
-					where.append("(type = 23 OR type = 54 OR type = 61 OR type = 62) AND type = replaced AND ");
 					if (!types.isEmpty()) {
 						where.append('(');
 						for (final Block block : types) {
