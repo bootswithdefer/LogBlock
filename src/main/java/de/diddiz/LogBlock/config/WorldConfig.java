@@ -14,7 +14,9 @@ public class WorldConfig extends LoggingEnabledMapping
 
 	public WorldConfig(File file) throws IOException {
 		final Map<String, Object> def = new HashMap<String, Object>();
-		def.put("table", "lb-" + file.getName().substring(0, file.getName().length() - 4).replace(' ', '_'));
+		// "Before MySQL 5.1.6, database and table names cannot contain "/", "\", ".", or characters that are not permitted in file names" - MySQL manual
+		// They _can_ contain spaces, but replace them as well
+		def.put("table", "lb-" + file.getName().substring(0, file.getName().length() - 4).replaceAll("[ ./\\\\]", "_"));
 		for (final Logging l : Logging.values())
 			def.put("logging." + l.toString(), l.isDefaultEnabled());
 		final YamlConfiguration config = YamlConfiguration.loadConfiguration(file);

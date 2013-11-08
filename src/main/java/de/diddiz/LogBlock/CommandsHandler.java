@@ -551,8 +551,8 @@ public class CommandsHandler implements CommandExecutor
 				rs = state.executeQuery(params.getQuery());
 				if (rs.next()) {
 					final Player player = (Player)sender;
-					final int y = rs.getInt(2);
-					final Location loc = new Location(params.world, rs.getInt(1) + 0.5, y, rs.getInt(3) + 0.5, player.getLocation().getYaw(), 90);
+					final int y = rs.getInt("y");
+					final Location loc = new Location(params.world, rs.getInt("x") + 0.5, y, rs.getInt("z") + 0.5, player.getLocation().getYaw(), 90);
 
 					// Teleport the player sync because omg thread safety
 					logblock.getServer().getScheduler().scheduleSyncDelayedTask(logblock, new Runnable() {

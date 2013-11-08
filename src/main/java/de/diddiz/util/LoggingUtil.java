@@ -109,7 +109,7 @@ public class LoggingUtil {
 						}
 						break;
 					case COCOA:
-						if (blockState.getBlock().getRelative(((CocoaPlant) data).getAttachedFace()).equals(origin)) {
+						if (blockState.getBlock().getRelative(((CocoaPlant) data).getAttachedFace().getOppositeFace()).equals(origin)) {
 							consumer.queueBlockBreak(playerName, blockState);
 						}
 						break;
