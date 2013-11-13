@@ -46,6 +46,7 @@ public class Config
 	public static Set<String> ignoredChat;
 	public static SimpleDateFormat formatter;
 	public static boolean safetyIdCheck;
+	public static boolean logEnvironmentalKills;
 
 	public static enum LogKillsLevel
 	{
@@ -82,6 +83,7 @@ public class Config
 		def.put("clearlog.autoClearLogDelay", "6h");
 		def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		def.put("logging.logKillsLevel", "PLAYERS");
+		def.put("logging.logEnvironmentalKills", false);
 		def.put("logging.logPlayerInfo", false);
 		def.put("logging.hiddenPlayers", new ArrayList<String>());
 		def.put("logging.hiddenBlocks", Arrays.asList(0));
@@ -149,6 +151,7 @@ public class Config
 		} catch (final IllegalArgumentException ex) {
 			throw new DataFormatException("logging.logKillsLevel doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
+		logEnvironmentalKills = config.getBoolean("logging.logEnvironmentalKills", false);
 		hiddenPlayers = new HashSet<String>();
 		for (final String playerName : config.getStringList("logging.hiddenPlayers"))
 			hiddenPlayers.add(playerName.toLowerCase().trim());
