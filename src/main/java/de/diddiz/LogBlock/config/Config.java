@@ -147,7 +147,7 @@ public class Config
 		try {
 			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel").toUpperCase());
 		} catch (final IllegalArgumentException ex) {
-			throw new DataFormatException("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
+			throw new DataFormatException("logging.logKillsLevel doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
 		hiddenPlayers = new HashSet<String>();
 		for (final String playerName : config.getStringList("logging.hiddenPlayers"))
