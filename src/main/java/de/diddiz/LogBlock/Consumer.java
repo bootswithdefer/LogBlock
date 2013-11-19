@@ -160,9 +160,9 @@ public class Consumer extends TimerTask
 
 	/**
 	 * @param killer
-	 * Can' be null
+	 * Can't be null
 	 * @param victim
-	 * Can' be null
+	 * Can't be null
 	 */
 	public void queueKill(Entity killer, Entity victim) {
 		if (killer == null || victim == null)
@@ -171,6 +171,19 @@ public class Consumer extends TimerTask
 		if (killer instanceof Player && ((Player)killer).getItemInHand() != null)
 			weapon = ((Player)killer).getItemInHand().getTypeId();
 		queueKill(victim.getLocation(), entityName(killer), entityName(victim), weapon);
+	}
+
+	/**
+	 * This form should only be used when the killer is not an entity e.g. for fall or suffocation damage
+	 * @param killer
+	 * Can't be null
+	 * @param victim
+	 * Can't be null
+	 */
+	public void queueKill(String killer, Entity victim) {
+		if (killer == null || victim == null)
+			return;
+		queueKill(victim.getLocation(), killer, entityName(victim), 0);
 	}
 
 	/**
@@ -539,7 +552,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ");"};
+			return new String[]{"INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + (loc.getBlockY() < 0 ? 0 : loc.getBlockY()) + ", " + loc.getBlockZ() + ");"};
 		}
 
 		@Override
