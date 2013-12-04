@@ -217,12 +217,14 @@ class Updater
 					}
 				}
 				for (final WorldConfig wcfg : getLoggedWorlds()) {
-					final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `"+wcfg.table+"-sign` WHERE field = 'signtext'");
-					if (rs.next() && !rs.getString("Collation").substring(0,4).equalsIgnoreCase("utf8")) {
-						st.execute("ALTER TABLE `"+wcfg.table+"-sign` CONVERT TO CHARSET utf8");
-						getLogger().info("Table "+wcfg.table+"-sign modified");
-					} else {
-						getLogger().info("Table "+wcfg.table+"-sign already fine, skipping it");
+					if (wcfg.isLogging(Logging.SIGNTEXT)) {
+						final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `"+wcfg.table+"-sign` WHERE field = 'signtext'");
+						if (rs.next() && !rs.getString("Collation").substring(0,4).equalsIgnoreCase("utf8")) {
+							st.execute("ALTER TABLE `"+wcfg.table+"-sign` CONVERT TO CHARSET utf8");
+							getLogger().info("Table "+wcfg.table+"-sign modified");
+						} else {
+							getLogger().info("Table "+wcfg.table+"-sign already fine, skipping it");
+						}
 					}
 				}
 				st.close();
