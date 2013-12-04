@@ -19,6 +19,15 @@ public class Utils
 		return false;
 	}
 
+	public static boolean isShort(String str) {
+		try {
+			Short.parseShort(str);
+			return true;
+		} catch (final NumberFormatException ex) {
+		}
+		return false;
+	}
+
 	public static boolean isByte(String str) {
 		try {
 			Byte.parseByte(str);

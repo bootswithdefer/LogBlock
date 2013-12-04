@@ -607,7 +607,7 @@ public class CommandsHandler implements CommandExecutor
                 final WorldEditor editor = new WorldEditor(logblock, params.world);
 
 				while (rs.next())
-					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
+					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getShort("itemdata"));
 				final int changes = editor.getSize();
                 if (changes > 10000) {
                     editor.setSender(sender);

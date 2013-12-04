@@ -71,7 +71,7 @@ public class WorldEditor implements Runnable
         this.sender = sender;
     }
 
-	public void queueEdit(int x, int y, int z, int replaced, int type, byte data, String signtext, short itemType, short itemAmount, byte itemData) {
+	public void queueEdit(int x, int y, int z, int replaced, int type, byte data, String signtext, short itemType, short itemAmount, short itemData) {
 		edits.add(new Edit(0, new Location(world, x, y, z), null, replaced, type, data, signtext, new ChestAccess(itemType, itemAmount, itemData)));
 	}
 
@@ -165,11 +165,11 @@ public class WorldEditor implements Runnable
 				} else if (ca != null && (type == 23 || type == 54 || type == 61 || type == 62)) {
 					int leftover;
 					try {
-						leftover = modifyContainer(state, new ItemStack(ca.itemType, -ca.itemAmount, (short)0, ca.itemData));
+						leftover = modifyContainer(state, new ItemStack(ca.itemType, -ca.itemAmount, ca.itemData));
 						if (leftover > 0)
 							for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
 								if (block.getRelative(face).getTypeId() == 54)
-									leftover = modifyContainer(block.getRelative(face).getState(), new ItemStack(ca.itemType, ca.itemAmount < 0 ? leftover : -leftover, (short)0, ca.itemData));
+									leftover = modifyContainer(block.getRelative(face).getState(), new ItemStack(ca.itemType, ca.itemAmount < 0 ? leftover : -leftover, ca.itemData));
 					} catch (final Exception ex) {
 						throw new WorldEditorException(ex.getMessage(), block.getLocation());
 					}
