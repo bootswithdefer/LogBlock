@@ -168,7 +168,7 @@ class Updater
 				final Statement st = conn.createStatement();
 				for (final WorldConfig wcfg : getLoggedWorlds())
 					if (wcfg.isLogging(Logging.KILL))
-						st.execute("ALTER TABLE `" + wcfg.table + "-kills` ADD (x SMALLINT NOT NULL DEFAULT 0, y TINYINT UNSIGNED NOT NULL DEFAULT 0, z SMALLINT NOT NULL DEFAULT 0)");
+						st.execute("ALTER TABLE `" + wcfg.table + "-kills` ADD (x MEDIUMINT NOT NULL DEFAULT 0, y SMALLINT NOT NULL DEFAULT 0, z MEDIUMINT NOT NULL DEFAULT 0)");
 				st.close();
 				conn.close();
 			} catch (final SQLException ex) {
