@@ -242,7 +242,7 @@ public class BukkitUtils
 		for (final ItemStack item : items)
 			if (item != null) {
 				final int type = item.getTypeId();
-				final byte data = rawData(item);
+				final short data = rawData(item);
 				boolean found = false;
 				for (final ItemStack item2 : compressed)
 					if (type == item2.getTypeId() && data == rawData(item2)) {
@@ -251,7 +251,7 @@ public class BukkitUtils
 						break;
 					}
 				if (!found)
-					compressed.add(new ItemStack(type, item.getAmount(), (short)0, data));
+					compressed.add(new ItemStack(type, item.getAmount(), data));
 			}
 		Collections.sort(compressed, new ItemStackComparator());
 		return compressed.toArray(new ItemStack[compressed.size()]);
@@ -322,8 +322,8 @@ public class BukkitUtils
 		}
 	}
 
-	public static byte rawData(ItemStack item) {
-		return item.getType() != null ? item.getData() != null ? item.getData().getData() : 0 : 0;
+	public static short rawData(ItemStack item) {
+		return item.getType() != null ? item.getData() != null ? item.getDurability() : 0 : 0;
 	}
 
 	public static int saveSpawnHeight(Location loc) {
@@ -381,7 +381,7 @@ public class BukkitUtils
 				return -1;
 			if (aType > bType)
 				return 1;
-			final byte aData = rawData(a), bData = rawData(b);
+			final short aData = rawData(a), bData = rawData(b);
 			if (aData < bData)
 				return -1;
 			if (aData > bData)

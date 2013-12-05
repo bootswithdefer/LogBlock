@@ -122,7 +122,7 @@ public class Consumer extends TimerTask
 	 * @param container
 	 * The respective container. Must be an instance of an InventoryHolder.
 	 */
-	public void queueChestAccess(String playerName, BlockState container, short itemType, short itemAmount, byte itemData) {
+	public void queueChestAccess(String playerName, BlockState container, short itemType, short itemAmount, short itemData) {
 		if (!(container instanceof InventoryHolder))
 			return;
 		queueChestAccess(playerName, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getTypeId(), itemType, itemAmount, itemData);
@@ -132,7 +132,7 @@ public class Consumer extends TimerTask
 	 * @param type
 	 * Type id of the container.
 	 */
-	public void queueChestAccess(String playerName, Location loc, int type, short itemType, short itemAmount, byte itemData) {
+	public void queueChestAccess(String playerName, Location loc, int type, short itemType, short itemAmount, short itemData) {
 		queueBlock(playerName, loc, type, type, (byte)0, null, new ChestAccess(itemType, itemAmount, itemData));
 	}
 
