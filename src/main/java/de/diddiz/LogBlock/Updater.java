@@ -235,8 +235,8 @@ class Updater
 			}
 			config.set("version", "1.71");
 		}
-		if (config.getString("version").compareTo("1.72") < 0) {
-			getLogger().info("Updating tables to 1.72 ...");
+		if (config.getString("version").compareTo("1.81") < 0) {
+			getLogger().info("Updating tables to 1.81 ...");
 			final Connection conn = logblock.getConnection();
 			try {
 				conn.setAutoCommit(true);
@@ -253,7 +253,7 @@ class Updater
 				Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
 				return false;
 			}
-			config.set("version", "1.72");
+			config.set("version", "1.81");
 		}
 		
 		logblock.saveConfig();
