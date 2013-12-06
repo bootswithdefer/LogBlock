@@ -73,15 +73,27 @@ public class LoggingUtil {
 		if (BukkitUtils.getRelativeTopBreakabls().contains(checkBlock.getType())) {
 			if (wcfg.isLogging(Logging.SIGNTEXT) && checkBlock.getType() == Material.SIGN_POST) {
 				consumer.queueSignBreak(playerName, (Sign) checkBlock.getState());
-			} else if (checkBlock.getType() == Material.IRON_DOOR || checkBlock.getType() == Material.WOOD_DOOR) {
+			} else if (checkBlock.getType() == Material.IRON_DOOR_BLOCK || checkBlock.getType() == Material.WOODEN_DOOR) {
 				Block doorBlock = checkBlock;
 				// If the doorBlock is the top half a door the player simply punched a door
 				// this will be handled later.
-				if (doorBlock.getData() != 8 && doorBlock.getData() != 9) {
+				if (!BukkitUtils.isTop(doorBlock.getType(), doorBlock.getData())) {
 					doorBlock = doorBlock.getRelative(BlockFace.UP);
 					// Fall back check just in case the top half wasn't a door
-					if (doorBlock.getType() == Material.IRON_DOOR || doorBlock.getType() == Material.WOOD_DOOR) {
+					if (doorBlock.getType() == Material.IRON_DOOR_BLOCK || doorBlock.getType() == Material.WOODEN_DOOR) {
 						consumer.queueBlockBreak(playerName, doorBlock.getState());
+					}
+					consumer.queueBlockBreak(playerName, checkBlock.getState());
+				}
+			} else if (checkBlock.getType() == Material.DOUBLE_PLANT) {
+				Block plantBlock = checkBlock;
+				// If the plantBlock is the top half of a double plant the player simply
+				// punched the plant this will be handled later.
+				if (!BukkitUtils.isTop(plantBlock.getType(), plantBlock.getData())) {
+					plantBlock = plantBlock.getRelative(BlockFace.UP);
+					// Fall back check just in case the top half wasn't a plant
+					if (plantBlock.getType() == Material.DOUBLE_PLANT) {
+						consumer.queueBlockBreak(playerName, plantBlock.getState());
 					}
 					consumer.queueBlockBreak(playerName, checkBlock.getState());
 				}
@@ -156,18 +168,31 @@ public class LoggingUtil {
 		}
 
 		// Special door check
-		if (origin.getType() == Material.IRON_DOOR || origin.getType() == Material.WOOD_DOOR) {
+		if (origin.getType() == Material.IRON_DOOR_BLOCK || origin.getType() == Material.WOODEN_DOOR) {
 			Block doorBlock = origin;
 
 			// Up or down?
-			if (origin.getData() != 8 && origin.getData() != 9) {
+			if (!BukkitUtils.isTop(doorBlock.getType(), doorBlock.getData())) {
 				doorBlock = doorBlock.getRelative(BlockFace.UP);
 			} else {
 				doorBlock = doorBlock.getRelative(BlockFace.DOWN);
 			}
 
-			if (doorBlock.getType() == Material.IRON_DOOR || doorBlock.getType() == Material.WOOD_DOOR) {
+			if (doorBlock.getType() == Material.IRON_DOOR_BLOCK || doorBlock.getType() == Material.WOODEN_DOOR) {
 				consumer.queueBlockBreak(playerName, doorBlock.getState());
+			}
+		} else if (origin.getType() == Material.DOUBLE_PLANT) { // Special double plant check
+			Block plantBlock = origin;
+
+			// Up or down?
+			if (!BukkitUtils.isTop(origin.getType(), origin.getData())) {
+				plantBlock = plantBlock.getRelative(BlockFace.UP);
+			} else {
+				plantBlock = plantBlock.getRelative(BlockFace.DOWN);
+			}
+
+			if (plantBlock.getType() == Material.DOUBLE_PLANT) {
+				consumer.queueBlockBreak(playerName, plantBlock.getState());
 			}
 		}
 
