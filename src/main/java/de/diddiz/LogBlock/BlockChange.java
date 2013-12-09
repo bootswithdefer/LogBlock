@@ -41,7 +41,7 @@ public class BlockChange implements LookupCacheElement
 		type = p.needType ? rs.getInt("type") : 0;
 		data = p.needData ? rs.getByte("data") : (byte)0;
 		signtext = p.needSignText ? rs.getString("signtext") : null;
-		ca = p.needChestAccess && rs.getShort("itemtype") != 0 && rs.getShort("itemamount") != 0 ? new ChestAccess(rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata")) : null;
+		ca = p.needChestAccess && rs.getShort("itemtype") != 0 && rs.getShort("itemamount") != 0 ? new ChestAccess(rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getShort("itemdata")) : null;
 	}
 
 	@Override
