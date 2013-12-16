@@ -18,9 +18,11 @@ import org.bukkit.entity.WitherSkull;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.Material;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.logCreeperExplosionsAsPlayerWhoTriggeredThese;
+import static de.diddiz.util.BukkitUtils.getContainerBlocks;
 
 public class ExplosionLogging extends LoggingListener
 {
@@ -90,7 +92,7 @@ public class ExplosionLogging extends LoggingListener
 				final int type = block.getTypeId();
 				if (wcfg.isLogging(Logging.SIGNTEXT) & (type == 63 || type == 68))
 					consumer.queueSignBreak(name, (Sign)block.getState());
-				else if (wcfg.isLogging(Logging.CHESTACCESS) && (type == 23 || type == 54 || type == 61))
+				else if (wcfg.isLogging(Logging.CHESTACCESS) && (getContainerBlocks().contains(Material.getMaterial(type))))
 					consumer.queueContainerBreak(name, block.getState());
 				else
 					consumer.queueBlockBreak(name, block.getState());

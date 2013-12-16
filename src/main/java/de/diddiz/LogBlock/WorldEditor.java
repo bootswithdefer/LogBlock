@@ -10,6 +10,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.Material;
 import org.bukkit.material.Bed;
 import org.bukkit.material.PistonBaseMaterial;
 import org.bukkit.material.PistonExtensionMaterial;
@@ -26,6 +27,7 @@ import java.util.logging.Level;
 import static de.diddiz.LogBlock.config.Config.dontRollback;
 import static de.diddiz.LogBlock.config.Config.replaceAnyway;
 import static de.diddiz.util.BukkitUtils.equalTypes;
+import static de.diddiz.util.BukkitUtils.getContainerBlocks;
 import static de.diddiz.util.BukkitUtils.modifyContainer;
 import static de.diddiz.util.MaterialName.materialName;
 import static org.bukkit.Bukkit.getLogger;
@@ -162,13 +164,13 @@ public class WorldEditor implements Runnable
 				if (type == 0) {
 					if (!block.setTypeId(0))
 						throw new WorldEditorException(block.getTypeId(), 0, block.getLocation());
-				} else if (ca != null ) {
-					boolean chest = (type == 54 || type == 146);
-					if (chest || type == 23 || type == 61 || type == 62) {
+				} else if (ca != null) {
+					if (getContainerBlocks().contains(Material.getMaterial(type))) {
 						int leftover;
 						try {
 							leftover = modifyContainer(state, new ItemStack(ca.itemType, -ca.itemAmount, ca.itemData));
-							if (leftover > 0 && chest)
+							// Special-case blocks which might be double chests
+							if (leftover > 0 && (type == 54 || type == 146))
 								for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST})
 									if (block.getRelative(face).getTypeId() == type)
 										leftover = modifyContainer(block.getRelative(face).getState(), new ItemStack(ca.itemType, ca.itemAmount < 0 ? leftover : -leftover, ca.itemData));
