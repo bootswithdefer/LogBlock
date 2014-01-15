@@ -70,9 +70,9 @@ public class ToolListener implements Listener
 											block.getLocation(), block.getRelative(face).getLocation()));
 								}
 							}
-							if (params.sel == null) {
-								params.setLocation(block.getLocation());
-							}
+						}
+						if (params.sel == null) {
+							params.setLocation(block.getLocation());
 						}
 					}
 					try {
