@@ -60,7 +60,7 @@ public class BukkitUtils
 		relativeBreakable.add(Material.COCOA);
 
 		// Blocks that break when they are on top of a block
-		relativeTopBreakable = new HashSet<Material>(32);
+		relativeTopBreakable = new HashSet<Material>(33);
 		relativeTopBreakable.add(Material.SAPLING);
 		relativeTopBreakable.add(Material.LONG_GRASS);
 		relativeTopBreakable.add(Material.DEAD_BUSH);
@@ -91,8 +91,9 @@ public class BukkitUtils
 		relativeTopBreakable.add(Material.REDSTONE_COMPARATOR_ON);
 		relativeTopBreakable.add(Material.REDSTONE_COMPARATOR_OFF);
 		relativeTopBreakable.add(Material.WOODEN_DOOR);
-		relativeTopBreakable.add(Material.IRON_DOOR);
+		relativeTopBreakable.add(Material.IRON_DOOR_BLOCK);
 		relativeTopBreakable.add(Material.CARPET);
+		relativeTopBreakable.add(Material.DOUBLE_PLANT);
 
 		// Blocks that fall
 		relativeTopFallables = new HashSet<Material>(4);
@@ -178,6 +179,19 @@ public class BukkitUtils
 			}
 		}
 		return blocks;
+	}
+
+	public static boolean isTop(Material mat, byte data) {
+
+		switch (mat) {
+			case DOUBLE_PLANT:
+				return data > 5;
+			case IRON_DOOR_BLOCK:
+			case WOODEN_DOOR:
+				return data == 8 || data == 9;
+			default:
+				return false;
+		}
 	}
 
 	public static int getInventoryHolderType(InventoryHolder holder) {
