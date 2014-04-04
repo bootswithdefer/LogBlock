@@ -19,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.Material;
+import org.bukkit.projectiles.ProjectileSource;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.logCreeperExplosionsAsPlayerWhoTriggeredThese;
@@ -57,7 +58,7 @@ public class ExplosionLogging extends LoggingListener
 					name = "Creeper";
 			} else if (source instanceof Fireball) {
 				Fireball fireball = (Fireball) source;
-				Entity shooter = fireball.getShooter();
+				ProjectileSource shooter = fireball.getShooter();
 				if (shooter == null) {
 					return;
 				}

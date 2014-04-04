@@ -24,7 +24,7 @@ import de.diddiz.LogBlock.listeners.StructureGrowLogging;
 import de.diddiz.LogBlock.listeners.ToolListener;
 import de.diddiz.LogBlock.listeners.WitherLogging;
 import de.diddiz.util.MySQLConnectionPool;
-import de.diddiz.worldedit.LogBlockEditSessionFactory;
+import de.diddiz.worldedit.WorldEditLoggingHook;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -110,7 +110,7 @@ public class LogBlock extends JavaPlugin
 		if (noDb)
 			return;
 		if (pm.getPlugin("WorldEdit") != null) {
-			LogBlockEditSessionFactory.initialize(this);
+			new WorldEditLoggingHook(this).hook();
 		}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
