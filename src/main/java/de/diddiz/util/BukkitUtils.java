@@ -28,6 +28,9 @@ import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static de.diddiz.util.MessagingUtil.prettyMaterial;
+import static de.diddiz.util.TypeColor.DEFAULT;
+
 public class BukkitUtils {
     private static final Set<Set<Integer>> blockEquivalents;
     private static final Set<Material> relativeBreakable;
@@ -642,10 +645,11 @@ public class BukkitUtils {
 
     public static String toString(ItemStack stack) {
         if (stack == null || stack.getAmount() == 0 || isEmpty(stack.getType())) {
-            return "nothing";
+            return prettyMaterial("nothing");
         }
         StringBuilder sb = new StringBuilder();
-        sb.append(stack.getAmount()).append("x ").append(stack.getType().name());
+        sb.append(stack.getAmount()).append("x ").append(prettyMaterial(stack.getType()));
+        sb.append(TypeColor.STATE);
         ItemMeta meta = stack.getItemMeta();
         boolean metaStarted = false;
         if (meta.hasEnchants()) {
@@ -659,8 +663,8 @@ public class BukkitUtils {
                         sb.append(", ");
                     }
                     sb.append(formatMinecraftKey(e.getKey().getKey().getKey()));
-                    if (e.getValue().intValue() > 1) {
-                        sb.append(" ").append(maybeToRoman(e.getValue().intValue() - 1));
+                    if (e.getValue() > 1) {
+                        sb.append(" ").append(maybeToRoman(e.getValue() - 1));
                     }
                 }
             }
@@ -678,8 +682,8 @@ public class BukkitUtils {
                             sb.append(", ");
                         }
                         sb.append(formatMinecraftKey(e.getKey().getKey().getKey()));
-                        if (e.getValue().intValue() > 1) {
-                            sb.append(" ").append(maybeToRoman(e.getValue().intValue() - 1));
+                        if (e.getValue() > 1) {
+                            sb.append(" ").append(maybeToRoman(e.getValue() - 1));
                         }
                     }
                 }
@@ -688,6 +692,7 @@ public class BukkitUtils {
         if (metaStarted) {
             sb.append("]");
         }
+        sb.append(DEFAULT);
         return sb.toString();
     }
 

@@ -37,6 +37,9 @@ import static de.diddiz.LogBlock.Session.getSession;
 import static de.diddiz.LogBlock.config.Config.*;
 import static de.diddiz.util.BukkitUtils.giveTool;
 import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
+import static de.diddiz.util.TypeColor.DEFAULT;
+import static de.diddiz.util.TypeColor.ERROR;
+import static de.diddiz.util.TypeColor.HEADER;
 import static de.diddiz.util.Utils.isInt;
 import static de.diddiz.util.Utils.listing;
 
@@ -382,19 +385,19 @@ public class CommandsHandler implements CommandExecutor {
                 final int stoppos = startpos + linesPerPage >= lookupElements.length ? lookupElements.length - 1 : startpos + linesPerPage - 1;
                 final int numberOfPages = (int) Math.ceil(lookupElements.length / (double) linesPerPage);
                 if (numberOfPages != 1) {
-                    sender.sendMessage(ChatColor.DARK_AQUA + "Page " + page + "/" + numberOfPages);
+                    sender.sendMessage(HEADER + "Page " + page + "/" + numberOfPages);
                 }
                 for (int i = startpos; i <= stoppos; i++) {
-                    sender.sendMessage(ChatColor.GOLD + (lookupElements[i].getLocation() != null ? "(" + (i + 1) + ") " : "") + lookupElements[i].getMessage());
+                    sender.sendMessage(DEFAULT + (lookupElements[i].getLocation() != null ? "(" + (i + 1) + ") " : "") + lookupElements[i].getMessage());
                 }
                 if (setSessionPage) {
                     getSession(sender).page = page;
                 }
             } else {
-                sender.sendMessage(ChatColor.RED + "There isn't a page '" + page + "'");
+                sender.sendMessage(ERROR + "There isn't a page '" + page + "'");
             }
         } else {
-            sender.sendMessage(ChatColor.RED + "No blocks in lookup cache");
+            sender.sendMessage(ERROR + "No blocks in lookup cache");
         }
     }
 
