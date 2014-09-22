@@ -24,7 +24,7 @@ import static de.diddiz.util.Utils.*;
 
 public final class QueryParams implements Cloneable
 {
-	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode(), "chat".hashCode(), "search".hashCode(), "match".hashCode(), "loc".hashCode(), "location".hashCode(), "kills".hashCode(), "killer".hashCode(), "victim".hashCode()));
+	private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode(), "chat".hashCode(), "search".hashCode(), "match".hashCode(), "loc".hashCode(), "location".hashCode(), "kills".hashCode(), "killer".hashCode(), "victim".hashCode(), "both".hashCode()));
 	public BlockChangeType bct = BlockChangeType.BOTH;
 	public int limit = -1, before = 0, since = 0, radius = -1;
 	public Location loc = null;
@@ -32,7 +32,7 @@ public final class QueryParams implements Cloneable
 	public List<String> players = new ArrayList<String>();
 	public List<String> killers = new ArrayList<String>();
 	public List<String> victims = new ArrayList<String>();
-	public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, prepareToolQuery = false, silent = false;
+	public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, excludeBlocksMode = false, prepareToolQuery = false, silent = false;
 	public RegionContainer sel = null;
 	public SummarizationMode sum = SummarizationMode.NONE;
 	public List<Block> types = new ArrayList<Block>();
@@ -141,7 +141,12 @@ public final class QueryParams implements Cloneable
 			if (needSignText)
 				from += "LEFT JOIN `" + getTable() + "-sign` USING (id) ";
 			if (needChestAccess)
-				from += "LEFT JOIN `" + getTable() + "-chest` USING (id) ";
+				// If BlockChangeType is CHESTACCESS, we can use more efficient query
+				if (bct == BlockChangeType.CHESTACCESS) {
+					from += "RIGHT JOIN `" + getTable() + "-chest` USING (id) ";
+				} else {
+					from += "LEFT JOIN `" + getTable() + "-chest` USING (id) ";
+				}
 			return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
 		} else if (sum == SummarizationMode.TYPES)
 			return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
@@ -163,6 +168,8 @@ public final class QueryParams implements Cloneable
 			title.append("kills ");
 		else {
 			if (!types.isEmpty()) {
+				if (excludeBlocksMode)
+					title.append("all blocks except ");
 				final String[] blocknames = new String[types.size()];
 				for (int i = 0; i < types.size(); i++)
 					blocknames[i] = materialName(types.get(i).getBlock());
@@ -198,7 +205,7 @@ public final class QueryParams implements Cloneable
 			title.append("more than ").append(before * -1).append(" minutes ago ");
 		if (loc != null) {
 			if (radius > 0)
-				title.append("within ").append(radius).append(" blocks of ").append(prepareToolQuery ? "clicked block" : "you").append(" ");
+				title.append("within ").append(radius).append(" blocks of ").append(prepareToolQuery ? "clicked block" : "location").append(" ");
 			else if (radius == 0)
 				title.append("at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ()).append(" ");
 		} else if (sel != null)
@@ -299,6 +306,8 @@ public final class QueryParams implements Cloneable
 			switch (blockChangeType) {
 				case ALL:
 					if (!types.isEmpty()) {
+						if (excludeBlocksMode)
+							where.append("NOT ");
 						where.append('(');
 						for (final Block block : types) {
 							where.append("((type = ").append(block.getBlock()).append(" OR replaced = ").append(block.getBlock());
@@ -315,6 +324,8 @@ public final class QueryParams implements Cloneable
 					break;
 				case BOTH:
 					if (!types.isEmpty()) {
+						if (excludeBlocksMode)
+							where.append("NOT ");
 						where.append('(');
 						for (final Block block : types) {
 							where.append("((type = ").append(block.getBlock()).append(" OR replaced = ").append(block.getBlock());
@@ -332,6 +343,8 @@ public final class QueryParams implements Cloneable
 					break;
 				case CREATED:
 					if (!types.isEmpty()) {
+						if (excludeBlocksMode)
+							where.append("NOT ");
 						where.append('(');
 						for (final Block block : types) {
 							where.append("((type = ").append(block.getBlock());
@@ -344,12 +357,13 @@ public final class QueryParams implements Cloneable
 						}
 						where.delete(where.length() - 4, where.length());
 						where.append(") AND ");
-					} else
-						where.append("type != 0 AND ");
-					where.append("type != replaced AND ");
+					}
+					where.append("type != 0 AND type != replaced AND ");
 					break;
 				case DESTROYED:
 					if (!types.isEmpty()) {
+						if (excludeBlocksMode)
+							where.append("NOT ");
 						where.append('(');
 						for (final Block block : types) {
 							where.append("((replaced = ").append(block.getBlock());
@@ -362,13 +376,13 @@ public final class QueryParams implements Cloneable
 						}
 						where.delete(where.length() - 4, where.length());
 						where.append(") AND ");
-					} else
-						where.append("replaced != 0 AND ");
-					where.append("type != replaced AND ");
+					}
+					where.append("replaced != 0 AND type != replaced AND ");
 					break;
 				case CHESTACCESS:
-					where.append("(type = 23 OR type = 54 OR type = 61 OR type = 62) AND type = replaced AND ");
 					if (!types.isEmpty()) {
+						if (excludeBlocksMode)
+							where.append("NOT ");
 						where.append('(');
 						for (final Block block : types) {
 							where.append("((itemtype = ").append(block.getBlock());
@@ -488,6 +502,7 @@ public final class QueryParams implements Cloneable
 							players.add(matches.size() == 1 ? matches.get(0).getName() : playerName.replaceAll("[^a-zA-Z0-9_]", ""));
 						}
 					}
+				needPlayer = true;
 			} else if (param.equals("killer")) {
 				if (values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
@@ -504,6 +519,7 @@ public final class QueryParams implements Cloneable
 							killers.add(matches.size() == 1 ? matches.get(0).getName() : killerName.replaceAll("[^a-zA-Z0-9_]", ""));
 						}
 					}
+				needKiller = true;
 			} else if (param.equals("victim")) {
 				if (values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
@@ -520,6 +536,7 @@ public final class QueryParams implements Cloneable
 							victims.add(matches.size() == 1 ? matches.get(0).getName() : victimName.replaceAll("[^a-zA-Z0-9_]", ""));
 						}
 					}
+				needVictim = true;
 			} else if (param.equals("weapon")) {
 				if (values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
@@ -535,10 +552,15 @@ public final class QueryParams implements Cloneable
 						throw new IllegalArgumentException("No material matching: '" + weaponName + "'");
 					types.add(new Block(mat.getId(), -1));
 				}
+				needWeapon = true;
 			} else if (param.equals("block") || param.equals("type")) {
 				if (values.length < 1)
 					throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
-				for (final String blockName : values) {
+				for (String blockName : values) {
+					if (blockName.startsWith("!")) {
+						excludeBlocksMode = true;
+						blockName = blockName.substring(1);
+					}
 					if (blockName.contains(":")) {
 						String[] blockNameSplit = blockName.split(":");
 						if (blockNameSplit.length > 2)
@@ -563,17 +585,17 @@ public final class QueryParams implements Cloneable
 					}
 				}
 			} else if (param.equals("area")) {
-				if (player == null && !prepareToolQuery)
-					throw new IllegalArgumentException("You have to ba a player to use area");
+				if (player == null && !prepareToolQuery && loc == null)
+					throw new IllegalArgumentException("You have to be a player to use area, or specify a location first");
 				if (values.length == 0) {
 					radius = defaultDist;
-					if (!prepareToolQuery)
+					if (!prepareToolQuery && loc == null)
 						loc = player.getLocation();
 				} else {
 					if (!isInt(values[0]))
 						throw new IllegalArgumentException("Not a number: '" + values[0] + "'");
 					radius = Integer.parseInt(values[0]);
-					if (!prepareToolQuery)
+					if (!prepareToolQuery && loc == null)
 						loc = player.getLocation();
 				}
 			} else if (param.equals("selection") || param.equals("sel")) {
@@ -608,6 +630,8 @@ public final class QueryParams implements Cloneable
 				bct = BlockChangeType.CREATED;
 			else if (param.equals("destroyed"))
 				bct = BlockChangeType.DESTROYED;
+			else if (param.equals("both"))
+				bct = BlockChangeType.BOTH;
 			else if (param.equals("chestaccess"))
 				bct = BlockChangeType.CHESTACCESS;
 			else if (param.equals("chat"))
@@ -655,8 +679,12 @@ public final class QueryParams implements Cloneable
 				throw new IllegalArgumentException("Not a valid argument: '" + param + "'");
 			i += values.length;
 		}
-		if (bct == BlockChangeType.KILLS && !getWorldConfig(world).isLogging(Logging.KILL))
-			throw new IllegalArgumentException("Kill logging not enabled for world '" + world.getName() + "'");
+		if (bct == BlockChangeType.KILLS) {
+			if (world == null)
+				throw new IllegalArgumentException("No world specified");
+			if (!getWorldConfig(world).isLogging(Logging.KILL))
+				throw new IllegalArgumentException("Kill logging not enabled for world '" + world.getName() + "'");
+		}
 		if (types.size() > 0)
 			for (final Set<Integer> equivalent : getBlockEquivalents()) {
 				boolean found = false;

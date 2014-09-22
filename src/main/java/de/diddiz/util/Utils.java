@@ -19,6 +19,15 @@ public class Utils
 		return false;
 	}
 
+	public static boolean isShort(String str) {
+		try {
+			Short.parseShort(str);
+			return true;
+		} catch (final NumberFormatException ex) {
+		}
+		return false;
+	}
+
 	public static boolean isByte(String str) {
 		try {
 			Byte.parseByte(str);
@@ -76,6 +85,8 @@ public class Utils
 					while (currIndex <= spec[0].length() && isInt(spec[0].substring(lastIndex, currIndex)))
 						currIndex++;
 					if (currIndex - 1 != lastIndex) {
+						if (currIndex > spec[0].length())
+							return -1;
 						final String param = spec[0].substring(currIndex - 1, currIndex).toLowerCase();
 						if (param.equals("d"))
 							days = Integer.parseInt(spec[0].substring(lastIndex, currIndex - 1));

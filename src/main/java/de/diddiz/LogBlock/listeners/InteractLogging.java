@@ -27,6 +27,7 @@ public class InteractLogging extends LoggingListener
 		final WorldConfig wcfg = getWorldConfig(event.getPlayer().getWorld());
 		if (wcfg != null) {
 			final Block clicked = event.getClickedBlock();
+			if (clicked == null) return;
 			final Material type = clicked.getType();
 			final int typeId = type.getId();
 			final byte blockData = clicked.getData();

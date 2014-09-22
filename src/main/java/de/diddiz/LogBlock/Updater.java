@@ -168,7 +168,7 @@ class Updater
 				final Statement st = conn.createStatement();
 				for (final WorldConfig wcfg : getLoggedWorlds())
 					if (wcfg.isLogging(Logging.KILL))
-						st.execute("ALTER TABLE `" + wcfg.table + "-kills` ADD (x SMALLINT NOT NULL DEFAULT 0, y TINYINT UNSIGNED NOT NULL DEFAULT 0, z SMALLINT NOT NULL DEFAULT 0)");
+						st.execute("ALTER TABLE `" + wcfg.table + "-kills` ADD (x MEDIUMINT NOT NULL DEFAULT 0, y SMALLINT NOT NULL DEFAULT 0, z MEDIUMINT NOT NULL DEFAULT 0)");
 				st.close();
 				conn.close();
 			} catch (final SQLException ex) {
@@ -199,6 +199,63 @@ class Updater
 			}
 			config.set("version", "1.52");
 		}
+		// Ensure charset for free-text fields is UTF-8
+		// As this may be an expensive operation and the database default may already be UTF-8, check on a table-by-table basis before converting
+		if (config.getString("version").compareTo("1.71") < 0) {
+			getLogger().info("Updating tables to 1.71 ...");
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				if (isLogging(Logging.CHAT)) {
+					final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `lb-chat` WHERE field = 'message'");
+					if (rs.next() && !rs.getString("Collation").substring(0,4).equalsIgnoreCase("utf8")) {
+						st.execute("ALTER TABLE `lb-chat` CONVERT TO CHARSET utf8");
+						getLogger().info("Table lb-chat modified");
+					} else {
+						getLogger().info("Table lb-chat already fine, skipping it");
+					}
+				}
+				for (final WorldConfig wcfg : getLoggedWorlds()) {
+					if (wcfg.isLogging(Logging.SIGNTEXT)) {
+						final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `"+wcfg.table+"-sign` WHERE field = 'signtext'");
+						if (rs.next() && !rs.getString("Collation").substring(0,4).equalsIgnoreCase("utf8")) {
+							st.execute("ALTER TABLE `"+wcfg.table+"-sign` CONVERT TO CHARSET utf8");
+							getLogger().info("Table "+wcfg.table+"-sign modified");
+						} else {
+							getLogger().info("Table "+wcfg.table+"-sign already fine, skipping it");
+						}
+					}
+				}
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+				return false;
+			}
+			config.set("version", "1.71");
+		}
+		if (config.getString("version").compareTo("1.81") < 0) {
+			getLogger().info("Updating tables to 1.81 ...");
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				for (final WorldConfig wcfg : getLoggedWorlds()) {
+					if (wcfg.isLogging(Logging.CHESTACCESS)) {
+						st.execute("ALTER TABLE `"+wcfg.table+"-chest` CHANGE itemdata itemdata SMALLINT NOT NULL");
+						getLogger().info("Table "+wcfg.table+"-chest modified");
+					}
+				}
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+				return false;
+			}
+			config.set("version", "1.81");
+		}
+		
 		logblock.saveConfig();
 		return true;
 	}
@@ -211,14 +268,18 @@ class Updater
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
 		createTable(dbm, state, "lb-players", "(playerid INT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
+		// Players table must not be empty or inserts won't work - bug #492
+		final ResultSet rs = state.executeQuery("SELECT NULL FROM `lb-players` LIMIT 1;");
+		if (!rs.next())
+			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('dummy_record')");
 		if (isLogging(Logging.CHAT))
-			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM");
+			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM DEFAULT CHARSET utf8");
 		for (final WorldConfig wcfg : getLoggedWorlds()) {
 			createTable(dbm, state, wcfg.table, "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT UNSIGNED NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
-			createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id))");
-			createTable(dbm, state, wcfg.table + "-chest", "(id INT UNSIGNED NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata TINYINT UNSIGNED NOT NULL, PRIMARY KEY (id))");
+			createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET utf8");
+			createTable(dbm, state, wcfg.table + "-chest", "(id INT UNSIGNED NOT NULL, itemtype SMALLINT UNSIGNED NOT NULL, itemamount SMALLINT NOT NULL, itemdata SMALLINT NOT NULL, PRIMARY KEY (id))");
 			if (wcfg.isLogging(Logging.KILL))
-				createTable(dbm, state, wcfg.table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer INT UNSIGNED, victim INT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, x SMALLINT NOT NULL, y TINYINT UNSIGNED NOT NULL, z SMALLINT NOT NULL, PRIMARY KEY (id))");
+				createTable(dbm, state, wcfg.table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer INT UNSIGNED, victim INT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id))");
 		}
 		state.close();
 		conn.close();

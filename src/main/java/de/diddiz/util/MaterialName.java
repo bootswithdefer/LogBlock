@@ -1,7 +1,7 @@
 package de.diddiz.util;
 
-import static de.diddiz.util.Utils.isByte;
 import static de.diddiz.util.Utils.isInt;
+import static de.diddiz.util.Utils.isShort;
 import static org.bukkit.Bukkit.getLogger;
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import org.bukkit.material.MaterialData;
 public class MaterialName
 {
 	private static final Map<Integer, String> materialNames = new HashMap<Integer, String>();
-	private static final Map<Integer, Map<Byte, String>> materialDataNames = new HashMap<Integer, Map<Byte, String>>();
+	private static final Map<Integer, Map<Short, String>> materialDataNames = new HashMap<Integer, Map<Short, String>>();
 
 	static {
 		// Add all known materials
@@ -57,13 +57,13 @@ public class MaterialName
 				if (cfg.isString(entry))
 					materialNames.put(Integer.valueOf(entry), cfg.getString(entry));
 				else if (cfg.isConfigurationSection(entry)) {
-					final Map<Byte, String> dataNames = new HashMap<Byte, String>();
+					final Map<Short, String> dataNames = new HashMap<Short, String>();
 					materialDataNames.put(Integer.valueOf(entry), dataNames);
 					final ConfigurationSection sec = cfg.getConfigurationSection(entry);
 					for (final String data : sec.getKeys(false))
-						if (isByte(data)) {
+						if (isShort(data)) {
 							if (sec.isString(data))
-								dataNames.put(Byte.valueOf(data), sec.getString(data));
+								dataNames.put(Short.valueOf(data), sec.getString(data));
 							else
 								getLogger().warning("Parsing materials.yml: '" + data + "' is not a string.");
 						} else
@@ -84,8 +84,8 @@ public class MaterialName
 	/**
 	 * @return Name of the material regarding it's data, or if it's unknown, the basic name.
 	 */
-	public static String materialName(int type, byte data) {
-		final Map<Byte, String> dataNames = materialDataNames.get(type);
+	public static String materialName(int type, short data) {
+		final Map<Short, String> dataNames = materialDataNames.get(type);
 		if (dataNames != null)
 			if (dataNames.containsKey(data))
 				return dataNames.get(data);

@@ -120,9 +120,9 @@ public class Consumer extends TimerTask
 
 	/**
 	 * @param container
-	 * The respective container. Must be an instance of Chest, Dispencer or Furnace.
+	 * The respective container. Must be an instance of an InventoryHolder.
 	 */
-	public void queueChestAccess(String playerName, BlockState container, short itemType, short itemAmount, byte itemData) {
+	public void queueChestAccess(String playerName, BlockState container, short itemType, short itemAmount, short itemData) {
 		if (!(container instanceof InventoryHolder))
 			return;
 		queueChestAccess(playerName, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getTypeId(), itemType, itemAmount, itemData);
@@ -130,9 +130,9 @@ public class Consumer extends TimerTask
 
 	/**
 	 * @param type
-	 * Type id of the container. Must be 63 or 68.
+	 * Type id of the container.
 	 */
-	public void queueChestAccess(String playerName, Location loc, int type, short itemType, short itemAmount, byte itemData) {
+	public void queueChestAccess(String playerName, Location loc, int type, short itemType, short itemAmount, short itemData) {
 		queueBlock(playerName, loc, type, type, (byte)0, null, new ChestAccess(itemType, itemAmount, itemData));
 	}
 
@@ -140,7 +140,7 @@ public class Consumer extends TimerTask
 	 * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
 	 *
 	 * @param container
-	 * Must be instanceof InventoryHolder
+	 * Must be an instance of InventoryHolder
 	 */
 	public void queueContainerBreak(String playerName, BlockState container) {
 		if (!(container instanceof InventoryHolder))
@@ -160,9 +160,9 @@ public class Consumer extends TimerTask
 
 	/**
 	 * @param killer
-	 * Can' be null
+	 * Can't be null
 	 * @param victim
-	 * Can' be null
+	 * Can't be null
 	 */
 	public void queueKill(Entity killer, Entity victim) {
 		if (killer == null || victim == null)
@@ -171,6 +171,19 @@ public class Consumer extends TimerTask
 		if (killer instanceof Player && ((Player)killer).getItemInHand() != null)
 			weapon = ((Player)killer).getItemInHand().getTypeId();
 		queueKill(victim.getLocation(), entityName(killer), entityName(victim), weapon);
+	}
+
+	/**
+	 * This form should only be used when the killer is not an entity e.g. for fall or suffocation damage
+	 * @param killer
+	 * Can't be null
+	 * @param victim
+	 * Can't be null
+	 */
+	public void queueKill(String killer, Entity victim) {
+		if (killer == null || victim == null)
+			return;
+		queueKill(victim.getLocation(), killer, entityName(victim), 0);
 	}
 
 	/**
@@ -336,7 +349,8 @@ public class Consumer extends TimerTask
 				continue;
 			for (final String player : r.getPlayers())
 				if (!playerIds.containsKey(player) && !insertedPlayers.contains(player)) {
-					writer.println("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + player + "');");
+					// Odd query contruction is to work around innodb auto increment behaviour - bug #492
+					writer.println("INSERT IGNORE INTO `lb-players` (playername) SELECT '" + player + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE playername = '" + player + "') LIMIT 1;");
 					insertedPlayers.add(player);
 				}
 			for (final String insert : r.getInserts())
@@ -365,7 +379,8 @@ public class Consumer extends TimerTask
 	}
 
 	private boolean addPlayer(Statement state, String playerName) throws SQLException {
-		state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('" + playerName + "')");
+		// Odd query contruction is to work around innodb auto increment behaviour - bug #492
+		state.execute("INSERT IGNORE INTO `lb-players` (playername) SELECT '" + playerName + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE playername = '" + playerName + "') LIMIT 1;");
 		final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE playername = '" + playerName + "'");
 		if (rs.next())
 			playerIds.put(playerName, rs.getInt(1));
@@ -537,7 +552,7 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + ");"};
+			return new String[]{"INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + (loc.getBlockY() < 0 ? 0 : loc.getBlockY()) + ", " + loc.getBlockZ() + ");"};
 		}
 
 		@Override
