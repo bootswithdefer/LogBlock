@@ -508,7 +508,15 @@ public class Consumer extends TimerTask
 					ps.executeUpdate();
 				}
 			}
-			// we intentionally do not catch SQLException, it is thrown to the caller
+			catch (final SQLException ex) {
+				if (ps1 != null) {
+					getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps1.toString());
+				}
+				if (ps != null) {
+					getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps.toString());
+				}
+				throw ex;
+			}
 			finally {
 				// individual try/catch here, though ugly, prevents resource leaks
 				if( ps1 != null ) {
