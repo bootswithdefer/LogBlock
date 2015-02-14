@@ -69,7 +69,7 @@ public final class QueryParams implements Cloneable
 				if (needDate)
 					select += "date, ";
 				if (needPlayer)
-					select += "playername, ";
+					select += "playername, UUID,";
 				if (needMessage)
 					select += "message, ";
 				select = select.substring(0, select.length() - 2);
@@ -110,7 +110,7 @@ public final class QueryParams implements Cloneable
 
 				return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
 			} else if (sum == SummarizationMode.PLAYERS)
-				return "SELECT playername, SUM(kills) AS kills, SUM(killed) AS killed FROM ((SELECT killer AS playerid, count(*) AS kills, 0 as killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY killer) UNION (SELECT victim AS playerid, 0 as kills, count(*) AS killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY victim)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(kills) + SUM(killed) " + order + " " + getLimit();
+				return "SELECT playername, UUID, SUM(kills) AS kills, SUM(killed) AS killed FROM ((SELECT killer AS playerid, count(*) AS kills, 0 as killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY killer) UNION (SELECT victim AS playerid, 0 as kills, count(*) AS killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY victim)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(kills) + SUM(killed) " + order + " " + getLimit();
 		}
 		if (sum == SummarizationMode.NONE) {
 			String select = "SELECT ";
@@ -126,7 +126,7 @@ public final class QueryParams implements Cloneable
 				if (needData)
 					select += "data, ";
 				if (needPlayer)
-					select += "playername, ";
+					select += "playername, UUID, ";
 				if (needCoords)
 					select += "x, y, z, ";
 				if (needSignText)

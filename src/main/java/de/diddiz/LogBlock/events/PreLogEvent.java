@@ -1,24 +1,36 @@
 package de.diddiz.LogBlock.events;
+import de.diddiz.LogBlock.Actor;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 
 public abstract class PreLogEvent extends Event implements Cancellable {
 
 	protected boolean cancelled = false;
-	protected String owner;
+	protected Actor owner;
 
-	public PreLogEvent(String owner) {
+	public PreLogEvent(Actor owner) {
 
-		this.owner = owner.replaceAll("[^a-zA-Z0-9_]", "");
+		this.owner = owner;
 	}
 
 	/**
 	 * Returns the player/monster/cause involved in this event
 	 *
 	 * @return Player/monster/cause who is involved in this event
+	 * @deprecated {@link #getOwnerActor() } returns an object encapsulating
+	 * name and uuid.  Names are not guaranteed to be unique.
 	 */
 	public String getOwner() {
 
+		return owner.getName();
+	}
+	
+	/**
+	 * Returns the player/monster/cause involved in this event
+	 *
+	 * @return Player/monster/cause who is involved in this event
+	 */
+	public Actor getOwnerActor() {
 		return owner;
 	}
 
@@ -27,9 +39,9 @@ public abstract class PreLogEvent extends Event implements Cancellable {
 	 *
 	 * @param owner The player/monster/cause who is involved in this event
 	 */
-	public void setOwner(String owner) {
+	public void setOwner(Actor owner) {
 
-		this.owner = owner.replaceAll("[^a-zA-Z0-9_]", "");
+		this.owner = owner;
 	}
 
 	public boolean isCancelled() {

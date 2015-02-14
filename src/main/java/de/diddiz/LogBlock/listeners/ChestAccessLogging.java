@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock.listeners;
 
+import de.diddiz.LogBlock.Actor;
 import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.BukkitUtils.compareInventories;
 import static de.diddiz.util.BukkitUtils.compressInventory;
@@ -43,7 +44,7 @@ public class ChestAccessLogging extends LoggingListener
 				final ItemStack[] diff = compareInventories(before, after);
 				final Location loc = getInventoryHolderLocation(holder);
 				for (final ItemStack item : diff) {
-					consumer.queueChestAccess(player.getName(), loc, loc.getWorld().getBlockTypeIdAt(loc), (short)item.getTypeId(), (short)item.getAmount(), rawData(item));
+					consumer.queueChestAccess(Actor.actorFromEntity(player), loc, loc.getWorld().getBlockTypeIdAt(loc), (short)item.getTypeId(), (short)item.getAmount(), rawData(item));
 				}
 				containers.remove(player);
 			}

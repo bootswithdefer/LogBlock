@@ -12,11 +12,14 @@ public class SummedBlockChanges implements LookupCacheElement
 	private final String group;
 	private final int created, destroyed;
 	private final float spaceFactor;
+	private final Actor actor;
 
 	public SummedBlockChanges(ResultSet rs, QueryParams p, float spaceFactor) throws SQLException {
-		group = p.sum == SummarizationMode.PLAYERS ? rs.getString(1) : materialName(rs.getInt(1));
-		created = rs.getInt(2);
-		destroyed = rs.getInt(3);
+		// Actor currently useless here as we don't yet output UUID in results anywhere
+		actor = p.sum == SummarizationMode.PLAYERS ? new Actor(rs) : null;
+		group = actor == null ? materialName(rs.getInt("type")) : actor.getName();
+		created = rs.getInt("created");
+		destroyed = rs.getInt("destroyed");
 		this.spaceFactor = spaceFactor;
 	}
 

@@ -14,28 +14,31 @@ public class BlockChange implements LookupCacheElement
 {
 	public final long id, date;
 	public final Location loc;
+	public final Actor actor;
 	public final String playerName;
 	public final int replaced, type;
 	public final byte data;
 	public final String signtext;
 	public final ChestAccess ca;
 
-	public BlockChange(long date, Location loc, String playerName, int replaced, int type, byte data, String signtext, ChestAccess ca) {
+	public BlockChange(long date, Location loc, Actor actor, int replaced, int type, byte data, String signtext, ChestAccess ca) {
 		id = 0;
 		this.date = date;
 		this.loc = loc;
-		this.playerName = playerName;
+		this.actor = actor;
 		this.replaced = replaced;
 		this.type = type;
 		this.data = data;
 		this.signtext = signtext;
 		this.ca = ca;
+		this.playerName = actor == null ? null : actor.getName();
 	}
 
 	public BlockChange(ResultSet rs, QueryParams p) throws SQLException {
 		id = p.needId ? rs.getInt("id") : 0;
 		date = p.needDate ? rs.getTimestamp("date").getTime() : 0;
 		loc = p.needCoords ? new Location(p.world, rs.getInt("x"), rs.getInt("y"), rs.getInt("z")) : null;
+		actor = p.needPlayer ? new Actor(rs) : null;
 		playerName = p.needPlayer ? rs.getString("playername") : null;
 		replaced = p.needType ? rs.getInt("replaced") : 0;
 		type = p.needType ? rs.getInt("type") : 0;
@@ -49,8 +52,8 @@ public class BlockChange implements LookupCacheElement
 		final StringBuilder msg = new StringBuilder();
 		if (date > 0)
 			msg.append(Config.formatter.format(date)).append(" ");
-		if (playerName != null)
-			msg.append(playerName).append(" ");
+		if (actor != null)
+			msg.append(actor.getName()).append(" ");
 		if (signtext != null) {
 			final String action = type == 0 ? "destroyed " : "created ";
 			if (!signtext.contains("\0"))

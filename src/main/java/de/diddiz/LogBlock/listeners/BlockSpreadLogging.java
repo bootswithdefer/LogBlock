@@ -1,14 +1,14 @@
 package de.diddiz.LogBlock.listeners;
 
+import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import static de.diddiz.LogBlock.config.Config.isLogging;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockSpreadEvent;
-
-import static de.diddiz.LogBlock.config.Config.isLogging;
 
 public class BlockSpreadLogging extends LoggingListener
 {
@@ -47,6 +47,6 @@ public class BlockSpreadLogging extends LoggingListener
 				return;
 		}
 
-		consumer.queueBlockReplace(name, event.getBlock().getState(), event.getNewState());
+		consumer.queueBlockReplace(new Actor(name), event.getBlock().getState(), event.getNewState());
 	}
 }

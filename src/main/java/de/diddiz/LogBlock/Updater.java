@@ -13,15 +13,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 
 import static de.diddiz.LogBlock.config.Config.getLoggedWorlds;
 import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
+import de.diddiz.util.UUIDFetcher;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.logging.Logger;
 import static org.bukkit.Bukkit.getLogger;
 
 class Updater
 {
 	private final LogBlock logblock;
+	final int UUID_CONVERT_BATCH_SIZE = 100;
 
 	Updater(LogBlock logblock) {
 		this.logblock = logblock;
@@ -256,6 +265,77 @@ class Updater
 			config.set("version", "1.81");
 		}
 		
+		if (config.getString("version").compareTo("1.90") < 0) {
+			getLogger().info("Updating tables to 1.9 ...");
+			getLogger().info("Importing UUIDs for large databases may take some time");
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				st.execute("ALTER TABLE `lb-players` ADD `UUID` VARCHAR(36) NOT NULL");
+			} catch (final SQLException ex) {
+				// Error 1060 is MySQL error "column already exists". We want to continue with import if we get that error
+				if (ex.getErrorCode() != 1060) {
+					Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+				return false;
+				}
+			}
+			try {
+				ResultSet rs;
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				// Start by assuming anything with no onlinetime is not a player
+				st.execute("UPDATE `lb-players` SET UUID = CONCAT ('log_',playername) WHERE onlinetime=0 AND LENGTH(UUID) = 0");
+				// Tell people how many are needing converted
+				rs = st.executeQuery("SELECT COUNT(playername) FROM `lb-players` WHERE LENGTH(UUID)=0");
+				rs.next();
+				String total = Integer.toString(rs.getInt(1));
+				getLogger().info(total + " players to convert");
+				int done = 0;
+				
+				conn.setAutoCommit(false);
+				Map <String,Integer> players = new HashMap<String,Integer>();
+				List <String> names = new ArrayList<String>(UUID_CONVERT_BATCH_SIZE);
+				Map <String,UUID> response;
+				rs = st.executeQuery("SELECT playerid,playername FROM `lb-players` WHERE LENGTH(UUID)=0 LIMIT " + Integer.toString(UUID_CONVERT_BATCH_SIZE));
+				while (rs.next()) {
+					do {
+						players.put(rs.getString(2),rs.getInt(1));
+						names.add(rs.getString(2));
+					} while (rs.next());
+					if (names.size()>0) {
+						String theUUID;
+						response = UUIDFetcher.getUUIDs(names);
+						for (Map.Entry<String,Integer> entry : players.entrySet()) {
+							if (response.get(entry.getKey()) == null) {
+								theUUID = "noimport_" + entry.getKey();
+								getLogger().warning(entry.getKey() + " not found - giving UUID of " + theUUID);
+							} else {
+								theUUID = response.get(entry.getKey()).toString();
+							}
+							String thePID = entry.getValue().toString();
+							st.execute("UPDATE `lb-players` SET UUID = '" + theUUID + "' WHERE playerid = " + thePID);
+							done++;
+						}
+						conn.commit();
+						players.clear();
+						names.clear();
+						getLogger().info("Processed " + Integer.toString(done) + " out of " + total);
+						rs = st.executeQuery("SELECT playerid,playername FROM `lb-players` WHERE LENGTH(UUID)=0 LIMIT " + Integer.toString(UUID_CONVERT_BATCH_SIZE));
+					}
+				}
+				st.close();
+				conn.close();
+				
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+				return false;
+			} catch (Exception ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[UUID importer]", ex);
+				return false;
+			}
+			config.set("version", "1.90");
+		}
 		logblock.saveConfig();
 		return true;
 	}
@@ -267,11 +347,11 @@ class Updater
 		final Statement state = conn.createStatement();
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
-		createTable(dbm, state, "lb-players", "(playerid INT UNSIGNED NOT NULL AUTO_INCREMENT, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (playername))");
+		createTable(dbm, state, "lb-players", "(playerid INT UNSIGNED NOT NULL AUTO_INCREMENT, UUID varchar(36) NOT NULL, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (UUID))");
 		// Players table must not be empty or inserts won't work - bug #492
 		final ResultSet rs = state.executeQuery("SELECT NULL FROM `lb-players` LIMIT 1;");
 		if (!rs.next())
-			state.execute("INSERT IGNORE INTO `lb-players` (playername) VALUES ('dummy_record')");
+			state.execute("INSERT IGNORE INTO `lb-players` (UUID,playername) VALUES ('log_dummy_record','dummy_record')");
 		if (isLogging(Logging.CHAT))
 			createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM DEFAULT CHARSET utf8");
 		for (final WorldConfig wcfg : getLoggedWorlds()) {

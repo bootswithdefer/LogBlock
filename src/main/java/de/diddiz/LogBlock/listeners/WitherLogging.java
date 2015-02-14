@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock.listeners;
 
+import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import org.bukkit.entity.Wither;
@@ -18,6 +19,6 @@ public class WitherLogging extends LoggingListener
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onEntityChangeBlock(EntityChangeBlockEvent event) {
 		if (event.getEntity() instanceof Wither && isLogging(event.getBlock().getWorld(), Logging.WITHER))
-			consumer.queueBlockReplace("Wither", event.getBlock().getState(), event.getTo().getId(), event.getData()); // Wither walked through a block.
+			consumer.queueBlockReplace(Actor.actorFromEntity(event.getEntity()), event.getBlock().getState(), event.getTo().getId(), event.getData()); // Wither walked through a block.
 	}
 }

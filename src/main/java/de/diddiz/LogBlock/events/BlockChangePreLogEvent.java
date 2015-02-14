@@ -1,4 +1,5 @@
 package de.diddiz.LogBlock.events;
+import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.ChestAccess;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Location;
@@ -13,7 +14,7 @@ public class BlockChangePreLogEvent extends PreLogEvent {
 	private String signText;
 	private ChestAccess chestAccess;
 
-	public BlockChangePreLogEvent(String owner, Location location, int typeBefore, int typeAfter, byte data,
+	public BlockChangePreLogEvent(Actor owner, Location location, int typeBefore, int typeAfter, byte data,
 								  String signText, ChestAccess chestAccess) {
 
 		super(owner);
