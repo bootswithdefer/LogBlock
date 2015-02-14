@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock.listeners;
 
+import de.diddiz.LogBlock.Actor;
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.LoggingUtil.smartLogBlockBreak;
@@ -29,33 +30,33 @@ public class BlockBreakLogging extends LoggingListener
 			WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
 			if (wcfg == null) return;
 
-			final String playerName = event.getPlayer().getName();
+			final Actor actor = Actor.actorFromEntity(event.getPlayer());
 			final Block origin = event.getBlock();
 			final int typeId = origin.getTypeId();
 			final Material type = origin.getType();
 
 			if (wcfg.isLogging(Logging.SIGNTEXT) && (typeId == 63 || typeId == 68)) {
-				consumer.queueSignBreak(playerName, (Sign) origin.getState());
+				consumer.queueSignBreak(actor, (Sign) origin.getState());
 			} else if (wcfg.isLogging(Logging.CHESTACCESS) && BukkitUtils.getContainerBlocks().contains(type)) {
-				consumer.queueContainerBreak(playerName, origin.getState());
+				consumer.queueContainerBreak(actor, origin.getState());
 			} else if (type == Material.ICE) {
 				// When in creative mode ice doesn't form water
 				if (event.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
-					consumer.queueBlockBreak(playerName, origin.getState());
+					consumer.queueBlockBreak(actor, origin.getState());
 				} else {
-					consumer.queueBlockReplace(playerName, origin.getState(), 9, (byte) 0);
+					consumer.queueBlockReplace(actor, origin.getState(), 9, (byte) 0);
 				}
 			} else {
-				smartLogBlockBreak(consumer, playerName, origin);
+				smartLogBlockBreak(consumer, actor, origin);
 			}
-			smartLogFallables(consumer, playerName, origin);
+			smartLogFallables(consumer, actor, origin);
 		}
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerBucketFill(PlayerBucketFillEvent event) {
 		if (isLogging(event.getBlockClicked().getWorld(), Logging.BLOCKBREAK)) {
-			consumer.queueBlockBreak(event.getPlayer().getName(), event.getBlockClicked().getState());
+			consumer.queueBlockBreak(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getState());
 		}
 	}
 }

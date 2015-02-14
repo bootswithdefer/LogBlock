@@ -147,8 +147,8 @@ public class WorldEditor implements Runnable
 
 	private class Edit extends BlockChange
 	{
-		public Edit(long time, Location loc, String playerName, int replaced, int type, byte data, String signtext, ChestAccess ca) {
-			super(time, loc, playerName, replaced, type, data, signtext, ca);
+		public Edit(long time, Location loc, Actor actor, int replaced, int type, byte data, String signtext, ChestAccess ca) {
+			super(time, loc, actor, replaced, type, data, signtext, ca);
 		}
 
 		PerformResult perform() throws WorldEditorException {

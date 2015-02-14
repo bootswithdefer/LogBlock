@@ -1,7 +1,9 @@
 package de.diddiz.LogBlock.listeners;
 
+import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.util.BukkitUtils;
 import org.bukkit.Location;
@@ -13,8 +15,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityInteractEvent;
-
-import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 
 public class CreatureInteractLogging extends LoggingListener
 {
@@ -42,11 +42,11 @@ public class CreatureInteractLogging extends LoggingListener
 				case SOIL:
 					if (wcfg.isLogging(Logging.CREATURECROPTRAMPLE)) {
 						// 3 = Dirt ID
-						consumer.queueBlock(entityType.getName(), loc, typeId, 3, blockData);
+						consumer.queueBlock(Actor.actorFromEntity(entityType), loc, typeId, 3, blockData);
 						// Log the crop on top as being broken
 						Block trampledCrop = clicked.getRelative(BlockFace.UP);
 						if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
-							consumer.queueBlockBreak("CreatureTrample", trampledCrop.getState());
+							consumer.queueBlockBreak(new Actor("CreatureTrample"), trampledCrop.getState());
 						}
 					}
 					break;

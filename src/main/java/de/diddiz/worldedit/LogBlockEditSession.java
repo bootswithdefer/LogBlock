@@ -57,7 +57,7 @@ public class LogBlockEditSession extends EditSession {
 
 			// Check to see if we've broken a sign
 			if (Config.isLogging(location.getWorld().getName(), Logging.SIGNTEXT) && (typeBefore == Material.SIGN_POST.getId() || typeBefore == Material.SIGN.getId())) {
-				plugin.getConsumer().queueSignBreak(player.getName(), (Sign) stateBefore);
+				plugin.getConsumer().queueSignBreak(player, (Sign) stateBefore);
 				if (block.getType() != Material.AIR.getId()) {
 					plugin.getConsumer().queueBlockPlace(player.getName(), location, block.getType(), (byte) block.getData());
 				}
