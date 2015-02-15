@@ -277,15 +277,21 @@ class Updater
 				// Error 1060 is MySQL error "column already exists". We want to continue with import if we get that error
 				if (ex.getErrorCode() != 1060) {
 					Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
-				return false;
+					return false;
 				}
 			}
 			try {
+				String unimportedPrefix="noimport_";
 				ResultSet rs;
 				conn.setAutoCommit(true);
 				final Statement st = conn.createStatement();
-				// Start by assuming anything with no onlinetime is not a player
-				st.execute("UPDATE `lb-players` SET UUID = CONCAT ('log_',playername) WHERE onlinetime=0 AND LENGTH(UUID) = 0");
+				if (config.getBoolean("logging.logPlayerInfo")) {
+					// Start by assuming anything with no onlinetime is not a player
+					st.execute("UPDATE `lb-players` SET UUID = CONCAT ('log_',playername) WHERE onlinetime=0 AND LENGTH(UUID) = 0");
+				} else {
+					// If we can't assume that, we must assume anything we can't look up is not a player
+					unimportedPrefix = "log_";
+				}
 				// Tell people how many are needing converted
 				rs = st.executeQuery("SELECT COUNT(playername) FROM `lb-players` WHERE LENGTH(UUID)=0");
 				rs.next();
@@ -308,7 +314,7 @@ class Updater
 						response = UUIDFetcher.getUUIDs(names);
 						for (Map.Entry<String,Integer> entry : players.entrySet()) {
 							if (response.get(entry.getKey()) == null) {
-								theUUID = "noimport_" + entry.getKey();
+								theUUID = unimportedPrefix + entry.getKey();
 								getLogger().warning(entry.getKey() + " not found - giving UUID of " + theUUID);
 							} else {
 								theUUID = response.get(entry.getKey()).toString();
@@ -336,6 +342,39 @@ class Updater
 			}
 			config.set("version", "1.90");
 		}
+
+			if (config.getString("version").compareTo("1.91") < 0) {
+			getLogger().info("Updating tables to 1.91 ...");
+			final Connection conn = logblock.getConnection();
+				try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				// Need to wrap both these next two inside individual try/catch statements in case index does not exist
+				try {
+					st.execute("DROP INDEX UUID ON `lb-players`");
+				} catch (final SQLException ex) {
+					if (ex.getErrorCode() != 1091) {
+						Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+						return false;
+					}
+				}
+				try {
+					st.execute("DROP INDEX playername ON `lb-players`");
+				} catch (final SQLException ex) {
+					if (ex.getErrorCode() != 1091) {
+						Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+						return false;
+					}
+				}
+				st.execute("CREATE INDEX UUID ON `lb-players` (UUID);");
+				st.close();
+				conn.close();
+				} catch (final SQLException ex) {
+					Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+					return false;
+				}
+			config.set("version", "1.91");
+		}
 		logblock.saveConfig();
 		return true;
 	}
@@ -347,7 +386,7 @@ class Updater
 		final Statement state = conn.createStatement();
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
-		createTable(dbm, state, "lb-players", "(playerid INT UNSIGNED NOT NULL AUTO_INCREMENT, UUID varchar(36) NOT NULL, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), UNIQUE (UUID))");
+		createTable(dbm, state, "lb-players", "(playerid INT UNSIGNED NOT NULL AUTO_INCREMENT, UUID varchar(36) NOT NULL, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), INDEX (UUID))");
 		// Players table must not be empty or inserts won't work - bug #492
 		final ResultSet rs = state.executeQuery("SELECT NULL FROM `lb-players` LIMIT 1;");
 		if (!rs.next())
