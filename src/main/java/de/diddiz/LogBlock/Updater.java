@@ -30,7 +30,7 @@ import static org.bukkit.Bukkit.getLogger;
 class Updater
 {
 	private final LogBlock logblock;
-	final int UUID_CONVERT_BATCH_SIZE = 75;
+	final int UUID_CONVERT_BATCH_SIZE = 100;
 
 	Updater(LogBlock logblock) {
 		this.logblock = logblock;
