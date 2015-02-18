@@ -670,7 +670,9 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "', playername = '" + player.getName() + "' WHERE UUID = '" + player.getUUID() + "';"};
+			if (logPlayerInfo)
+				return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "', playername = '" + player.getName() + "' WHERE UUID = '" + player.getUUID() + "';"};
+			return new String[]{"UPDATE `lb-players` SET playername = '" + player.getName() + "' WHERE UUID = '" + player.getUUID() + "';"};
 		}
 
 		@Override
@@ -696,7 +698,9 @@ public class Consumer extends TimerTask
 
 		@Override
 		public String[] getInserts() {
-			return new String[]{"UPDATE `lb-players` SET onlinetime = onlinetime + TIMESTAMPDIFF(SECOND, lastlogin, FROM_UNIXTIME('" + leaveTime + "')), playername = '" + actor.getName() + "' WHERE lastlogin > 0 && UUID = '" + actor.getUUID() + "';"};
+			if (logPlayerInfo)
+				return new String[]{"UPDATE `lb-players` SET onlinetime = onlinetime + TIMESTAMPDIFF(SECOND, lastlogin, FROM_UNIXTIME('" + leaveTime + "')), playername = '" + actor.getName() + "' WHERE lastlogin > 0 && UUID = '" + actor.getUUID() + "';"};
+			return new String[]{"UPDATE `lb-players` SET playername = '" + actor.getName() + "' WHERE UUID = '" + actor.getUUID() + "';"};
 		}
 
 		@Override

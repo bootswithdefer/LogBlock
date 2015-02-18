@@ -148,6 +148,7 @@ public class LogBlock extends JavaPlugin
 	private void registerEvents() {
 		final PluginManager pm = getPluginManager();
 		pm.registerEvents(new ToolListener(this), this);
+		pm.registerEvents(new PlayerInfoLogging(this), this);
 		if (askRollbackAfterBan)
 			pm.registerEvents(new BanListener(this), this);
 		if (isLogging(Logging.BLOCKPLACE))
@@ -190,8 +191,6 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvents(new BlockSpreadLogging(this), this);
 		if (isLogging(Logging.LOCKEDCHESTDECAY))
 			pm.registerEvents(new LockedChestDecayLogging(this), this);
-		if (logPlayerInfo)
-			pm.registerEvents(new PlayerInfoLogging(this), this);
 	}
 
 	@Override
