@@ -86,6 +86,13 @@ public class LogBlock extends JavaPlugin
 				noDb = true;
 				return;
 			}
+			final Statement st = conn.createStatement();
+			final ResultSet rs = st.executeQuery("SHOW CHARACTER SET where charset='utf8mb4';");
+			if (rs.next()) {
+				Config.mb4=true;
+				// Allegedly JDBC driver since 2010 hasn't needed this. I did.
+				st.executeQuery("SET NAMES utf8mb4;");
+			}
 			conn.close();
 			if (updater.update())
 				load(this);

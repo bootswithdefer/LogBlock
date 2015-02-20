@@ -1,5 +1,6 @@
 package de.diddiz.util;
 
+import static de.diddiz.LogBlock.config.Config.mb4;
 import java.io.Closeable;
 import java.sql.Array;
 import java.sql.Blob;
@@ -76,6 +77,7 @@ public class MySQLConnectionPool implements Closeable
 				throw new SQLException("Failed to validate a brand new connection");
 			}
 			connections.add(conn);
+			if (mb4) conn.createStatement().executeQuery("SET NAMES utf8mb4");
 			return conn;
 		} finally {
 			lock.unlock();

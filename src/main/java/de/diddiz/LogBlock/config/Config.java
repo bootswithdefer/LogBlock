@@ -47,6 +47,8 @@ public class Config
 	public static SimpleDateFormat formatter;
 	public static boolean safetyIdCheck;
 	public static boolean logEnvironmentalKills;
+	// Not loaded from config - checked at runtime
+	public static boolean mb4 = false;
 
 	public static enum LogKillsLevel
 	{

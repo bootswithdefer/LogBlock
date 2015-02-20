@@ -4,6 +4,7 @@ import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.Consumer;
 import de.diddiz.LogBlock.Logging;
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+import static de.diddiz.LogBlock.config.Config.mb4;
 import de.diddiz.LogBlock.config.WorldConfig;
 import java.util.List;
 import org.bukkit.Location;
@@ -199,5 +200,11 @@ public class LoggingUtil {
 
 		// Do this down here so that the block is added after blocks sitting on it
 		consumer.queueBlockBreak(actor, origin.getState());
+	}
+	
+	public static String checkText(String text) {
+		if (text==null) return text;
+		if (mb4) return text;
+		return text.replaceAll("[^\\u0000-\\uFFFF]", "?");
 	}
 }

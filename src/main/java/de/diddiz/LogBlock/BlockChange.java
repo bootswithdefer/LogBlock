@@ -8,6 +8,7 @@ import de.diddiz.util.BukkitUtils;
 import org.bukkit.Location;
 
 import de.diddiz.LogBlock.config.Config;
+import static de.diddiz.util.LoggingUtil.checkText;
 import org.bukkit.Material;
 
 public class BlockChange implements LookupCacheElement
@@ -29,7 +30,7 @@ public class BlockChange implements LookupCacheElement
 		this.replaced = replaced;
 		this.type = type;
 		this.data = data;
-		this.signtext = signtext;
+		this.signtext = checkText(signtext);
 		this.ca = ca;
 		this.playerName = actor == null ? null : actor.getName();
 	}

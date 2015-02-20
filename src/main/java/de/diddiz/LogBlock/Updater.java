@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -208,42 +209,6 @@ class Updater
 			}
 			config.set("version", "1.52");
 		}
-		// Ensure charset for free-text fields is UTF-8
-		// As this may be an expensive operation and the database default may already be UTF-8, check on a table-by-table basis before converting
-		if (config.getString("version").compareTo("1.71") < 0) {
-			getLogger().info("Updating tables to 1.71 ...");
-			final Connection conn = logblock.getConnection();
-			try {
-				conn.setAutoCommit(true);
-				final Statement st = conn.createStatement();
-				if (isLogging(Logging.CHAT)) {
-					final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `lb-chat` WHERE field = 'message'");
-					if (rs.next() && !rs.getString("Collation").substring(0,4).equalsIgnoreCase("utf8")) {
-						st.execute("ALTER TABLE `lb-chat` CONVERT TO CHARSET utf8");
-						getLogger().info("Table lb-chat modified");
-					} else {
-						getLogger().info("Table lb-chat already fine, skipping it");
-					}
-				}
-				for (final WorldConfig wcfg : getLoggedWorlds()) {
-					if (wcfg.isLogging(Logging.SIGNTEXT)) {
-						final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `"+wcfg.table+"-sign` WHERE field = 'signtext'");
-						if (rs.next() && !rs.getString("Collation").substring(0,4).equalsIgnoreCase("utf8")) {
-							st.execute("ALTER TABLE `"+wcfg.table+"-sign` CONVERT TO CHARSET utf8");
-							getLogger().info("Table "+wcfg.table+"-sign modified");
-						} else {
-							getLogger().info("Table "+wcfg.table+"-sign already fine, skipping it");
-						}
-					}
-				}
-				st.close();
-				conn.close();
-			} catch (final SQLException ex) {
-				Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
-				return false;
-			}
-			config.set("version", "1.71");
-		}
 		if (config.getString("version").compareTo("1.81") < 0) {
 			getLogger().info("Updating tables to 1.81 ...");
 			final Connection conn = logblock.getConnection();
@@ -342,7 +307,6 @@ class Updater
 			}
 			config.set("version", "1.90");
 		}
-
 			if (config.getString("version").compareTo("1.91") < 0) {
 			getLogger().info("Updating tables to 1.91 ...");
 			final Connection conn = logblock.getConnection();
@@ -374,6 +338,44 @@ class Updater
 					return false;
 				}
 			config.set("version", "1.91");
+		}
+		// Ensure charset for free-text fields is UTF-8, or UTF8-mb4 if possible
+		// As this may be an expensive operation and the database default may already be this, check on a table-by-table basis before converting
+		if (config.getString("version").compareTo("1.92") < 0) {
+			getLogger().info("Updating tables to 1.92 ...");
+			String charset = "utf8";
+			if ( Config.mb4) charset="utf8mb4";
+			final Connection conn = logblock.getConnection();
+			try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				if (isLogging(Logging.CHAT)) {
+					final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `lb-chat` WHERE field = 'message'");
+					if (rs.next() && !rs.getString("Collation").substring(0,4).equalsIgnoreCase(charset)) {
+						st.execute("ALTER TABLE `lb-chat` CONVERT TO CHARSET " + charset);
+						getLogger().info("Table lb-chat modified");
+					} else {
+						getLogger().info("Table lb-chat already fine, skipping it");
+					}
+				}
+				for (final WorldConfig wcfg : getLoggedWorlds()) {
+					if (wcfg.isLogging(Logging.SIGNTEXT)) {
+						final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `"+wcfg.table+"-sign` WHERE field = 'signtext'");
+						if (rs.next() && !rs.getString("Collation").substring(0,4).equalsIgnoreCase(charset)) {
+							st.execute("ALTER TABLE `"+wcfg.table+"-sign` CONVERT TO CHARSET " + charset);
+							getLogger().info("Table "+wcfg.table+"-sign modified");
+						} else {
+							getLogger().info("Table "+wcfg.table+"-sign already fine, skipping it");
+						}
+					}
+				}
+				st.close();
+				conn.close();
+			} catch (final SQLException ex) {
+				Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+				return false;
+			}
+			config.set("version", "1.92");
 		}
 		logblock.saveConfig();
 		return true;
