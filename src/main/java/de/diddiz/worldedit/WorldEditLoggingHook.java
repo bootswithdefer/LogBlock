@@ -4,7 +4,7 @@ import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.blocks.BaseBlock;
-import com.sk89q.worldedit.entity.Player;
+import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.event.extent.EditSessionEvent;
 //...so they ALSO have a class called Actor... need to fully-qualify when we use ours
 import com.sk89q.worldedit.extension.platform.Actor;
@@ -13,9 +13,11 @@ import com.sk89q.worldedit.util.eventbus.Subscribe;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.Config;
+import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -31,9 +33,19 @@ public class WorldEditLoggingHook {
 	// Convert WE Actor to LB Actor
 	private de.diddiz.LogBlock.Actor AtoA(Actor weActor) {
 		if (weActor.isPlayer()) {
-			return de.diddiz.LogBlock.Actor.actorFromEntity(plugin.getServer().getPlayer(weActor.getName()));
+			return new de.diddiz.LogBlock.Actor(weActor.getName(),weActor.getUniqueId());
 		}
 		return new de.diddiz.LogBlock.Actor(weActor.getName());
+	}
+
+	private World adapt(com.sk89q.worldedit.world.World weWorld) {
+		if (weWorld == null) {
+			throw new NullPointerException("[Logblock-Worldedit] The provided world was null.");
+		}
+		if (weWorld instanceof BukkitWorld) return ((BukkitWorld) weWorld).getWorld();
+		World world = Bukkit.getServer().getWorld(weWorld.getName());
+		if (world == null) throw new IllegalArgumentException("Can't find a Bukkit world for " + weWorld);
+		return world;
 	}
 
 	public void hook() {
@@ -45,17 +57,21 @@ public class WorldEditLoggingHook {
 				final de.diddiz.LogBlock.Actor lbActor = AtoA(actor);
 
 				// Check to ensure the world should be logged
-				String worldName = event.getWorld().getName();
+				final World world;
+				final com.sk89q.worldedit.world.World k = event.getWorld();
+				try {
+					world = adapt(k);
+				} catch (RuntimeException ex) {
+					plugin.getLogger().warning("Failed to register logging for WorldEdit!");
+					plugin.getLogger().log(Level.WARNING, ex.getMessage(),ex);
+					return;
+				}
+
 				// If config becomes reloadable, this check should be moved
-				if (!(Config.isLogging(worldName, Logging.WORLDEDIT))) {
+				if (!(Config.isLogging(world, Logging.WORLDEDIT))) {
 					return;
 				}
-
-				final org.bukkit.World bukkitWorld = Bukkit.getWorld(worldName);
-				if (bukkitWorld == null) {
-					return;
-				}
-
+				
 				event.setExtent(new AbstractLoggingExtent(event.getExtent()) {
 					@Override
 					protected void onBlockChange(Vector pt, BaseBlock block) {
@@ -64,8 +80,7 @@ public class WorldEditLoggingHook {
 							return;
 						}
 
-						Location location = new Location(bukkitWorld, pt.getBlockX(), pt.getBlockY(), pt.getBlockZ());
-
+						Location location = new Location(world, pt.getBlockX(), pt.getBlockY(), pt.getBlockZ());
 						Block origin = location.getBlock();
 						int typeBefore = origin.getTypeId();
 						byte dataBefore = origin.getData();

@@ -40,6 +40,12 @@ public class Actor {
 		this.UUID = UUID;
 		
 	}
+	
+	public Actor(String name, java.util.UUID UUID) {
+		this.name = name;
+		this.UUID = UUID.toString();
+		
+	}
 
 	public Actor(String name) {
 		this(name, generateUUID(name));
@@ -59,7 +65,7 @@ public class Actor {
 
 	public static Actor actorFromEntity(Entity entity) {
 		if (entity instanceof Player) {
-			return new Actor(entityName(entity),entity.getUniqueId().toString());
+			return new Actor(entityName(entity),entity.getUniqueId());
 		} else {
 			return new Actor(entityName(entity));
 		}
