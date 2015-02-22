@@ -126,16 +126,16 @@ public class LogBlock extends JavaPlugin
 		getServer().getScheduler().runTaskAsynchronously(this, new DumpedLogImporter(this));
 		registerEvents();
 		if (useBukkitScheduler) {
-			if (getServer().getScheduler().runTaskTimerAsynchronously(this, consumer, delayBetweenRuns * 20, delayBetweenRuns * 20).getTaskId() > 0)
+			if (getServer().getScheduler().runTaskTimerAsynchronously(this, consumer, delayBetweenRuns < 20 ? 20 : delayBetweenRuns, delayBetweenRuns).getTaskId() > 0)
 				getLogger().info("Scheduled consumer with bukkit scheduler.");
 			else {
 				getLogger().warning("Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
 				timer = new Timer();
-				timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
+				timer.schedule(consumer, delayBetweenRuns < 20 ? 1000 : delayBetweenRuns * 50, delayBetweenRuns * 50);
 			}
 		} else {
 			timer = new Timer();
-			timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
+			timer.schedule(consumer, delayBetweenRuns < 20 ? 1000 : delayBetweenRuns * 50, delayBetweenRuns * 50);
 			getLogger().info("Scheduled consumer with timer.");
 		}
 		getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
@@ -209,9 +209,10 @@ public class LogBlock extends JavaPlugin
 			if (logPlayerInfo && getServer().getOnlinePlayers() != null)
 				for (final Player player : getServer().getOnlinePlayers())
 					consumer.queueLeave(player);
+			getLogger().info("Waiting for consumer ...");
+			consumer.run();
 			if (consumer.getQueueSize() > 0) {
-				getLogger().info("Waiting for consumer ...");
-				int tries = 10;
+				int tries = 9;
 				while (consumer.getQueueSize() > 0) {
 					getLogger().info("Remaining queue size: " + consumer.getQueueSize());
 					if (tries > 0)
