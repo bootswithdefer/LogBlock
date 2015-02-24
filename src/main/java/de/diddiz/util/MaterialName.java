@@ -28,12 +28,24 @@ public class MaterialName
 		if (cfg.getKeys(false).isEmpty()) {
 			// Generate defaults
 			cfg.options().header("Add block or item names you want to be overridden or also names for custom blocks");
+			cfg.set("1.1", "granite");
+			cfg.set("1.2", "polished granite");
+			cfg.set("1.3", "diorite");
+			cfg.set("1.4", "polished diorite");
+			cfg.set("1.5", "andesite");
+			cfg.set("1.6", "polished andesite");
+			cfg.set("3.1", "coarse dirt");
+			cfg.set("3.2", "podzol");
 			cfg.set("6.1", "redwood sapling");
 			cfg.set("6.2", "birch sapling");
+			cfg.set("6.3", "jungle sapling");
+			cfg.set("6.4", "acacia sapling");
+			cfg.set("6.5", "dark oak sapling");
 			cfg.set("9", "water");
 			cfg.set("11", "lava");
 			cfg.set("17.1", "redwood log");
 			cfg.set("17.2", "birch log");
+			cfg.set("17.3", "jungle log");
 			cfg.set("18.1", "redwood leaves");
 			cfg.set("18.2", "birch leaves");
 			cfg.set("31.0", "dead long grass");
