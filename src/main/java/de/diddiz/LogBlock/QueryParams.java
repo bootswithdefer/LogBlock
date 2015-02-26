@@ -20,6 +20,7 @@ import static de.diddiz.LogBlock.config.Config.*;
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.BukkitUtils.getBlockEquivalents;
 import static de.diddiz.util.MaterialName.materialName;
+import static de.diddiz.util.MaterialName.typeFromName;
 import static de.diddiz.util.Utils.*;
 
 public final class QueryParams implements Cloneable
@@ -579,9 +580,7 @@ public final class QueryParams implements Cloneable
 						types.add(new Block(mat.getId(), data));
 					} else {
 						final Material mat = Material.matchMaterial(blockName);
-						if (mat == null)
-							throw new IllegalArgumentException("No material matching: '" + blockName + "'");
-						types.add(new Block(mat.getId(), -1));
+						types.add(new Block(typeFromName(blockName), -1));
 					}
 				}
 			} else if (param.equals("area")) {

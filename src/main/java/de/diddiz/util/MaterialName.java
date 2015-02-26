@@ -18,6 +18,7 @@ public class MaterialName
 	private static final String[] COLORS = {"white","orange","magenta","light blue","yellow","lime","pink","gray","silver","cyan","purple","blue","brown","green","red","black"};
 	private static final Map<Integer, String> materialNames = new HashMap<Integer, String>();
 	private static final Map<Integer, Map<Short, String>> materialDataNames = new HashMap<Integer, Map<Short, String>>();
+	private static final Map<String, Integer> nameTypes = new HashMap<String, Integer>();
 
 	static {
 		// Add all known materials
@@ -141,7 +142,7 @@ public class MaterialName
 			cfg.set("162.9", "dark oak log");
 			cfg.set("162.12", "acacia log");
 			cfg.set("162.13", "dark oak log");
-			cfg.set("168.1", "prismarine bricks");
+			cfg.set("168.1", "prismarine brick");
 			cfg.set("168.2", "dark prismarine");
 			cfg.set("181.0", "red sandstone double step");
 			cfg.set("181.8", "smooth red sandstone double step");
@@ -197,16 +198,20 @@ public class MaterialName
 		}
 		for (final String entry : cfg.getKeys(false))
 			if (isInt(entry)) {
-				if (cfg.isString(entry))
+				if (cfg.isString(entry)) {
 					materialNames.put(Integer.valueOf(entry), cfg.getString(entry));
+					nameTypes.put(cfg.getString(entry), Integer.valueOf(entry));
+				}
 				else if (cfg.isConfigurationSection(entry)) {
 					final Map<Short, String> dataNames = new HashMap<Short, String>();
 					materialDataNames.put(Integer.valueOf(entry), dataNames);
 					final ConfigurationSection sec = cfg.getConfigurationSection(entry);
 					for (final String data : sec.getKeys(false))
 						if (isShort(data)) {
-							if (sec.isString(data))
+							if (sec.isString(data)) {
 								dataNames.put(Short.valueOf(data), sec.getString(data));
+								nameTypes.put(sec.getString(data), Integer.valueOf(entry));
+							}
 							else
 								getLogger().warning("Parsing materials.yml: '" + data + "' is not a string.");
 						} else
@@ -234,8 +239,20 @@ public class MaterialName
 				return dataNames.get(data);
 		return materialName(type);
 	}
+	
+	public static Integer typeFromName(String name) {
+	    Integer answer = nameTypes.get(toReadable(name));
+	    if (answer != null) return answer;
+	    final Material mat = Material.matchMaterial(name);
+	    if (mat == null) throw new IllegalArgumentException("No material matching: '" + name + "'");
+	    return mat.getId();
+	}
 
 	private static String toReadable(MaterialData matData) {
 		return matData.toString().toLowerCase().replace('_', ' ').replaceAll("[^a-z ]", "");
+	}
+
+	private static String toReadable(String matData) {
+		return matData.toLowerCase().replace('_', ' ').replaceAll("[^a-z ]", "");
 	}
 }
