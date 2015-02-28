@@ -1,5 +1,5 @@
 name: ${project.name}
-version: '1.92'
+version: '1.93'
 author: DiddiZ
 authors: [md_5, ammar2, frymaster]
 website: http://dev.bukkit.org/server-mods/logblock/

@@ -307,38 +307,6 @@ class Updater
 			}
 			config.set("version", "1.90");
 		}
-			if (config.getString("version").compareTo("1.91") < 0) {
-			getLogger().info("Updating tables to 1.91 ...");
-			final Connection conn = logblock.getConnection();
-				try {
-				conn.setAutoCommit(true);
-				final Statement st = conn.createStatement();
-				// Need to wrap both these next two inside individual try/catch statements in case index does not exist
-				try {
-					st.execute("DROP INDEX UUID ON `lb-players`");
-				} catch (final SQLException ex) {
-					if (ex.getErrorCode() != 1091) {
-						Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
-						return false;
-					}
-				}
-				try {
-					st.execute("DROP INDEX playername ON `lb-players`");
-				} catch (final SQLException ex) {
-					if (ex.getErrorCode() != 1091) {
-						Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
-						return false;
-					}
-				}
-				st.execute("CREATE INDEX UUID ON `lb-players` (UUID);");
-				st.close();
-				conn.close();
-				} catch (final SQLException ex) {
-					Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
-					return false;
-				}
-			config.set("version", "1.91");
-		}
 		// Ensure charset for free-text fields is UTF-8, or UTF8-mb4 if possible
 		// As this may be an expensive operation and the database default may already be this, check on a table-by-table basis before converting
 		if (config.getString("version").compareTo("1.92") < 0) {
@@ -377,6 +345,40 @@ class Updater
 			}
 			config.set("version", "1.92");
 		}
+		if (config.getString("version").compareTo("1.93") < 0) {
+			getLogger().info("Updating tables to 1.93 ...");
+			final Connection conn = logblock.getConnection();
+				try {
+				conn.setAutoCommit(true);
+				final Statement st = conn.createStatement();
+				// Need to wrap both these next two inside individual try/catch statements in case index does not exist
+				try {
+					st.execute("DROP INDEX UUID ON `lb-players`");
+				} catch (final SQLException ex) {
+					if (ex.getErrorCode() != 1091) {
+						Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+						return false;
+					}
+				}
+				try {
+					st.execute("DROP INDEX playername ON `lb-players`");
+				} catch (final SQLException ex) {
+					if (ex.getErrorCode() != 1091) {
+						Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+						return false;
+					}
+				}
+				st.execute("CREATE INDEX UUID ON `lb-players` (UUID);");
+				st.execute("CREATE INDEX playername ON `lb-players` (playername);");
+				st.close();
+				conn.close();
+				} catch (final SQLException ex) {
+					Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+					return false;
+				}
+			config.set("version", "1.93");
+		}
+
 		logblock.saveConfig();
 		return true;
 	}
