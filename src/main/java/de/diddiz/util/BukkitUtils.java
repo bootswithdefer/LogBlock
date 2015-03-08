@@ -6,8 +6,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -18,6 +21,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.inventory.Inventory;
@@ -34,6 +38,8 @@ public class BukkitUtils
 
 	private static final Set<Material> cropBlocks;
 	private static final Set<Material> containerBlocks;
+
+	private static final Map<EntityType,Integer> projectileItems;
 
 	static {
 		blockEquivalents = new HashSet<Set<Integer>>(7);
@@ -60,7 +66,7 @@ public class BukkitUtils
 		relativeBreakable.add(Material.COCOA);
 
 		// Blocks that break when they are on top of a block
-		relativeTopBreakable = new HashSet<Material>(32);
+		relativeTopBreakable = new HashSet<Material>(33);
 		relativeTopBreakable.add(Material.SAPLING);
 		relativeTopBreakable.add(Material.LONG_GRASS);
 		relativeTopBreakable.add(Material.DEAD_BUSH);
@@ -91,8 +97,9 @@ public class BukkitUtils
 		relativeTopBreakable.add(Material.REDSTONE_COMPARATOR_ON);
 		relativeTopBreakable.add(Material.REDSTONE_COMPARATOR_OFF);
 		relativeTopBreakable.add(Material.WOODEN_DOOR);
-		relativeTopBreakable.add(Material.IRON_DOOR);
+		relativeTopBreakable.add(Material.IRON_DOOR_BLOCK);
 		relativeTopBreakable.add(Material.CARPET);
+		relativeTopBreakable.add(Material.DOUBLE_PLANT);
 
 		// Blocks that fall
 		relativeTopFallables = new HashSet<Material>(4);
@@ -152,8 +159,25 @@ public class BukkitUtils
 		containerBlocks.add(Material.DROPPER);
 		containerBlocks.add(Material.HOPPER);
 		containerBlocks.add(Material.BREWING_STAND);
+		containerBlocks.add(Material.FURNACE);
+		containerBlocks.add(Material.BURNING_FURNACE);
+		containerBlocks.add(Material.BEACON);
 		// Doesn't actually have a block inventory
 		// containerBlocks.add(Material.ENDER_CHEST);
+
+		// It doesn't seem like you could injure people with some of these, but they exist, so....
+		projectileItems = new EnumMap<EntityType,Integer>(EntityType.class);
+		projectileItems.put(EntityType.ARROW,262);
+		projectileItems.put(EntityType.EGG,344);
+		projectileItems.put(EntityType.ENDER_PEARL,368);
+		projectileItems.put(EntityType.SMALL_FIREBALL,385);	// Fire charge
+		projectileItems.put(EntityType.FIREBALL,385);		// Fire charge
+		projectileItems.put(EntityType.FISHING_HOOK,346);
+		projectileItems.put(EntityType.SNOWBALL,332);
+		projectileItems.put(EntityType.SPLASH_POTION,373);
+		projectileItems.put(EntityType.THROWN_EXP_BOTTLE,384);
+		projectileItems.put(EntityType.WITHER_SKULL,397);
+
 	}
 
 	private static final BlockFace[] relativeBlockFaces = new BlockFace[] {
@@ -175,6 +199,19 @@ public class BukkitUtils
 			}
 		}
 		return blocks;
+	}
+
+	public static boolean isTop(Material mat, byte data) {
+
+		switch (mat) {
+			case DOUBLE_PLANT:
+				return data > 5;
+			case IRON_DOOR_BLOCK:
+			case WOODEN_DOOR:
+				return data == 8 || data == 9;
+			default:
+				return false;
+		}
 	}
 
 	public static int getInventoryHolderType(InventoryHolder holder) {
@@ -240,7 +277,7 @@ public class BukkitUtils
 		for (final ItemStack item : items)
 			if (item != null) {
 				final int type = item.getTypeId();
-				final byte data = rawData(item);
+				final short data = rawData(item);
 				boolean found = false;
 				for (final ItemStack item2 : compressed)
 					if (type == item2.getTypeId() && data == rawData(item2)) {
@@ -249,7 +286,7 @@ public class BukkitUtils
 						break;
 					}
 				if (!found)
-					compressed.add(new ItemStack(type, item.getAmount(), (short)0, data));
+					compressed.add(new ItemStack(type, item.getAmount(), data));
 			}
 		Collections.sort(compressed, new ItemStackComparator());
 		return compressed.toArray(new ItemStack[compressed.size()]);
@@ -320,8 +357,8 @@ public class BukkitUtils
 		}
 	}
 
-	public static byte rawData(ItemStack item) {
-		return item.getType() != null ? item.getData() != null ? item.getData().getData() : 0 : 0;
+	public static short rawData(ItemStack item) {
+		return item.getType() != null ? item.getData() != null ? item.getDurability() : 0 : 0;
 	}
 
 	public static int saveSpawnHeight(Location loc) {
@@ -379,12 +416,17 @@ public class BukkitUtils
 				return -1;
 			if (aType > bType)
 				return 1;
-			final byte aData = rawData(a), bData = rawData(b);
+			final short aData = rawData(a), bData = rawData(b);
 			if (aData < bData)
 				return -1;
 			if (aData > bData)
 				return 1;
 			return 0;
 		}
+	}
+
+	public static int itemIDfromProjectileEntity(Entity e) {
+		Integer i = projectileItems.get(e.getType());
+		return (i == null) ? 0 : i;
 	}
 }

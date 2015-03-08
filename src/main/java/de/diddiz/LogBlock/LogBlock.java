@@ -1,9 +1,30 @@
 package de.diddiz.LogBlock;
 
 import de.diddiz.LogBlock.config.Config;
-import de.diddiz.LogBlock.listeners.*;
+import de.diddiz.LogBlock.listeners.BanListener;
+import de.diddiz.LogBlock.listeners.BlockBreakLogging;
+import de.diddiz.LogBlock.listeners.BlockBurnLogging;
+import de.diddiz.LogBlock.listeners.BlockPlaceLogging;
+import de.diddiz.LogBlock.listeners.BlockSpreadLogging;
+import de.diddiz.LogBlock.listeners.ChatLogging;
+import de.diddiz.LogBlock.listeners.ChestAccessLogging;
+import de.diddiz.LogBlock.listeners.CreatureInteractLogging;
+import de.diddiz.LogBlock.listeners.EndermenLogging;
+import de.diddiz.LogBlock.listeners.ExplosionLogging;
+import de.diddiz.LogBlock.listeners.FluidFlowLogging;
+import de.diddiz.LogBlock.listeners.InteractLogging;
+import de.diddiz.LogBlock.listeners.KillLogging;
+import de.diddiz.LogBlock.listeners.LeavesDecayLogging;
+import de.diddiz.LogBlock.listeners.LockedChestDecayLogging;
+import de.diddiz.LogBlock.listeners.PlayerInfoLogging;
+import de.diddiz.LogBlock.listeners.SignChangeLogging;
+import de.diddiz.LogBlock.listeners.SnowFadeLogging;
+import de.diddiz.LogBlock.listeners.SnowFormLogging;
+import de.diddiz.LogBlock.listeners.StructureGrowLogging;
+import de.diddiz.LogBlock.listeners.ToolListener;
+import de.diddiz.LogBlock.listeners.WitherLogging;
 import de.diddiz.util.MySQLConnectionPool;
-import de.diddiz.worldedit.LogBlockEditSessionFactory;
+import de.diddiz.worldedit.WorldEditLoggingHook;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -24,6 +45,7 @@ import java.util.Timer;
 import java.util.logging.Level;
 
 import static de.diddiz.LogBlock.config.Config.*;
+import static de.diddiz.util.MaterialName.materialName;
 import static org.bukkit.Bukkit.getPluginManager;
 
 public class LogBlock extends JavaPlugin
@@ -65,6 +87,13 @@ public class LogBlock extends JavaPlugin
 				noDb = true;
 				return;
 			}
+			final Statement st = conn.createStatement();
+			final ResultSet rs = st.executeQuery("SHOW CHARACTER SET where charset='utf8mb4';");
+			if (rs.next()) {
+				Config.mb4=true;
+				// Allegedly JDBC driver since 2010 hasn't needed this. I did.
+				st.executeQuery("SET NAMES utf8mb4;");
+			}
 			conn.close();
 			if (updater.update())
 				load(this);
@@ -81,6 +110,7 @@ public class LogBlock extends JavaPlugin
 
 	@Override
 	public void onEnable() {
+		materialName(0);	// Force static code to run
 		final PluginManager pm = getPluginManager();
 		if (errorAtLoading) {
 			pm.disablePlugin(this);
@@ -89,27 +119,32 @@ public class LogBlock extends JavaPlugin
 		if (noDb)
 			return;
 		if (pm.getPlugin("WorldEdit") != null) {
-			LogBlockEditSessionFactory.initialize(this);
+			if(Integer.parseInt(pm.getPlugin("WorldEdit").getDescription().getVersion().substring(0, 1)) > 5) {
+				new WorldEditLoggingHook(this).hook();
+			} else {
+				getLogger().warning("Failed to hook into WorldEdit. Your WorldEdit version seems to be outdated, please make sure WorldEdit is at least version 6.");
+			}
 		}
 		commandsHandler = new CommandsHandler(this);
 		getCommand("lb").setExecutor(commandsHandler);
 		if (enableAutoClearLog && autoClearLogDelay > 0)
-			getServer().getScheduler().scheduleAsyncRepeatingTask(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
-		getServer().getScheduler().scheduleAsyncDelayedTask(this, new DumpedLogImporter(this));
+			getServer().getScheduler().runTaskTimerAsynchronously(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
+		getServer().getScheduler().runTaskAsynchronously(this, new DumpedLogImporter(this));
 		registerEvents();
 		if (useBukkitScheduler) {
-			if (getServer().getScheduler().scheduleAsyncRepeatingTask(this, consumer, delayBetweenRuns * 20, delayBetweenRuns * 20) > 0)
+			if (getServer().getScheduler().runTaskTimerAsynchronously(this, consumer, delayBetweenRuns < 20 ? 20 : delayBetweenRuns, delayBetweenRuns).getTaskId() > 0)
 				getLogger().info("Scheduled consumer with bukkit scheduler.");
 			else {
 				getLogger().warning("Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
 				timer = new Timer();
-				timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
+				timer.schedule(consumer, delayBetweenRuns < 20 ? 1000 : delayBetweenRuns * 50, delayBetweenRuns * 50);
 			}
 		} else {
 			timer = new Timer();
-			timer.scheduleAtFixedRate(consumer, delayBetweenRuns * 1000, delayBetweenRuns * 1000);
+			timer.schedule(consumer, delayBetweenRuns < 20 ? 1000 : delayBetweenRuns * 50, delayBetweenRuns * 50);
 			getLogger().info("Scheduled consumer with timer.");
 		}
+		getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
 		for (final Tool tool : toolsByType.values())
 			if (pm.getPermission("logblock.tools." + tool.name) == null) {
 				final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
@@ -126,6 +161,7 @@ public class LogBlock extends JavaPlugin
 	private void registerEvents() {
 		final PluginManager pm = getPluginManager();
 		pm.registerEvents(new ToolListener(this), this);
+		pm.registerEvents(new PlayerInfoLogging(this), this);
 		if (askRollbackAfterBan)
 			pm.registerEvents(new BanListener(this), this);
 		if (isLogging(Logging.BLOCKPLACE))
@@ -166,8 +202,8 @@ public class LogBlock extends JavaPlugin
 			pm.registerEvents(new StructureGrowLogging(this), this);
 		if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD))
 			pm.registerEvents(new BlockSpreadLogging(this), this);
-		if (logPlayerInfo)
-			pm.registerEvents(new PlayerInfoLogging(this), this);
+		if (isLogging(Logging.LOCKEDCHESTDECAY))
+			pm.registerEvents(new LockedChestDecayLogging(this), this);
 	}
 
 	@Override
@@ -179,9 +215,10 @@ public class LogBlock extends JavaPlugin
 			if (logPlayerInfo && getServer().getOnlinePlayers() != null)
 				for (final Player player : getServer().getOnlinePlayers())
 					consumer.queueLeave(player);
+			getLogger().info("Waiting for consumer ...");
+			consumer.run();
 			if (consumer.getQueueSize() > 0) {
-				getLogger().info("Waiting for consumer ...");
-				int tries = 10;
+				int tries = 9;
 				while (consumer.getQueueSize() > 0) {
 					getLogger().info("Remaining queue size: " + consumer.getQueueSize());
 					if (tries > 0)

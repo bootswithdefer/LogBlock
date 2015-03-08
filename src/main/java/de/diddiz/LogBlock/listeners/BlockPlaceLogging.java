@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock.listeners;
 
+import de.diddiz.LogBlock.Actor;
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.isLogging;
 
@@ -29,14 +30,14 @@ public class BlockPlaceLogging extends LoggingListener
 			final Material type = event.getBlock().getType();
 			final BlockState before = event.getBlockReplacedState();
 			final BlockState after = event.getBlockPlaced().getState();
-			final String playerName = event.getPlayer().getName();
+			final Actor actor = Actor.actorFromEntity(event.getPlayer());
 
 			//Handle falling blocks
 			if (BukkitUtils.getRelativeTopFallables().contains(type)) {
 
 				// Catch placed blocks overwriting something
 				if (before.getType() != Material.AIR) {
-					consumer.queueBlockBreak(playerName, before);
+					consumer.queueBlockBreak(actor, before);
 				}
 
 				Location loc = event.getBlock().getLocation();
@@ -55,9 +56,9 @@ public class BlockPlaceLogging extends LoggingListener
 					// Run this check to avoid false positives
 					if (!BukkitUtils.getFallingEntityKillers().contains(finalLoc.getBlock().getType())) {
 						if (finalLoc.getBlock().getType() == Material.AIR || finalLoc.equals(event.getBlock().getLocation())) {
-							consumer.queueBlockPlace(playerName, finalLoc, type.getId(), event.getBlock().getData());
+							consumer.queueBlockPlace(actor, finalLoc, type.getId(), event.getBlock().getData());
 						} else {
-							consumer.queueBlockReplace(playerName, finalLoc, finalLoc.getBlock().getTypeId(), finalLoc.getBlock().getData(), type.getId(), event.getBlock().getData());
+							consumer.queueBlockReplace(actor, finalLoc, finalLoc.getBlock().getTypeId(), finalLoc.getBlock().getData(), type.getId(), event.getBlock().getData());
 						}
 					}
 				}
@@ -73,9 +74,9 @@ public class BlockPlaceLogging extends LoggingListener
 				@Override
 				public void run() {
 					if (before.getTypeId() == 0)
-						consumer.queueBlockPlace(playerName, after);
+						consumer.queueBlockPlace(actor, after);
 					else
-						consumer.queueBlockReplace(playerName, before, after);
+						consumer.queueBlockReplace(actor, before, after);
 				}
 			}, 1L);
 		}
@@ -84,6 +85,6 @@ public class BlockPlaceLogging extends LoggingListener
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
 		if (isLogging(event.getPlayer().getWorld(), Logging.BLOCKPLACE))
-			consumer.queueBlockPlace(event.getPlayer().getName(), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), event.getBucket() == Material.WATER_BUCKET ? 9 : 11, (byte)0);
+			consumer.queueBlockPlace(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), event.getBucket() == Material.WATER_BUCKET ? 9 : 11, (byte)0);
 	}
 }

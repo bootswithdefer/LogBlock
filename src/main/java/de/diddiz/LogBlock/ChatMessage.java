@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.LoggingUtil.checkText;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.bukkit.Location;
@@ -8,17 +9,20 @@ public class ChatMessage implements LookupCacheElement
 {
 	final long id, date;
 	final String playerName, message;
+	final Actor player;
 
-	public ChatMessage(String playerName, String message) {
+	public ChatMessage(Actor player, String message) {
 		id = 0;
 		date = System.currentTimeMillis() / 1000;
-		this.playerName = playerName;
-		this.message = message;
+		this.player = player;
+		this.message = checkText(message);
+		this.playerName = player == null ? null : player.getName();
 	}
 
 	public ChatMessage(ResultSet rs, QueryParams p) throws SQLException {
 		id = p.needId ? rs.getInt("id") : 0;
 		date = p.needDate ? rs.getTimestamp("date").getTime() : 0;
+		player = p.needPlayer ? new Actor(rs) : null;
 		playerName = p.needPlayer ? rs.getString("playername") : null;
 		message = p.needMessage ? rs.getString("message") : null;
 	}
@@ -30,6 +34,6 @@ public class ChatMessage implements LookupCacheElement
 
 	@Override
 	public String getMessage() {
-		return (playerName != null ? "<" + playerName + "> " : "") + (message != null ? message : "");
+		return (player != null ? "<" + player.getName() + "> " : "") + (message != null ? message : "");
 	}
 }

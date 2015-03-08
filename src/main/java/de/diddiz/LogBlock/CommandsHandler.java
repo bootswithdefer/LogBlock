@@ -306,6 +306,8 @@ public class CommandsHandler implements CommandExecutor
 			}
 		} catch (final IllegalArgumentException ex) {
 			sender.sendMessage(ChatColor.RED + ex.getMessage());
+		} catch (final ArrayIndexOutOfBoundsException ex) {
+			sender.sendMessage(ChatColor.RED + "Not enough arguments given");
 		} catch (final Exception ex) {
 			sender.sendMessage(ChatColor.RED + "Error, check server.log");
 			getLogger().log(Level.WARNING, "Exception in commands handler: ", ex);
@@ -404,7 +406,7 @@ public class CommandsHandler implements CommandExecutor
 					params.needPlayer = true;
 					if (params.types.isEmpty() || Block.inList(params.types, 63) || Block.inList(params.types, 68))
 						params.needSignText = true;
-					if (params.bct == BlockChangeType.CHESTACCESS || params.types.isEmpty() || Block.inList(params.types, 23) || Block.inList(params.types, 54) || Block.inList(params.types, 61) || Block.inList(params.types, 62))
+					if (params.bct == BlockChangeType.CHESTACCESS || params.bct == BlockChangeType.ALL)
 						params.needChestAccess = true;
 				}
 				conn = logblock.getConnection();
@@ -464,7 +466,7 @@ public class CommandsHandler implements CommandExecutor
 					params.needPlayer = true;
 					if (params.types.isEmpty() || Block.inList(params.types, 63) || Block.inList(params.types, 68))
 						params.needSignText = true;
-					if (params.types.isEmpty() || Block.inList(params.types, 23) || Block.inList(params.types, 54) || Block.inList(params.types, 61) || Block.inList(params.types, 62))
+					if (params.bct == BlockChangeType.CHESTACCESS || params.bct == BlockChangeType.ALL)
 						params.needChestAccess = true;
 				}
 				conn = logblock.getConnection();
@@ -536,9 +538,8 @@ public class CommandsHandler implements CommandExecutor
 		public void run() {
 			try {
 				params.needCoords = true;
-				if (params.bct == BlockChangeType.CHESTACCESS || params.types.isEmpty() || Block.inList(params.types, 23) || Block.inList(params.types, 54) || Block.inList(params.types, 61) || Block.inList(params.types, 62)) {
+				if (params.bct == BlockChangeType.CHESTACCESS || params.bct == BlockChangeType.ALL)
 					params.needChestAccess = true;
-				}
 				params.limit = 1;
 				params.sum = SummarizationMode.NONE;
 				conn = logblock.getConnection();
@@ -550,8 +551,8 @@ public class CommandsHandler implements CommandExecutor
 				rs = state.executeQuery(params.getQuery());
 				if (rs.next()) {
 					final Player player = (Player)sender;
-					final int y = rs.getInt(2);
-					final Location loc = new Location(params.world, rs.getInt(1) + 0.5, y, rs.getInt(3) + 0.5, player.getLocation().getYaw(), 90);
+					final int y = rs.getInt("y");
+					final Location loc = new Location(params.world, rs.getInt("x") + 0.5, y, rs.getInt("z") + 0.5, player.getLocation().getYaw(), 90);
 
 					// Teleport the player sync because omg thread safety
 					logblock.getServer().getScheduler().scheduleSyncDelayedTask(logblock, new Runnable() {
@@ -606,7 +607,7 @@ public class CommandsHandler implements CommandExecutor
                 final WorldEditor editor = new WorldEditor(logblock, params.world);
 
 				while (rs.next())
-					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getByte("itemdata"));
+					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("type"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), rs.getShort("itemamount"), rs.getShort("itemdata"));
 				final int changes = editor.getSize();
                 if (changes > 10000) {
                     editor.setSender(sender);
@@ -671,7 +672,7 @@ public class CommandsHandler implements CommandExecutor
 					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
 				while (rs.next())
-					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), (short)-rs.getShort("itemamount"), rs.getByte("itemdata"));
+					editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("replaced"), rs.getByte("data"), rs.getString("signtext"), rs.getShort("itemtype"), (short)-rs.getShort("itemamount"), rs.getShort("itemdata"));
 				final int changes = editor.getSize();
 				if (!params.silent)
 					sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");

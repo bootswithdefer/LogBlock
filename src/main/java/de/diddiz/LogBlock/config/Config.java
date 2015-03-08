@@ -46,6 +46,9 @@ public class Config
 	public static Set<String> ignoredChat;
 	public static SimpleDateFormat formatter;
 	public static boolean safetyIdCheck;
+	public static boolean logEnvironmentalKills;
+	// Not loaded from config - checked at runtime
+	public static boolean mb4 = false;
 
 	public static enum LogKillsLevel
 	{
@@ -82,6 +85,7 @@ public class Config
 		def.put("clearlog.autoClearLogDelay", "6h");
 		def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
 		def.put("logging.logKillsLevel", "PLAYERS");
+		def.put("logging.logEnvironmentalKills", false);
 		def.put("logging.logPlayerInfo", false);
 		def.put("logging.hiddenPlayers", new ArrayList<String>());
 		def.put("logging.hiddenBlocks", Arrays.asList(0));
@@ -129,7 +133,7 @@ public class Config
 			if (!config.contains(e.getKey()))
 				config.set(e.getKey(), e.getValue());
 		logblock.saveConfig();
-		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + getStringIncludingInts(config, "mysql.database") + "?useUnicode=true&characterEncoding=utf-8";
+		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + getStringIncludingInts(config, "mysql.database") + "?useUnicode=true&characterEncoding=utf-8&rewriteBatchedStatements=true";
 		user = getStringIncludingInts(config, "mysql.user");
 		password = getStringIncludingInts(config, "mysql.password");
 		delayBetweenRuns = config.getInt("consumer.delayBetweenRuns", 2);
@@ -147,8 +151,9 @@ public class Config
 		try {
 			logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel").toUpperCase());
 		} catch (final IllegalArgumentException ex) {
-			throw new DataFormatException("lookup.toolblockID doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
+			throw new DataFormatException("logging.logKillsLevel doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
 		}
+		logEnvironmentalKills = config.getBoolean("logging.logEnvironmentalKills", false);
 		hiddenPlayers = new HashSet<String>();
 		for (final String playerName : config.getStringList("logging.hiddenPlayers"))
 			hiddenPlayers.add(playerName.toLowerCase().trim());

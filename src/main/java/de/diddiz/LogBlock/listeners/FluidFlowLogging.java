@@ -1,6 +1,10 @@
 package de.diddiz.LogBlock.listeners;
 
+import de.diddiz.LogBlock.Actor;
+import de.diddiz.LogBlock.LogBlock;
+import de.diddiz.LogBlock.Logging;
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+import de.diddiz.LogBlock.config.WorldConfig;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -9,9 +13,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockFromToEvent;
-import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.LogBlock.Logging;
-import de.diddiz.LogBlock.config.WorldConfig;
 
 public class FluidFlowLogging extends LoggingListener
 {
@@ -32,37 +33,37 @@ public class FluidFlowLogging extends LoggingListener
 			if (typeFrom == 10 || typeFrom == 11) {
 				if (canFlow && wcfg.isLogging(Logging.LAVAFLOW)) {
 					if (isSurroundedByWater(to) && event.getBlock().getData() <= 2)
-						consumer.queueBlockReplace("LavaFlow", to.getState(), 4, (byte)0);
+						consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 4, (byte)0);
 					else if (typeTo == 0) {
-						consumer.queueBlockPlace("LavaFlow", to.getLocation(), 10, (byte)(event.getBlock().getData() + 1));
+						consumer.queueBlockPlace(new Actor("LavaFlow"), to.getLocation(), 10, (byte)(event.getBlock().getData() + 1));
 					} else {
-						consumer.queueBlockReplace("LavaFlow", to.getState(), 10, (byte)(event.getBlock().getData() + 1));
+						consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 10, (byte)(event.getBlock().getData() + 1));
 					}
 				} else if (typeTo == 8 || typeTo == 9) {
 					if (event.getFace() == BlockFace.DOWN) {
-						consumer.queueBlockReplace("LavaFlow", to.getState(), 1, (byte)0);
+						consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 1, (byte)0);
 					} else {
-						consumer.queueBlockReplace("LavaFlow", to.getState(), 4, (byte)0);
+						consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 4, (byte)0);
 					}
 				}
 			} else if ((typeFrom == 8 || typeFrom == 9) && wcfg.isLogging(Logging.WATERFLOW)) {
 				if (typeTo == 0) {
-					consumer.queueBlockPlace("WaterFlow", to.getLocation(), 8, (byte)(event.getBlock().getData() + 1));
+					consumer.queueBlockPlace(new Actor("WaterFlow"), to.getLocation(), 8, (byte)(event.getBlock().getData() + 1));
 				} else if (nonFluidProofBlocks.contains(typeTo)) {
-					consumer.queueBlockReplace("WaterFlow", to.getState(), 8, (byte)(event.getBlock().getData() + 1));
+					consumer.queueBlockReplace(new Actor("WaterFlow"), to.getState(), 8, (byte)(event.getBlock().getData() + 1));
 				}
 				else if (typeTo == 10 || typeTo == 11) {
 					if (to.getData() == 0) {
-						consumer.queueBlockReplace("WaterFlow", to.getState(), 49, (byte)0);
+						consumer.queueBlockReplace(new Actor("WaterFlow"), to.getState(), 49, (byte)0);
 					} else if (event.getFace() == BlockFace.DOWN) {
-						consumer.queueBlockReplace("LavaFlow", to.getState(), 1, (byte)0);
+						consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 1, (byte)0);
 					}
 				}
 				if (typeTo == 0 || nonFluidProofBlocks.contains(typeTo)) {
 					for (final BlockFace face : new BlockFace[]{BlockFace.DOWN, BlockFace.NORTH, BlockFace.WEST, BlockFace.EAST, BlockFace.SOUTH}) {
 						final Block lower = to.getRelative(face);
 						if (lower.getTypeId() == 10 || lower.getTypeId() == 11) {
-							consumer.queueBlockReplace("WaterFlow", lower.getState(), lower.getData() == 0 ? 49 : 4, (byte)0);
+							consumer.queueBlockReplace(new Actor("WaterFlow"), lower.getState(), lower.getData() == 0 ? 49 : 4, (byte)0);
 						}
 					}
 				}

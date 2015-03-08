@@ -1,4 +1,3 @@
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -28,24 +27,22 @@
 		<url>http://ci.kitteh.org/job/LogBlock</url>
 	</ciManagement>
 
-	<distributionManagement>
-		<repository>
-			<id>kittehReleases</id>
-			<name>Kitteh Releases</name>
-			<url>http://repo.kitteh.org/content/repositories/releases</url>
-		</repository>
-		<snapshotRepository>
-			<id>kittehSnapshots</id>
-			<name>Kitteh Snapshots</name>
-			<url>http://repo.kitteh.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
+        <distributionManagement>
+            <repository>
+                <id>md_5-releases</id>
+                <url>http://repo.md-5.net/content/repositories/releases/</url>
+            </repository>
+            <snapshotRepository>
+                <id>md_5-snapshots</id>
+                <url>http://repo.md-5.net/content/repositories/snapshots/</url>
+            </snapshotRepository>
+        </distributionManagement>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.bukkit</groupId>
 			<artifactId>bukkit</artifactId>
-			<version>1.6.1-R0.1-SNAPSHOT</version>
+			<version>1.7.2-R0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -57,7 +54,7 @@
 		<dependency>
 			<groupId>com.sk89q</groupId>
 			<artifactId>worldedit</artifactId>
-			<version>5.5</version>
+			<version>6.0.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
