@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>de.diddiz</groupId>
@@ -13,7 +13,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<build.number>Unknown</build.number>
+		<build.number>${buildNumber}</build.number>
 	</properties>
 
 	<scm>
@@ -27,16 +27,16 @@
 		<url>http://ci.kitteh.org/job/LogBlock</url>
 	</ciManagement>
 
-        <distributionManagement>
-            <repository>
-                <id>md_5-releases</id>
-                <url>http://repo.md-5.net/content/repositories/releases/</url>
-            </repository>
-            <snapshotRepository>
-                <id>md_5-snapshots</id>
-                <url>http://repo.md-5.net/content/repositories/snapshots/</url>
-            </snapshotRepository>
-        </distributionManagement>
+	<distributionManagement>
+		<repository>
+			<id>md_5-releases</id>
+			<url>http://repo.md-5.net/content/repositories/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>md_5-snapshots</id>
+			<url>http://repo.md-5.net/content/repositories/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<dependencies>
 		<dependency>
@@ -72,6 +72,32 @@
 			<url>http://repo.kitteh.org/content/groups/public</url>
 		</repository>
 	</repositories>
+	<profiles>
+		<profile>
+			<id>static_build_number</id>
+			<activation>
+				<property>
+					<name>!env.BUILD_NUMBER</name>
+				</property>
+			</activation>
+			<properties>
+				<buildNumber>0</buildNumber>
+				<buildDescription>(manually compiled)</buildDescription>
+			</properties>
+		</profile>
+		<profile>
+			<id>dynamic_build_number</id>
+			<activation>
+				<property>
+					<name>env.BUILD_NUMBER</name>
+				</property>
+			</activation>
+			<properties>
+				<buildNumber>${env.BUILD_NUMBER}</buildNumber>
+				<buildDescription>(build #${env.BUILD_NUMBER})</buildDescription>
+			</properties>
+		</profile>
+	</profiles>
 
 	<build>
 		<finalName>${project.name}</finalName>
@@ -91,6 +117,27 @@
 					<target>1.6</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.9.1</version>
+				<executions>
+					<execution>
+						<id>regex-property</id>
+						<goals>
+							<goal>regex-property</goal>
+						</goals>
+						<configuration>
+							<name>minecraft.plugin.version</name>
+							<value>${project.version} ${buildDescription}</value>
+							<regex>[0-9\.]+ \(.+\)</regex>
+							<replacement>${project.version}</replacement>
+							<failIfNoMatch>false</failIfNoMatch>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 </project>
