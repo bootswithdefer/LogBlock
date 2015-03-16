@@ -345,8 +345,8 @@ class Updater
 			}
 			config.set("version", "1.92");
 		}
-		if (config.getString("version").compareTo("1.93") < 0) {
-			getLogger().info("Updating tables to 1.93 ...");
+		if (config.getString("version").compareTo("1.94") < 0) {
+			getLogger().info("Updating tables to 1.94 ...");
 			final Connection conn = logblock.getConnection();
 				try {
 				conn.setAutoCommit(true);
@@ -376,7 +376,7 @@ class Updater
 					Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
 					return false;
 				}
-			config.set("version", "1.93");
+			config.set("version", "1.94");
 		}
 
 		logblock.saveConfig();
@@ -390,7 +390,7 @@ class Updater
 		final Statement state = conn.createStatement();
 		final DatabaseMetaData dbm = conn.getMetaData();
 		conn.setAutoCommit(true);
-		createTable(dbm, state, "lb-players", "(playerid INT UNSIGNED NOT NULL AUTO_INCREMENT, UUID varchar(36) NOT NULL, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), INDEX (UUID))");
+		createTable(dbm, state, "lb-players", "(playerid INT UNSIGNED NOT NULL AUTO_INCREMENT, UUID varchar(36) NOT NULL, playername varchar(32) NOT NULL, firstlogin DATETIME NOT NULL, lastlogin DATETIME NOT NULL, onlinetime INT UNSIGNED NOT NULL, ip varchar(255) NOT NULL, PRIMARY KEY (playerid), INDEX (UUID), INDEX (playername))");
 		// Players table must not be empty or inserts won't work - bug #492
 		final ResultSet rs = state.executeQuery("SELECT NULL FROM `lb-players` LIMIT 1;");
 		if (!rs.next())
