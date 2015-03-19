@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import de.diddiz.util.Block;
+import de.diddiz.util.Utils;
 import de.diddiz.worldedit.RegionContainer;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -476,6 +477,7 @@ public final class QueryParams implements Cloneable
 	public void parseArgs(CommandSender sender, List<String> args) throws IllegalArgumentException {
 		if (args == null || args.isEmpty())
 			throw new IllegalArgumentException("No parameters specified.");
+		args = Utils.parseQuotes(args);
 		final Player player = sender instanceof Player ? (Player)sender : null;
 		final Session session = prepareToolQuery ? null : getSession(sender);
 		if (player != null && world == null)
@@ -744,51 +746,23 @@ public final class QueryParams implements Cloneable
 				break;
 			}
 		}
-		// If the offset equals to the last value index, return an empty string array
+		// If there are no values, i.e there is a keyword immediately after the offset
+		// return an empty string array
 		if (i == offset) {
 			return new String[0];
 		}
-		// Instantiate a new string array with the total indexes required
-		final List<String> values = new ArrayList<String>();
-		// Buffer for the value
-		String value = "";
-		// Iterate over the offset up till the last index value
+
+		final String[] values = new String[i - offset];
 		for (int j = offset; j < i; j++) {
-			// If the value starts with a double quote or we're already dealing with a quoted value
-			if (args.get(j).startsWith("\"") || !value.equals("")) {
-				// If the value doesn't end with a double quote
-				if (!args.get(j).endsWith("\"")) {
-					// Add the argument to the value buffer after stripping out the initial quote
-					
-					// If the argument starts with a quote we wanna strip that out otherwise add it normally
-					if (args.get(j).startsWith("\"")) {
-						value += args.get(j).substring(1) + " ";
-					} else {
-						value += args.get(j) + " ";
-					}
-					
-				} else {
-					// The value ends with a double quote
-					
-					// If the argument starts with a double quote we wanna strip that out too along with the end quote
-					if (args.get(j).startsWith("\"")) {
-						value += args.get(j).substring(0, args.get(j).length() - 1).substring(1);
-					} else {
-					// Looks like its just the end quote here, just need to strip that out
-						value += args.get(j).substring(0, args.get(j).length() - 1);
-					}
-					// Add the value to the main values list
-					values.add(value);
-					// Reset the buffer
-					value = "";
-				}
-			} else {
-				// Set the value in the array to be returned to the one from the main arguments list
-				values.add(args.get(j));
+			String value = args.get(j);
+
+			// If the value is encapsulated in quotes, strip them
+			if (value.startsWith("\"") && value.endsWith("\"")) {
+				value = value.substring(1, value.length() - 1);
 			}
+			values[j - offset] = value;
 		}
-		// Return the values array
-		return values.toArray(new String[values.size()]);
+		return values;
 	}
 
 	public void merge(QueryParams p) {

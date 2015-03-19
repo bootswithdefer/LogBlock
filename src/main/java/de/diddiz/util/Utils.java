@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils
 {
@@ -133,6 +136,26 @@ public class Utils
 		for (int i = 1; i < len; i++)
 			builder.append(delimiter).append(s[i]);
 		return builder.toString();
+	}
+
+	/***
+	 * Converts a list of arguments e.g ['lb', 'clearlog', 'world', '"my', 'world', 'of', 'swag"']
+	 * into a list of arguments with any text encapsulated by quotes treated as one word
+	 * For this particular example: ['lb', 'clearlog', 'world', '"my world of swag"']
+	 * @param args The list of arguments
+	 * @return A new list with the quoted arguments parsed to single values
+	 */
+	public static List<String> parseQuotes(List<String> args) {
+		List<String> newArguments = new ArrayList<String>();
+		String subjectString = join(args.toArray(new String[args.size()]), " ");
+
+		Pattern regex = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'");
+		Matcher regexMatcher = regex.matcher(subjectString);
+		while (regexMatcher.find()) {
+			newArguments.add(regexMatcher.group());
+		}
+
+		return newArguments;
 	}
 
 	public static class ExtensionFilenameFilter implements FilenameFilter
