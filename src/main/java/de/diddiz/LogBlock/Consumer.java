@@ -266,6 +266,9 @@ public class Consumer extends TimerTask
 				return;
 			}
 		}
+		if (hiddenPlayers.contains(player.getName().toLowerCase())) {
+			return;
+		}
 		queue.add(new ChatRow(player, message));
 	}
 
