@@ -426,7 +426,7 @@ public class CommandsHandler implements CommandExecutor
 					return;
 				}
 				state = conn.createStatement();
-				rs = state.executeQuery(params.getQuery());
+				rs = executeQuery(state, params.getQuery());
 				sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
 				if (rs.next()) {
 					rs.beforeFirst();
@@ -488,7 +488,7 @@ public class CommandsHandler implements CommandExecutor
 				state = conn.createStatement();
 				file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".") + ".log");
 				sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
-				rs = state.executeQuery(params.getQuery());
+				rs = executeQuery(state, params.getQuery());
 				file.getParentFile().mkdirs();
 				file.createNewFile();
 				final FileWriter writer = new FileWriter(file);
@@ -559,7 +559,7 @@ public class CommandsHandler implements CommandExecutor
 					return;
 				}
 				state = conn.createStatement();
-				rs = state.executeQuery(params.getQuery());
+				rs = executeQuery(state, params.getQuery());
 				if (rs.next()) {
 					final Player player = (Player)sender;
 					final int y = rs.getInt("y");
@@ -614,7 +614,7 @@ public class CommandsHandler implements CommandExecutor
 					new CommandSaveQueue(sender, null, false);
 				if (!params.silent)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
-				rs = state.executeQuery(params.getQuery());
+				rs = executeQuery(state, params.getQuery());
                 final WorldEditor editor = new WorldEditor(logblock, params.world);
 
 				while (rs.next())
@@ -678,7 +678,7 @@ public class CommandsHandler implements CommandExecutor
 				state = conn.createStatement();
 				if (!checkRestrictions(sender, params))
 					return;
-				rs = state.executeQuery(params.getQuery());
+				rs = executeQuery(state, params.getQuery());
 				if (!params.silent)
 					sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
 				final WorldEditor editor = new WorldEditor(logblock, params.world);
@@ -775,6 +775,17 @@ public class CommandsHandler implements CommandExecutor
 			} finally {
 				close();
 			}
+		}
+	}
+
+	private static ResultSet executeQuery(Statement state, String query) throws SQLException {
+		if (Config.debug) {
+			long startTime = System.currentTimeMillis();
+			ResultSet rs = state.executeQuery(query);
+			getLogger().log(Level.INFO, "[LogBlock Debug] Time Taken: " + (System.currentTimeMillis() - startTime) + " milliseconds. Query: " + query );
+			return rs;
+		} else {
+			return state.executeQuery(query);
 		}
 	}
 

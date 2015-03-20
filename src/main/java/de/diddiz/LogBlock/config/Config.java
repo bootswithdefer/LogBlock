@@ -46,6 +46,7 @@ public class Config
 	public static Set<String> ignoredChat;
 	public static SimpleDateFormat formatter;
 	public static boolean safetyIdCheck;
+	public static boolean debug;
 	public static boolean logEnvironmentalKills;
 	// Not loaded from config - checked at runtime
 	public static boolean mb4 = false;
@@ -129,6 +130,7 @@ public class Config
 		def.put("tools.toolblock.mode", "LOOKUP");
 		def.put("tools.toolblock.permissionDefault", "OP");
 		def.put("safety.id.check", true);
+		def.put("debug", false);
 		for (final Entry<String, Object> e : def.entrySet())
 			if (!config.contains(e.getKey()))
 				config.set(e.getKey(), e.getValue());
@@ -183,6 +185,7 @@ public class Config
 		askClearLogAfterRollback = config.getBoolean("questioner.askClearLogAfterRollback", true);
 		askRollbackAfterBan = config.getBoolean("questioner.askRollbackAfterBan", false);
 		safetyIdCheck = config.getBoolean("safety.id.check", true);
+		debug = config.getBoolean("debug", false);
 		banPermission = config.getString("questioner.banPermission");
 		final List<Tool> tools = new ArrayList<Tool>();
 		final ConfigurationSection toolsSec = config.getConfigurationSection("tools");

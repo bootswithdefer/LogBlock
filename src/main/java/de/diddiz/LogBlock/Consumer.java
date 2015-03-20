@@ -284,6 +284,9 @@ public class Consumer extends TimerTask
 	public synchronized void run() {
 		if (queue.isEmpty() || !lock.tryLock())
 			return;
+		long startTime = System.currentTimeMillis();
+		int startSize = queue.size();
+
 		final Connection conn = logblock.getConnection();
 		Statement state = null;
 		if (Config.queueWarningSize > 0 && queue.size() >= Config.queueWarningSize) {
@@ -365,6 +368,14 @@ public class Consumer extends TimerTask
 				getLogger().log(Level.SEVERE, "[Consumer] SQL exception on close", ex);
 			}
 			lock.unlock();
+
+			if (debug) {
+				long timeElapsed = System.currentTimeMillis() - startTime;
+				int rowsProcessed = startSize - queue.size();
+				float rowPerTime = rowsProcessed / timeElapsed;
+				getLogger().log(Level.INFO, "[Consumer] Finished consumer cycle in " + timeElapsed + " milliseconds.");
+				getLogger().log(Level.INFO, "[Consumer] Total rows processed: " + rowsProcessed + ". row/time: " + String.format("%.4f", rowPerTime));
+			}
 		}
 	}
 
