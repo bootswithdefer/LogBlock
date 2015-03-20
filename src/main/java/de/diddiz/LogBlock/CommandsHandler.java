@@ -189,10 +189,21 @@ public class CommandsHandler implements CommandExecutor
 				} else if (command.equals("hide")) {
 					if (sender instanceof Player) {
 						if (logblock.hasPermission(sender, "logblock.hide")) {
-							if (Consumer.hide((Player)sender))
-								sender.sendMessage(ChatColor.GREEN + "You are now hidden and aren't logged. Type '/lb hide' again to unhide");
-							else
-								sender.sendMessage(ChatColor.GREEN + "You aren't hidden anylonger.");
+							if (args.length == 2) {
+								if (args[1].equalsIgnoreCase("on")) {
+									Consumer.hide((Player) sender);
+									sender.sendMessage(ChatColor.GREEN + "You are now hidden and aren't logged. Type /lb hide to unhide.");
+								} else if (args[1].equalsIgnoreCase("off")) {
+									Consumer.unHide((Player) sender);
+									sender.sendMessage(ChatColor.GREEN + "You aren't hidden any longer.");
+								}
+							} else {
+								if (Consumer.toggleHide((Player) sender)) {
+									sender.sendMessage(ChatColor.GREEN + "You are now hidden and aren't logged. Type '/lb hide' again to unhide.");
+								} else {
+									sender.sendMessage(ChatColor.GREEN + "You aren't hidden any longer.");
+								}
+							}
 						} else
 							sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
 					} else

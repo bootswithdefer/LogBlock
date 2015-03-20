@@ -396,7 +396,15 @@ public class Consumer extends TimerTask
 		return queue.size();
 	}
 
-	static boolean hide(Player player) {
+	static void hide(Player player) {
+		hiddenPlayers.add(player.getName().toLowerCase());
+	}
+
+	static void unHide(Player player) {
+		hiddenPlayers.remove(player.getName().toLowerCase());
+	}
+
+	static boolean toggleHide(Player player) {
 		final String playerName = player.getName().toLowerCase();
 		if (hiddenPlayers.contains(playerName)) {
 			hiddenPlayers.remove(playerName);
