@@ -3,35 +3,38 @@ package de.diddiz.LogBlock.listeners;
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
-import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import de.diddiz.LogBlock.config.WorldConfig;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.world.StructureGrowEvent;
 
-public class StructureGrowLogging extends LoggingListener
-{
-	public StructureGrowLogging(LogBlock lb) {
-		super(lb);
-	}
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onStructureGrow(StructureGrowEvent event) {
-		final WorldConfig wcfg = getWorldConfig(event.getWorld());
-		if (wcfg != null) {
-			final Actor actor;
-			if (event.getPlayer() != null) {
-				if (!wcfg.isLogging(Logging.BONEMEALSTRUCTUREGROW))
-					return;
-				actor = Actor.actorFromEntity(event.getPlayer());
-			} else {
-				if (!wcfg.isLogging(Logging.NATURALSTRUCTUREGROW))
-					return;
-				actor = new Actor("NaturalGrow");
-			}
-			for (final BlockState state : event.getBlocks())
-				consumer.queueBlockReplace(actor, state.getBlock().getState(), state);
-		}
-	}
+public class StructureGrowLogging extends LoggingListener {
+    public StructureGrowLogging(LogBlock lb) {
+        super(lb);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onStructureGrow(StructureGrowEvent event) {
+        final WorldConfig wcfg = getWorldConfig(event.getWorld());
+        if (wcfg != null) {
+            final Actor actor;
+            if (event.getPlayer() != null) {
+                if (!wcfg.isLogging(Logging.BONEMEALSTRUCTUREGROW)) {
+                    return;
+                }
+                actor = Actor.actorFromEntity(event.getPlayer());
+            } else {
+                if (!wcfg.isLogging(Logging.NATURALSTRUCTUREGROW)) {
+                    return;
+                }
+                actor = new Actor("NaturalGrow");
+            }
+            for (final BlockState state : event.getBlocks()) {
+                consumer.queueBlockReplace(actor, state.getBlock().getState(), state);
+            }
+        }
+    }
 }

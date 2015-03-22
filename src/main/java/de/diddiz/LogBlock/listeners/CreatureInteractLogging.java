@@ -3,7 +3,6 @@ package de.diddiz.LogBlock.listeners;
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
-import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.util.BukkitUtils;
 import org.bukkit.Location;
@@ -16,42 +15,45 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityInteractEvent;
 
-public class CreatureInteractLogging extends LoggingListener
-{
-	public CreatureInteractLogging(LogBlock lb) {
-		super(lb);
-	}
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onEntityInteract(EntityInteractEvent event) {
-		final WorldConfig wcfg = getWorldConfig(event.getEntity().getWorld());
+public class CreatureInteractLogging extends LoggingListener {
+    public CreatureInteractLogging(LogBlock lb) {
+        super(lb);
+    }
 
-		final EntityType entityType = event.getEntityType();
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onEntityInteract(EntityInteractEvent event) {
+        final WorldConfig wcfg = getWorldConfig(event.getEntity().getWorld());
 
-		// Mobs only
-		if (event.getEntity() instanceof Player || entityType == null) return;
+        final EntityType entityType = event.getEntityType();
 
-		if (wcfg != null) {
-			final Block clicked = event.getBlock();
-			final Material type = clicked.getType();
-			final int typeId = type.getId();
-			final byte blockData = clicked.getData();
-			final Location loc = clicked.getLocation();
+        // Mobs only
+        if (event.getEntity() instanceof Player || entityType == null) {
+            return;
+        }
 
-			switch (type) {
-				case SOIL:
-					if (wcfg.isLogging(Logging.CREATURECROPTRAMPLE)) {
-						// 3 = Dirt ID
-						consumer.queueBlock(Actor.actorFromEntity(entityType), loc, typeId, 3, blockData);
-						// Log the crop on top as being broken
-						Block trampledCrop = clicked.getRelative(BlockFace.UP);
-						if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
-							consumer.queueBlockBreak(new Actor("CreatureTrample"), trampledCrop.getState());
-						}
-					}
-					break;
-			}
-		}
-	}
+        if (wcfg != null) {
+            final Block clicked = event.getBlock();
+            final Material type = clicked.getType();
+            final int typeId = type.getId();
+            final byte blockData = clicked.getData();
+            final Location loc = clicked.getLocation();
+
+            switch (type) {
+                case SOIL:
+                    if (wcfg.isLogging(Logging.CREATURECROPTRAMPLE)) {
+                        // 3 = Dirt ID
+                        consumer.queueBlock(Actor.actorFromEntity(entityType), loc, typeId, 3, blockData);
+                        // Log the crop on top as being broken
+                        Block trampledCrop = clicked.getRelative(BlockFace.UP);
+                        if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
+                            consumer.queueBlockBreak(new Actor("CreatureTrample"), trampledCrop.getState());
+                        }
+                    }
+                    break;
+            }
+        }
+    }
 }
 
