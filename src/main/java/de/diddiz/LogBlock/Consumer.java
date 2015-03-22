@@ -525,7 +525,7 @@ public class Consumer extends TimerTask {
         public String[] getInserts() {
             final String table = getWorldConfig(loc.getWorld()).table;
             final String[] inserts = new String[ca != null || signtext != null ? 2 : 1];
-            inserts[0] = "INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + loc.getBlockY() + ", '" + loc.getBlockZ() + "');";
+            inserts[0] = "INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + safeY(loc) + ", '" + loc.getBlockZ() + "');";
             if (signtext != null) {
                 inserts[1] = "INSERT INTO `" + table + "-sign` (id, signtext) values (LAST_INSERT_ID(), '" + signtext.replace("\\", "\\\\").replace("'", "\\'") + "');";
             } else if (ca != null) {
@@ -562,7 +562,7 @@ public class Consumer extends TimerTask {
                 ps1.setInt(3, type);
                 ps1.setInt(4, data);
                 ps1.setInt(5, loc.getBlockX());
-                ps1.setInt(6, loc.getBlockY());
+                ps1.setInt(6, safeY(loc));
                 ps1.setInt(7, loc.getBlockZ());
                 ps1.executeUpdate();
 
@@ -668,7 +668,7 @@ public class Consumer extends TimerTask {
                     ps.setInt(4, row.type);
                     ps.setInt(5, row.data);
                     ps.setInt(6, row.loc.getBlockX());
-                    ps.setInt(7, row.loc.getBlockY());
+                    ps.setInt(7, safeY(row.loc));
                     ps.setInt(8, row.loc.getBlockZ());
                     ps.addBatch();
                 }
@@ -747,7 +747,7 @@ public class Consumer extends TimerTask {
 
         @Override
         public String[] getInserts() {
-            return new String[]{"INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + (loc.getBlockY() < 0 ? 0 : loc.getBlockY()) + ", " + loc.getBlockZ() + ");"};
+            return new String[]{"INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + safeY(loc) + ", " + loc.getBlockZ() + ");"};
         }
 
         @Override
@@ -885,5 +885,12 @@ public class Consumer extends TimerTask {
         public Actor[] getActors() {
             return new Actor[]{actor};
         }
+    }
+    
+    private int safeY(Location loc) {    
+        int safeY = loc.getBlockY();
+        if (safeY<0) safeY = 0;
+        if (safeY>65535) safeY=65535;
+        return safeY;
     }
 }
