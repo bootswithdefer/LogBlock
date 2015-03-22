@@ -135,7 +135,7 @@ public class Config
 			if (!config.contains(e.getKey()))
 				config.set(e.getKey(), e.getValue());
 		logblock.saveConfig();
-		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + getStringIncludingInts(config, "mysql.database") + "?useUnicode=true&characterEncoding=utf-8&rewriteBatchedStatements=true";
+		url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + getStringIncludingInts(config, "mysql.database");
 		user = getStringIncludingInts(config, "mysql.user");
 		password = getStringIncludingInts(config, "mysql.password");
 		delayBetweenRuns = config.getInt("consumer.delayBetweenRuns", 2);
