@@ -293,13 +293,14 @@ public class Consumer extends TimerTask
 			getLogger().info("[Consumer] Queue overloaded. Size: " + getQueueSize());
 		}
 
+		int count = 0;
+
 		try {
 			if (conn == null)
 				return;
 			conn.setAutoCommit(false);
 			state = conn.createStatement();
 			final long start = System.currentTimeMillis();
-			int count = 0;
 			process:
 			while (!queue.isEmpty() && (System.currentTimeMillis() - start < timePerRun || count < forceToProcessAtLeast)) {
 				final Row r = queue.poll();
@@ -371,10 +372,9 @@ public class Consumer extends TimerTask
 
 			if (debug) {
 				long timeElapsed = System.currentTimeMillis() - startTime;
-				int rowsProcessed = startSize - queue.size();
-				float rowPerTime = rowsProcessed / timeElapsed;
+				float rowPerTime = count / timeElapsed;
 				getLogger().log(Level.INFO, "[Consumer] Finished consumer cycle in " + timeElapsed + " milliseconds.");
-				getLogger().log(Level.INFO, "[Consumer] Total rows processed: " + rowsProcessed + ". row/time: " + String.format("%.4f", rowPerTime));
+				getLogger().log(Level.INFO, "[Consumer] Total rows processed: " + count + ". row/time: " + String.format("%.4f", rowPerTime));
 			}
 		}
 	}
