@@ -24,7 +24,7 @@
 
     <ciManagement>
         <system>jenkins</system>
-        <url>http://ci.kitteh.org/job/LogBlock</url>
+        <url>http://ci.md-5.net/job/LogBlock/</url>
     </ciManagement>
 
     <distributionManagement>
