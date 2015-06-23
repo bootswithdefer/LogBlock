@@ -278,7 +278,16 @@ public class LogBlock extends JavaPlugin {
     }
 
     /**
+     * Returns a list of block changes based on the given query parameters, the query parameters
+     * are essentially programmatic versions of the parameters a player would pass
+     * to the logblock lookup command i.e /lb lookup <i>query-parameters</i>
+     *
+     * Note: this method directly calls a SQL query and is hence a slow blocking function, avoid running
+     * it on the main game thread
+     *
      * @param params QueryParams that contains the needed columns (all other will be filled with default values) and the params. World is required.
+     * @return Returns a list of block changes based on the given query parameters
+     * @throws SQLException if a sql exception occurs while looking up the block changes
      */
     public List<BlockChange> getBlockChanges(QueryParams params) throws SQLException {
         final Connection conn = getConnection();

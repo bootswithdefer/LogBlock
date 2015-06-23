@@ -229,6 +229,9 @@ public class MaterialName {
     }
 
     /**
+     * Returns the name of a material based on its id
+     *
+     * @param type The type of the material
      * @return Name of the material, or if it's unknown, the id.
      */
     public static String materialName(int type) {
@@ -236,6 +239,10 @@ public class MaterialName {
     }
 
     /**
+     * Returns the name of a material based on its id and data
+     *
+     * @param type The type of the material
+     * @param data The data of the material
      * @return Name of the material regarding it's data, or if it's unknown, the basic name.
      */
     public static String materialName(int type, short data) {

@@ -45,6 +45,12 @@ public class Consumer extends TimerTask {
 
     /**
      * Logs any block change. Don't try to combine broken and placed blocks. Queue two block changes or use the queueBLockReplace methods.
+     *
+     * @param actor Actor responsible for making the change
+     * @param loc Location of the block change
+     * @param typeBefore Type of the block before the change
+     * @param typeAfter Type of the block after the change
+     * @param data Data of the block after the change
      */
     public void queueBlock(Actor actor, Location loc, int typeBefore, int typeAfter, byte data) {
         queueBlock(actor, loc, typeBefore, typeAfter, data, null, null);
@@ -53,6 +59,7 @@ public class Consumer extends TimerTask {
     /**
      * Logs a block break. The type afterwards is assumed to be o (air).
      *
+     * @param actor Actor responsible for breaking the block
      * @param before Blockstate of the block before actually being destroyed.
      */
     public void queueBlockBreak(Actor actor, BlockState before) {
@@ -61,6 +68,11 @@ public class Consumer extends TimerTask {
 
     /**
      * Logs a block break. The block type afterwards is assumed to be o (air).
+     *
+     * @param actor Actor responsible for the block break
+     * @param loc Location of the broken block
+     * @param typeBefore Type of the block before the break
+     * @param dataBefore Data of the block before the break
      */
     public void queueBlockBreak(Actor actor, Location loc, int typeBefore, byte dataBefore) {
         queueBlock(actor, loc, typeBefore, 0, dataBefore);
@@ -69,6 +81,7 @@ public class Consumer extends TimerTask {
     /**
      * Logs a block place. The block type before is assumed to be o (air).
      *
+     * @param actor Actor responsible for placing the block
      * @param after Blockstate of the block after actually being placed.
      */
     public void queueBlockPlace(Actor actor, BlockState after) {
@@ -77,12 +90,20 @@ public class Consumer extends TimerTask {
 
     /**
      * Logs a block place. The block type before is assumed to be o (air).
+     *
+     * @param actor Actor responsible for placing the block
+     * @param loc Location of the placed block
+     * @param type Type of the placed block
+     * @param data Data of the placed block
      */
     public void queueBlockPlace(Actor actor, Location loc, int type, byte data) {
         queueBlock(actor, loc, 0, type, data);
     }
 
     /**
+     * Logs a block being replaced from the before and after {@link org.bukkit.block.BlockState}s
+     *
+     * @param actor Actor responsible for replacing the block
      * @param before Blockstate of the block before actually being destroyed.
      * @param after  Blockstate of the block after actually being placed.
      */
@@ -91,13 +112,23 @@ public class Consumer extends TimerTask {
     }
 
     /**
-     * @param before Blockstate of the block before actually being destroyed.
+     * Logs a block being replaced from the before {@link org.bukkit.block.BlockState} and the type and data after
+     *
+     * @param actor  Actor responsible for replacing the block
+     * @param before Blockstate of the block before being replaced.
+     * @param typeAfter Type of the block after being replaced
+     * @param dataAfter Data of the block after being replaced
      */
     public void queueBlockReplace(Actor actor, BlockState before, int typeAfter, byte dataAfter) {
         queueBlockReplace(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), before.getRawData(), typeAfter, dataAfter);
     }
 
     /**
+     * Logs a block being replaced from the type and data before and the {@link org.bukkit.block.BlockState} after
+     *
+     * @param actor Actor responsible for replacing the block
+     * @param typeBefore Type of the block before being replaced
+     * @param dataBefore Data of the block before being replaced
      * @param after Blockstate of the block after actually being placed.
      */
     public void queueBlockReplace(Actor actor, int typeBefore, byte dataBefore, BlockState after) {
@@ -114,17 +145,30 @@ public class Consumer extends TimerTask {
     }
 
     /**
+     * Logs an actor interacting with a container block's inventory
+     *
+     * @param actor The actor interacting with the container
      * @param container The respective container. Must be an instance of an InventoryHolder.
+     * @param itemType Type of the item taken/stored
+     * @param itemAmount Amount of the item taken/stored
+     * @param itemData Data of the item taken/stored
      */
     public void queueChestAccess(Actor actor, BlockState container, short itemType, short itemAmount, short itemData) {
         if (!(container instanceof InventoryHolder)) {
-            return;
+            throw new IllegalArgumentException("Container must be instanceof InventoryHolder");
         }
         queueChestAccess(actor, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getTypeId(), itemType, itemAmount, itemData);
     }
 
     /**
+     * Logs an actor interacting with a container block's inventory
+     *
+     * @param actor The actor interacting with the container
+     * @param loc The location of the container block
      * @param type Type id of the container.
+     * @param itemType Type of the item taken/stored
+     * @param itemAmount Amount of the item taken/stored
+     * @param itemData Data of the item taken/stored
      */
     public void queueChestAccess(Actor actor, Location loc, int type, short itemType, short itemAmount, short itemData) {
         queueBlock(actor, loc, type, type, (byte) 0, null, new ChestAccess(itemType, itemAmount, itemData));
@@ -133,6 +177,7 @@ public class Consumer extends TimerTask {
     /**
      * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
      *
+     * @param actor The actor breaking the container
      * @param container Must be an instance of InventoryHolder
      */
     public void queueContainerBreak(Actor actor, BlockState container) {
@@ -144,6 +189,12 @@ public class Consumer extends TimerTask {
 
     /**
      * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
+     *
+     * @param actor The actor responsible for breaking the container
+     * @param loc The location of the inventory block
+     * @param type The type of the container block
+     * @param data The data of the container block
+     * @param inv The inventory of the container block
      */
     public void queueContainerBreak(Actor actor, Location loc, int type, byte data, Inventory inv) {
         final ItemStack[] items = compressInventory(inv.getContents());
@@ -191,10 +242,10 @@ public class Consumer extends TimerTask {
 
     /**
      * @param world      World the victim was inside.
-     * @param killerName Name of the killer. Can be null.
-     * @param victimName Name of the victim. Can't be null.
+     * @param killer Name of the killer. Can be null.
+     * @param victim Name of the victim. Can't be null.
      * @param weapon     Item id of the weapon. 0 for no weapon.
-     * @deprecated Use {@link #queueKill(Location, String, String, int)} instead
+     * @deprecated Use {@link #queueKill(Location, Actor, Actor, int)} instead
      */
     @Deprecated
     public void queueKill(World world, Actor killer, Actor victim, int weapon) {
@@ -215,7 +266,12 @@ public class Consumer extends TimerTask {
     }
 
     /**
+     * Logs an actor breaking a sign along with its contents
+     *
+     * @param actor Actor responsible for breaking the sign
+     * @param loc Location of the broken sign
      * @param type  Type of the sign. Must be 63 or 68.
+     * @param data Data of the sign being broken
      * @param lines The four lines on the sign.
      */
     public void queueSignBreak(Actor actor, Location loc, int type, byte data, String[] lines) {
@@ -225,12 +281,23 @@ public class Consumer extends TimerTask {
         queueBlock(actor, loc, type, 0, data, lines[0] + "\0" + lines[1] + "\0" + lines[2] + "\0" + lines[3], null);
     }
 
+    /**
+     * Logs an actor breaking a sign along with its contents
+     *
+     * @param actor Actor responsible for breaking the sign
+     * @param sign The sign being broken
+     */
     public void queueSignBreak(Actor actor, Sign sign) {
         queueSignBreak(actor, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), sign.getLines());
     }
 
     /**
+     * Logs an actor placing a sign along with its contents
+     *
+     * @param actor Actor placing the sign
+     * @param loc Location of the placed sign
      * @param type  Type of the sign. Must be 63 or 68.
+     * @param data Data of the placed sign block
      * @param lines The four lines on the sign.
      */
     public void queueSignPlace(Actor actor, Location loc, int type, byte data, String[] lines) {
@@ -240,6 +307,12 @@ public class Consumer extends TimerTask {
         queueBlock(actor, loc, 0, type, data, lines[0] + "\0" + lines[1] + "\0" + lines[2] + "\0" + lines[3], null);
     }
 
+    /**
+     * Logs an actor placing a sign along with its contents
+     *
+     * @param actor Actor placing the sign
+     * @param sign The palced sign object
+     */
     public void queueSignPlace(Actor actor, Sign sign) {
         queueSignPlace(actor, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), sign.getLines());
     }
