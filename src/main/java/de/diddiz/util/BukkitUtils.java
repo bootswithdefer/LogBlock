@@ -204,7 +204,7 @@ public class BukkitUtils {
 
     public static int getInventoryHolderType(InventoryHolder holder) {
         if (holder instanceof DoubleChest) {
-            return ((DoubleChest) holder).getLocation().getBlock().getTypeId();
+            return getInventoryHolderType(((DoubleChest) holder).getLeftSide());
         } else if (holder instanceof BlockState) {
             return ((BlockState) holder).getTypeId();
         } else {
@@ -214,7 +214,7 @@ public class BukkitUtils {
 
     public static Location getInventoryHolderLocation(InventoryHolder holder) {
         if (holder instanceof DoubleChest) {
-            return ((DoubleChest) holder).getLocation();
+            return getInventoryHolderLocation(((DoubleChest) holder).getLeftSide());
         } else if (holder instanceof BlockState) {
             return ((BlockState) holder).getLocation();
         } else {
