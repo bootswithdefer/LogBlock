@@ -219,12 +219,12 @@ public class Consumer extends TimerTask {
             weapon = ((Player) killer).getItemInHand().getTypeId();
         }
         if (killer instanceof Projectile) {
+            weapon = itemIDfromProjectileEntity(killer);
             ProjectileSource ps = ((Projectile) killer).getShooter();
             if (ps == null) {
                 killerActor = Actor.actorFromEntity(killer);
             } else {
                 killerActor = Actor.actorFromProjectileSource(ps);
-                weapon = itemIDfromProjectileEntity(killer);
             }
         }
 
