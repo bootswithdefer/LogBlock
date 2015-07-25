@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static de.diddiz.util.BukkitUtils.entityName;
+import org.bukkit.Bukkit;
 
 public class Actor {
 
@@ -85,6 +86,30 @@ public class Actor {
             return new Actor(psource.toString());
         }
 
+    }
+/**
+ * Generate an Actor object from a String name, trying to guess if it's an online player
+ * and if so, setting the UUID accordingly.  This only checks against currently online
+ * players and is a "best effort" attempt for use with the pre-UUID API
+ * <p>
+ * If you know something is an entity (player or otherwise) use the {@link #actorFromEntity(org.bukkit.entity.Entity) }
+ * or {@link #actorFromEntity(org.bukkit.entity.EntityType) } methods
+ * <p>
+ * If you know something is a server effect (like gravity) use {@link #Actor(java.lang.String)}
+ * @deprecated Only use this if you have a String of unknown origin
+ * 
+ * @param actorName String of unknown origin
+ * @return 
+ */
+    public static Actor actorFromString(String actorName) {
+        Player[] players = Bukkit.getServer().getOnlinePlayers();
+        for (Player p : players) {
+            if (p.getName().equalsIgnoreCase(actorName)) {
+                return actorFromEntity(p);
+            }
+        }
+    // No player found online with that name, assuming non-player entity/effect
+    return new Actor(actorName);
     }
 
     public static boolean isValidUUID(String uuid) {

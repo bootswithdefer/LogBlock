@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.Actor.actorFromString;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
 import org.bukkit.Location;
@@ -57,7 +58,7 @@ public class Consumer extends TimerTask {
     }
 
     /**
-     * Logs a block break. The type afterwards is assumed to be o (air).
+     * Logs a block break. The type afterwards is assumed to be 0 (air).
      *
      * @param actor Actor responsible for breaking the block
      * @param before Blockstate of the block before actually being destroyed.
@@ -67,7 +68,7 @@ public class Consumer extends TimerTask {
     }
 
     /**
-     * Logs a block break. The block type afterwards is assumed to be o (air).
+     * Logs a block break. The block type afterwards is assumed to be 0 (air).
      *
      * @param actor Actor responsible for the block break
      * @param loc Location of the broken block
@@ -79,7 +80,7 @@ public class Consumer extends TimerTask {
     }
 
     /**
-     * Logs a block place. The block type before is assumed to be o (air).
+     * Logs a block place. The block type before is assumed to be 0 (air).
      *
      * @param actor Actor responsible for placing the block
      * @param after Blockstate of the block after actually being placed.
@@ -89,7 +90,7 @@ public class Consumer extends TimerTask {
     }
 
     /**
-     * Logs a block place. The block type before is assumed to be o (air).
+     * Logs a block place. The block type before is assumed to be 0 (air).
      *
      * @param actor Actor responsible for placing the block
      * @param loc Location of the placed block
@@ -249,7 +250,8 @@ public class Consumer extends TimerTask {
      * @param killer Name of the killer. Can be null.
      * @param victim Name of the victim. Can't be null.
      * @param weapon     Item id of the weapon. 0 for no weapon.
-     * @deprecated Use {@link #queueKill(Location, Actor, Actor, int)} instead
+     * @deprecated Use {@link #queueKill(org.bukkit.Location, de.diddiz.LogBlock.Actor, de.diddiz.LogBlock.Actor, int)}
+     * instead
      */
     @Deprecated
     public void queueKill(World world, Actor killer, Actor victim, int weapon) {
@@ -339,6 +341,220 @@ public class Consumer extends TimerTask {
 
     public void queueLeave(Player player) {
         queue.add(new PlayerLeaveRow(player));
+    }
+
+    // Deprecated methods re-added for API compatability
+
+    /**
+     * Logs any block change. Don't try to combine broken and placed blocks.
+     * Queue two block changes or use the queueBLockReplace methods.
+     *
+     * @deprecated Use
+     * {@link #queueBlock(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, int, byte)}
+     * which supports UUIDs
+     */
+    public void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data) {
+        queueBlock(actorFromString(playerName), loc, typeBefore, typeAfter, data);
+    }
+
+    /**
+     * Logs a block break. The type afterwards is assumed to be 0 (air).
+     *
+     * @param before Blockstate of the block before actually being destroyed.
+     * @deprecated Use
+     * {@link #queueBlockBreak(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState)}
+     * which supports UUIDs
+     */
+    public void queueBlockBreak(String playerName, BlockState before) {
+        queueBlockBreak(actorFromString(playerName), before);
+        
+    }
+
+    /**
+     * Logs a block break. The block type afterwards is assumed to be 0 (air).
+     *
+     * @deprecated Use {@link #queueBlockBreak(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte)}
+     * which supports UUIDs
+     */
+    public void queueBlockBreak(String playerName, Location loc, int typeBefore, byte dataBefore) {
+        queueBlockBreak(actorFromString(playerName), loc, typeBefore, dataBefore);
+    }
+
+    /**
+     * Logs a block place. The block type before is assumed to be 0 (air).
+     *
+     * @param after Blockstate of the block after actually being placed.
+     * @depracated Use {@link #queueBlockPlace(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState)}
+     * which supports UUIDs
+     */
+    public void queueBlockPlace(String playerName, BlockState after) {
+        queueBlockPlace(actorFromString(playerName), after);
+    }
+
+    /**
+     * Logs a block place. The block type before is assumed to be 0 (air).
+     * @deprecated Use {@link #queueBlockPlace(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte)}
+     * which supports UUIDs
+     */
+    public void queueBlockPlace(String playerName, Location loc, int type, byte data) {
+        queueBlockPlace(actorFromString(playerName), loc, type, data);
+    }
+
+    /**
+     * @param before Blockstate of the block before actually being destroyed.
+     * @param after Blockstate of the block after actually being placed.
+     * @deprecated Use {@link #queueBlockReplace(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState, org.bukkit.block.BlockState)}
+     * which supports UUIDs
+     */
+    public void queueBlockReplace(String playerName, BlockState before, BlockState after) {
+        queueBlockReplace(actorFromString(playerName), before, after);
+    }
+
+    /**
+     * @param before Blockstate of the block before actually being destroyed.
+     * @deprecated Use {@link #queueBlockReplace(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState, int, byte)}
+     * which supports UUIDs
+     */
+    public void queueBlockReplace(String playerName, BlockState before, int typeAfter, byte dataAfter) {
+        queueBlockReplace(actorFromString(playerName), before, typeAfter, dataAfter);
+    }
+
+    /**
+     * @param after Blockstate of the block after actually being placed.
+     * @deprecated {@link #queueBlockReplace(de.diddiz.LogBlock.Actor, int, byte, org.bukkit.block.BlockState)}
+     * which supports UUIDs
+     */
+    public void queueBlockReplace(String playerName, int typeBefore, byte dataBefore, BlockState after) {
+        queueBlockReplace(actorFromString(playerName), typeBefore, dataBefore, after);
+    }
+
+    /**
+    * @deprecated use {@link #queueBlockReplace(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte, int, byte)}
+    * which supports UUIDs
+    */
+    public void queueBlockReplace(String playerName, Location loc, int typeBefore, byte dataBefore, int typeAfter, byte dataAfter) {
+        queueBlockReplace(actorFromString(playerName),loc,typeBefore,dataBefore,typeAfter,dataAfter);
+    }
+
+    /**
+     * @param container The respective container. Must be an instance of an
+     * InventoryHolder.
+     * @deprecated Use {@link #queueChestAccess(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState, short, short, short)}
+     * which supports UUIDs
+     */
+    public void queueChestAccess(String playerName, BlockState container, short itemType, short itemAmount, short itemData) {
+        queueChestAccess(actorFromString(playerName),container,itemType,itemAmount,itemData);
+    }
+
+    /**
+     * @param type Type id of the container.
+     * @deprecated Use {@link #queueChestAccess(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, short, short, short)}
+     * which supports UUIDs
+     */
+    public void queueChestAccess(String playerName, Location loc, int type, short itemType, short itemAmount, short itemData) {
+        queueChestAccess(actorFromString(playerName), loc, type, itemType, itemAmount, itemData);
+    }
+
+    /**
+     * Logs a container block break. The block type before is assumed to be o
+     * (air). All content is assumed to be taken.
+     *
+     * @param container Must be an instance of InventoryHolder
+     * @deprecated Use {@link #queueContainerBreak(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState)}
+     * which supports UUIDs
+     */
+    public void queueContainerBreak(String playerName, BlockState container) {
+        queueContainerBreak(actorFromString(playerName), container);
+    }
+
+    /**
+     * Logs a container block break. The block type before is assumed to be o
+     * (air). All content is assumed to be taken.
+     * @deprecated Use {@link #queueContainerBreak(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte, org.bukkit.inventory.Inventory)}
+     * which supports UUIDs
+     */
+    public void queueContainerBreak(String playerName, Location loc, int type, byte data, Inventory inv) {
+        queueContainerBreak(actorFromString(playerName),loc,type,data,inv);
+    }
+
+    /**
+     * This form should only be used when the killer is not an entity e.g. for
+     * fall or suffocation damage
+     *
+     * @param killer Can't be null
+     * @param victim Can't be null
+     * @deprecated Use {@link #queueKill(de.diddiz.LogBlock.Actor, org.bukkit.entity.Entity)}
+     * which supports UUIDs
+     */
+    public void queueKill(String killer, Entity victim) {
+        queueKill(actorFromString(killer),victim);
+    }
+
+    /**
+     * @param world World the victim was inside.
+     * @param killerName Name of the killer. Can be null.
+     * @param victimName Name of the victim. Can't be null.
+     * @param weapon Item id of the weapon. 0 for no weapon.
+     * @deprecated Use {@link #queueKill(org.bukkit.Location, de.diddiz.LogBlock.Actor, de.diddiz.LogBlock.Actor, int)} instead
+     */
+    @Deprecated
+    public void queueKill(World world, String killerName, String victimName, int weapon) {
+        queueKill(world,actorFromString(killerName),actorFromString(victimName),weapon);
+    }
+
+    /**
+     * @param location Location of the victim.
+     * @param killerName Name of the killer. Can be null.
+     * @param victimName Name of the victim. Can't be null.
+     * @param weapon Item id of the weapon. 0 for no weapon.
+     * @deprecated Use {@link #queueKill(org.bukkit.Location, de.diddiz.LogBlock.Actor, de.diddiz.LogBlock.Actor, int)}
+     * which supports UUIDs
+     */
+    public void queueKill(Location location, String killerName, String victimName, int weapon) {
+        queueKill(location,actorFromString(killerName),actorFromString(victimName),weapon);
+    }
+
+    /**
+     * @param type Type of the sign. Must be 63 or 68.
+     * @param lines The four lines on the sign.
+     * @deprecated Use {@link #queueSignBreak(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte, java.lang.String[])}
+     * which supports UUIDs
+     */
+    public void queueSignBreak(String playerName, Location loc, int type, byte data, String[] lines) {
+        queueSignBreak(actorFromString(playerName),loc,type,data,lines);
+    }
+
+    /**
+     * @deprecated Use {@link #queueSignBreak(de.diddiz.LogBlock.Actor, org.bukkit.block.Sign)}
+     * which supports UUIDs
+     */
+    public void queueSignBreak(String playerName, Sign sign) {
+        queueSignBreak(actorFromString(playerName),sign);
+    }
+
+    /**
+     * @param type Type of the sign. Must be 63 or 68.
+     * @param lines The four lines on the sign.
+     * @deprecated Use {@link #queueSignPlace(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte, java.lang.String[])}
+     * which supports UUIDs
+     */
+    public void queueSignPlace(String playerName, Location loc, int type, byte data, String[] lines) {
+        queueSignPlace(actorFromString(playerName),loc,type,data,lines);
+    }
+
+    /**
+     * @deprecated Use {@link #queueSignPlace(de.diddiz.LogBlock.Actor, org.bukkit.block.Sign)}
+     * which supports UUIDs
+     */
+    public void queueSignPlace(String playerName, Sign sign) {
+        queueSignPlace(actorFromString(playerName),sign);
+    }
+/**
+ * @deprecated Use {@link #queueChat(de.diddiz.LogBlock.Actor, java.lang.String)}
+ * which supports UUIDs
+ */
+    public void queueChat(String player, String message) {
+        queueChat(actorFromString(player),message);
     }
 
     @Override
