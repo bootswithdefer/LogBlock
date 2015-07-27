@@ -191,4 +191,9 @@ public class Utils {
             return name.toLowerCase().endsWith(ext);
         }
     }
+
+    public static String mysqlTextEscape(String untrusted) {
+        return untrusted.replace("\\", "\\\\").replace("'", "\\'");
+    }
+
 }

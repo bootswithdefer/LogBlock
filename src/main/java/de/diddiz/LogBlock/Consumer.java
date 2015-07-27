@@ -26,6 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 import static de.diddiz.LogBlock.config.Config.*;
+import static de.diddiz.util.Utils.mysqlTextEscape;
 import static de.diddiz.util.BukkitUtils.*;
 import static org.bukkit.Bukkit.getLogger;
 
@@ -686,7 +687,7 @@ public class Consumer extends TimerTask {
             for (final Actor actor : r.getActors()) {
                 if (!playerIds.containsKey(actor) && !insertedPlayers.contains(actor)) {
                     // Odd query contruction is to work around innodb auto increment behaviour - bug #492
-                    writer.println("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + actor.getName() + "','" + actor.getUUID() + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + actor.getUUID() + "') LIMIT 1;");
+                    writer.println("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(actor.getName()) + "','" + actor.getUUID() + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + actor.getUUID() + "') LIMIT 1;");
                     insertedPlayers.add(actor);
                 }
             }
@@ -728,7 +729,7 @@ public class Consumer extends TimerTask {
         // Odd query contruction is to work around innodb auto increment behaviour - bug #492
         String name = actor.getName();
         String uuid = actor.getUUID();
-        state.execute("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + name + "','" + uuid + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + uuid + "') LIMIT 1;");
+        state.execute("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(name) + "','" + uuid + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + uuid + "') LIMIT 1;");
         final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE UUID = '" + uuid + "'");
         if (rs.next()) {
             playerIds.put(actor, rs.getInt(1));
@@ -820,7 +821,7 @@ public class Consumer extends TimerTask {
             final String[] inserts = new String[ca != null || signtext != null ? 2 : 1];
             inserts[0] = "INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + safeY(loc) + ", '" + loc.getBlockZ() + "');";
             if (signtext != null) {
-                inserts[1] = "INSERT INTO `" + table + "-sign` (id, signtext) values (LAST_INSERT_ID(), '" + signtext.replace("\\", "\\\\").replace("'", "\\'") + "');";
+                inserts[1] = "INSERT INTO `" + table + "-sign` (id, signtext) values (LAST_INSERT_ID(), '" + mysqlTextEscape(signtext) + "');";
             } else if (ca != null) {
                 inserts[1] = "INSERT INTO `" + table + "-chest` (id, itemtype, itemamount, itemdata) values (LAST_INSERT_ID(), " + ca.itemType + ", " + ca.itemAmount + ", " + ca.itemData + ");";
             }
@@ -1063,7 +1064,7 @@ public class Consumer extends TimerTask {
 
         @Override
         public String[] getInserts() {
-            return new String[]{"INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(player) + ", '" + message.replace("\\", "\\\\").replace("'", "\\'") + "');"};
+            return new String[]{"INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(player) + ", '" + mysqlTextEscape(message) + "');"};
         }
 
         @Override
@@ -1135,9 +1136,9 @@ public class Consumer extends TimerTask {
         @Override
         public String[] getInserts() {
             if (logPlayerInfo) {
-                return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "', playername = '" + player.getName() + "' WHERE UUID = '" + player.getUUID() + "';"};
+                return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "', playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + player.getUUID() + "';"};
             }
-            return new String[]{"UPDATE `lb-players` SET playername = '" + player.getName() + "' WHERE UUID = '" + player.getUUID() + "';"};
+            return new String[]{"UPDATE `lb-players` SET playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + player.getUUID() + "';"};
         }
 
         @Override
@@ -1164,9 +1165,9 @@ public class Consumer extends TimerTask {
         @Override
         public String[] getInserts() {
             if (logPlayerInfo) {
-                return new String[]{"UPDATE `lb-players` SET onlinetime = onlinetime + TIMESTAMPDIFF(SECOND, lastlogin, FROM_UNIXTIME('" + leaveTime + "')), playername = '" + actor.getName() + "' WHERE lastlogin > 0 && UUID = '" + actor.getUUID() + "';"};
+                return new String[]{"UPDATE `lb-players` SET onlinetime = onlinetime + TIMESTAMPDIFF(SECOND, lastlogin, FROM_UNIXTIME('" + leaveTime + "')), playername = '" + mysqlTextEscape(actor.getName()) + "' WHERE lastlogin > 0 && UUID = '" + actor.getUUID() + "';"};
             }
-            return new String[]{"UPDATE `lb-players` SET playername = '" + actor.getName() + "' WHERE UUID = '" + actor.getUUID() + "';"};
+            return new String[]{"UPDATE `lb-players` SET playername = '" + mysqlTextEscape(actor.getName()) + "' WHERE UUID = '" + actor.getUUID() + "';"};
         }
 
         @Override

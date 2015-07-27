@@ -765,7 +765,7 @@ public final class QueryParams implements Cloneable {
                 if (values.length == 0) {
                     throw new IllegalArgumentException("No arguments for '" + param + "'");
                 }
-                match = join(values, " ").replace("\\", "\\\\").replace("'", "\\'");
+                match = mysqlTextEscape(join(values, " "));
             } else if (param.equals("loc") || param.equals("location")) {
                 final String[] vectors = values.length == 1 ? values[0].split(":") : values;
                 if (vectors.length != 3) {
