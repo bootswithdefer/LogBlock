@@ -1,34 +1,37 @@
 package de.diddiz.LogBlock.listeners;
 
-import static de.diddiz.LogBlock.config.Config.isLogging;
+import de.diddiz.LogBlock.Actor;
+import de.diddiz.LogBlock.LogBlock;
+import de.diddiz.LogBlock.Logging;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
-import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.LogBlock.Logging;
 
-public class ChatLogging extends LoggingListener
-{
-	public ChatLogging(LogBlock lb) {
-		super(lb);
-	}
+import static de.diddiz.LogBlock.config.Config.isLogging;
 
-	@EventHandler(priority = EventPriority.MONITOR)
-	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-		if (isLogging(event.getPlayer().getWorld(), Logging.CHAT))
-			consumer.queueChat(event.getPlayer().getName(), event.getMessage());
-	}
+public class ChatLogging extends LoggingListener {
+    public ChatLogging(LogBlock lb) {
+        super(lb);
+    }
 
-	@EventHandler(priority = EventPriority.MONITOR)
-	public void onPlayerChat(AsyncPlayerChatEvent event) {
-		if (isLogging(event.getPlayer().getWorld(), Logging.CHAT))
-			consumer.queueChat(event.getPlayer().getName(), event.getMessage());
-	}
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        if (isLogging(event.getPlayer().getWorld(), Logging.CHAT)) {
+            consumer.queueChat(Actor.actorFromEntity(event.getPlayer()), event.getMessage());
+        }
+    }
 
-	@EventHandler(priority = EventPriority.MONITOR)
-	public void onServerCommand(ServerCommandEvent event) {
-		consumer.queueChat("Console", "/" + event.getCommand());
-	}
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        if (isLogging(event.getPlayer().getWorld(), Logging.CHAT)) {
+            consumer.queueChat(Actor.actorFromEntity(event.getPlayer()), event.getMessage());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onServerCommand(ServerCommandEvent event) {
+        consumer.queueChat(new Actor("Console"), "/" + event.getCommand());
+    }
 }
