@@ -85,6 +85,13 @@ public class ExplosionLogging extends LoggingListener {
                     return;
                 }
                 actor = Actor.actorFromEntity(source);
+
+            } else if (source instanceof EnderCrystal){
+                if (!wcfg.isLogging(Logging.ENDERCRYSTALEXPLOSION)) {
+                    return;
+                }
+                actor = Actor.actorFromEntity(source);
+
             } else {
                 if (!wcfg.isLogging(Logging.MISCEXPLOSION)) {
                     return;
