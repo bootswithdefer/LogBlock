@@ -11,6 +11,7 @@ import org.bukkit.entity.*;
 import org.bukkit.entity.minecart.ExplosiveMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.projectiles.ProjectileSource;
 
@@ -98,6 +99,29 @@ public class ExplosionLogging extends LoggingListener {
                 }
             }
             for (final Block block : event.blockList()) {
+                final int type = block.getTypeId();
+                if (wcfg.isLogging(Logging.SIGNTEXT) & (type == 63 || type == 68)) {
+                    consumer.queueSignBreak(actor, (Sign) block.getState());
+                } else if (wcfg.isLogging(Logging.CHESTACCESS) && (getContainerBlocks().contains(Material.getMaterial(type)))) {
+                    consumer.queueContainerBreak(actor, block.getState());
+                } else {
+                    consumer.queueBlockBreak(actor, block.getState());
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        for (final Block block : event.blockList()) {
+            final WorldConfig wcfg = getWorldConfig(block.getLocation().getWorld());
+
+            if (wcfg != null) {
+                if (!wcfg.isLogging(Logging.MISCEXPLOSION)) {
+                    return;
+                }
+                Actor actor = new Actor("Explosion");
+
                 final int type = block.getTypeId();
                 if (wcfg.isLogging(Logging.SIGNTEXT) & (type == 63 || type == 68)) {
                     consumer.queueSignBreak(actor, (Sign) block.getState());
