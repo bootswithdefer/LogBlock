@@ -386,6 +386,22 @@ class Updater {
             config.set("version", "1.10.0");
         }
 
+        if (configVersion.compareTo(new ComparableVersion("1.12.0")) < 0) {
+            getLogger().info("Updating tables to 1.12.0 ...");
+            final Connection conn = logblock.getConnection();
+            try {
+                conn.setAutoCommit(true);
+                final Statement st = conn.createStatement();
+                st.execute("ALTER TABLE `lb-chat` ALTER COLUMN `message` VARCHAR(256) NOT NULL");
+                st.close();
+                conn.close();
+            } catch (final SQLException ex) {
+                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                return false;
+            }
+            config.set("version", "1.12.0");
+        }
+
         logblock.saveConfig();
         return true;
     }
@@ -423,7 +439,7 @@ class Updater {
             state.execute("INSERT IGNORE INTO `lb-players` (UUID,playername) VALUES ('log_dummy_record','dummy_record')");
         }
         if (isLogging(Logging.CHAT)) {
-            createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, message VARCHAR(255) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM DEFAULT CHARSET " + charset);
+            createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, message VARCHAR(256) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) ENGINE=MyISAM DEFAULT CHARSET " + charset);
         }
         for (final WorldConfig wcfg : getLoggedWorlds()) {
             createTable(dbm, state, wcfg.table, "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, replaced TINYINT UNSIGNED NOT NULL, type TINYINT UNSIGNED NOT NULL, data TINYINT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT UNSIGNED NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
