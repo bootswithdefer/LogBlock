@@ -388,16 +388,18 @@ class Updater {
 
         if (configVersion.compareTo(new ComparableVersion("1.12.0")) < 0) {
             getLogger().info("Updating tables to 1.12.0 ...");
-            final Connection conn = logblock.getConnection();
-            try {
-                conn.setAutoCommit(true);
-                final Statement st = conn.createStatement();
-                st.execute("ALTER TABLE `lb-chat` ALTER COLUMN `message` VARCHAR(256) NOT NULL");
-                st.close();
-                conn.close();
-            } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
-                return false;
+            if (isLogging(Logging.CHAT)) {
+                final Connection conn = logblock.getConnection();
+                try {
+                    conn.setAutoCommit(true);
+                    final Statement st = conn.createStatement();
+                    st.execute("ALTER TABLE `lb-chat` MODIFY COLUMN `message` VARCHAR(256) NOT NULL");
+                    st.close();
+                    conn.close();
+                } catch (final SQLException ex) {
+                    Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                    return false;
+                }
             }
             config.set("version", "1.12.0");
         }
