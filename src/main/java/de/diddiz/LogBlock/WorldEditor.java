@@ -182,7 +182,7 @@ public class WorldEditor implements Runnable {
                         } catch (final Exception ex) {
                             throw new WorldEditorException(ex.getMessage(), block.getLocation());
                         }
-                        if (!state.update()) {
+                        if (false /*!state.update()*/) { // Raw inventory doesn't need update, really should be using snapshot inventory however. Do this for backwards compat with < 1.12.1
                             throw new WorldEditorException("Failed to update inventory of " + materialName(block.getTypeId()), block.getLocation());
                         }
                         if (leftover > 0 && ca.itemAmount < 0) {
