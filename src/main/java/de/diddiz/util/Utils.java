@@ -11,6 +11,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
@@ -19,6 +20,8 @@ import java.util.zip.GZIPOutputStream;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
+
+import de.diddiz.LogBlock.LogBlock;
 
 public class Utils {
     public static String newline = System.getProperty("line.separator");
@@ -225,14 +228,10 @@ public class Utils {
         if (data == null || data.length == 0) {
             return null;
         }
-        YamlConfiguration conf = new YamlConfiguration();
         try {
-            InputStreamReader reader = new InputStreamReader(new GZIPInputStream(new ByteArrayInputStream(data)), "UTF-8");
-            conf.load(reader);
-            reader.close();
-            return conf.getItemStack("stack");
-        } catch (IOException | InvalidConfigurationException e) {
-            e.printStackTrace();
+            return deserializeYamlConfiguration(data).getItemStack("stack");
+        } catch (InvalidConfigurationException e) {
+            LogBlock.getInstance().getLogger().log(Level.SEVERE, "Exception while deserializing ItemStack", e);
         }
         return null;
     }
@@ -241,17 +240,32 @@ public class Utils {
         if (stack == null || BukkitUtils.isEmpty(stack.getType())) {
             return null;
         }
+        YamlConfiguration conf = new YamlConfiguration();
+        conf.set("stack", stack);
+        return serializeYamlConfiguration(conf);
+    }
+
+    public static YamlConfiguration deserializeYamlConfiguration(byte[] data) throws InvalidConfigurationException {
+        YamlConfiguration conf = new YamlConfiguration();
         try {
-            YamlConfiguration conf = new YamlConfiguration();
-            conf.set("stack", stack);
+            InputStreamReader reader = new InputStreamReader(new GZIPInputStream(new ByteArrayInputStream(data)), "UTF-8");
+            conf.load(reader);
+            reader.close();
+            return conf;
+        } catch (IOException e) {
+            throw new RuntimeException("IOException should be impossible for ByteArrayInputStream", e);
+        }
+    }
+
+    public static byte[] serializeYamlConfiguration(YamlConfiguration conf) {
+        try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(baos), "UTF-8");
             writer.write(conf.saveToString());
             writer.close();
             return baos.toByteArray();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("IOException should be impossible for ByteArrayOutputStream", e);
         }
-        return null;
     }
 }
