@@ -47,7 +47,7 @@ class Updater {
             logblock.saveConfig();
         }
         ComparableVersion configVersion = new ComparableVersion(versionString);
-        if (configVersion.compareTo(new ComparableVersion(logblock.getDescription().getVersion())) >= 0) {
+        if (configVersion.compareTo(new ComparableVersion(logblock.getDescription().getVersion().replace(" (manually compiled)", ""))) >= 0) {
             return false;
         }
         if (configVersion.compareTo(new ComparableVersion("1.2.7")) < 0) {
