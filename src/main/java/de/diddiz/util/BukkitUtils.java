@@ -167,6 +167,7 @@ public class BukkitUtils {
         containerBlocks.add(Material.BREWING_STAND);
         containerBlocks.add(Material.FURNACE);
         containerBlocks.add(Material.BEACON);
+        containerBlocks.add(Material.SHULKER_BOX);
         containerBlocks.add(Material.BLACK_SHULKER_BOX);
         containerBlocks.add(Material.BLUE_SHULKER_BOX);
         containerBlocks.add(Material.LIGHT_GRAY_SHULKER_BOX);
