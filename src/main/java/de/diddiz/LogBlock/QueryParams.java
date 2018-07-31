@@ -18,7 +18,39 @@ import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import static de.diddiz.util.Utils.*;
 
 public final class QueryParams implements Cloneable {
-    private static final Set<Integer> keywords = new HashSet<Integer>(Arrays.asList("player".hashCode(), "area".hashCode(), "selection".hashCode(), "sel".hashCode(), "block".hashCode(), "type".hashCode(), "sum".hashCode(), "destroyed".hashCode(), "created".hashCode(), "chestaccess".hashCode(), "all".hashCode(), "time".hashCode(), "since".hashCode(), "before".hashCode(), "limit".hashCode(), "world".hashCode(), "asc".hashCode(), "desc".hashCode(), "last".hashCode(), "coords".hashCode(), "silent".hashCode(), "chat".hashCode(), "search".hashCode(), "match".hashCode(), "loc".hashCode(), "location".hashCode(), "kills".hashCode(), "killer".hashCode(), "victim".hashCode(), "both".hashCode()));
+    private static final HashMap<String, Integer> keywords = new HashMap<>();
+    static {
+        keywords.put("player", 1);
+        keywords.put("area", 0);
+        keywords.put("selection", 0);
+        keywords.put("sel", 0);
+        keywords.put("block", 1);
+        keywords.put("type", 1);
+        keywords.put("sum", 1);
+        keywords.put("destroyed", 0);
+        keywords.put("created", 0);
+        keywords.put("chestaccess", 0);
+        keywords.put("all", 0);
+        keywords.put("time", 0);
+        keywords.put("since", 0);
+        keywords.put("before", 0);
+        keywords.put("limit", 1);
+        keywords.put("world", 1);
+        keywords.put("asc", 0);
+        keywords.put("desc", 0);
+        keywords.put("last", 0);
+        keywords.put("coords", 0);
+        keywords.put("silent", 0);
+        keywords.put("chat", 0);
+        keywords.put("search", 1);
+        keywords.put("match", 1);
+        keywords.put("loc", 1);
+        keywords.put("location", 1);
+        keywords.put("kills", 0);
+        keywords.put("killer", 1);
+        keywords.put("victim", 1);
+        keywords.put("both", 0);
+    }
     public BlockChangeType bct = BlockChangeType.BOTH;
     public int limit = -1, before = 0, since = 0, radius = -1;
     public Location loc = null;
@@ -46,7 +78,12 @@ public final class QueryParams implements Cloneable {
     }
 
     public static boolean isKeyWord(String param) {
-        return keywords.contains(param.toLowerCase().hashCode());
+        return keywords.containsKey(param.toLowerCase());
+    }
+
+    public static int getKeyWordMinArguments(String param) {
+        Integer minArgs = keywords.get(param.toLowerCase());
+        return minArgs == null ? 0 : minArgs;
     }
 
     public String getLimit() {
@@ -530,7 +567,7 @@ public final class QueryParams implements Cloneable {
         }
         for (int i = 0; i < args.size(); i++) {
             final String param = args.get(i).toLowerCase();
-            final String[] values = getValues(args, i + 1);
+            final String[] values = getValues(args, i + 1, getKeyWordMinArguments(param));
             if (param.equals("last")) {
                 if (session == null || session.lastQuery == null) {
                     throw new IllegalArgumentException("This is your first command, you can't use last.");
@@ -797,13 +834,13 @@ public final class QueryParams implements Cloneable {
         }
     }
 
-    private static String[] getValues(List<String> args, int offset) {
+    private static String[] getValues(List<String> args, int offset, int minParams) {
         // The variable i will store the last value's index
         int i;
         // Iterate over the all the values from the offset up till the end
         for (i = offset; i < args.size(); i++) {
             // We found a keyword, break here since anything after this isn't a value.
-            if (isKeyWord(args.get(i))) {
+            if (i >= offset + minParams && isKeyWord(args.get(i))) {
                 break;
             }
         }
