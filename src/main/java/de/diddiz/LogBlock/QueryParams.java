@@ -585,11 +585,8 @@ public final class QueryParams implements Cloneable {
                         if (playerName.contains("\"")) {
                             players.add(playerName.replaceAll("[^a-zA-Z0-9_]", ""));
                         } else {
-                            final List<Player> matches = logblock.getServer().matchPlayer(playerName);
-                            if (matches.size() > 1) {
-                                throw new IllegalArgumentException("Ambiguous playername '" + param + "'");
-                            }
-                            players.add(matches.size() == 1 ? matches.get(0).getName() : playerName.replaceAll("[^a-zA-Z0-9_]", ""));
+                            final Player matches = logblock.getServer().getPlayerExact(playerName);
+                            players.add(matches != null ? matches.getName() : playerName.replaceAll("[^a-zA-Z0-9_]", ""));
                         }
                     }
                 }
