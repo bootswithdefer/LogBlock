@@ -634,6 +634,18 @@ public class CommandsHandler implements CommandExecutor {
         @Override
         public void run() {
             try {
+                if(params.bct == BlockChangeType.CHAT) {
+                    sender.sendMessage(ChatColor.RED + "Chat cannot be rolled back");
+                    return;
+                }
+                if(params.bct == BlockChangeType.KILLS) {
+                    sender.sendMessage(ChatColor.RED + "Kills cannot be rolled back");
+                    return;
+                }
+                if(params.sum != SummarizationMode.NONE) {
+                    sender.sendMessage(ChatColor.RED + "Cannot rollback summarized changes");
+                    return;
+                }
                 params.needCoords = true;
                 params.needType = true;
                 params.needData = true;
@@ -712,6 +724,18 @@ public class CommandsHandler implements CommandExecutor {
         @Override
         public void run() {
             try {
+                if(params.bct == BlockChangeType.CHAT) {
+                    sender.sendMessage(ChatColor.RED + "Chat cannot be redone");
+                    return;
+                }
+                if(params.bct == BlockChangeType.KILLS) {
+                    sender.sendMessage(ChatColor.RED + "Kills cannot be redone");
+                    return;
+                }
+                if(params.sum != SummarizationMode.NONE) {
+                    sender.sendMessage(ChatColor.RED + "Cannot redo summarized changes");
+                    return;
+                }
                 params.needCoords = true;
                 params.needType = true;
                 params.needData = true;
