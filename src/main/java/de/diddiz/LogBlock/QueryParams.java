@@ -10,8 +10,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-
 import java.util.*;
 
 import static de.diddiz.LogBlock.Session.getSession;
@@ -349,9 +347,9 @@ public final class QueryParams implements Cloneable {
             } else if (sel != null) {
                 compileLocationQuery(
                         where,
-                        sel.getSelection().getMinimumPoint().getBlockX(), sel.getSelection().getMaximumPoint().getBlockX(),
-                        sel.getSelection().getMinimumPoint().getBlockY(), sel.getSelection().getMaximumPoint().getBlockY(),
-                        sel.getSelection().getMinimumPoint().getBlockZ(), sel.getSelection().getMaximumPoint().getBlockZ()
+                        sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX(),
+                        sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY(),
+                        sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()
                 );
             }
 
@@ -458,9 +456,9 @@ public final class QueryParams implements Cloneable {
             } else if (sel != null) {
                 compileLocationQuery(
                         where,
-                        sel.getSelection().getMinimumPoint().getBlockX(), sel.getSelection().getMaximumPoint().getBlockX(),
-                        sel.getSelection().getMinimumPoint().getBlockY(), sel.getSelection().getMaximumPoint().getBlockY(),
-                        sel.getSelection().getMinimumPoint().getBlockZ(), sel.getSelection().getMaximumPoint().getBlockZ()
+                        sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX(),
+                        sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY(),
+                        sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()
                 );
             }
 
@@ -774,7 +772,7 @@ public final class QueryParams implements Cloneable {
 
     public void setSelection(RegionContainer container) {
         this.sel = container;
-        world = BukkitAdapter.adapt(sel.getSelection().getWorld());
+        world = sel.getWorld();
     }
 
     public void setPlayer(String playerName) {
