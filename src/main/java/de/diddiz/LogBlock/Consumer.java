@@ -681,7 +681,7 @@ public class Consumer extends TimerTask {
             if (replacedState != null || typeState != null) {
                 inserts[1] = "INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES('" + Utils.mysqlEscapeBytes(replacedState) + "', '" + Utils.mysqlEscapeBytes(typeState) + "', LAST_INSERT_ID());";
             } else if (ca != null) {
-                inserts[1] = "INSERT INTO `" + table + "-chestdata` (id, item, itemremoved, itemtype) values (LAST_INSERT_ID(), '" + Utils.mysqlEscapeBytes(Utils.saveItemStack(ca.itemStack)) + "', " + (ca.remove ? 1 : 0) + ", " + ca.itemType + ");";
+                inserts[1] = "INSERT INTO `" + table + "-chestdata` (id, item, itemremove, itemtype) values (LAST_INSERT_ID(), '" + Utils.mysqlEscapeBytes(Utils.saveItemStack(ca.itemStack)) + "', " + (ca.remove ? 1 : 0) + ", " + ca.itemType + ");";
             }
             return inserts;
         }

@@ -826,7 +826,7 @@ public class CommandsHandler implements CommandExecutor {
                 rs.next();
                 if ((deleted = rs.getInt(1)) > 0) {
                     if (dumpDeletedLog) {
-                        state.execute("SELECT id, item, itemremove FROM `" + table + "-chestdata` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, time + " " + table + "-chest " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
+                        state.execute("SELECT id, item, itemremove, itemtype FROM `" + table + "-chestdata` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, time + " " + table + "-chest " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
                     }
                     state.execute("DELETE `" + table + "-chestdata` FROM `" + table + "-chestdata` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL;");
                     sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-chestdata. Deleted " + deleted + " entries.");
