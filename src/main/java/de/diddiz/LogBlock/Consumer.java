@@ -394,8 +394,8 @@ public class Consumer extends TimerTask {
         queue.add(new PlayerJoinRow(player));
     }
 
-    public void queueLeave(Player player) {
-        queue.add(new PlayerLeaveRow(player));
+    public void queueLeave(Player player, long onlineTime) {
+        queue.add(new PlayerLeaveRow(player, onlineTime));
     }
 
     public void queueAddMaterialMapping(int key, String material) {
@@ -1019,20 +1019,20 @@ public class Consumer extends TimerTask {
     }
 
     private class PlayerLeaveRow implements Row {
-        private final long leaveTime;
+        private final long onlineTime;
         private final Actor actor;
 
-        PlayerLeaveRow(Player player) {
-            leaveTime = System.currentTimeMillis() / 1000;
+        PlayerLeaveRow(Player player, long onlineTime) {
+            this.onlineTime = onlineTime;
             actor = Actor.actorFromEntity(player);
         }
 
         @Override
         public String[] getInserts() {
             if (logPlayerInfo) {
-                return new String[] { "UPDATE `lb-players` SET onlinetime = onlinetime + TIMESTAMPDIFF(SECOND, lastlogin, FROM_UNIXTIME('" + leaveTime + "')), playername = '" + mysqlTextEscape(actor.getName()) + "' WHERE lastlogin > 0 && UUID = '" + actor.getUUID() + "';" };
+                return new String[] { "UPDATE `lb-players` SET onlinetime = onlinetime + " + onlineTime + " WHERE lastlogin > 0 && UUID = '" + actor.getUUID() + "';" };
             }
-            return new String[] { "UPDATE `lb-players` SET playername = '" + mysqlTextEscape(actor.getName()) + "' WHERE UUID = '" + actor.getUUID() + "';" };
+            return new String[0];
         }
 
         @Override

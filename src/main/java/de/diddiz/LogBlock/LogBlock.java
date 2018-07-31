@@ -37,6 +37,7 @@ public class LogBlock extends JavaPlugin {
     private Updater updater = null;
     private Timer timer = null;
     private boolean errorAtLoading = false, noDb = false, connected = true;
+    private PlayerInfoLogging playerInfoLogging;
 
     public static LogBlock getInstance() {
         return logblock;
@@ -147,7 +148,7 @@ public class LogBlock extends JavaPlugin {
     private void registerEvents() {
         final PluginManager pm = getPluginManager();
         pm.registerEvents(new ToolListener(this), this);
-        pm.registerEvents(new PlayerInfoLogging(this), this);
+        pm.registerEvents(playerInfoLogging = new PlayerInfoLogging(this), this);
         if (askRollbackAfterBan) {
             pm.registerEvents(new BanListener(this), this);
         }
@@ -214,9 +215,9 @@ public class LogBlock extends JavaPlugin {
         }
         getServer().getScheduler().cancelTasks(this);
         if (consumer != null) {
-            if (logPlayerInfo && getServer().getOnlinePlayers() != null) {
+            if (logPlayerInfo && playerInfoLogging != null) {
                 for (final Player player : getServer().getOnlinePlayers()) {
-                    consumer.queueLeave(player);
+                    playerInfoLogging.onPlayerQuit(player);
                 }
             }
             getLogger().info("Waiting for consumer ...");
