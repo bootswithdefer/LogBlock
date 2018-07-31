@@ -8,6 +8,7 @@ import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.Bisected.Half;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Stairs;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -15,9 +16,12 @@ import org.bukkit.entity.TNTPrimed;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.File;
 import java.util.*;
+import java.util.Map.Entry;
 
 public class BukkitUtils {
     private static final Set<Set<Integer>> blockEquivalents;
@@ -283,48 +287,28 @@ public class BukkitUtils {
     }
 
     public static ItemStack[] compareInventories(ItemStack[] items1, ItemStack[] items2) {
-        final ItemStackComparator comperator = new ItemStackComparator();
         final ArrayList<ItemStack> diff = new ArrayList<ItemStack>();
-        final int l1 = items1.length, l2 = items2.length;
-        for (int i = 0; i < l1; i++) {
-            if (items1[i] != null) {
-                items1[i] = new ItemStack(items1[i]);
-            }
+        for (ItemStack current : items2) {
+            diff.add(new ItemStack(current));
         }
-        for (int i = 0; i < l2; i++) {
-            if (items2[i] != null) {
-                items2[i] = new ItemStack(items2[i]);
-            }
-        }
-        int c1 = 0, c2 = 0;
-        while (c1 < l1 || c2 < l2) {
-            if (c1 >= l1) {
-                diff.add(items2[c2]);
-                c2++;
-                continue;
-            }
-            if (c2 >= l2) {
-                items1[c1].setAmount(items1[c1].getAmount() * -1);
-                diff.add(items1[c1]);
-                c1++;
-                continue;
-            }
-            final int comp = comperator.compare(items1[c1], items2[c2]);
-            if (comp < 0) {
-                items1[c1].setAmount(items1[c1].getAmount() * -1);
-                diff.add(items1[c1]);
-                c1++;
-            } else if (comp > 0) {
-                diff.add(items2[c2]);
-                c2++;
-            } else {
-                final int amount = items2[c2].getAmount() - items1[c1].getAmount();
-                if (amount != 0) {
-                    items1[c1].setAmount(amount);
-                    diff.add(items1[c1]);
+        for (ItemStack previous : items1) {
+            boolean found = false;
+            for (ItemStack current : diff) {
+                if (current.isSimilar(previous)) {
+                    int newAmount = current.getAmount() - previous.getAmount();
+                    if (newAmount == 0) {
+                        diff.remove(current);
+                    } else {
+                        current.setAmount(newAmount);
+                    }
+                    found = true;
+                    break;
                 }
-                c1++;
-                c2++;
+            }
+            if (!found) {
+                ItemStack subtracted = new ItemStack(previous);
+                subtracted.setAmount(-subtracted.getAmount());
+                diff.add(subtracted);
             }
         }
         return diff.toArray(new ItemStack[diff.size()]);
@@ -347,7 +331,6 @@ public class BukkitUtils {
                 }
             }
         }
-        Collections.sort(compressed, new ItemStackComparator());
         return compressed.toArray(new ItemStack[compressed.size()]);
     }
 
@@ -474,13 +457,6 @@ public class BukkitUtils {
         return false;
     }
 
-    public static class ItemStackComparator implements Comparator<ItemStack> {
-        @Override
-        public int compare(ItemStack a, ItemStack b) {
-            return a.getType().name().compareTo(b.getType().name());
-        }
-    }
-
     public static Material itemIDfromProjectileEntity(Entity e) {
         return projectileItems.get(e.getType());
     }
@@ -491,5 +467,88 @@ public class BukkitUtils {
 
     public static boolean isEmpty(Material m) {
         return m == Material.AIR || m == Material.CAVE_AIR || m == Material.VOID_AIR;
+    }
+
+    public static String toString(ItemStack stack) {
+        if (stack == null || stack.getAmount() == 0 || isEmpty(stack.getType())) {
+            return "nothing";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(stack.getAmount()).append("x ").append(stack.getType().name());
+        ItemMeta meta = stack.getItemMeta();
+        boolean metaStarted = false;
+        if (meta.hasEnchants()) {
+            Map<Enchantment, Integer> enchants = meta.getEnchants();
+            if (!enchants.isEmpty()) {
+                for (Entry<Enchantment, Integer> e : enchants.entrySet()) {
+                    if (!metaStarted) {
+                        sb.append(" [");
+                        metaStarted = true;
+                    } else {
+                        sb.append(", ");
+                    }
+                    sb.append(formatMinecraftKey(e.getKey().getKey().getKey()));
+                    if (e.getValue().intValue() > 1) {
+                        sb.append(" ").append(maybeToRoman(e.getValue().intValue() - 1));
+                    }
+                }
+            }
+        }
+        if (meta instanceof EnchantmentStorageMeta) {
+            EnchantmentStorageMeta emeta = (EnchantmentStorageMeta) meta;
+            if (emeta.hasStoredEnchants()) {
+                Map<Enchantment, Integer> enchants = emeta.getStoredEnchants();
+                if (!enchants.isEmpty()) {
+                    for (Entry<Enchantment, Integer> e : enchants.entrySet()) {
+                        if (!metaStarted) {
+                            sb.append(" [");
+                            metaStarted = true;
+                        } else {
+                            sb.append(", ");
+                        }
+                        sb.append(formatMinecraftKey(e.getKey().getKey().getKey()));
+                        if (e.getValue().intValue() > 1) {
+                            sb.append(" ").append(maybeToRoman(e.getValue().intValue() - 1));
+                        }
+                    }
+                }
+            }
+        }
+        if (metaStarted) {
+            sb.append("]");
+        }
+        return sb.toString();
+    }
+
+    private static final String[] romanNumbers = new String[] { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "XI", "X" };
+
+    private static String maybeToRoman(int value) {
+        if (value > 0 && value <= 10) {
+            return romanNumbers[value];
+        }
+        return Integer.toString(value);
+    }
+
+    public static String formatMinecraftKey(String s) {
+        char[] cap = s.toCharArray();
+        boolean lastSpace = true;
+        for (int i = 0; i < cap.length; i++) {
+            char c = cap[i];
+            if (c == '_') {
+                c = ' ';
+                lastSpace = true;
+            } else if (c >= '0' && c <= '9' || c == '(' || c == ')') {
+                lastSpace = true;
+            } else {
+                if (lastSpace) {
+                    c = Character.toUpperCase(c);
+                } else {
+                    c = Character.toLowerCase(c);
+                }
+                lastSpace = false;
+            }
+            cap[i] = c;
+        }
+        return new String(cap);
     }
 }

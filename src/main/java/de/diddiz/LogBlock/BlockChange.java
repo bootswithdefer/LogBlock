@@ -107,9 +107,9 @@ public class BlockChange implements LookupCacheElement {
                 if (ca.itemStack == null) {
                     msg.append("looked inside ").append(type.getMaterial().name());
                 } else if (ca.remove) {
-                    msg.append("took ").append(ca.itemStack.getAmount()).append("x ").append(ca.itemStack.getType().name()).append(" from ").append(type.getMaterial().name());
+                    msg.append("took ").append(BukkitUtils.toString(ca.itemStack)).append(" from ").append(type.getMaterial().name());
                 } else {
-                    msg.append("put ").append(ca.itemStack.getAmount()).append("x ").append(ca.itemStack.getType().name()).append(" into ").append(type.getMaterial().name());
+                    msg.append("put ").append(BukkitUtils.toString(ca.itemStack)).append(" into ").append(type.getMaterial().name());
                 }
             } else if (BukkitUtils.getContainerBlocks().contains(type.getMaterial())) {
                 msg.append("opened ").append(type.getMaterial().name());
