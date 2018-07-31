@@ -314,6 +314,9 @@ public class LogBlock extends JavaPlugin {
     }
 
     public int getCount(QueryParams params) throws SQLException {
+        if (params == null || params.world == null || !Config.isLogged(params.world)) {
+            throw new IllegalArgumentException("World is not logged: " + ((params == null || params.world == null) ? "null" : params.world.getName()));
+        }
         final Connection conn = getConnection();
         Statement state = null;
         if (conn == null) {
