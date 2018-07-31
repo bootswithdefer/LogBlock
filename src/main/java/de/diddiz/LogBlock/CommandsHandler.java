@@ -664,7 +664,7 @@ public class CommandsHandler implements CommandExecutor {
                     ChestAccess chestaccess = null;
                     ItemStack stack = Utils.loadItemStack(rs.getBytes("item"));
                     if (stack != null) {
-                        chestaccess = new ChestAccess(stack, rs.getBoolean("itemremove"));
+                        chestaccess = new ChestAccess(stack, rs.getBoolean("itemremove"), rs.getInt("itemtype"));
                     }
                     editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("replacedData"), rs.getBytes("replacedState"), rs.getInt("type"), rs.getInt("typeData"), rs.getBytes("typeState"), chestaccess);
                 }
@@ -738,7 +738,7 @@ public class CommandsHandler implements CommandExecutor {
                     ChestAccess chestaccess = null;
                     ItemStack stack = Utils.loadItemStack(rs.getBytes("item"));
                     if (stack != null) {
-                        chestaccess = new ChestAccess(stack, !rs.getBoolean("itemremove"));
+                        chestaccess = new ChestAccess(stack, !rs.getBoolean("itemremove"), rs.getInt("itemtype"));
                     }
                     editor.queueEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("typeData"), rs.getBytes("typeState"), rs.getInt("replaced"), rs.getInt("replacedData"), rs.getBytes("replacedState"), chestaccess);
                 }

@@ -149,7 +149,7 @@ public final class QueryParams implements Cloneable {
                     select += "replacedState, typeState, ";
                 }
                 if (needChestAccess) {
-                    select += "item, itemremove, ";
+                    select += "item, itemremove, itemtype, ";
                 }
                 select = select.substring(0, select.length() - 2);
             }
@@ -605,7 +605,7 @@ public final class QueryParams implements Cloneable {
                     throw new IllegalArgumentException("No or wrong count of arguments for '" + param + "'");
                 }
                 for (final String weaponName : values) {
-                    Material mat = Material.matchMaterial(weaponName);
+                    Material mat = weaponName.equalsIgnoreCase("fist") ? Material.AIR : Material.matchMaterial(weaponName);
                     if (mat == null) {
                         throw new IllegalArgumentException("No material matching: '" + weaponName + "'");
                     }

@@ -212,7 +212,7 @@ public class Consumer extends TimerTask {
      *            Data of the item taken/stored
      */
     public void queueChestAccess(Actor actor, Location loc, BlockData type, ItemStack itemStack, boolean remove) {
-        queueBlock(actor, loc, type, type, null, null, new ChestAccess(itemStack, remove));
+        queueBlock(actor, loc, type, type, null, null, new ChestAccess(itemStack, remove, MaterialConverter.getOrAddMaterialId(itemStack.getType().getKey())));
     }
 
     /**
@@ -682,7 +682,7 @@ public class Consumer extends TimerTask {
             if (replacedState != null || typeState != null) {
                 inserts[1] = "INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES('" + Utils.mysqlEscapeBytes(replacedState) + "', '" + Utils.mysqlEscapeBytes(typeState) + "', LAST_INSERT_ID());";
             } else if (ca != null) {
-                inserts[1] = "INSERT INTO `" + table + "-chestdata` (id, item, itemremoved) values (LAST_INSERT_ID(), '" + Utils.mysqlEscapeBytes(Utils.saveItemStack(ca.itemStack)) + "', " + (ca.remove ? 1 : 0) + ");";
+                inserts[1] = "INSERT INTO `" + table + "-chestdata` (id, item, itemremoved, itemtype) values (LAST_INSERT_ID(), '" + Utils.mysqlEscapeBytes(Utils.saveItemStack(ca.itemStack)) + "', " + (ca.remove ? 1 : 0) + ", " + ca.itemType + ");";
             }
             return inserts;
         }
@@ -732,10 +732,11 @@ public class Consumer extends TimerTask {
                     ps.setInt(3, id);
                     ps.executeUpdate();
                 } else if (ca != null) {
-                    ps = connection.prepareStatement("INSERT INTO `" + table + "-chestdata` (item, itemremove, id) values (?, ?, ?)");
+                    ps = connection.prepareStatement("INSERT INTO `" + table + "-chestdata` (item, itemremove, id, itemtype) values (?, ?, ?, ?)");
                     ps.setBytes(1, Utils.saveItemStack(ca.itemStack));
                     ps.setInt(2, ca.remove ? 1 : 0);
                     ps.setInt(3, id);
+                    ps.setInt(4, ca.itemType);
                     ps.executeUpdate();
                 }
             } catch (final SQLException ex) {

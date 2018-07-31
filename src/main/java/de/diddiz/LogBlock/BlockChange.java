@@ -57,7 +57,7 @@ public class BlockChange implements LookupCacheElement {
         if (p.needChestAccess) {
             ItemStack stack = Utils.loadItemStack(rs.getBytes("item"));
             if (stack != null) {
-                catemp = new ChestAccess(stack, rs.getBoolean("itemremove"));
+                catemp = new ChestAccess(stack, rs.getBoolean("itemremove"), rs.getInt("itemtype"));
             }
         }
         ca = catemp;

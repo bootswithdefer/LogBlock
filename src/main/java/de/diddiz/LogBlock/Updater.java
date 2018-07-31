@@ -514,7 +514,7 @@ class Updater {
                         }
                         rs.close();
                         
-                        PreparedStatement insertChestData = conn.prepareStatement("INSERT INTO `" + wcfg.table + "-chestdata` (id, item, itemremove) VALUES (?, ?, ?)");
+                        PreparedStatement insertChestData = conn.prepareStatement("INSERT INTO `" + wcfg.table + "-chestdata` (id, item, itemremove, itemtype) VALUES (?, ?, ?, ?)");
                         PreparedStatement deleteChest = conn.prepareStatement("DELETE FROM `" + wcfg.table + "-chest` WHERE id = ?");
                         while (true) {
                             rs = st.executeQuery("SELECT id, itemtype, itemamount, itemdata FROM `" + wcfg.table + "-chest` ORDER BY id ASC LIMIT 10000");
@@ -533,6 +533,7 @@ class Updater {
                                 insertChestData.setInt(1, id);
                                 insertChestData.setBytes(2, Utils.saveItemStack(stack));
                                 insertChestData.setInt(3, amount >= 0 ? 0 : 1);
+                                insertChestData.setInt(4, MaterialConverter.getOrAddMaterialId(weaponMaterial.getKey()));
                                 insertChestData.addBatch();
                                 
                                 deleteChest.setInt(1, id);
@@ -632,6 +633,12 @@ class Updater {
                 final Statement st = conn.createStatement();
                 for (final WorldConfig wcfg : getLoggedWorlds()) {
                     getLogger().info("Processing world " + wcfg.world + "...");
+                    ResultSet rsCol = st.executeQuery("SHOW COLUMNS FROM `" + wcfg.table + "-chestdata` LIKE 'itemtype'");
+                    if (!rsCol.next()) {
+                        st.execute("ALTER TABLE `" + wcfg.table + "-chestdata` ADD COLUMN `itemtype` SMALLINT NOT NULL DEFAULT '0'");
+                    }
+                    rsCol.close();
+                    conn.commit();
                     if (wcfg.isLogging(Logging.SIGNTEXT)) {
                         int rowsToConvert = 0;
                         int done = 0;
@@ -747,7 +754,7 @@ class Updater {
         for (final WorldConfig wcfg : getLoggedWorlds()) {
             createTable(dbm, state, wcfg.table + "-blocks", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, replaced SMALLINT UNSIGNED NOT NULL, replacedData SMALLINT NOT NULL, type SMALLINT UNSIGNED NOT NULL, typeData SMALLINT NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT UNSIGNED NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
             // createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET " + charset);
-            createTable(dbm, state, wcfg.table + "-chestdata", "(id INT UNSIGNED NOT NULL, item MEDIUMBLOB, itemremove TINYINT, PRIMARY KEY (id))");
+            createTable(dbm, state, wcfg.table + "-chestdata", "(id INT UNSIGNED NOT NULL, item MEDIUMBLOB, itemremove TINYINT, itemtype SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (id))");
             createTable(dbm, state, wcfg.table + "-state", "(id INT UNSIGNED NOT NULL, replacedState MEDIUMBLOB NULL, typeState MEDIUMBLOB NULL, PRIMARY KEY (id))");
             if (wcfg.isLogging(Logging.KILL)) {
                 createTable(dbm, state, wcfg.table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer INT UNSIGNED, victim INT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id))");
