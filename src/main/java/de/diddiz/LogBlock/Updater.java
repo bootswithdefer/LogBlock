@@ -381,9 +381,9 @@ class Updater {
             try {
                 conn.setAutoCommit(true);
                 final Statement st = conn.createStatement();
-                checkCharset("lb-players","name",st);
+                checkCharset("lb-players", "name", st, false);
                 if (isLogging(Logging.CHAT)) {
-                    checkCharset("lb-chat","message", st);
+                    checkCharset("lb-chat", "message", st, false);
                 }
                 for (final WorldConfig wcfg : getLoggedWorlds()) {
                     if (wcfg.isLogging(Logging.SIGNTEXT)) {
@@ -708,12 +708,29 @@ class Updater {
             
             config.set("version", "1.13.1");
         }
+
+        // this can always be checked
+        try {
+            final Connection conn = logblock.getConnection();
+            conn.setAutoCommit(true);
+            final Statement st = conn.createStatement();
+            checkCharset("lb-players", "name", st, true);
+            if (isLogging(Logging.CHAT)) {
+                checkCharset("lb-chat", "message", st, true);
+            }
+            
+            st.close();
+            conn.close();
+        } catch (final SQLException ex) {
+            Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+            return false;
+        }
         
         logblock.saveConfig();
         return true;
     }
 
-    void checkCharset(String table, String column, Statement st) throws SQLException {
+    void checkCharset(String table, String column, Statement st, boolean silent) throws SQLException {
         final ResultSet rs = st.executeQuery("SHOW FULL COLUMNS FROM `" + table + "` WHERE field = '" + column + "'");
         String charset = "utf8";
         if (Config.mb4) {
@@ -722,7 +739,7 @@ class Updater {
         if (rs.next() && !rs.getString("Collation").substring(0, charset.length()).equalsIgnoreCase(charset)) {
             st.execute("ALTER TABLE `" + table + "` CONVERT TO CHARSET " + charset);
             getLogger().info("Table " + table + " modified");
-        } else {
+        } else if (!silent) {
             getLogger().info("Table " + table + " already fine, skipping it");
         }
     }
