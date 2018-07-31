@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import de.diddiz.LogBlock.config.Config;
 import de.diddiz.util.Utils;
 import de.diddiz.worldedit.RegionContainer;
 import org.bukkit.Location;
@@ -757,6 +758,9 @@ public final class QueryParams implements Cloneable {
             if (!isLogged(world)) {
                 throw new IllegalArgumentException("This world ('" + world.getName() + "') isn't logged");
             }
+        }
+        if (bct == BlockChangeType.CHAT && !Config.isLogging(Logging.CHAT)) {
+            throw new IllegalArgumentException("Chat is not logged");
         }
         if (session != null) {
             session.lastQuery = clone();
