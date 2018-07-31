@@ -31,12 +31,14 @@ public class BukkitUtils {
 
     private static final Set<Material> cropBlocks;
     private static final Set<Material> containerBlocks;
-    
+
     private static final Set<Material> singleBlockPlants;
     private static final Set<Material> doublePlants;
-    
+
     private static final Set<Material> nonFluidProofBlocks;
-    
+
+    private static final Set<Material> bedBlocks;
+
     private static final Map<EntityType, Material> projectileItems;
 
     static {
@@ -203,7 +205,7 @@ public class BukkitUtils {
         projectileItems.put(EntityType.SPLASH_POTION, Material.SPLASH_POTION);
         projectileItems.put(EntityType.THROWN_EXP_BOTTLE, Material.EXPERIENCE_BOTTLE);
         projectileItems.put(EntityType.WITHER_SKULL, Material.WITHER_SKELETON_SKULL);
-        
+
         nonFluidProofBlocks = EnumSet.noneOf(Material.class);
         nonFluidProofBlocks.addAll(singleBlockPlants);
         nonFluidProofBlocks.addAll(doublePlants);
@@ -236,6 +238,23 @@ public class BukkitUtils {
         nonFluidProofBlocks.add(Material.DAYLIGHT_DETECTOR);
         nonFluidProofBlocks.addAll(Tag.CARPETS.getValues());
 
+        bedBlocks = EnumSet.noneOf(Material.class);
+        bedBlocks.add(Material.BLACK_BED);
+        bedBlocks.add(Material.BLUE_BED);
+        bedBlocks.add(Material.LIGHT_GRAY_BED);
+        bedBlocks.add(Material.BROWN_BED);
+        bedBlocks.add(Material.CYAN_BED);
+        bedBlocks.add(Material.GRAY_BED);
+        bedBlocks.add(Material.GREEN_BED);
+        bedBlocks.add(Material.LIGHT_BLUE_BED);
+        bedBlocks.add(Material.MAGENTA_BED);
+        bedBlocks.add(Material.LIME_BED);
+        bedBlocks.add(Material.ORANGE_BED);
+        bedBlocks.add(Material.PINK_BED);
+        bedBlocks.add(Material.PURPLE_BED);
+        bedBlocks.add(Material.RED_BED);
+        bedBlocks.add(Material.WHITE_BED);
+        bedBlocks.add(Material.YELLOW_BED);
     }
 
     private static final BlockFace[] relativeBlockFaces = new BlockFace[]{
@@ -550,5 +569,9 @@ public class BukkitUtils {
             cap[i] = c;
         }
         return new String(cap);
+    }
+
+    public static boolean isBed(Material type) {
+        return bedBlocks.contains(type);
     }
 }

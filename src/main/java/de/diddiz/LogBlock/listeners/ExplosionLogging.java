@@ -3,7 +3,12 @@ package de.diddiz.LogBlock.listeners;
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
+import de.diddiz.util.BukkitUtils;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
@@ -11,15 +16,24 @@ import org.bukkit.entity.*;
 import org.bukkit.entity.minecart.ExplosiveMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.projectiles.ProjectileSource;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.logCreeperExplosionsAsPlayerWhoTriggeredThese;
 import static de.diddiz.util.BukkitUtils.getContainerBlocks;
 
+import java.util.UUID;
+
 public class ExplosionLogging extends LoggingListener {
+
+    private UUID lastBedInteractionPlayer;
+    private Location lastBedInteractionLocation;
+
     public ExplosionLogging(LogBlock lb) {
         super(lb);
     }
@@ -112,15 +126,49 @@ public class ExplosionLogging extends LoggingListener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.hasBlock() && BukkitUtils.isBed(event.getClickedBlock().getType())) {
+            Block block = event.getClickedBlock();
+            if (!Config.isLogging(block.getWorld(), Logging.BEDEXPLOSION)) {
+                return;
+            }
+            lastBedInteractionPlayer = event.getPlayer().getUniqueId();
+            lastBedInteractionLocation = block.getLocation();
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    lastBedInteractionPlayer = null;
+                    lastBedInteractionLocation = null;
+                }
+            }.runTask(LogBlock.getInstance());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockExplode(BlockExplodeEvent event) {
+        Player bedCause = null;
+        if (lastBedInteractionPlayer != null && lastBedInteractionLocation != null) {
+            Location block = event.getBlock().getLocation();
+            if (lastBedInteractionLocation.getWorld() == block.getWorld() && block.distanceSquared(lastBedInteractionLocation) <= 1) {
+                bedCause = Bukkit.getPlayer(lastBedInteractionPlayer);
+            }
+        }
+
         for (final Block block : event.blockList()) {
             final WorldConfig wcfg = getWorldConfig(block.getLocation().getWorld());
 
             if (wcfg != null) {
-                if (!wcfg.isLogging(Logging.MISCEXPLOSION)) {
+                Actor actor = new Actor("Explosion");
+                if (bedCause != null) {
+                    if (!wcfg.isLogging(Logging.BEDEXPLOSION)) {
+                        return;
+                    }
+                    if (Config.logBedExplosionsAsPlayerWhoTriggeredThese) {
+                        actor = Actor.actorFromEntity(bedCause);
+                    }
+                } else if (!wcfg.isLogging(Logging.MISCEXPLOSION)) {
                     return;
                 }
-                Actor actor = new Actor("Explosion");
 
                 final Material type = block.getType();
                 if (wcfg.isLogging(Logging.SIGNTEXT) & (type == Material.SIGN || type == Material.WALL_SIGN)) {
