@@ -650,7 +650,7 @@ public final class QueryParams implements Cloneable {
                 }
             } else if (param.equals("selection") || param.equals("sel")) {
                 if (player == null) {
-                    throw new IllegalArgumentException("You have to ba a player to use selection");
+                    throw new IllegalArgumentException("You have to be a player to use selection");
                 }
                 final Plugin we = player.getServer().getPluginManager().getPlugin("WorldEdit");
                 if (we != null) {
