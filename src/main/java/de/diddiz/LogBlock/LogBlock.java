@@ -2,6 +2,7 @@ package de.diddiz.LogBlock;
 
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.listeners.*;
+import de.diddiz.LogBlock.questioner.Questioner;
 import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.MySQLConnectionPool;
 import de.diddiz.worldedit.WorldEditLoggingHook;
@@ -38,6 +39,7 @@ public class LogBlock extends JavaPlugin {
     private Timer timer = null;
     private boolean errorAtLoading = false, noDb = false, connected = true;
     private PlayerInfoLogging playerInfoLogging;
+    private Questioner questioner;
 
     public static LogBlock getInstance() {
         return logblock;
@@ -137,6 +139,7 @@ public class LogBlock extends JavaPlugin {
                 pm.addPermission(perm);
             }
         }
+        questioner = new Questioner(this);
         try {
             Metrics metrics = new Metrics(this);
             metrics.start();
@@ -342,5 +345,9 @@ public class LogBlock extends JavaPlugin {
     @Override
     public File getFile() {
         return super.getFile();
+    }
+    
+    public Questioner getQuestioner() {
+        return questioner;
     }
 }

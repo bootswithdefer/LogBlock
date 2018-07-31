@@ -5,7 +5,6 @@ import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
-import de.diddiz.LogBlockQuestioner.LogBlockQuestioner;
 import de.diddiz.util.Utils;
 
 import org.bukkit.ChatColor;
@@ -40,12 +39,10 @@ import static de.diddiz.util.Utils.listing;
 public class CommandsHandler implements CommandExecutor {
     private final LogBlock logblock;
     private final BukkitScheduler scheduler;
-    private final LogBlockQuestioner questioner;
 
     CommandsHandler(LogBlock logblock) {
         this.logblock = logblock;
         scheduler = logblock.getServer().getScheduler();
-        questioner = (LogBlockQuestioner) logblock.getServer().getPluginManager().getPlugin("LogBlockQuestioner");
     }
 
     @Override
@@ -691,16 +688,16 @@ public class CommandsHandler implements CommandExecutor {
                     }
                     return;
                 }
-                if (!params.silent && askRollbacks && questioner != null && sender instanceof Player && !questioner.ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+                if (!params.silent && askRollbacks && sender instanceof Player && !logblock.getQuestioner().ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
                     sender.sendMessage(ChatColor.RED + "Rollback aborted");
                     return;
                 }
                 editor.start();
                 getSession(sender).lookupCache = editor.errors;
                 sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
-                if (!params.silent && askClearLogAfterRollback && logblock.hasPermission(sender, "logblock.clearlog") && questioner != null && sender instanceof Player) {
+                if (!params.silent && askClearLogAfterRollback && logblock.hasPermission(sender, "logblock.clearlog") && sender instanceof Player) {
                     Thread.sleep(1000);
-                    if (questioner.ask((Player) sender, "Do you want to delete the rollbacked log?", "yes", "no").equals("yes")) {
+                    if (logblock.getQuestioner().ask((Player) sender, "Do you want to delete the rollbacked log?", "yes", "no").equals("yes")) {
                         params.silent = true;
                         new CommandClearLog(sender, params, false);
                     } else {
@@ -774,7 +771,7 @@ public class CommandsHandler implements CommandExecutor {
                     }
                     return;
                 }
-                if (!params.silent && askRedos && questioner != null && sender instanceof Player && !questioner.ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+                if (!params.silent && askRedos && sender instanceof Player && !logblock.getQuestioner().ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
                     sender.sendMessage(ChatColor.RED + "Redo aborted");
                     return;
                 }
@@ -817,10 +814,10 @@ public class CommandsHandler implements CommandExecutor {
                 rs = state.executeQuery("SELECT count(*) FROM `" + table + "-blocks` " + join + params.getWhere());
                 rs.next();
                 if ((deleted = rs.getInt(1)) > 0) {
-                    if (!params.silent && askClearLogs && sender instanceof Player && questioner != null) {
+                    if (!params.silent && askClearLogs && sender instanceof Player) {
                         sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
                         sender.sendMessage(ChatColor.GREEN.toString() + deleted + " blocks found.");
-                        if (!questioner.ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+                        if (!logblock.getQuestioner().ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
                             sender.sendMessage(ChatColor.RED + "ClearLog aborted");
                             return;
                         }
