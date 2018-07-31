@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import de.diddiz.LogBlock.blockstate.BlockStateCodecSign;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.util.UUIDFetcher;
@@ -386,7 +387,7 @@ class Updater {
                 }
                 for (final WorldConfig wcfg : getLoggedWorlds()) {
                     if (wcfg.isLogging(Logging.SIGNTEXT)) {
-                        checkCharset(wcfg.table + "-sign","signtext",st);
+                        // checkCharset(wcfg.table + "-sign","signtext",st);
                     }
                 }
                 st.close();
@@ -565,7 +566,7 @@ class Updater {
                             }
                             rs.close();
                             
-                            PreparedStatement updateWeaponStatement = conn.prepareStatement("UPDATE `" + wcfg.table + "`-kills SET weapon = ? WHERE id = ?");
+                            PreparedStatement updateWeaponStatement = conn.prepareStatement("UPDATE `" + wcfg.table + "-kills` SET weapon = ? WHERE id = ?");
                             for (int start = 0;; start += 10000) {
                                 rs = st.executeQuery("SELECT id, weapon FROM `" + wcfg.table + "-kills` ORDER BY id ASC LIMIT " + start + ",10000");
                                 boolean anyUpdate = false;
@@ -622,7 +623,85 @@ class Updater {
             }
             config.set("version", "1.13.0");
         }
+        
+        if (configVersion.compareTo(new ComparableVersion("1.13.1")) < 0) {
+            getLogger().info("Updating tables to 1.13.1 ...");
+            try {
+                final Connection conn = logblock.getConnection();
+                conn.setAutoCommit(false);
+                final Statement st = conn.createStatement();
+                for (final WorldConfig wcfg : getLoggedWorlds()) {
+                    getLogger().info("Processing world " + wcfg.world + "...");
+                    if (wcfg.isLogging(Logging.SIGNTEXT)) {
+                        int rowsToConvert = 0;
+                        int done = 0;
+                        try {
+                            ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "-sign`");
+                            if (rs.next()) {
+                                rowsToConvert = rs.getInt(1);
+                                getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-sign");
+                            }
+                            rs.close();
 
+                            PreparedStatement insertSignState = conn.prepareStatement("INSERT INTO `" + wcfg.table + "-state` (id, replacedState, typeState) VALUES (?, ?, ?)");
+                            PreparedStatement deleteSign = conn.prepareStatement("DELETE FROM `" + wcfg.table + "-sign` WHERE id = ?");
+                            while (true) {
+                                rs = st.executeQuery("SELECT id, signtext, replaced, type FROM `" + wcfg.table + "-sign` LEFT JOIN `" + wcfg.table + "-blocks` USING (id) ORDER BY id ASC LIMIT 10000");
+                                boolean anyRow = false;
+                                while (rs.next()) {
+                                    anyRow = true;
+                                    int id = rs.getInt("id");
+                                    String signText = rs.getString("signtext");
+                                    int replaced = rs.getInt("replaced");
+                                    boolean nullBlock = rs.wasNull();
+                                    int type = rs.getInt("type");
+
+                                    if (!nullBlock && signText != null) {
+                                        String[] lines = signText.split("\0", 4);
+                                        byte[] bytes = Utils.serializeYamlConfiguration(BlockStateCodecSign.serialize(lines));
+
+                                        Material replacedMaterial = MaterialConverter.getBlockData(replaced, -1).getMaterial();
+                                        Material typeMaterial = MaterialConverter.getBlockData(type, -1).getMaterial();
+                                        boolean wasSign = replacedMaterial == Material.SIGN || replacedMaterial == Material.WALL_SIGN;
+                                        boolean isSign = typeMaterial == Material.SIGN || typeMaterial == Material.WALL_SIGN;
+
+                                        insertSignState.setInt(1, id);
+                                        insertSignState.setBytes(2, wasSign ? bytes : null);
+                                        insertSignState.setBytes(3, isSign ? bytes : null);
+                                        insertSignState.addBatch();
+                                    }
+
+                                    deleteSign.setInt(1, id);
+                                    deleteSign.addBatch();
+                                    done++;
+                                }
+                                rs.close();
+                                if (!anyRow) {
+                                    break;
+                                }
+                                insertSignState.executeBatch();
+                                deleteSign.executeBatch();
+                                conn.commit();
+                                getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
+                            }
+                            insertSignState.close();
+                            deleteSign.close();
+                        } catch (SQLException e) {
+                            getLogger().info("Could not convert " + wcfg.table + "-sign: " + e.getMessage());
+                        }
+                    }
+                }
+
+                st.close();
+                conn.close();
+            } catch (final SQLException ex) {
+                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                return false;
+            }
+            
+            config.set("version", "1.13.1");
+        }
+        
         logblock.saveConfig();
         return true;
     }
@@ -667,8 +746,9 @@ class Updater {
         
         for (final WorldConfig wcfg : getLoggedWorlds()) {
             createTable(dbm, state, wcfg.table + "-blocks", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, replaced SMALLINT UNSIGNED NOT NULL, replacedData SMALLINT NOT NULL, type SMALLINT UNSIGNED NOT NULL, typeData SMALLINT NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT UNSIGNED NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
-            createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET " + charset);
+            // createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET " + charset);
             createTable(dbm, state, wcfg.table + "-chestdata", "(id INT UNSIGNED NOT NULL, item MEDIUMBLOB, itemremove TINYINT, PRIMARY KEY (id))");
+            createTable(dbm, state, wcfg.table + "-state", "(id INT UNSIGNED NOT NULL, replacedState MEDIUMBLOB NULL, typeState MEDIUMBLOB NULL, PRIMARY KEY (id))");
             if (wcfg.isLogging(Logging.KILL)) {
                 createTable(dbm, state, wcfg.table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer INT UNSIGNED, victim INT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id))");
             }

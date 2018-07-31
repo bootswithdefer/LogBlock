@@ -7,7 +7,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
 import org.bukkit.block.data.Bisected.Half;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Bed;
@@ -20,6 +19,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
+import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.util.BukkitUtils;
 
 import java.io.File;
@@ -76,8 +76,8 @@ public class WorldEditor implements Runnable {
         this.sender = sender;
     }
 
-    public void queueEdit(int x, int y, int z, int replaced, int replaceData, int type, int typeData, String signtext, ChestAccess item) {
-        edits.add(new Edit(0, new Location(world, x, y, z), null, replaced, replaceData, type, typeData, signtext, item));
+    public void queueEdit(int x, int y, int z, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess item) {
+        edits.add(new Edit(0, new Location(world, x, y, z), null, replaced, replaceData, replacedState, type, typeData, typeState, item));
     }
 
     public long getElapsedTime() {
@@ -153,8 +153,8 @@ public class WorldEditor implements Runnable {
     }
 
     private class Edit extends BlockChange {
-        public Edit(long time, Location loc, Actor actor, int replaced, int replaceData, int type, int typeData, String signtext, ChestAccess ca) {
-            super(time, loc, actor, replaced, replaceData, type, typeData, signtext, ca);
+        public Edit(long time, Location loc, Actor actor, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
+            super(time, loc, actor, replaced, replaceData,replacedState , type, typeData, typeState, ca);
         }
 
         PerformResult perform() throws WorldEditorException {
@@ -172,7 +172,7 @@ public class WorldEditor implements Runnable {
             if (BukkitUtils.isEmpty(replacedBlock.getMaterial()) && BukkitUtils.isEmpty(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
-            final BlockState state = block.getState();
+            BlockState state = block.getState();
             if (!world.isChunkLoaded(block.getChunk())) {
                 world.loadChunk(block.getChunk());
             }
@@ -217,21 +217,18 @@ public class WorldEditor implements Runnable {
             }
             block.setBlockData(replacedBlock);
             BlockData newData = block.getBlockData();
+            if (BlockStateCodecs.hasCodec(replacedBlock.getMaterial())) {
+                state = block.getState();
+                try {
+                    BlockStateCodecs.deserialize(state, replacedState);
+                    state.update();
+                } catch (Exception e) {
+                    throw new WorldEditorException("Failed to restore blockstate of " + block.getType() + ": " + e, block.getLocation());
+                }
+            }
 
             final Material curtype = block.getType();
-            if (signtext != null && (curtype == Material.SIGN || curtype == Material.WALL_SIGN)) {
-                final Sign sign = (Sign) block.getState();
-                final String[] lines = signtext.split("\0", 4);
-                if (lines.length < 4) {
-                    return PerformResult.NO_ACTION;
-                }
-                for (int i = 0; i < 4; i++) {
-                    sign.setLine(i, lines[i]);
-                }
-                if (!sign.update()) {
-                    throw new WorldEditorException("Failed to update signtext of " + block.getType(), block.getLocation());
-                }
-            } else if (newData instanceof Bed) {
+            if (newData instanceof Bed) {
                 final Bed bed = (Bed) newData;
                 final Block secBlock = bed.getPart() == Part.HEAD ? block.getRelative(bed.getFacing().getOppositeFace()) : block.getRelative(bed.getFacing());
                 if (secBlock.isEmpty()) {

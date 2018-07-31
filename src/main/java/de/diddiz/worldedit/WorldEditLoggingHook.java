@@ -14,6 +14,7 @@ import com.sk89q.worldedit.world.block.BlockStateHolder;
 
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.util.BukkitUtils;
 
@@ -22,8 +23,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 
 import java.util.logging.Level;
@@ -104,9 +103,8 @@ public class WorldEditLoggingHook {
                         Material typeBefore = origin.getType();
 
                         // Check to see if we've broken a sign
-                        if (Config.isLogging(location.getWorld().getName(), Logging.SIGNTEXT) && (typeBefore == Material.SIGN || typeBefore == Material.WALL_SIGN)) {
-                            BlockState stateBefore = origin.getState();
-                            plugin.getConsumer().queueSignBreak(lbActor, (Sign) stateBefore);
+                        if (BlockStateCodecs.hasCodec(typeBefore)) {
+                            plugin.getConsumer().queueBlockBreak(lbActor, origin.getState());
                         } else if (!origin.isEmpty()) {
                             plugin.getConsumer().queueBlockBreak(lbActor, location, origin.getBlockData());
                         }

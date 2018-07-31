@@ -1,5 +1,7 @@
 package de.diddiz.LogBlock;
 
+import de.diddiz.LogBlock.blockstate.BlockStateCodecSign;
+import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
 import de.diddiz.util.Utils;
@@ -63,7 +65,7 @@ public class Consumer extends TimerTask {
      *            Data of the block after the change
      */
     public void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter) {
-        queueBlock(actor, loc, typeBefore, typeAfter, null, null);
+        queueBlock(actor, loc, typeBefore, typeAfter, null, null, null);
     }
 
     /**
@@ -75,7 +77,7 @@ public class Consumer extends TimerTask {
      *            Blockstate of the block before actually being destroyed.
      */
     public void queueBlockBreak(Actor actor, BlockState before) {
-        queueBlockBreak(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData());
+        queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), null, BlockStateCodecs.serialize(before), null, null);
     }
 
     /**
@@ -103,7 +105,7 @@ public class Consumer extends TimerTask {
      *            Blockstate of the block after actually being placed.
      */
     public void queueBlockPlace(Actor actor, BlockState after) {
-        queueBlockPlace(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), after.getBlockData());
+        queueBlock(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), null, after.getBlockData(), null, BlockStateCodecs.serialize(after), null);
     }
 
     /**
@@ -133,7 +135,7 @@ public class Consumer extends TimerTask {
      *            Blockstate of the block after actually being placed.
      */
     public void queueBlockReplace(Actor actor, BlockState before, BlockState after) {
-        queueBlockReplace(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), after.getBlockData());
+        queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), after.getBlockData(), BlockStateCodecs.serialize(before), BlockStateCodecs.serialize(after), null);
     }
 
     /**
@@ -149,7 +151,7 @@ public class Consumer extends TimerTask {
      *            Data of the block after being replaced
      */
     public void queueBlockReplace(Actor actor, BlockState before, BlockData typeAfter) {
-        queueBlockReplace(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), typeAfter);
+        queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), typeAfter, BlockStateCodecs.serialize(before), null, null);
     }
 
     /**
@@ -165,12 +167,11 @@ public class Consumer extends TimerTask {
      *            Blockstate of the block after actually being placed.
      */
     public void queueBlockReplace(Actor actor, BlockData typeBefore, BlockState after) {
-        queueBlockReplace(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), typeBefore, after.getBlockData());
+        queueBlock(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), typeBefore, after.getBlockData(), null, BlockStateCodecs.serialize(after), null);
     }
 
     public void queueBlockReplace(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter) {
-        queueBlockBreak(actor, loc, typeBefore);
-        queueBlockPlace(actor, loc, typeAfter);
+        queueBlock(actor, loc, typeBefore, typeAfter, null, null, null);
     }
 
     /**
@@ -211,7 +212,7 @@ public class Consumer extends TimerTask {
      *            Data of the item taken/stored
      */
     public void queueChestAccess(Actor actor, Location loc, BlockData type, ItemStack itemStack, boolean remove) {
-        queueBlock(actor, loc, type, type, null, new ChestAccess(itemStack, remove));
+        queueBlock(actor, loc, type, type, null, null, new ChestAccess(itemStack, remove));
     }
 
     /**
@@ -326,11 +327,8 @@ public class Consumer extends TimerTask {
      * @param lines
      *            The four lines on the sign.
      */
-    public void queueSignBreak(Actor actor, Location loc, BlockData type, String[] lines) {
-        if ((type.getMaterial() != Material.SIGN && type.getMaterial() != Material.WALL_SIGN) || lines == null || lines.length != 4) {
-            return;
-        }
-        queueBlock(actor, loc, type, null, lines[0] + "\0" + lines[1] + "\0" + lines[2] + "\0" + lines[3], null);
+    public void queueSignBreak(Actor actor, Location loc, BlockData type, byte[] typeState) {
+        queueBlock(actor, loc, type, null, typeState, null, null);
     }
 
     /**
@@ -342,7 +340,7 @@ public class Consumer extends TimerTask {
      *            The sign being broken
      */
     public void queueSignBreak(Actor actor, Sign sign) {
-        queueSignBreak(actor, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getBlockData(), sign.getLines());
+        queueSignBreak(actor, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getBlockData(), BlockStateCodecs.serialize(sign));
     }
 
     /**
@@ -363,7 +361,7 @@ public class Consumer extends TimerTask {
         if ((type.getMaterial() != Material.SIGN && type.getMaterial() != Material.WALL_SIGN) || lines == null || lines.length != 4) {
             return;
         }
-        queueBlock(actor, loc, null, type, lines[0] + "\0" + lines[1] + "\0" + lines[2] + "\0" + lines[3], null);
+        queueBlock(actor, loc, null, type, null, Utils.serializeYamlConfiguration(BlockStateCodecSign.serialize(lines)), null);
     }
 
     /**
@@ -585,7 +583,7 @@ public class Consumer extends TimerTask {
         return playerIds.containsKey(actor);
     }
 
-    private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, String signtext, ChestAccess ca) {
+    private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, byte[] stateBefore, byte[] stateAfter, ChestAccess ca) {
         if (typeBefore == null) {
             typeBefore = Bukkit.createBlockData(Material.AIR);
         }
@@ -594,7 +592,7 @@ public class Consumer extends TimerTask {
         }
         if (Config.fireCustomEvents) {
             // Create and call the event
-            BlockChangePreLogEvent event = new BlockChangePreLogEvent(actor, loc, typeBefore, typeAfter, signtext, ca);
+            BlockChangePreLogEvent event = new BlockChangePreLogEvent(actor, loc, typeBefore, typeAfter, null, ca);
             logblock.getServer().getPluginManager().callEvent(event);
             if (event.isCancelled()) {
                 return;
@@ -605,7 +603,7 @@ public class Consumer extends TimerTask {
             loc = event.getLocation();
             typeBefore = event.getTypeBefore();
             typeAfter = event.getTypeAfter();
-            signtext = event.getSignText();
+            // signtext = event.getSignText();
             ca = event.getChestAccess();
         }
         // Do this last so LogBlock still has final say in what is being added
@@ -620,7 +618,7 @@ public class Consumer extends TimerTask {
         int typeMaterialId = MaterialConverter.getOrAddMaterialId(typeString);
         int typeStateId = MaterialConverter.getOrAddBlockStateId(typeString);
 
-        queue.add(new BlockRow(loc, actor, replacedMaterialId, replacedStateId, typeMaterialId, typeStateId, signtext, ca));
+        queue.add(new BlockRow(loc, actor, replacedMaterialId, replacedStateId, stateBefore, typeMaterialId, typeStateId, stateAfter, ca));
     }
 
     private String playerID(Actor actor) {
@@ -670,19 +668,19 @@ public class Consumer extends TimerTask {
     private class BlockRow extends BlockChange implements MergeableRow {
         private Connection connection;
 
-        public BlockRow(Location loc, Actor actor, int replaced, int replacedData, int type, int typeData, String signtext, ChestAccess ca) {
-            super(System.currentTimeMillis() / 1000, loc, actor, replaced, replacedData, type, typeData, signtext, ca);
+        public BlockRow(Location loc, Actor actor, int replaced, int replacedData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
+            super(System.currentTimeMillis() / 1000, loc, actor, replaced, replacedData, replacedState, type, typeData, typeState, ca);
         }
 
         @Override
         public String[] getInserts() {
             final String table = getWorldConfig(loc.getWorld()).table;
-            final String[] inserts = new String[ca != null || signtext != null ? 2 : 1];
+            final String[] inserts = new String[ca != null || replacedState != null || typeState != null ? 2 : 1];
 
             inserts[0] = "INSERT INTO `" + table + "-blocks` (date, playerid, replaced, replaceddata, type, typedata, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + replacedMaterial + ", " + replacedData + ", " + typeMaterial + ", " + typeData + ", '" + loc.getBlockX()
                     + "', " + safeY(loc) + ", '" + loc.getBlockZ() + "');";
-            if (signtext != null) {
-                inserts[1] = "INSERT INTO `" + table + "-sign` (id, signtext) values (LAST_INSERT_ID(), '" + mysqlTextEscape(signtext) + "');";
+            if (replacedState != null || typeState != null) {
+                inserts[1] = "INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES('" + Utils.mysqlEscapeBytes(replacedState) + "', '" + Utils.mysqlEscapeBytes(typeState) + "', LAST_INSERT_ID());";
             } else if (ca != null) {
                 inserts[1] = "INSERT INTO `" + table + "-chestdata` (id, item, itemremoved) values (LAST_INSERT_ID(), '" + Utils.mysqlEscapeBytes(Utils.saveItemStack(ca.itemStack)) + "', " + (ca.remove ? 1 : 0) + ");";
             }
@@ -727,10 +725,11 @@ public class Consumer extends TimerTask {
                 rs.next();
                 id = rs.getInt(1);
 
-                if (signtext != null) {
-                    ps = connection.prepareStatement("INSERT INTO `" + table + "-sign` (signtext, id) VALUES(?, ?)");
-                    ps.setString(1, signtext);
-                    ps.setInt(2, id);
+                if (typeState != null || replacedState != null) {
+                    ps = connection.prepareStatement("INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES(?, ?, ?)");
+                    ps.setBytes(1, replacedState);
+                    ps.setBytes(2, typeState);
+                    ps.setInt(3, id);
                     ps.executeUpdate();
                 } else if (ca != null) {
                     ps = connection.prepareStatement("INSERT INTO `" + table + "-chestdata` (item, itemremove, id) values (?, ?, ?)");
@@ -772,7 +771,7 @@ public class Consumer extends TimerTask {
 
         @Override
         public boolean isUnique() {
-            return !(signtext == null && ca == null && playerIds.containsKey(actor));
+            return !(typeState == null && replacedState == null && ca == null && playerIds.containsKey(actor));
         }
 
         @Override

@@ -34,7 +34,7 @@ public final class QueryParams implements Cloneable {
     public List<Integer> typeIds = new ArrayList<Integer>();
     public World world = null;
     public String match = null;
-    public boolean needCount = false, needId = false, needDate = false, needType = false, needData = false, needPlayer = false, needCoords = false, needSignText = false, needChestAccess = false, needMessage = false, needKiller = false, needVictim = false, needWeapon = false;
+    public boolean needCount = false, needId = false, needDate = false, needType = false, needData = false, needPlayer = false, needCoords = false, needChestAccess = false, needMessage = false, needKiller = false, needVictim = false, needWeapon = false;
     private final LogBlock logblock;
 
     public QueryParams(LogBlock logblock) {
@@ -145,8 +145,8 @@ public final class QueryParams implements Cloneable {
                 if (needCoords) {
                     select += "x, y, z, ";
                 }
-                if (needSignText) {
-                    select += "signtext, ";
+                if (needData) {
+                    select += "replacedState, typeState, ";
                 }
                 if (needChestAccess) {
                     select += "item, itemremove, ";
@@ -157,8 +157,8 @@ public final class QueryParams implements Cloneable {
             if (needPlayer || players.size() > 0) {
                 from += "INNER JOIN `lb-players` USING (playerid) ";
             }
-            if (needSignText) {
-                from += "LEFT JOIN `" + getTable() + "-sign` USING (id) ";
+            if (!needCount && needData) {
+                from += "LEFT JOIN `" + getTable() + "-state` USING (id) ";
             }
             if (needChestAccess)
             // If BlockChangeType is CHESTACCESS, we can use more efficient query
