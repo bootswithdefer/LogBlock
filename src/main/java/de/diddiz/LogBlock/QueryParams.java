@@ -2,7 +2,7 @@ package de.diddiz.LogBlock;
 
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.util.Utils;
-import de.diddiz.worldedit.RegionContainer;
+import de.diddiz.worldedit.CuboidRegion;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -27,7 +27,7 @@ public final class QueryParams implements Cloneable {
     public List<String> killers = new ArrayList<String>();
     public List<String> victims = new ArrayList<String>();
     public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, excludeBlocksMode = false, prepareToolQuery = false, silent = false;
-    public RegionContainer sel = null;
+    public CuboidRegion sel = null;
     public SummarizationMode sum = SummarizationMode.NONE;
     public List<Material> types = new ArrayList<Material>();
     public List<Integer> typeIds = new ArrayList<Integer>();
@@ -653,7 +653,7 @@ public final class QueryParams implements Cloneable {
                 }
                 final Plugin we = player.getServer().getPluginManager().getPlugin("WorldEdit");
                 if (we != null) {
-                    setSelection(RegionContainer.fromPlayerSelection(player, we));
+                    setSelection(CuboidRegion.fromPlayerSelection(player, we));
                 } else {
                     throw new IllegalArgumentException("WorldEdit not found!");
                 }
@@ -770,7 +770,7 @@ public final class QueryParams implements Cloneable {
         world = loc.getWorld();
     }
 
-    public void setSelection(RegionContainer container) {
+    public void setSelection(CuboidRegion container) {
         this.sel = container;
         world = sel.getWorld();
     }

@@ -1,7 +1,7 @@
 package de.diddiz.LogBlock.listeners;
 
 import de.diddiz.LogBlock.*;
-import de.diddiz.worldedit.RegionContainer;
+import de.diddiz.worldedit.CuboidRegion;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -59,7 +59,7 @@ public class ToolListener implements Listener {
                         if (logblock.getServer().getPluginManager().isPluginEnabled("WorldEdit")) {
                             for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
                                 if (block.getRelative(face).getType() == block.getType()) {
-                                    params.setSelection(RegionContainer.fromCorners(event.getPlayer().getWorld(),
+                                    params.setSelection(CuboidRegion.fromCorners(event.getPlayer().getWorld(),
                                             block.getLocation(), block.getRelative(face).getLocation()));
                                 }
                             }

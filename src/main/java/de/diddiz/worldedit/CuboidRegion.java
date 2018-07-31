@@ -4,7 +4,6 @@ import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 
 import org.bukkit.Location;
@@ -14,13 +13,13 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
-public class RegionContainer implements Cloneable {
+public class CuboidRegion implements Cloneable {
 
     private World world;
     private BlockVector min = new BlockVector();
     private BlockVector max = new BlockVector();
 
-    public RegionContainer(World world, Vector first, Vector second) {
+    public CuboidRegion(World world, Vector first, Vector second) {
         this.world = world;
         this.min.setX(Math.min(first.getBlockX(),second.getBlockX()));
         this.min.setY(Math.min(first.getBlockY(),second.getBlockY()));
@@ -30,7 +29,7 @@ public class RegionContainer implements Cloneable {
         this.max.setZ(Math.max(first.getBlockZ(),second.getBlockZ()));
     }
 
-    public static RegionContainer fromPlayerSelection(Player player, Plugin worldEditPlugin) {
+    public static CuboidRegion fromPlayerSelection(Player player, Plugin worldEditPlugin) {
         LocalSession session = ((WorldEditPlugin) worldEditPlugin).getSession(player);
         World world = player.getWorld();
         com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(world);
@@ -46,18 +45,18 @@ public class RegionContainer implements Cloneable {
         if (selection == null) {
             throw new IllegalArgumentException("No selection defined");
         }
-        if (!(selection instanceof CuboidRegion)) {
+        if (!(selection instanceof com.sk89q.worldedit.regions.CuboidRegion)) {
             throw new IllegalArgumentException("You have to define a cuboid selection");
         }
         com.sk89q.worldedit.Vector weMin = selection.getMinimumPoint();
         com.sk89q.worldedit.Vector weMax = selection.getMaximumPoint();
         Vector min = new Vector(weMin.getBlockX(), weMin.getBlockY(), weMin.getBlockZ());
         Vector max = new Vector(weMax.getBlockX(), weMax.getBlockY(), weMax.getBlockZ());
-        return new RegionContainer(world, min, max);
+        return new CuboidRegion(world, min, max);
     }
 
-    public static RegionContainer fromCorners(World world, Location first, Location second) {
-        return new RegionContainer(world, first.toVector(), second.toVector());
+    public static CuboidRegion fromCorners(World world, Location first, Location second) {
+        return new CuboidRegion(world, first.toVector(), second.toVector());
     }
 
     public World getWorld() {
@@ -81,9 +80,9 @@ public class RegionContainer implements Cloneable {
     }
 
     @Override
-    public RegionContainer clone() {
+    public CuboidRegion clone() {
         try {
-            RegionContainer clone = (RegionContainer) super.clone();
+            CuboidRegion clone = (CuboidRegion) super.clone();
             clone.min = min.clone();
             clone.max = max.clone();
             return clone;
