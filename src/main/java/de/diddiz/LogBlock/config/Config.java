@@ -44,7 +44,7 @@ public class Config {
     public static String banPermission;
     public static Set<Material> hiddenBlocks;
     public static Set<String> hiddenPlayers;
-    public static Set<String> ignoredChat;
+    public static List<String> ignoredChat;
     public static SimpleDateFormat formatter;
     public static boolean safetyIdCheck;
     public static boolean debug;
@@ -176,9 +176,9 @@ public class Config {
                 throw new DataFormatException("Not a valid material in hiddenBlocks: '" + blocktype + "'");
             }
         }
-        ignoredChat = new HashSet<String>();
+        ignoredChat = new ArrayList<String>();
         for (String chatCommand : config.getStringList("logging.ignoredChat")) {
-            ignoredChat.add(chatCommand);
+            ignoredChat.add(chatCommand.toLowerCase());
         }
         dontRollback = new HashSet<Material>();
         for (String e : config.getStringList("rollback.dontRollback")) {

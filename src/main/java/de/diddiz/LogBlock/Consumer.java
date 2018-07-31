@@ -376,9 +376,12 @@ public class Consumer extends TimerTask {
     }
 
     public void queueChat(Actor player, String message) {
-        for (String ignored : Config.ignoredChat) {
-            if (message.startsWith(ignored)) {
-                return;
+        if (!Config.ignoredChat.isEmpty()) {
+            String lowerCaseMessage = message.toLowerCase();
+            for (String ignored : Config.ignoredChat) {
+                if (lowerCaseMessage.startsWith(ignored)) {
+                    return;
+                }
             }
         }
         if (hiddenPlayers.contains(player.getName().toLowerCase())) {
