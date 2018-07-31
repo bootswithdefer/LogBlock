@@ -42,10 +42,12 @@ public class ChestAccessLogging extends LoggingListener {
                 final ItemStack[] after = compressInventory(event.getInventory().getContents());
                 final ItemStack[] diff = compareInventories(before, after);
                 final Location loc = getInventoryHolderLocation(holder);
-                for (final ItemStack item : diff) {
-                    ItemStack item2 = item.clone();
-                    item2.setAmount(Math.abs(item.getAmount()));
-                    consumer.queueChestAccess(Actor.actorFromEntity(player), loc, loc.getWorld().getBlockAt(loc).getBlockData(), item2, item.getAmount() < 0);
+                if (loc != null) {
+                    for (final ItemStack item : diff) {
+                        ItemStack item2 = item.clone();
+                        item2.setAmount(Math.abs(item.getAmount()));
+                        consumer.queueChestAccess(Actor.actorFromEntity(player), loc, loc.getWorld().getBlockAt(loc).getBlockData(), item2, item.getAmount() < 0);
+                    }
                 }
                 containers.remove(player);
             }
