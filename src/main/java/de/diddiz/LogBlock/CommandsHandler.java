@@ -405,7 +405,7 @@ public class CommandsHandler implements CommandExecutor {
 
         protected AbstractCommand(CommandSender sender, QueryParams params, boolean async) throws Exception {
             this.sender = sender;
-            this.params = params;
+            this.params = params == null ? null : params.clone();
             if (async) {
                 scheduler.runTaskAsynchronously(logblock, this);
             } else {

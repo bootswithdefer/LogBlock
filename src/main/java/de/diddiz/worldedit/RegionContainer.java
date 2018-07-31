@@ -13,7 +13,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-public class RegionContainer {
+public class RegionContainer implements Cloneable {
 
     private Region selection;
 
@@ -56,5 +56,15 @@ public class RegionContainer {
 
     public void setSelection(Region selection) {
         this.selection = selection;
+    }
+
+    @Override
+    public RegionContainer clone() {
+        try {
+            RegionContainer clone = (RegionContainer) super.clone();
+            return clone;
+        } catch (final CloneNotSupportedException ex) {
+            throw new Error("RegionContainer should be cloneable", ex);
+        }
     }
 }

@@ -534,7 +534,7 @@ public final class QueryParams implements Cloneable {
             final String param = args.get(i).toLowerCase();
             final String[] values = getValues(args, i + 1);
             if (param.equals("last")) {
-                if (session.lastQuery == null) {
+                if (session == null || session.lastQuery == null) {
                     throw new IllegalArgumentException("This is your first command, you can't use last.");
                 }
                 merge(session.lastQuery);
@@ -787,12 +787,16 @@ public final class QueryParams implements Cloneable {
         try {
             final QueryParams params = (QueryParams) super.clone();
             params.players = new ArrayList<String>(players);
+            params.killers = new ArrayList<String>(killers);
+            params.victims = new ArrayList<String>(victims);
             params.typeIds = new ArrayList<Integer>(typeIds);
             params.types = new ArrayList<Material>(types);
+            params.loc = loc == null ? null : loc.clone();
+            params.sel = sel == null ? null : sel.clone();
             return params;
         } catch (final CloneNotSupportedException ex) {
+            throw new Error("QueryParams should be cloneable", ex);
         }
-        return null;
     }
 
     private static String[] getValues(List<String> args, int offset) {
@@ -825,13 +829,15 @@ public final class QueryParams implements Cloneable {
     }
 
     public void merge(QueryParams p) {
-        players = p.players;
+        players.addAll(p.players);
+        killers.addAll(p.killers);
+        victims.addAll(p.victims);
         excludePlayersMode = p.excludePlayersMode;
-        typeIds = p.typeIds;
-        types = p.types;
-        loc = p.loc;
+        typeIds.addAll(p.typeIds);
+        types.addAll(p.types);
+        loc = p.loc == null ? null : p.loc.clone();
         radius = p.radius;
-        sel = p.sel;
+        sel = p.sel == null ? null : p.sel.clone();
         if (p.since != 0 || since != defaultTime) {
             since = p.since;
         }
