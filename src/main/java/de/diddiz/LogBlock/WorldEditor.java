@@ -34,7 +34,6 @@ import java.util.logging.Level;
 import static de.diddiz.LogBlock.config.Config.dontRollback;
 import static de.diddiz.LogBlock.config.Config.replaceAnyway;
 import static de.diddiz.util.BukkitUtils.*;
-import static org.bukkit.Bukkit.getLogger;
 
 public class WorldEditor implements Runnable {
     private final LogBlock logblock;
@@ -118,7 +117,7 @@ public class WorldEditor implements Runnable {
             } catch (final WorldEditorException ex) {
                 errorList.add(ex);
             } catch (final Exception ex) {
-                getLogger().log(Level.WARNING, "[WorldEditor] Exeption: ", ex);
+                logblock.getLogger().log(Level.WARNING, "[WorldEditor] Exeption: ", ex);
             }
             counter++;
             if (sender != null) {

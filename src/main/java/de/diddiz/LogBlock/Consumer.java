@@ -33,7 +33,6 @@ import java.util.logging.Level;
 import static de.diddiz.LogBlock.config.Config.*;
 import static de.diddiz.util.Utils.mysqlTextEscape;
 import static de.diddiz.util.BukkitUtils.*;
-import static org.bukkit.Bukkit.getLogger;
 
 public class Consumer extends TimerTask {
     private final Queue<Row> queue = new LinkedBlockingQueue<Row>();
@@ -418,7 +417,7 @@ public class Consumer extends TimerTask {
 
             conn = logblock.getConnection();
             if (Config.queueWarningSize > 0 && queue.size() >= Config.queueWarningSize) {
-                getLogger().info("[Consumer] Queue overloaded. Size: " + getQueueSize());
+                logblock.getLogger().info("[Consumer] Queue overloaded. Size: " + getQueueSize());
             }
 
             if (conn == null) {
@@ -437,7 +436,7 @@ public class Consumer extends TimerTask {
                         if (!addPlayer(state, actor)) {
                             if (!failedPlayers.contains(actor)) {
                                 failedPlayers.add(actor);
-                                getLogger().warning("[Consumer] Failed to add player " + actor.getName());
+                                logblock.getLogger().warning("[Consumer] Failed to add player " + actor.getName());
                             }
                             continue process;
                         }
@@ -477,7 +476,7 @@ public class Consumer extends TimerTask {
                     try {
                         PSRow.executeStatements();
                     } catch (final SQLException ex) {
-                        getLogger().log(Level.SEVERE, "[Consumer] SQL exception on insertion: ", ex);
+                        logblock.getLogger().log(Level.SEVERE, "[Consumer] SQL exception on insertion: ", ex);
                         break;
                     }
                 } else {
@@ -485,7 +484,7 @@ public class Consumer extends TimerTask {
                         try {
                             state.execute(insert);
                         } catch (final SQLException ex) {
-                            getLogger().log(Level.SEVERE, "[Consumer] SQL exception on " + insert + ": ", ex);
+                            logblock.getLogger().log(Level.SEVERE, "[Consumer] SQL exception on " + insert + ": ", ex);
                             break process;
                         }
                     }
@@ -495,7 +494,7 @@ public class Consumer extends TimerTask {
             }
             conn.commit();
         } catch (final SQLException ex) {
-            getLogger().log(Level.SEVERE, "[Consumer] SQL exception", ex);
+            logblock.getLogger().log(Level.SEVERE, "[Consumer] SQL exception", ex);
         } finally {
             try {
                 if (state != null) {
@@ -505,15 +504,15 @@ public class Consumer extends TimerTask {
                     conn.close();
                 }
             } catch (final SQLException ex) {
-                getLogger().log(Level.SEVERE, "[Consumer] SQL exception on close", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Consumer] SQL exception on close", ex);
             }
             lock.unlock();
 
             if (debug) {
                 long timeElapsed = System.currentTimeMillis() - startTime;
                 float rowPerTime = count / timeElapsed;
-                getLogger().log(Level.INFO, "[Consumer] Finished consumer cycle in " + timeElapsed + " milliseconds.");
-                getLogger().log(Level.INFO, "[Consumer] Total rows processed: " + count + ". row/time: " + String.format("%.4f", rowPerTime));
+                logblock.getLogger().log(Level.INFO, "[Consumer] Finished consumer cycle in " + timeElapsed + " milliseconds.");
+                logblock.getLogger().log(Level.INFO, "[Consumer] Total rows processed: " + count + ". row/time: " + String.format("%.4f", rowPerTime));
             }
         }
     }
@@ -741,10 +740,10 @@ public class Consumer extends TimerTask {
                 }
             } catch (final SQLException ex) {
                 if (ps1 != null) {
-                    getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps1.toString());
+                    logblock.getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps1.toString());
                 }
                 if (ps != null) {
-                    getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps.toString());
+                    logblock.getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps.toString());
                 }
                 throw ex;
             } finally {
@@ -831,7 +830,7 @@ public class Consumer extends TimerTask {
                 ps.executeBatch();
             } catch (final SQLException ex) {
                 if (ps != null) {
-                    getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps.toString());
+                    logblock.getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps.toString());
                 }
                 throw ex;
             } finally {

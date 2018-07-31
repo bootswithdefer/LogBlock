@@ -29,8 +29,6 @@ import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import de.diddiz.util.ComparableVersion;
 import java.util.regex.Pattern;
 
-import static org.bukkit.Bukkit.getLogger;
-
 class Updater {
     private final LogBlock logblock;
     final int UUID_CONVERT_BATCH_SIZE = 100;
@@ -52,7 +50,7 @@ class Updater {
             return false;
         }
         if (configVersion.compareTo(new ComparableVersion("1.2.7")) < 0) {
-            getLogger().info("Updating tables to 1.2.7 ...");
+            logblock.getLogger().info("Updating tables to 1.2.7 ...");
             if (isLogging(Logging.CHAT)) {
                 final Connection conn = logblock.getConnection();
                 try {
@@ -62,14 +60,14 @@ class Updater {
                     st.close();
                     conn.close();
                 } catch (final SQLException ex) {
-                    Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                    logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                     return false;
                 }
             }
             config.set("version", "1.2.7");
         }
         if (configVersion.compareTo(new ComparableVersion("1.3")) < 0) {
-            getLogger().info("Updating config to 1.3.0 ...");
+            logblock.getLogger().info("Updating config to 1.3.0 ...");
             for (final String tool : config.getConfigurationSection("tools").getKeys(false)) {
                 if (config.get("tools." + tool + ".permissionDefault") == null) {
                     config.set("tools." + tool + ".permissionDefault", "OP");
@@ -78,7 +76,7 @@ class Updater {
             config.set("version", "1.3.0");
         }
         if (configVersion.compareTo(new ComparableVersion("1.3.1")) < 0) {
-            getLogger().info("Updating tables to 1.3.1 ...");
+            logblock.getLogger().info("Updating tables to 1.3.1 ...");
             final Connection conn = logblock.getConnection();
             try {
                 conn.setAutoCommit(true);
@@ -87,13 +85,13 @@ class Updater {
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             config.set("version", "1.3.1");
         }
         if (configVersion.compareTo(new ComparableVersion("1.3.2")) < 0) {
-            getLogger().info("Updating tables to 1.3.2 ...");
+            logblock.getLogger().info("Updating tables to 1.3.2 ...");
             final Connection conn = logblock.getConnection();
             try {
                 conn.setAutoCommit(true);
@@ -102,18 +100,18 @@ class Updater {
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             config.set("version", "1.3.2");
         }
         if (configVersion.compareTo(new ComparableVersion("1.4")) < 0) {
-            getLogger().info("Updating config to 1.4.0 ...");
+            logblock.getLogger().info("Updating config to 1.4.0 ...");
             config.set("clearlog.keepLogDays", null);
             config.set("version", "1.4.0");
         }
         if (configVersion.compareTo(new ComparableVersion("1.4.2")) < 0) {
-            getLogger().info("Updating config to 1.4.2 ...");
+            logblock.getLogger().info("Updating config to 1.4.2 ...");
             for (final String world : config.getStringList("loggedWorlds")) {
                 final File file = new File(logblock.getDataFolder(), friendlyWorldname(world) + ".yml");
                 final YamlConfiguration wcfg = YamlConfiguration.loadConfiguration(file);
@@ -192,14 +190,14 @@ class Updater {
                 try {
                     wcfg.save(file);
                 } catch (final IOException ex) {
-                    Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                    logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 }
             }
             config.set("clearlog.keepLogDays", null);
             config.set("version", "1.4.2");
         }
         if (configVersion.compareTo(new ComparableVersion("1.5.1")) < 0) {
-            getLogger().info("Updating tables to 1.5.1 ...");
+            logblock.getLogger().info("Updating tables to 1.5.1 ...");
             final Connection conn = logblock.getConnection();
             try {
                 conn.setAutoCommit(true);
@@ -212,13 +210,13 @@ class Updater {
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             config.set("version", "1.5.1");
         }
         if (configVersion.compareTo(new ComparableVersion("1.5.2")) < 0) {
-            getLogger().info("Updating tables to 1.5.2 ...");
+            logblock.getLogger().info("Updating tables to 1.5.2 ...");
             final Connection conn = logblock.getConnection();
             try {
                 conn.setAutoCommit(true);
@@ -230,18 +228,18 @@ class Updater {
                     st.execute("ALTER TABLE `lb-players` DROP onlinetime");
                     st.execute("ALTER TABLE `lb-players` CHANGE onlinetime2 onlinetime INT UNSIGNED NOT NULL");
                 } else {
-                    getLogger().info("Column lb-players was already modified, skipping it.");
+                    logblock.getLogger().info("Column lb-players was already modified, skipping it.");
                 }
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             config.set("version", "1.5.2");
         }
         if (configVersion.compareTo(new ComparableVersion("1.8.1")) < 0) {
-            getLogger().info("Updating tables to 1.8.1 ...");
+            logblock.getLogger().info("Updating tables to 1.8.1 ...");
             final Connection conn = logblock.getConnection();
             try {
                 conn.setAutoCommit(true);
@@ -249,21 +247,21 @@ class Updater {
                 for (final WorldConfig wcfg : getLoggedWorlds()) {
                     if (wcfg.isLogging(Logging.CHESTACCESS)) {
                         st.execute("ALTER TABLE `" + wcfg.table + "-chest` CHANGE itemdata itemdata SMALLINT NOT NULL");
-                        getLogger().info("Table " + wcfg.table + "-chest modified");
+                        logblock.getLogger().info("Table " + wcfg.table + "-chest modified");
                     }
                 }
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             config.set("version", "1.8.1");
         }
 
         if (configVersion.compareTo(new ComparableVersion("1.9")) < 0) {
-            getLogger().info("Updating tables to 1.9.0 ...");
-            getLogger().info("Importing UUIDs for large databases may take some time");
+            logblock.getLogger().info("Updating tables to 1.9.0 ...");
+            logblock.getLogger().info("Importing UUIDs for large databases may take some time");
             final Connection conn = logblock.getConnection();
             try {
                 conn.setAutoCommit(true);
@@ -272,7 +270,7 @@ class Updater {
             } catch (final SQLException ex) {
                 // Error 1060 is MySQL error "column already exists". We want to continue with import if we get that error
                 if (ex.getErrorCode() != 1060) {
-                    Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                    logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                     return false;
                 }
             }
@@ -292,7 +290,7 @@ class Updater {
                 rs = st.executeQuery("SELECT COUNT(playername) FROM `lb-players` WHERE LENGTH(UUID)=0");
                 rs.next();
                 String total = Integer.toString(rs.getInt(1));
-                getLogger().info(total + " players to convert");
+                logblock.getLogger().info(total + " players to convert");
                 int done = 0;
 
                 conn.setAutoCommit(false);
@@ -311,7 +309,7 @@ class Updater {
                         for (Map.Entry<String, Integer> entry : players.entrySet()) {
                             if (response.get(entry.getKey()) == null) {
                                 theUUID = unimportedPrefix + entry.getKey();
-                                getLogger().warning(entry.getKey() + " not found - giving UUID of " + theUUID);
+                                logblock.getLogger().warning(entry.getKey() + " not found - giving UUID of " + theUUID);
                             } else {
                                 theUUID = response.get(entry.getKey()).toString();
                             }
@@ -322,7 +320,7 @@ class Updater {
                         conn.commit();
                         players.clear();
                         names.clear();
-                        getLogger().info("Processed " + Integer.toString(done) + " out of " + total);
+                        logblock.getLogger().info("Processed " + Integer.toString(done) + " out of " + total);
                         rs.close();
                         rs = st.executeQuery("SELECT playerid,playername FROM `lb-players` WHERE LENGTH(UUID)=0 LIMIT " + Integer.toString(UUID_CONVERT_BATCH_SIZE));
                     }
@@ -332,16 +330,16 @@ class Updater {
                 conn.close();
 
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             } catch (Exception ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[UUID importer]", ex);
+                logblock.getLogger().log(Level.SEVERE, "[UUID importer]", ex);
                 return false;
             }
             config.set("version", "1.9.0");
         }
         if (configVersion.compareTo(new ComparableVersion("1.9.4")) < 0) {
-            getLogger().info("Updating tables to 1.9.4 ...");
+            logblock.getLogger().info("Updating tables to 1.9.4 ...");
             final Connection conn = logblock.getConnection();
             try {
                 conn.setAutoCommit(true);
@@ -351,7 +349,7 @@ class Updater {
                     st.execute("DROP INDEX UUID ON `lb-players`");
                 } catch (final SQLException ex) {
                     if (ex.getErrorCode() != 1091) {
-                        Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                        logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                         return false;
                     }
                 }
@@ -359,7 +357,7 @@ class Updater {
                     st.execute("DROP INDEX playername ON `lb-players`");
                 } catch (final SQLException ex) {
                     if (ex.getErrorCode() != 1091) {
-                        Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                        logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                         return false;
                     }
                 }
@@ -368,7 +366,7 @@ class Updater {
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             config.set("version", "1.9.4");
@@ -376,7 +374,7 @@ class Updater {
         // Ensure charset for free-text fields is UTF-8, or UTF8-mb4 if possible
         // As this may be an expensive operation and the database default may already be this, check on a table-by-table basis before converting
         if (configVersion.compareTo(new ComparableVersion("1.10.0")) < 0) {
-            getLogger().info("Updating tables to 1.10.0 ...");
+            logblock.getLogger().info("Updating tables to 1.10.0 ...");
             final Connection conn = logblock.getConnection();
             try {
                 conn.setAutoCommit(true);
@@ -393,14 +391,14 @@ class Updater {
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             config.set("version", "1.10.0");
         }
 
         if (configVersion.compareTo(new ComparableVersion("1.12.0")) < 0) {
-            getLogger().info("Updating tables to 1.12.0 ...");
+            logblock.getLogger().info("Updating tables to 1.12.0 ...");
             if (isLogging(Logging.CHAT)) {
                 final Connection conn = logblock.getConnection();
                 try {
@@ -410,23 +408,23 @@ class Updater {
                     st.close();
                     conn.close();
                 } catch (final SQLException ex) {
-                    Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                    logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                     return false;
                 }
             }
             config.set("version", "1.12.0");
         }
         if (configVersion.compareTo(new ComparableVersion("1.13.0")) < 0) {
-            getLogger().info("Updating tables to 1.13.0 ...");
+            logblock.getLogger().info("Updating tables to 1.13.0 ...");
             try {
                 MaterialUpdater1_13 materialUpdater = new MaterialUpdater1_13(logblock);
-                getLogger().info("Convertig BlockId to BlockData. This can take a while ...");
+                logblock.getLogger().info("Convertig BlockId to BlockData. This can take a while ...");
                 final Connection conn = logblock.getConnection();
                 conn.setAutoCommit(false);
                 final Statement st = conn.createStatement();
                 for (final WorldConfig wcfg : getLoggedWorlds()) {
-                    getLogger().info("Processing world " + wcfg.world + "...");
-                    getLogger().info("Processing block changes...");
+                    logblock.getLogger().info("Processing world " + wcfg.world + "...");
+                    logblock.getLogger().info("Processing block changes...");
                     boolean hadRow = true;
                     int rowsToConvert = 0;
                     int done = 0;
@@ -434,7 +432,7 @@ class Updater {
                         ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "`");
                         if (rs.next()) {
                             rowsToConvert = rs.getInt(1);
-                            getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table);
+                            logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table);
                         }
                         rs.close();
                         
@@ -481,7 +479,7 @@ class Updater {
                                     insertStatement.setInt(10, z);
                                     insertStatement.addBatch();
                                 } catch (Exception e) {
-                                    getLogger().info("Exception in entry " + id + " (" + replaced + ":" + data + "->" + type + ":" + data + "): " + e.getMessage());
+                                    logblock.getLogger().info("Exception in entry " + id + " (" + replaced + ":" + data + "->" + type + ":" + data + "): " + e.getMessage());
                                 }
                                 deleteStatement.setInt(1, id);
                                 deleteStatement.addBatch();
@@ -495,22 +493,22 @@ class Updater {
                             }
                             conn.commit();
                             logblock.getConsumer().run(); // force a consumer run to save new material mappings
-                            getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
+                            logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                         }
                         insertStatement.close();
                         deleteStatement.close();
                     } catch (SQLException e) {
-                        getLogger().info("Could not convert " + wcfg.table + ": " + e.getMessage());
+                        logblock.getLogger().info("Could not convert " + wcfg.table + ": " + e.getMessage());
                     }
 
-                    getLogger().info("Processing chests...");
+                    logblock.getLogger().info("Processing chests...");
                     rowsToConvert = 0;
                     done = 0;
                     try {
                         ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "-chest`");
                         if (rs.next()) {
                             rowsToConvert = rs.getInt(1);
-                            getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-chest");
+                            logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-chest");
                         }
                         rs.close();
                         
@@ -547,23 +545,23 @@ class Updater {
                             insertChestData.executeBatch();
                             deleteChest.executeBatch();
                             conn.commit();
-                            getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
+                            logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                         }
                         insertChestData.close();
                         deleteChest.close();
                     } catch (SQLException e) {
-                        getLogger().info("Could not convert " + wcfg.table + "-chest: " + e.getMessage());
+                        logblock.getLogger().info("Could not convert " + wcfg.table + "-chest: " + e.getMessage());
                     }
 
                     if (wcfg.isLogging(Logging.KILL)) {
-                        getLogger().info("Processing kills...");
+                        logblock.getLogger().info("Processing kills...");
                         rowsToConvert = 0;
                         done = 0;
                         try {
                             ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "-kills`");
                             if (rs.next()) {
                                 rowsToConvert = rs.getInt(1);
-                                getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-kills");
+                                logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-kills");
                             }
                             rs.close();
                             
@@ -595,21 +593,21 @@ class Updater {
                                     conn.commit();
                                     logblock.getConsumer().run(); // force a consumer run to save new material mappings
                                 }
-                                getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
+                                logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                                 if (!anyRow) {
                                     break;
                                 }
                             }
                             updateWeaponStatement.close();
                         } catch (SQLException e) {
-                            getLogger().info("Could not convert " + wcfg.table + "-kills: " + e.getMessage());
+                            logblock.getLogger().info("Could not convert " + wcfg.table + "-kills: " + e.getMessage());
                         }
                     }
                 }
                 st.close();
                 conn.close();
 
-                getLogger().info("Updating config to 1.13.0 ...");
+                logblock.getLogger().info("Updating config to 1.13.0 ...");
                 config.set("logging.hiddenBlocks", materialUpdater.convertMaterials(config.getStringList("logging.hiddenBlocks")));
                 config.set("rollback.dontRollback", materialUpdater.convertMaterials(config.getStringList("rollback.dontRollback")));
                 config.set("rollback.replaceAnyway", materialUpdater.convertMaterials(config.getStringList("rollback.replaceAnyway")));
@@ -619,20 +617,20 @@ class Updater {
                     tSec.set("item", materialUpdater.convertMaterial(tSec.getString("item", "OAK_LOG")));
                 }
             } catch (final SQLException | IOException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             config.set("version", "1.13.0");
         }
         
         if (configVersion.compareTo(new ComparableVersion("1.13.1")) < 0) {
-            getLogger().info("Updating tables to 1.13.1 ...");
+            logblock.getLogger().info("Updating tables to 1.13.1 ...");
             try {
                 final Connection conn = logblock.getConnection();
                 conn.setAutoCommit(false);
                 final Statement st = conn.createStatement();
                 for (final WorldConfig wcfg : getLoggedWorlds()) {
-                    getLogger().info("Processing world " + wcfg.world + "...");
+                    logblock.getLogger().info("Processing world " + wcfg.world + "...");
                     ResultSet rsCol = st.executeQuery("SHOW COLUMNS FROM `" + wcfg.table + "-chestdata` LIKE 'itemtype'");
                     if (!rsCol.next()) {
                         st.execute("ALTER TABLE `" + wcfg.table + "-chestdata` ADD COLUMN `itemtype` SMALLINT NOT NULL DEFAULT '0'");
@@ -646,7 +644,7 @@ class Updater {
                             ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "-sign`");
                             if (rs.next()) {
                                 rowsToConvert = rs.getInt(1);
-                                getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-sign");
+                                logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-sign");
                             }
                             rs.close();
 
@@ -689,12 +687,12 @@ class Updater {
                                 insertSignState.executeBatch();
                                 deleteSign.executeBatch();
                                 conn.commit();
-                                getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
+                                logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                             }
                             insertSignState.close();
                             deleteSign.close();
                         } catch (SQLException e) {
-                            getLogger().info("Could not convert " + wcfg.table + "-sign: " + e.getMessage());
+                            logblock.getLogger().info("Could not convert " + wcfg.table + "-sign: " + e.getMessage());
                         }
                     }
                 }
@@ -702,7 +700,7 @@ class Updater {
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
             
@@ -722,7 +720,7 @@ class Updater {
             st.close();
             conn.close();
         } catch (final SQLException ex) {
-            Bukkit.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+            logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
             return false;
         }
         
@@ -738,9 +736,9 @@ class Updater {
         }
         if (rs.next() && !rs.getString("Collation").substring(0, charset.length()).equalsIgnoreCase(charset)) {
             st.execute("ALTER TABLE `" + table + "` CONVERT TO CHARSET " + charset);
-            getLogger().info("Table " + table + " modified");
+            logblock.getLogger().info("Table " + table + " modified");
         } else if (!silent) {
-            getLogger().info("Table " + table + " already fine, skipping it");
+            logblock.getLogger().info("Table " + table + " already fine, skipping it");
         }
     }
 
@@ -781,9 +779,9 @@ class Updater {
         conn.close();
     }
 
-    private static void createTable(DatabaseMetaData dbm, Statement state, String table, String query) throws SQLException {
+    private void createTable(DatabaseMetaData dbm, Statement state, String table, String query) throws SQLException {
         if (!dbm.getTables(null, null, table, null).next()) {
-            getLogger().log(Level.INFO, "Creating table " + table + ".");
+            logblock.getLogger().log(Level.INFO, "Creating table " + table + ".");
             state.execute("CREATE TABLE `" + table + "` " + query);
             if (!dbm.getTables(null, null, table, null).next()) {
                 throw new SQLException("Table " + table + " not found and failed to create");

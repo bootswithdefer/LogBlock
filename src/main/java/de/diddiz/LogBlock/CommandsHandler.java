@@ -36,8 +36,6 @@ import static de.diddiz.util.BukkitUtils.giveTool;
 import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
 import static de.diddiz.util.Utils.isInt;
 import static de.diddiz.util.Utils.listing;
-import static org.bukkit.Bukkit.getLogger;
-import static org.bukkit.Bukkit.getServer;
 
 public class CommandsHandler implements CommandExecutor {
     private final LogBlock logblock;
@@ -114,7 +112,7 @@ public class CommandsHandler implements CommandExecutor {
                     if (logblock.hasPermission(sender, "logblock.lookup")) {
                         World world = null;
                         if (args.length > 1) {
-                            world = getServer().getWorld(args[1]);
+                            world = logblock.getServer().getWorld(args[1]);
                         } else if (sender instanceof Player) {
                             world = ((Player) sender).getWorld();
                         }
@@ -356,7 +354,7 @@ public class CommandsHandler implements CommandExecutor {
             sender.sendMessage(ChatColor.RED + "Not enough arguments given");
         } catch (final Exception ex) {
             sender.sendMessage(ChatColor.RED + "Error, check server.log");
-            getLogger().log(Level.WARNING, "Exception in commands handler: ", ex);
+            logblock.getLogger().log(Level.WARNING, "Exception in commands handler: ", ex);
         }
         return true;
     }
@@ -427,7 +425,7 @@ public class CommandsHandler implements CommandExecutor {
                     rs.close();
                 }
             } catch (final SQLException ex) {
-                getLogger().log(Level.SEVERE, "[CommandsHandler] SQL exception on close", ex);
+                logblock.getLogger().log(Level.SEVERE, "[CommandsHandler] SQL exception on close", ex);
             }
         }
     }
@@ -492,7 +490,7 @@ public class CommandsHandler implements CommandExecutor {
                 }
             } catch (final Exception ex) {
                 sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                getLogger().log(Level.SEVERE, "[Lookup] " + params.getQuery() + ": ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Lookup] " + params.getQuery() + ": ", ex);
             } finally {
                 close();
             }
@@ -548,7 +546,7 @@ public class CommandsHandler implements CommandExecutor {
                 sender.sendMessage(ChatColor.GREEN + "Wrote " + counter + " lines.");
             } catch (final Exception ex) {
                 sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                getLogger().log(Level.SEVERE, "[WriteLogFile] " + params.getQuery() + " (file was " + file.getAbsolutePath() + "): ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[WriteLogFile] " + params.getQuery() + " (file was " + file.getAbsolutePath() + "): ", ex);
             } finally {
                 close();
             }
@@ -621,7 +619,7 @@ public class CommandsHandler implements CommandExecutor {
                 }
             } catch (final Exception ex) {
                 sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                getLogger().log(Level.SEVERE, "[Teleport] " + params.getQuery() + ": ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Teleport] " + params.getQuery() + ": ", ex);
             } finally {
                 close();
             }
@@ -699,7 +697,7 @@ public class CommandsHandler implements CommandExecutor {
                 }
             } catch (final Exception ex) {
                 sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                getLogger().log(Level.SEVERE, "[Rollback] " + params.getQuery() + ": ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Rollback] " + params.getQuery() + ": ", ex);
             } finally {
                 close();
             }
@@ -760,7 +758,7 @@ public class CommandsHandler implements CommandExecutor {
                 sender.sendMessage(ChatColor.GREEN + "Redo finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
             } catch (final Exception ex) {
                 sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                getLogger().log(Level.SEVERE, "[Redo] " + params.getQuery() + ": ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[Redo] " + params.getQuery() + ": ", ex);
             } finally {
                 close();
             }
@@ -808,7 +806,7 @@ public class CommandsHandler implements CommandExecutor {
                             state.execute("SELECT * FROM `" + table + "-blocks` " + join + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, time + " " + table + " " + params.getTitle().replace(":", ".") + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
                         } catch (final SQLException ex) {
                             sender.sendMessage(ChatColor.RED + "Error while dumping log. Make sure your MySQL user has access to the LogBlock folder, or disable clearlog.dumpDeletedLog");
-                            getLogger().log(Level.SEVERE, "[ClearLog] Exception while dumping log: ", ex);
+                            logblock.getLogger().log(Level.SEVERE, "[ClearLog] Exception while dumping log: ", ex);
                             return;
                         }
                     }
@@ -835,18 +833,18 @@ public class CommandsHandler implements CommandExecutor {
                 }
             } catch (final Exception ex) {
                 sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                getLogger().log(Level.SEVERE, "[ClearLog] Exception: ", ex);
+                logblock.getLogger().log(Level.SEVERE, "[ClearLog] Exception: ", ex);
             } finally {
                 close();
             }
         }
     }
 
-    private static ResultSet executeQuery(Statement state, String query) throws SQLException {
+    private ResultSet executeQuery(Statement state, String query) throws SQLException {
         if (Config.debug) {
             long startTime = System.currentTimeMillis();
             ResultSet rs = state.executeQuery(query);
-            getLogger().log(Level.INFO, "[LogBlock Debug] Time Taken: " + (System.currentTimeMillis() - startTime) + " milliseconds. Query: " + query);
+            logblock.getLogger().log(Level.INFO, "[LogBlock Debug] Time Taken: " + (System.currentTimeMillis() - startTime) + " milliseconds. Query: " + query);
             return rs;
         } else {
             return state.executeQuery(query);
