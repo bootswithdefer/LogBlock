@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 class Updater {
     private final LogBlock logblock;
     final int UUID_CONVERT_BATCH_SIZE = 100;
+    final int BLOCKS_CONVERT_BATCH_SIZE = 200000;
 
     Updater(LogBlock logblock) {
         this.logblock = logblock;
@@ -441,7 +442,7 @@ class Updater {
 
                         while (hadRow) {
                             hadRow = false;
-                            ResultSet entries = st.executeQuery("SELECT id, date, playerid, replaced, type, data, x, y, z FROM `" + wcfg.table + "` ORDER BY id ASC LIMIT 10000");
+                            ResultSet entries = st.executeQuery("SELECT id, date, playerid, replaced, type, data, x, y, z FROM `" + wcfg.table + "` ORDER BY id ASC LIMIT " + BLOCKS_CONVERT_BATCH_SIZE);
                             while (entries.next()) {
                                 hadRow = true;
                                 int id = entries.getInt("id");
@@ -515,7 +516,7 @@ class Updater {
                         PreparedStatement insertChestData = conn.prepareStatement("INSERT INTO `" + wcfg.table + "-chestdata` (id, item, itemremove, itemtype) VALUES (?, ?, ?, ?)");
                         PreparedStatement deleteChest = conn.prepareStatement("DELETE FROM `" + wcfg.table + "-chest` WHERE id = ?");
                         while (true) {
-                            rs = st.executeQuery("SELECT id, itemtype, itemamount, itemdata FROM `" + wcfg.table + "-chest` ORDER BY id ASC LIMIT 10000");
+                            rs = st.executeQuery("SELECT id, itemtype, itemamount, itemdata FROM `" + wcfg.table + "-chest` ORDER BY id ASC LIMIT " + BLOCKS_CONVERT_BATCH_SIZE);
                             boolean anyRow = false;
                             while (rs.next()) {
                                 anyRow = true;
@@ -566,8 +567,8 @@ class Updater {
                             rs.close();
                             
                             PreparedStatement updateWeaponStatement = conn.prepareStatement("UPDATE `" + wcfg.table + "-kills` SET weapon = ? WHERE id = ?");
-                            for (int start = 0;; start += 10000) {
-                                rs = st.executeQuery("SELECT id, weapon FROM `" + wcfg.table + "-kills` ORDER BY id ASC LIMIT " + start + ",10000");
+                            for (int start = 0;; start += BLOCKS_CONVERT_BATCH_SIZE) {
+                                rs = st.executeQuery("SELECT id, weapon FROM `" + wcfg.table + "-kills` ORDER BY id ASC LIMIT " + start + "," + BLOCKS_CONVERT_BATCH_SIZE);
                                 boolean anyUpdate = false;
                                 boolean anyRow = false;
                                 while (rs.next()) {
@@ -651,7 +652,7 @@ class Updater {
                             PreparedStatement insertSignState = conn.prepareStatement("INSERT INTO `" + wcfg.table + "-state` (id, replacedState, typeState) VALUES (?, ?, ?)");
                             PreparedStatement deleteSign = conn.prepareStatement("DELETE FROM `" + wcfg.table + "-sign` WHERE id = ?");
                             while (true) {
-                                rs = st.executeQuery("SELECT id, signtext, replaced, type FROM `" + wcfg.table + "-sign` LEFT JOIN `" + wcfg.table + "-blocks` USING (id) ORDER BY id ASC LIMIT 10000");
+                                rs = st.executeQuery("SELECT id, signtext, replaced, type FROM `" + wcfg.table + "-sign` LEFT JOIN `" + wcfg.table + "-blocks` USING (id) ORDER BY id ASC LIMIT " + BLOCKS_CONVERT_BATCH_SIZE);
                                 boolean anyRow = false;
                                 while (rs.next()) {
                                     anyRow = true;
