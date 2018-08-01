@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
@@ -19,6 +20,41 @@ import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.mb4;
 
 public class LoggingUtil {
+
+    public static void smartLogBlockPlace(Consumer consumer, Actor actor, BlockState replaced, BlockState placed) {       
+        Location loc = replaced.getLocation();
+        if (!placed.getType().hasGravity() || !BukkitUtils.canDirectlyFallIn(replaced.getBlock().getRelative(BlockFace.DOWN).getType())) {
+            if (BukkitUtils.isEmpty(replaced.getType())) {
+                consumer.queueBlockPlace(actor, placed);
+            } else {
+                consumer.queueBlockReplace(actor, replaced, placed);
+            }
+            return;
+        }
+        int x = loc.getBlockX();
+        int initialy = loc.getBlockY();
+        int y = initialy;
+        int z = loc.getBlockZ();
+        while (y > 0 && BukkitUtils.canFallIn(loc.getWorld(), x, (y - 1), z)) {
+            y--;
+        }
+        if (initialy != y && !BukkitUtils.isEmpty(replaced.getType())) {
+            // this is not the final location but the block got removed (vines etc)
+            consumer.queueBlockBreak(actor, replaced);
+        }
+        // If y is 0 then the block fell out of the world :(
+        if (y != 0) {
+            // Run this check to avoid false positives
+            Location finalLoc = new Location(loc.getWorld(), x, y, z);
+            if (y == initialy || !BukkitUtils.getFallingEntityKillers().contains(finalLoc.getBlock().getType())) {
+                if (BukkitUtils.isEmpty(finalLoc.getBlock().getType())) {
+                    consumer.queueBlockPlace(actor, finalLoc, placed.getBlockData());
+                } else {
+                    consumer.queueBlockReplace(actor, finalLoc.getBlock().getState(), placed.getBlockData());
+                }
+            }
+        }
+    }
 
     public static void smartLogFallables(Consumer consumer, Actor actor, Block origin) {
 
@@ -41,7 +77,7 @@ public class LoggingUtil {
             int x = loc.getBlockX();
             int y = loc.getBlockY();
             int z = loc.getBlockZ();
-            while (y > 0 && BukkitUtils.canFall(loc.getWorld(), x, (y - 1), z)) {
+            while (y > 0 && BukkitUtils.canFallIn(loc.getWorld(), x, (y - 1), z)) {
                 y--;
             }
             // If y is 0 then the sand block fell out of the world :(

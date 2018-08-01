@@ -1,12 +1,15 @@
 package de.diddiz.util;
 
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.Bisected.Half;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Slab;
+import org.bukkit.block.data.type.Slab.Type;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
@@ -42,6 +45,64 @@ public class BukkitUtils {
     private static final Map<EntityType, Material> projectileItems;
 
     static {
+        EnumSet<Material> pressurePlates = EnumSet.noneOf(Material.class);
+        pressurePlates.add(Material.OAK_PRESSURE_PLATE);
+        pressurePlates.add(Material.SPRUCE_PRESSURE_PLATE);
+        pressurePlates.add(Material.BIRCH_PRESSURE_PLATE);
+        pressurePlates.add(Material.JUNGLE_PRESSURE_PLATE);
+        pressurePlates.add(Material.ACACIA_PRESSURE_PLATE);
+        pressurePlates.add(Material.DARK_OAK_PRESSURE_PLATE);
+        pressurePlates.add(Material.STONE_PRESSURE_PLATE);
+        pressurePlates.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
+        pressurePlates.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
+
+        EnumSet<Material> saplings = EnumSet.noneOf(Material.class);
+        saplings.add(Material.OAK_SAPLING);
+        saplings.add(Material.SPRUCE_SAPLING);
+        saplings.add(Material.BIRCH_SAPLING);
+        saplings.add(Material.JUNGLE_SAPLING);
+        saplings.add(Material.ACACIA_SAPLING);
+        saplings.add(Material.DARK_OAK_SAPLING);
+
+        EnumSet<Material> carpets = EnumSet.noneOf(Material.class);
+        carpets.add(Material.BLACK_CARPET);
+        carpets.add(Material.BLUE_CARPET);
+        carpets.add(Material.LIGHT_GRAY_CARPET);
+        carpets.add(Material.BROWN_CARPET);
+        carpets.add(Material.CYAN_CARPET);
+        carpets.add(Material.GRAY_CARPET);
+        carpets.add(Material.GREEN_CARPET);
+        carpets.add(Material.LIGHT_BLUE_CARPET);
+        carpets.add(Material.MAGENTA_CARPET);
+        carpets.add(Material.LIME_CARPET);
+        carpets.add(Material.ORANGE_CARPET);
+        carpets.add(Material.PINK_CARPET);
+        carpets.add(Material.PURPLE_CARPET);
+        carpets.add(Material.RED_CARPET);
+        carpets.add(Material.WHITE_CARPET);
+        carpets.add(Material.YELLOW_CARPET);
+
+        EnumSet<Material> slabs = EnumSet.noneOf(Material.class);
+        slabs.add(Material.OAK_SLAB);
+        slabs.add(Material.SPRUCE_SLAB);
+        slabs.add(Material.BIRCH_SLAB);
+        slabs.add(Material.JUNGLE_SLAB);
+        slabs.add(Material.ACACIA_SLAB);
+        slabs.add(Material.DARK_OAK_SLAB);
+        slabs.add(Material.STONE_SLAB);
+        slabs.add(Material.STONE_BRICK_SLAB);
+        slabs.add(Material.COBBLESTONE_SLAB);
+        slabs.add(Material.PETRIFIED_OAK_SLAB);
+        slabs.add(Material.SANDSTONE_SLAB);
+        slabs.add(Material.RED_SANDSTONE_SLAB);
+        slabs.add(Material.NETHER_BRICK_SLAB);
+        slabs.add(Material.PURPUR_SLAB);
+        slabs.add(Material.QUARTZ_SLAB);
+        slabs.add(Material.BRICK_SLAB);
+        slabs.add(Material.PRISMARINE_SLAB);
+        slabs.add(Material.DARK_PRISMARINE_SLAB);
+        slabs.add(Material.PRISMARINE_BRICK_SLAB);
+
         singleBlockPlants = EnumSet.noneOf(Material.class);
         singleBlockPlants.add(Material.GRASS);
         singleBlockPlants.add(Material.FERN);
@@ -82,7 +143,12 @@ public class BukkitUtils {
         relativeBreakable.add(Material.WALL_SIGN);
         relativeBreakable.add(Material.LADDER);
         relativeBreakable.add(Material.STONE_BUTTON);
-        relativeBreakable.addAll(Tag.WOODEN_BUTTONS.getValues());
+        relativeBreakable.add(Material.OAK_BUTTON);
+        relativeBreakable.add(Material.SPRUCE_BUTTON);
+        relativeBreakable.add(Material.BIRCH_BUTTON);
+        relativeBreakable.add(Material.JUNGLE_BUTTON);
+        relativeBreakable.add(Material.ACACIA_BUTTON);
+        relativeBreakable.add(Material.DARK_OAK_BUTTON);
         relativeBreakable.add(Material.REDSTONE_WALL_TORCH);
         relativeBreakable.add(Material.LEVER);
         relativeBreakable.add(Material.WALL_TORCH);
@@ -91,7 +157,7 @@ public class BukkitUtils {
 
         // Blocks that break when they are on top of a block
         relativeTopBreakable = EnumSet.noneOf(Material.class);
-        relativeTopBreakable.addAll(Tag.SAPLINGS.getValues());
+        relativeTopBreakable.addAll(saplings);
         relativeTopBreakable.addAll(singleBlockPlants);
         relativeTopBreakable.add(Material.WHEAT);
         relativeTopBreakable.add(Material.POTATO);
@@ -106,10 +172,7 @@ public class BukkitUtils {
         relativeTopBreakable.add(Material.RAIL);
         relativeTopBreakable.add(Material.REDSTONE_WIRE);
         relativeTopBreakable.add(Material.SIGN);
-        relativeTopBreakable.add(Material.STONE_PRESSURE_PLATE);
-        relativeTopBreakable.addAll(Tag.WOODEN_PRESSURE_PLATES.getValues());
-        relativeTopBreakable.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
-        relativeTopBreakable.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
+        relativeTopBreakable.addAll(pressurePlates);
         relativeTopBreakable.add(Material.SNOW);
         relativeTopBreakable.add(Material.REPEATER);
         relativeTopBreakable.add(Material.COMPARATOR);
@@ -117,27 +180,42 @@ public class BukkitUtils {
         relativeTopBreakable.add(Material.WALL_TORCH);
         relativeTopBreakable.add(Material.REDSTONE_TORCH);
         relativeTopBreakable.add(Material.REDSTONE_WALL_TORCH);
-        relativeTopBreakable.addAll(Tag.WOODEN_DOORS.getValues());
+        relativeTopBreakable.add(Material.OAK_DOOR);
+        relativeTopBreakable.add(Material.SPRUCE_DOOR);
+        relativeTopBreakable.add(Material.BIRCH_DOOR);
+        relativeTopBreakable.add(Material.JUNGLE_DOOR);
+        relativeTopBreakable.add(Material.ACACIA_DOOR);
+        relativeTopBreakable.add(Material.DARK_OAK_DOOR);
         relativeTopBreakable.add(Material.IRON_DOOR);
-        relativeTopBreakable.addAll(Tag.CARPETS.getValues());
+        relativeTopBreakable.addAll(carpets);
         relativeTopBreakable.addAll(doublePlants);
 
         // Blocks that break falling entities
         fallingEntityKillers = EnumSet.noneOf(Material.class);
         fallingEntityKillers.add(Material.SIGN);
         fallingEntityKillers.add(Material.WALL_SIGN);
-        fallingEntityKillers.addAll(Tag.WOODEN_PRESSURE_PLATES.getValues());
-        fallingEntityKillers.add(Material.STONE_PRESSURE_PLATE);
-        fallingEntityKillers.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
-        fallingEntityKillers.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
-        fallingEntityKillers.addAll(Tag.SAPLINGS.getValues());
-        fallingEntityKillers.addAll(singleBlockPlants);
+        fallingEntityKillers.addAll(pressurePlates);
+        fallingEntityKillers.addAll(saplings);
+        fallingEntityKillers.add(Material.DANDELION);
+        fallingEntityKillers.add(Material.POPPY);
+        fallingEntityKillers.add(Material.BLUE_ORCHID);
+        fallingEntityKillers.add(Material.ALLIUM);
+        fallingEntityKillers.add(Material.AZURE_BLUET);
+        fallingEntityKillers.add(Material.ORANGE_TULIP);
+        fallingEntityKillers.add(Material.WHITE_TULIP);
+        fallingEntityKillers.add(Material.PINK_TULIP);
+        fallingEntityKillers.add(Material.RED_TULIP);
+        fallingEntityKillers.add(Material.OXEYE_DAISY);        
+        fallingEntityKillers.add(Material.BROWN_MUSHROOM);
+        fallingEntityKillers.add(Material.RED_MUSHROOM);
+        fallingEntityKillers.addAll(doublePlants);
         fallingEntityKillers.add(Material.WHEAT);
         fallingEntityKillers.add(Material.CARROT);
         fallingEntityKillers.add(Material.POTATO);
         fallingEntityKillers.add(Material.BEETROOT);
         fallingEntityKillers.add(Material.NETHER_WART);
-        fallingEntityKillers.addAll(Tag.SLABS.getValues());
+        fallingEntityKillers.add(Material.COCOA);
+        fallingEntityKillers.addAll(slabs);
         fallingEntityKillers.add(Material.TORCH);
         fallingEntityKillers.add(Material.WALL_TORCH);
         fallingEntityKillers.add(Material.FLOWER_POT);
@@ -152,7 +230,19 @@ public class BukkitUtils {
         fallingEntityKillers.add(Material.REPEATER);
         fallingEntityKillers.add(Material.COMPARATOR);
         fallingEntityKillers.add(Material.DAYLIGHT_DETECTOR);
-        fallingEntityKillers.addAll(Tag.CARPETS.getValues());
+        fallingEntityKillers.addAll(carpets);
+        fallingEntityKillers.add(Material.PLAYER_HEAD);
+        fallingEntityKillers.add(Material.PLAYER_WALL_HEAD);
+        fallingEntityKillers.add(Material.CREEPER_HEAD);
+        fallingEntityKillers.add(Material.CREEPER_WALL_HEAD);
+        fallingEntityKillers.add(Material.DRAGON_HEAD);
+        fallingEntityKillers.add(Material.DRAGON_WALL_HEAD);
+        fallingEntityKillers.add(Material.ZOMBIE_HEAD);
+        fallingEntityKillers.add(Material.ZOMBIE_WALL_HEAD);
+        fallingEntityKillers.add(Material.SKELETON_SKULL);
+        fallingEntityKillers.add(Material.SKELETON_WALL_SKULL);
+        fallingEntityKillers.add(Material.WITHER_SKELETON_SKULL);
+        fallingEntityKillers.add(Material.WITHER_SKELETON_WALL_SKULL);
 
         // Crop Blocks
         cropBlocks = EnumSet.noneOf(Material.class);
@@ -214,11 +304,8 @@ public class BukkitUtils {
         nonFluidProofBlocks.add(Material.WALL_TORCH);
         nonFluidProofBlocks.add(Material.TRIPWIRE_HOOK);
         nonFluidProofBlocks.add(Material.COCOA);
-        nonFluidProofBlocks.addAll(Tag.WOODEN_PRESSURE_PLATES.getValues());
-        nonFluidProofBlocks.add(Material.STONE_PRESSURE_PLATE);
-        nonFluidProofBlocks.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
-        nonFluidProofBlocks.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
-        nonFluidProofBlocks.addAll(Tag.SAPLINGS.getValues());
+        nonFluidProofBlocks.addAll(pressurePlates);
+        nonFluidProofBlocks.addAll(saplings);
         nonFluidProofBlocks.add(Material.WHEAT);
         nonFluidProofBlocks.add(Material.CARROT);
         nonFluidProofBlocks.add(Material.POTATO);
@@ -236,7 +323,7 @@ public class BukkitUtils {
         nonFluidProofBlocks.add(Material.REPEATER);
         nonFluidProofBlocks.add(Material.COMPARATOR);
         nonFluidProofBlocks.add(Material.DAYLIGHT_DETECTOR);
-        nonFluidProofBlocks.addAll(Tag.CARPETS.getValues());
+        nonFluidProofBlocks.addAll(carpets);
 
         bedBlocks = EnumSet.noneOf(Material.class);
         bedBlocks.add(Material.BLACK_BED);
@@ -462,18 +549,24 @@ public class BukkitUtils {
         return 0;
     }
 
-    public static boolean canFall(World world, int x, int y, int z) {
-        Material mat = world.getBlockAt(x, y, z).getType();
-
-        // Air
-        if (mat == Material.AIR) {
+    public static boolean canFallIn(World world, int x, int y, int z) {
+        Block block = world.getBlockAt(x, y, z);
+        Material mat = block.getType();
+        if (canDirectlyFallIn(mat)) {
             return true;
-        } else if (mat == Material.WATER || mat == Material.LAVA) { // Fluids
-            return true;
-        } else if (getFallingEntityKillers().contains(mat) || mat == Material.FIRE || mat == Material.VINE || doublePlants.contains(mat) || mat == Material.DEAD_BUSH) { // Misc.
+        } else if (getFallingEntityKillers().contains(mat) || singleBlockPlants.contains(mat) || mat == Material.VINE) {
+            if (Tag.SLABS.isTagged(mat)) {
+                if (((Slab) block.getBlockData()).getType() != Type.BOTTOM) {
+                    return false;
+                }
+            }
             return true;
         }
         return false;
+    }
+
+    public static boolean canDirectlyFallIn(Material m) {
+        return isEmpty(m) || m == Material.WATER || m == Material.LAVA || m == Material.FIRE;
     }
 
     public static Material itemIDfromProjectileEntity(Entity e) {
