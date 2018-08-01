@@ -209,6 +209,9 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD)) {
             pm.registerEvents(new BlockSpreadLogging(this), this);
         }
+        if (isLogging(Logging.DRAGONEGGTELEPORT)) {
+            pm.registerEvents(new DragonEggLogging(this), this);
+        }
     }
 
     @Override
