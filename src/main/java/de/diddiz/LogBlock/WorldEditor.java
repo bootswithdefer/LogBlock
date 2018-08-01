@@ -8,10 +8,11 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.Bisected.Half;
+import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Bed;
+import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Bed.Part;
-import org.bukkit.block.data.type.Door;
 import org.bukkit.block.data.type.Piston;
 import org.bukkit.block.data.type.PistonHead;
 import org.bukkit.block.data.type.TechnicalPiston.Type;
@@ -187,8 +188,9 @@ public class WorldEditor implements Runnable {
                         if (leftover > 0 && ca.remove) {
                             throw new WorldEditorException("Not enough space left in " + block.getType(), block.getLocation());
                         }
+                        return PerformResult.SUCCESS;
                     }
-                    return PerformResult.SUCCESS;
+                    return PerformResult.NO_ACTION;
                 }
             }
             if (block.getType() != setBlock.getMaterial() && !replaceAnyway.contains(block.getType())) {
@@ -219,13 +221,13 @@ public class WorldEditor implements Runnable {
                     bed2.setPart(bed.getPart() == Part.HEAD ? Part.FOOT : Part.HEAD);
                     secBlock.setBlockData(bed2);
                 }
-            } else if (newData instanceof Door) {
-                final Door door = (Door) newData;
-                final Block secBlock = door.getHalf() == Half.TOP ? block.getRelative(BlockFace.DOWN) : block.getRelative(BlockFace.UP);
+            } else if (newData instanceof Bisected) {
+                final Bisected firstPart = (Bisected) newData;
+                final Block secBlock = block.getRelative(firstPart.getHalf() == Half.TOP ? BlockFace.DOWN : BlockFace.UP);
                 if (secBlock.isEmpty()) {
-                    Door door2 = (Door) door.clone();
-                    door2.setHalf(door.getHalf() == Half.TOP ? Half.BOTTOM : Half.TOP);
-                    secBlock.setBlockData(door2);
+                    Bisected secondPart = (Bisected) firstPart.clone();
+                    secondPart.setHalf(firstPart.getHalf() == Half.TOP ? Half.BOTTOM : Half.TOP);
+                    secBlock.setBlockData(secondPart);
                 }
             } else if ((curtype == Material.PISTON || curtype == Material.STICKY_PISTON)) {
                 Piston piston = (Piston) newData;
@@ -246,6 +248,14 @@ public class WorldEditor implements Runnable {
                     piston.setFacing(head.getFacing());
                     piston.setExtended(true);
                     secBlock.setBlockData(piston);
+                }
+            } else if (newData instanceof Chest) {
+                Chest chest = (Chest) newData;
+                if (chest.getType() != org.bukkit.block.data.type.Chest.Type.SINGLE) {
+                    if (getConnectedChest(block) == null) {
+                        chest.setType(org.bukkit.block.data.type.Chest.Type.SINGLE);
+                        block.setBlockData(chest);
+                    }
                 }
             }
             return PerformResult.SUCCESS;

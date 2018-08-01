@@ -667,4 +667,46 @@ public class BukkitUtils {
     public static boolean isBed(Material type) {
         return bedBlocks.contains(type);
     }
+
+    public static Block getConnectedChest(Block chestBlock) {
+        // is this a chest?
+        BlockData blockData = chestBlock.getBlockData();
+        if (!(blockData instanceof org.bukkit.block.data.type.Chest)) {
+            return null;
+        }
+        // so check if is should have a neighbour
+        org.bukkit.block.data.type.Chest chestData = (org.bukkit.block.data.type.Chest) blockData;
+        org.bukkit.block.data.type.Chest.Type chestType = chestData.getType();
+        if (chestType != org.bukkit.block.data.type.Chest.Type.SINGLE) {
+            // check if the neighbour exists
+            BlockFace chestFace = chestData.getFacing();
+            BlockFace faceToSecondChest;
+            if (chestFace == BlockFace.WEST) {
+                faceToSecondChest = BlockFace.NORTH;
+            } else if (chestFace == BlockFace.NORTH) {
+                faceToSecondChest = BlockFace.EAST;
+            } else if (chestFace == BlockFace.EAST) {
+                faceToSecondChest = BlockFace.SOUTH;
+            } else if (chestFace == BlockFace.SOUTH) {
+                faceToSecondChest = BlockFace.WEST;
+            } else {
+                return null;
+            }
+            org.bukkit.block.data.type.Chest.Type wantedChestType = org.bukkit.block.data.type.Chest.Type.RIGHT;
+            if (chestType == org.bukkit.block.data.type.Chest.Type.RIGHT) {
+                faceToSecondChest = faceToSecondChest.getOppositeFace();
+                wantedChestType = org.bukkit.block.data.type.Chest.Type.LEFT;
+            }
+            Block face = chestBlock.getRelative(faceToSecondChest);
+            if (face.getType() == chestBlock.getType()) {
+                // check is the neighbour connects to this chest
+                org.bukkit.block.data.type.Chest otherChestData = (org.bukkit.block.data.type.Chest) face.getBlockData();
+                if(otherChestData.getType() != wantedChestType || otherChestData.getFacing() != chestFace) {
+                    return null;
+                }
+                return face;
+            }
+        }
+        return null;
+    }
 }
