@@ -556,6 +556,10 @@ public final class QueryParams implements Cloneable {
     }
 
     public void parseArgs(CommandSender sender, List<String> args) throws IllegalArgumentException {
+        parseArgs(sender, args, true);
+    }
+
+    public void parseArgs(CommandSender sender, List<String> args, boolean validate) throws IllegalArgumentException {
         if (args == null || args.isEmpty()) {
             throw new IllegalArgumentException("No parameters specified.");
         }
@@ -775,6 +779,15 @@ public final class QueryParams implements Cloneable {
             }
             i += values.length;
         }
+        if (validate) {
+            validate();
+        }
+        if (session != null) {
+            session.lastQuery = clone();
+        }
+    }
+
+    public void validate() {
         if (bct == BlockChangeType.KILLS) {
             if (world == null) {
                 throw new IllegalArgumentException("No world specified");
@@ -793,9 +806,6 @@ public final class QueryParams implements Cloneable {
         }
         if (bct == BlockChangeType.CHAT && !Config.isLogging(Logging.CHAT)) {
             throw new IllegalArgumentException("Chat is not logged");
-        }
-        if (session != null) {
-            session.lastQuery = clone();
         }
     }
 

@@ -69,6 +69,7 @@ public class ToolListener implements Listener {
                         }
                     }
                     try {
+                        params.validate();
                         if (toolData.mode == ToolMode.ROLLBACK) {
                             handler.new CommandRollback(player, params, true);
                         } else if (toolData.mode == ToolMode.REDO) {

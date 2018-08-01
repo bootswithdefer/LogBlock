@@ -228,7 +228,7 @@ public class Config {
                 final boolean canDrop = tSec.getBoolean("canDrop", false);
                 final QueryParams params = new QueryParams(logblock);
                 params.prepareToolQuery = true;
-                params.parseArgs(getConsoleSender(), Arrays.asList(tSec.getString("params").split(" ")));
+                params.parseArgs(getConsoleSender(), Arrays.asList(tSec.getString("params").split(" ")), false);
                 final ToolMode mode = ToolMode.valueOf(tSec.getString("mode").toUpperCase());
                 final PermissionDefault pdef = PermissionDefault.valueOf(tSec.getString("permissionDefault").toUpperCase());
                 tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, canDrop, params, mode, pdef));
