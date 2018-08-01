@@ -158,7 +158,7 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.BLOCKPLACE)) {
             pm.registerEvents(new BlockPlaceLogging(this), this);
         }
-        if (isLogging(Logging.BLOCKPLACE) || isLogging(Logging.LAVAFLOW) || isLogging(Logging.WATERFLOW)) {
+        if (isLogging(Logging.LAVAFLOW) || isLogging(Logging.WATERFLOW)) {
             pm.registerEvents(new FluidFlowLogging(this), this);
         }
         if (isLogging(Logging.BLOCKBREAK)) {

@@ -33,9 +33,9 @@ public class FluidFlowLogging extends LoggingListener {
             final Block to = event.getToBlock();
             final Material typeTo = to.getType();
             final boolean canFlow = BukkitUtils.isEmpty(typeTo) || BukkitUtils.getNonFluidProofBlocks().contains(typeTo);
-            if (typeFrom == Material.LAVA) {
+            if (typeFrom == Material.LAVA && wcfg.isLogging(Logging.LAVAFLOW)) {
                 Levelled levelledFrom = (Levelled)blockDataFrom;
-                if (canFlow && wcfg.isLogging(Logging.LAVAFLOW)) {
+                if (canFlow) {
                     if (isSurroundedByWater(to) && levelledFrom.getLevel() <= 2) {
                         consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), Material.COBBLESTONE.createBlockData());
                     } else {
