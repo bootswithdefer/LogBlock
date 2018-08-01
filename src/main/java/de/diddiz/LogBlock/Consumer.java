@@ -578,10 +578,10 @@ public class Consumer extends TimerTask {
     }
 
     private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, byte[] stateBefore, byte[] stateAfter, ChestAccess ca) {
-        if (typeBefore == null) {
+        if (typeBefore == null || typeBefore.getMaterial() == Material.CAVE_AIR || typeBefore.getMaterial() == Material.VOID_AIR) {
             typeBefore = Bukkit.createBlockData(Material.AIR);
         }
-        if (typeAfter == null) {
+        if (typeAfter == null || typeAfter.getMaterial() == Material.CAVE_AIR || typeAfter.getMaterial() == Material.VOID_AIR) {
             typeAfter = Bukkit.createBlockData(Material.AIR);
         }
         if (Config.fireCustomEvents) {

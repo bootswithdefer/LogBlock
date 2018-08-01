@@ -176,23 +176,11 @@ public class WorldEditor implements Runnable {
                 world.loadChunk(block.getChunk());
             }
             if (setBlock.equals(replacedBlock)) {
-                if (BukkitUtils.isEmpty(setBlock.getMaterial())) {
-                    block.setType(Material.AIR);
-                } else if (ca != null) {
-                    if (state instanceof InventoryHolder) {
+                if (ca != null) {
+                    if (state instanceof InventoryHolder && state.getType() == replacedBlock.getMaterial()) {
                         int leftover;
                         try {
                             leftover = modifyContainer(state, new ItemStack(ca.itemStack), !ca.remove);
-                            // Special-case blocks which might be double chests
-                            if (leftover > 0 && (setBlock.getMaterial() == Material.CHEST || setBlock.getMaterial() == Material.TRAPPED_CHEST)) {
-                                for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
-                                    if (block.getRelative(face).getType() == setBlock.getMaterial()) {
-                                        ItemStack remaining = new ItemStack(ca.itemStack);
-                                        remaining.setAmount(leftover);
-                                        leftover = modifyContainer(block.getRelative(face).getState(), remaining, !ca.remove);
-                                    }
-                                }
-                            }
                         } catch (final Exception ex) {
                             throw new WorldEditorException(ex.getMessage(), block.getLocation());
                         }
@@ -200,26 +188,13 @@ public class WorldEditor implements Runnable {
                             throw new WorldEditorException("Not enough space left in " + block.getType(), block.getLocation());
                         }
                     }
-                } else if (BlockStateCodecs.hasCodec(replacedBlock.getMaterial())) {
-                    block.setBlockData(replacedBlock);
-                    state = block.getState();
-                    try {
-                        BlockStateCodecs.deserialize(state, replacedState);
-                        state.update();
-                    } catch (Exception e) {
-                        throw new WorldEditorException("Failed to restore blockstate of " + block.getType() + ": " + e, block.getLocation());
-                    }
-                } else if (!block.getBlockData().equals(replacedBlock)) {
-                    block.setBlockData(replacedBlock);
-                } else {
-                    return PerformResult.NO_ACTION;
+                    return PerformResult.SUCCESS;
                 }
-                return PerformResult.SUCCESS;
             }
             if (block.getType() != setBlock.getMaterial() && !replaceAnyway.contains(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
-            if (state instanceof InventoryHolder) {
+            if (state instanceof InventoryHolder && replacedBlock.getMaterial() != block.getType()) {
                 ((InventoryHolder) state).getInventory().clear();
                 state.update();
             }
