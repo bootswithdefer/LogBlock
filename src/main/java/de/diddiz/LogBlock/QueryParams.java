@@ -825,7 +825,7 @@ public final class QueryParams implements Cloneable {
     }
 
     @Override
-    protected QueryParams clone() {
+    public QueryParams clone() {
         try {
             final QueryParams params = (QueryParams) super.clone();
             params.players = new ArrayList<String>(players);

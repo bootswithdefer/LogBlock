@@ -48,7 +48,7 @@ public class ToolListener implements Listener {
                         return;
                     }
                     final Block block = event.getClickedBlock();
-                    final QueryParams params = toolData.params;
+                    final QueryParams params = toolData.params.clone();
                     params.loc = null;
                     params.sel = null;
                     if (behavior == ToolBehavior.BLOCK) {
