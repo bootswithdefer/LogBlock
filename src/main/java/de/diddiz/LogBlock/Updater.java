@@ -47,9 +47,9 @@ class Updater {
             logblock.saveConfig();
         }
         ComparableVersion configVersion = new ComparableVersion(versionString);
-        if (configVersion.compareTo(new ComparableVersion(logblock.getDescription().getVersion().replace(" (manually compiled)", ""))) >= 0) {
-            return false;
-        }
+        // if (configVersion.compareTo(new ComparableVersion(logblock.getDescription().getVersion().replace(" (manually compiled)", ""))) >= 0) {
+        // return false;
+        // }
         if (configVersion.compareTo(new ComparableVersion("1.2.7")) < 0) {
             logblock.getLogger().info("Updating tables to 1.2.7 ...");
             if (isLogging(Logging.CHAT)) {
@@ -623,7 +623,7 @@ class Updater {
             }
             config.set("version", "1.13.0");
         }
-        
+
         if (configVersion.compareTo(new ComparableVersion("1.13.1")) < 0) {
             logblock.getLogger().info("Updating tables to 1.13.1 ...");
             try {
@@ -717,6 +717,8 @@ class Updater {
             if (isLogging(Logging.CHAT)) {
                 checkCharset("lb-chat", "message", st, true);
             }
+            createIndexIfDoesNotExist("lb-materials", "name", "UNIQUE KEY `name` (`name`(250))", st, true);
+            createIndexIfDoesNotExist("lb-blockstates", "name", "UNIQUE KEY `name` (`name`(250))", st, true);
             
             st.close();
             conn.close();
@@ -727,6 +729,17 @@ class Updater {
         
         logblock.saveConfig();
         return true;
+    }
+
+    void createIndexIfDoesNotExist(String table, String indexName, String definition, Statement st, boolean silent) throws SQLException {
+        final ResultSet rs = st.executeQuery("SHOW INDEX FROM `" + table + "` WHERE Key_name = '" + indexName + "'");
+        if (!rs.next()) {
+            st.execute("ALTER TABLE `" + table + "` ADD " + definition);
+            logblock.getLogger().info("Add index " + indexName + " to table " + table + ": Table modified");
+        } else if (!silent) {
+            logblock.getLogger().info("Add index " + indexName + " to table " + table + ": Already fine, skipping it");
+        }
+        rs.close();
     }
 
     void checkCharset(String table, String column, Statement st, boolean silent) throws SQLException {
@@ -741,6 +754,7 @@ class Updater {
         } else if (!silent) {
             logblock.getLogger().info("Table " + table + " already fine, skipping it");
         }
+        rs.close();
     }
 
     void checkTables() throws SQLException {

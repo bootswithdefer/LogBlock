@@ -398,14 +398,6 @@ public class Consumer extends TimerTask {
         queue.add(new PlayerLeaveRow(player, onlineTime));
     }
 
-    public void queueAddMaterialMapping(int key, String material) {
-        queue.add(new AddMaterialRow(key, material));
-    }
-
-    public void queueAddBlockStateMapping(int key, String blockState) {
-        queue.add(new AddBlockStateRow(key, blockState));
-    }
-
     @Override
     public synchronized void run() {
         if (queue.isEmpty() || !lock.tryLock()) {
@@ -1043,56 +1035,6 @@ public class Consumer extends TimerTask {
         @Override
         public Actor[] getActors() {
             return new Actor[] { actor };
-        }
-    }
-
-    private class AddMaterialRow implements Row {
-        private final int key;
-        private final String material;
-
-        AddMaterialRow(int key, String material) {
-            this.key = key;
-            this.material = material;
-        }
-
-        @Override
-        public String[] getInserts() {
-            return new String[] { "INSERT INTO `lb-materials` (id, name) VALUES (" + key + ",'" + mysqlTextEscape(material) + "');" };
-        }
-
-        @Override
-        public String[] getPlayers() {
-            return new String[0];
-        }
-
-        @Override
-        public Actor[] getActors() {
-            return new Actor[0];
-        }
-    }
-
-    private class AddBlockStateRow implements Row {
-        private final int key;
-        private final String blockstate;
-
-        AddBlockStateRow(int key, String blockstate) {
-            this.key = key;
-            this.blockstate = blockstate;
-        }
-
-        @Override
-        public String[] getInserts() {
-            return new String[] { "INSERT INTO `lb-blockstates` (id, name) VALUES (" + key + ",'" + mysqlTextEscape(blockstate) + "');" };
-        }
-
-        @Override
-        public String[] getPlayers() {
-            return new String[0];
-        }
-
-        @Override
-        public Actor[] getActors() {
-            return new Actor[0];
         }
     }
 
