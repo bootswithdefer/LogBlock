@@ -128,6 +128,10 @@ public class BlockChange implements LookupCacheElement {
                 msg.append("stepped on ").append(type.getMaterial().name());
             } else if (type.getMaterial() == Material.TRIPWIRE) {
                 msg.append("ran into ").append(type.getMaterial().name());
+            } else if (type.getMaterial() == Material.SIGN || type.getMaterial() == Material.WALL_SIGN) {
+                msg.append("edited a ").append(type.getMaterial().name()).append(" to ").append(typeDetails);
+            } else {
+                msg.append("replaced ").append(replaced.getMaterial().name()).append(replacedDetails).append(" with ").append(type.getMaterial().name()).append(typeDetails);    
             }
         } else if (BukkitUtils.isEmpty(type.getMaterial())) {
             msg.append("destroyed ").append(replaced.getMaterial().name()).append(replacedDetails);

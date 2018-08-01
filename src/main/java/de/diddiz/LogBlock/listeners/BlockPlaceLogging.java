@@ -13,8 +13,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.inventory.meta.BlockStateMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import static de.diddiz.LogBlock.config.Config.isLogging;
 
@@ -29,14 +27,6 @@ public class BlockPlaceLogging extends LoggingListener {
             final BlockState before = event.getBlockReplacedState();
             final BlockState after = event.getBlockPlaced().getState();
             final Actor actor = Actor.actorFromEntity(event.getPlayer());
-
-            // Sign logging is handled elsewhere
-            if (Config.isLogging(after.getWorld(), Logging.SIGNTEXT) && (after.getType() == Material.SIGN || after.getType() == Material.WALL_SIGN)) {
-                ItemMeta inHandMeta = event.getItemInHand() != null ? event.getItemInHand().getItemMeta() : null;
-                if (!(inHandMeta instanceof BlockStateMeta) || !((BlockStateMeta) inHandMeta).hasBlockState()) {
-                    return;
-                }
-            }
             
             LoggingUtil.smartLogBlockPlace(consumer, actor, before, after);
         }

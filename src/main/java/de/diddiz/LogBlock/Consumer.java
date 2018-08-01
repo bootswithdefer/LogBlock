@@ -360,7 +360,7 @@ public class Consumer extends TimerTask {
         if ((type.getMaterial() != Material.SIGN && type.getMaterial() != Material.WALL_SIGN) || lines == null || lines.length != 4) {
             return;
         }
-        queueBlock(actor, loc, null, type, null, Utils.serializeYamlConfiguration(BlockStateCodecSign.serialize(lines)), null);
+        queueBlock(actor, loc, type, type, null, Utils.serializeYamlConfiguration(BlockStateCodecSign.serialize(lines)), null);
     }
 
     /**

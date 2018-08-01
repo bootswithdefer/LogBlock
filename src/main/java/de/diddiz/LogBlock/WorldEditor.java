@@ -200,6 +200,15 @@ public class WorldEditor implements Runnable {
                             throw new WorldEditorException("Not enough space left in " + block.getType(), block.getLocation());
                         }
                     }
+                } else if (BlockStateCodecs.hasCodec(replacedBlock.getMaterial())) {
+                    block.setBlockData(replacedBlock);
+                    state = block.getState();
+                    try {
+                        BlockStateCodecs.deserialize(state, replacedState);
+                        state.update();
+                    } catch (Exception e) {
+                        throw new WorldEditorException("Failed to restore blockstate of " + block.getType() + ": " + e, block.getLocation());
+                    }
                 } else if (!block.getBlockData().equals(replacedBlock)) {
                     block.setBlockData(replacedBlock);
                 } else {
