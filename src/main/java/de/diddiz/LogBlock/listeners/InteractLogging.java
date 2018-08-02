@@ -11,7 +11,6 @@ import org.bukkit.Note;
 import org.bukkit.Note.Tone;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.Bisected.Half;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Cake;
@@ -154,13 +153,6 @@ public class InteractLogging extends LoggingListener {
                             Door newBlockData = (Door) blockData.clone();
                             newBlockData.setOpen(!newBlockData.isOpen());
                             consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
-                            Block otherBlock = clicked.getRelative(newBlockData.getHalf() == Half.TOP ? BlockFace.DOWN : BlockFace.UP);
-                            if (otherBlock.getType() == type) {
-                                BlockData blockData2 = otherBlock.getBlockData();
-                                Door newBlockData2 = (Door) blockData2.clone();
-                                newBlockData2.setOpen(!newBlockData2.isOpen());
-                                consumer.queueBlock(Actor.actorFromEntity(player), otherBlock.getLocation(), blockData2, newBlockData2);
-                            }
                         }
                     }
             }
