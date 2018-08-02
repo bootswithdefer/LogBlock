@@ -221,7 +221,7 @@ public class WorldEditor implements Runnable {
                     bed2.setPart(bed.getPart() == Part.HEAD ? Part.FOOT : Part.HEAD);
                     secBlock.setBlockData(bed2);
                 }
-            } else if (newData instanceof Bisected) {
+            } else if (curtype == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(curtype) || BukkitUtils.isDoublePlant(curtype)) {
                 final Bisected firstPart = (Bisected) newData;
                 final Block secBlock = block.getRelative(firstPart.getHalf() == Half.TOP ? BlockFace.DOWN : BlockFace.UP);
                 if (secBlock.isEmpty()) {
