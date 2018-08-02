@@ -337,7 +337,11 @@ public class CommandsHandler implements CommandExecutor {
                         if (command.equals("lookup")) {
                             argsList.remove(0);
                         }
-                        new CommandLookup(sender, new QueryParams(logblock, sender, argsList), true);
+                        final QueryParams params = new QueryParams(logblock);
+                        params.since = defaultTime;
+                        params.bct = BlockChangeType.ALL;
+                        params.parseArgs(sender, argsList);
+                        new CommandLookup(sender, params, true);
                     } else {
                         sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
                     }
