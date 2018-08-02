@@ -28,6 +28,7 @@ public class MySQLConnectionPool implements Closeable {
         ds.addDataSourceProperty("cachePrepStmts", "true");
         ds.addDataSourceProperty("prepStmtCacheSize", "250");
         ds.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        ds.addDataSourceProperty("useServerPrepStmts", "true");
     }
 
     @Override
