@@ -158,17 +158,17 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-							<relocations>
-								<relocation>
-									<pattern>com.zaxxer.hikari</pattern>
-									<shadedPattern>de.diddiz.lib.com.zaxxer.hikari</shadedPattern>
-								</relocation>
-								<relocation>
-									<pattern>org.slf4j</pattern>
-									<shadedPattern>de.diddiz.lib.org.slf4j</shadedPattern>
-								</relocation>
-							</relocations>
-						</configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.zaxxer.hikari</pattern>
+                                    <shadedPattern>de.diddiz.lib.com.zaxxer.hikari</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.slf4j</pattern>
+                                    <shadedPattern>de.diddiz.lib.org.slf4j</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
