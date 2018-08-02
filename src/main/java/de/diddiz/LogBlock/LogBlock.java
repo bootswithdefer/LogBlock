@@ -117,21 +117,9 @@ public class LogBlock extends JavaPlugin {
         if (enableAutoClearLog && autoClearLogDelay > 0) {
             getServer().getScheduler().runTaskTimerAsynchronously(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
         }
-        getServer().getScheduler().runTaskAsynchronously(this, new DumpedLogImporter(this));
+        new DumpedLogImporter(this).run();
         registerEvents();
-        if (useBukkitScheduler) {
-            if (getServer().getScheduler().runTaskTimerAsynchronously(this, consumer, delayBetweenRuns < 20 ? 20 : delayBetweenRuns, delayBetweenRuns).getTaskId() > 0) {
-                getLogger().info("Scheduled consumer with bukkit scheduler.");
-            } else {
-                getLogger().warning("Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
-                timer = new Timer();
-                timer.schedule(consumer, delayBetweenRuns < 20 ? 1000 : delayBetweenRuns * 50, delayBetweenRuns * 50);
-            }
-        } else {
-            timer = new Timer();
-            timer.schedule(consumer, delayBetweenRuns < 20 ? 1000 : delayBetweenRuns * 50, delayBetweenRuns * 50);
-            getLogger().info("Scheduled consumer with timer.");
-        }
+        consumer.start();
         getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
         for (final Tool tool : toolsByType.values()) {
             if (pm.getPermission("logblock.tools." + tool.name) == null) {
@@ -227,25 +215,14 @@ public class LogBlock extends JavaPlugin {
                 }
             }
             getLogger().info("Waiting for consumer ...");
-            consumer.run();
+            consumer.shutdown();
             if (consumer.getQueueSize() > 0) {
-                int tries = 9;
-                while (consumer.getQueueSize() > 0) {
-                    getLogger().info("Remaining queue size: " + consumer.getQueueSize());
-                    if (tries > 0) {
-                        getLogger().info("Remaining tries: " + tries);
-                    } else {
-                        getLogger().info("Unable to save queue to database. Trying to write to a local file.");
-                        try {
-                            consumer.writeToFile();
-                            getLogger().info("Successfully dumped queue.");
-                        } catch (final FileNotFoundException ex) {
-                            getLogger().info("Failed to write. Given up.");
-                            break;
-                        }
-                    }
-                    consumer.run();
-                    tries--;
+                getLogger().info("Remaining queue size: " + consumer.getQueueSize() + ". Trying to write to a local file.");
+                try {
+                    consumer.writeToFile();
+                    getLogger().info("Successfully dumped queue.");
+                } catch (final FileNotFoundException ex) {
+                    getLogger().info("Failed to write. Given up.");
                 }
             }
         }

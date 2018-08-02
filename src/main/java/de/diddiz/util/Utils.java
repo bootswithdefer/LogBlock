@@ -220,6 +220,13 @@ public class Utils {
         return new String(hexChars);
     }
 
+    public static String mysqlPrepareBytesForInsertAllowNull(byte[] bytes) {
+        if (bytes == null) {
+            return "null";
+        }
+        return "'" + mysqlEscapeBytes(bytes) + "'";
+    }
+
     public static String mysqlTextEscape(String untrusted) {
         return untrusted.replace("\\", "\\\\").replace("'", "\\'");
     }
