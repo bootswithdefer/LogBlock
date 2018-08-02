@@ -46,6 +46,7 @@ public class BukkitUtils {
     private static final EnumSet<Material> buttons;
     private static final EnumSet<Material> pressurePlates;
     private static final EnumSet<Material> woodenDoors;
+    private static final EnumSet<Material> slabs;
 
     static {
         pressurePlates = EnumSet.noneOf(Material.class);
@@ -93,7 +94,7 @@ public class BukkitUtils {
         carpets.add(Material.WHITE_CARPET);
         carpets.add(Material.YELLOW_CARPET);
 
-        EnumSet<Material> slabs = EnumSet.noneOf(Material.class);
+        slabs = EnumSet.noneOf(Material.class);
         slabs.add(Material.OAK_SLAB);
         slabs.add(Material.SPRUCE_SLAB);
         slabs.add(Material.BIRCH_SLAB);
@@ -564,7 +565,7 @@ public class BukkitUtils {
         if (canDirectlyFallIn(mat)) {
             return true;
         } else if (getFallingEntityKillers().contains(mat) || singleBlockPlants.contains(mat) || mat == Material.VINE) {
-            if (Tag.SLABS.isTagged(mat)) {
+            if (slabs.contains(mat)) {
                 if (((Slab) block.getBlockData()).getType() != Type.BOTTOM) {
                     return false;
                 }
