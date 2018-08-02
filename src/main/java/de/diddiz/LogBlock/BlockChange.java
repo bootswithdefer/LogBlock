@@ -7,9 +7,14 @@ import de.diddiz.util.Utils;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Note;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.Powerable;
+import org.bukkit.block.data.type.Comparator;
+import org.bukkit.block.data.type.DaylightDetector;
+import org.bukkit.block.data.type.NoteBlock;
+import org.bukkit.block.data.type.Repeater;
 import org.bukkit.block.data.type.Switch;
 import org.bukkit.inventory.ItemStack;
 
@@ -100,7 +105,7 @@ public class BlockChange implements LookupCacheElement {
         if (actor != null) {
             msg.append(actor.getName()).append(" ");
         }
-        if (type.equals(replaced)) {
+        if (type.getMaterial().equals(replaced.getMaterial())) {
             if (BukkitUtils.isEmpty(type.getMaterial())) {
                 msg.append("did an unspecified action");
             } else if (ca != null) {
@@ -117,13 +122,20 @@ public class BlockChange implements LookupCacheElement {
                 // Door, Trapdoor, Fence gate
                 msg.append(((Openable)type).isOpen() ? "opened" : "closed").append(" ").append(type.getMaterial().name());
             } else if (type.getMaterial() == Material.LEVER) {
-                msg.append("switched ").append(type.getMaterial().name());
+                msg.append("switched ").append(type.getMaterial().name()).append(" ").append(((Switch) type).isPowered() ? "on" : "off");
             } else if (type instanceof Switch) {
                 msg.append("pressed ").append(type.getMaterial().name());
             } else if (type.getMaterial() == Material.CAKE) {
                 msg.append("ate a piece of ").append(type.getMaterial().name());
-            } else if (type.getMaterial() == Material.NOTE_BLOCK || type.getMaterial() == Material.REPEATER || type.getMaterial() == Material.COMPARATOR || type.getMaterial() == Material.DAYLIGHT_DETECTOR) {
-                msg.append("changed ").append(type.getMaterial().name());
+            } else if (type.getMaterial() == Material.NOTE_BLOCK) {
+                Note note = ((NoteBlock) type).getNote();
+                msg.append("set ").append(type.getMaterial().name()).append(" to ").append(note.getTone().name()).append(note.isSharped() ? "#" : "");
+            } else if (type.getMaterial() == Material.REPEATER) {
+                msg.append("set ").append(type.getMaterial().name()).append(" to ").append(((Repeater) type).getDelay()).append(" ticks delay");
+            } else if (type.getMaterial() == Material.COMPARATOR) {
+                msg.append("set ").append(type.getMaterial().name()).append(" to ").append(((Comparator) type).getMode());
+            } else if (type.getMaterial() == Material.DAYLIGHT_DETECTOR) {
+                msg.append("set ").append(type.getMaterial().name()).append(" to ").append(((DaylightDetector) type).isInverted() ? "inverted" : "normal");
             } else if (type instanceof Powerable) {
                 msg.append("stepped on ").append(type.getMaterial().name());
             } else if (type.getMaterial() == Material.TRIPWIRE) {

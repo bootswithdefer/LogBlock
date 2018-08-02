@@ -43,9 +43,12 @@ public class BukkitUtils {
     private static final Set<Material> bedBlocks;
 
     private static final Map<EntityType, Material> projectileItems;
+    private static final EnumSet<Material> buttons;
+    private static final EnumSet<Material> pressurePlates;
+    private static final EnumSet<Material> woodenDoors;
 
     static {
-        EnumSet<Material> pressurePlates = EnumSet.noneOf(Material.class);
+        pressurePlates = EnumSet.noneOf(Material.class);
         pressurePlates.add(Material.OAK_PRESSURE_PLATE);
         pressurePlates.add(Material.SPRUCE_PRESSURE_PLATE);
         pressurePlates.add(Material.BIRCH_PRESSURE_PLATE);
@@ -55,6 +58,14 @@ public class BukkitUtils {
         pressurePlates.add(Material.STONE_PRESSURE_PLATE);
         pressurePlates.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
         pressurePlates.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
+
+        woodenDoors = EnumSet.noneOf(Material.class);
+        woodenDoors.add(Material.OAK_DOOR);
+        woodenDoors.add(Material.SPRUCE_DOOR);
+        woodenDoors.add(Material.BIRCH_DOOR);
+        woodenDoors.add(Material.JUNGLE_DOOR);
+        woodenDoors.add(Material.ACACIA_DOOR);
+        woodenDoors.add(Material.DARK_OAK_DOOR);
 
         EnumSet<Material> saplings = EnumSet.noneOf(Material.class);
         saplings.add(Material.OAK_SAPLING);
@@ -103,6 +114,15 @@ public class BukkitUtils {
         slabs.add(Material.DARK_PRISMARINE_SLAB);
         slabs.add(Material.PRISMARINE_BRICK_SLAB);
 
+        buttons = EnumSet.noneOf(Material.class);
+        buttons.add(Material.STONE_BUTTON);
+        buttons.add(Material.OAK_BUTTON);
+        buttons.add(Material.SPRUCE_BUTTON);
+        buttons.add(Material.BIRCH_BUTTON);
+        buttons.add(Material.JUNGLE_BUTTON);
+        buttons.add(Material.ACACIA_BUTTON);
+        buttons.add(Material.DARK_OAK_BUTTON);
+
         singleBlockPlants = EnumSet.noneOf(Material.class);
         singleBlockPlants.add(Material.GRASS);
         singleBlockPlants.add(Material.FERN);
@@ -142,13 +162,7 @@ public class BukkitUtils {
         relativeBreakable = EnumSet.noneOf(Material.class);
         relativeBreakable.add(Material.WALL_SIGN);
         relativeBreakable.add(Material.LADDER);
-        relativeBreakable.add(Material.STONE_BUTTON);
-        relativeBreakable.add(Material.OAK_BUTTON);
-        relativeBreakable.add(Material.SPRUCE_BUTTON);
-        relativeBreakable.add(Material.BIRCH_BUTTON);
-        relativeBreakable.add(Material.JUNGLE_BUTTON);
-        relativeBreakable.add(Material.ACACIA_BUTTON);
-        relativeBreakable.add(Material.DARK_OAK_BUTTON);
+        relativeBreakable.addAll(buttons);
         relativeBreakable.add(Material.REDSTONE_WALL_TORCH);
         relativeBreakable.add(Material.LEVER);
         relativeBreakable.add(Material.WALL_TORCH);
@@ -180,12 +194,7 @@ public class BukkitUtils {
         relativeTopBreakable.add(Material.WALL_TORCH);
         relativeTopBreakable.add(Material.REDSTONE_TORCH);
         relativeTopBreakable.add(Material.REDSTONE_WALL_TORCH);
-        relativeTopBreakable.add(Material.OAK_DOOR);
-        relativeTopBreakable.add(Material.SPRUCE_DOOR);
-        relativeTopBreakable.add(Material.BIRCH_DOOR);
-        relativeTopBreakable.add(Material.JUNGLE_DOOR);
-        relativeTopBreakable.add(Material.ACACIA_DOOR);
-        relativeTopBreakable.add(Material.DARK_OAK_DOOR);
+        relativeTopBreakable.addAll(woodenDoors);
         relativeTopBreakable.add(Material.IRON_DOOR);
         relativeTopBreakable.addAll(carpets);
         relativeTopBreakable.addAll(doublePlants);
@@ -575,6 +584,14 @@ public class BukkitUtils {
     
     public static boolean isDoublePlant(Material m) {
         return doublePlants.contains(m);
+    }
+
+    public static boolean isWoodenDoor(Material m) {
+        return woodenDoors.contains(m);
+    }
+
+    public static boolean isButton(Material m) {
+        return buttons.contains(m);
     }
 
     public static boolean isEmpty(Material m) {
