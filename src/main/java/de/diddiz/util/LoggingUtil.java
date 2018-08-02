@@ -6,7 +6,6 @@ import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -112,14 +111,14 @@ public class LoggingUtil {
         if (BukkitUtils.getRelativeTopBreakabls().contains(checkBlock.getType())) {
             if (wcfg.isLogging(Logging.SIGNTEXT) && checkBlock.getType() == Material.SIGN) {
                 consumer.queueSignBreak(actor, (Sign) checkBlock.getState());
-            } else if (checkBlock.getType() == Material.IRON_DOOR || Tag.WOODEN_DOORS.isTagged(checkBlock.getType())) {
+            } else if (checkBlock.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(checkBlock.getType())) {
                 Block doorBlock = checkBlock;
                 // If the doorBlock is the top half a door the player simply punched a door
                 // this will be handled later.
                 if (!BukkitUtils.isTop(doorBlock.getBlockData())) {
                     doorBlock = doorBlock.getRelative(BlockFace.UP);
                     // Fall back check just in case the top half wasn't a door
-                    if (doorBlock.getType() == Material.IRON_DOOR || Tag.WOODEN_DOORS.isTagged(doorBlock.getType())) {
+                    if (doorBlock.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(doorBlock.getType())) {
                         consumer.queueBlockBreak(actor, doorBlock.getState());
                     }
                     consumer.queueBlockBreak(actor, checkBlock.getState());
@@ -159,7 +158,7 @@ public class LoggingUtil {
         }
 
         // Special door check
-        if (origin.getType() == Material.IRON_DOOR || Tag.WOODEN_DOORS.isTagged(origin.getType())) {
+        if (origin.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(origin.getType())) {
             Block doorBlock = origin;
 
             // Up or down?
@@ -169,7 +168,7 @@ public class LoggingUtil {
                 doorBlock = doorBlock.getRelative(BlockFace.DOWN);
             }
 
-            if (doorBlock.getType() == Material.IRON_DOOR || Tag.WOODEN_DOORS.isTagged(doorBlock.getType())) {
+            if (doorBlock.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(doorBlock.getType())) {
                 consumer.queueBlockBreak(actor, doorBlock.getState());
             }
         } else if (BukkitUtils.isDoublePlant(origin.getType())) { // Special double plant check
