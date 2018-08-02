@@ -120,7 +120,7 @@ public class Config {
         def.put("tools.tool.defaultEnabled", true);
         def.put("tools.tool.item", Material.WOODEN_PICKAXE.name());
         def.put("tools.tool.canDrop", true);
-        def.put("tools.tool.params", "area 0 all sum none limit 15 desc silent");
+        def.put("tools.tool.params", "area 0 all sum none limit 15 desc since 60d silent");
         def.put("tools.tool.mode", "LOOKUP");
         def.put("tools.tool.permissionDefault", "OP");
         def.put("tools.toolblock.aliases", Arrays.asList("tb"));
@@ -129,7 +129,7 @@ public class Config {
         def.put("tools.toolblock.defaultEnabled", true);
         def.put("tools.toolblock.item", Material.BEDROCK.name());
         def.put("tools.toolblock.canDrop", false);
-        def.put("tools.toolblock.params", "area 0 all sum none limit 15 desc silent");
+        def.put("tools.toolblock.params", "area 0 all sum none limit 15 desc since 60d silent");
         def.put("tools.toolblock.mode", "LOOKUP");
         def.put("tools.toolblock.permissionDefault", "OP");
         def.put("safety.id.check", true);
