@@ -32,26 +32,37 @@ public class DumpedLogImporter implements Runnable {
                 final Statement st = conn.createStatement();
                 final BufferedWriter writer = new BufferedWriter(new FileWriter(new File(logblock.getDataFolder(), "import/failed.txt")));
                 int successes = 0, errors = 0;
-                for (final File sqlFile : imports) {
-                    logblock.getLogger().info("Trying to import " + sqlFile.getName() + " ...");
-                    final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
+                try {
+                    for (final File sqlFile : imports) {
+                        String line = null;
                         try {
-                            st.execute(line);
-                            successes++;
+                            logblock.getLogger().info("Trying to import " + sqlFile.getName() + " ...");
+                            final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
+                            while ((line = reader.readLine()) != null) {
+                                if (line.endsWith(";")) {
+                                    line = line.substring(0, line.length() - 1);
+                                }
+                                if(!line.isEmpty()) {
+                                    st.addBatch(line);
+                                    successes++;
+                                }
+                            }
+                            st.executeBatch();
+                            conn.commit();
+                            reader.close();
+                            sqlFile.delete();
+                            logblock.getLogger().info("Successfully imported " + sqlFile.getName() + ".");
                         } catch (final Exception ex) {
                             logblock.getLogger().warning("Error while importing: '" + line + "': " + ex.getMessage());
                             writer.write(line + newline);
                             errors++;
+                            ex.printStackTrace();
+                            return;
                         }
                     }
-                    conn.commit();
-                    reader.close();
-                    sqlFile.delete();
-                    logblock.getLogger().info("Successfully imported " + sqlFile.getName() + ".");
+                } finally {
+                    writer.close();
                 }
-                writer.close();
                 st.close();
                 logblock.getLogger().info("Successfully imported stored queue. (" + successes + " rows imported, " + errors + " errors)");
             } catch (final Exception ex) {
