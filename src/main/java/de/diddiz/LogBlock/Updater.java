@@ -493,7 +493,6 @@ class Updater {
                                 deleteStatement.executeBatch();
                             }
                             conn.commit();
-                            logblock.getConsumer().run(); // force a consumer run to save new material mappings
                             logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                         }
                         insertStatement.close();
@@ -592,7 +591,6 @@ class Updater {
                                 if (anyUpdate) {
                                     updateWeaponStatement.executeBatch();
                                     conn.commit();
-                                    logblock.getConsumer().run(); // force a consumer run to save new material mappings
                                 }
                                 logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                                 if (!anyRow) {
