@@ -73,11 +73,9 @@ public class Consumer extends Thread {
      * @param loc
      *            Location of the block change
      * @param typeBefore
-     *            Type of the block before the change
+     *            BlockData of the block before the change
      * @param typeAfter
-     *            Type of the block after the change
-     * @param data
-     *            Data of the block after the change
+     *            BlockData of the block after the change
      */
     public void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter) {
         queueBlock(actor, loc, typeBefore, typeAfter, null, null, null);
@@ -89,7 +87,7 @@ public class Consumer extends Thread {
      * @param actor
      *            Actor responsible for breaking the block
      * @param before
-     *            Blockstate of the block before actually being destroyed.
+     *            BlockState of the block before actually being destroyed.
      */
     public void queueBlockBreak(Actor actor, BlockState before) {
         queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), null, BlockStateCodecs.serialize(before), null, null);
@@ -103,9 +101,7 @@ public class Consumer extends Thread {
      * @param loc
      *            Location of the broken block
      * @param typeBefore
-     *            Type of the block before the break
-     * @param dataBefore
-     *            Data of the block before the break
+     *            BlockData of the block before the break
      */
     public void queueBlockBreak(Actor actor, Location loc, BlockData typeBefore) {
         queueBlock(actor, loc, typeBefore, null);
@@ -117,7 +113,7 @@ public class Consumer extends Thread {
      * @param actor
      *            Actor responsible for placing the block
      * @param after
-     *            Blockstate of the block after actually being placed.
+     *            BlockState of the block after actually being placed.
      */
     public void queueBlockPlace(Actor actor, BlockState after) {
         queueBlock(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), null, after.getBlockData(), null, BlockStateCodecs.serialize(after), null);
@@ -131,9 +127,7 @@ public class Consumer extends Thread {
      * @param loc
      *            Location of the placed block
      * @param type
-     *            Type of the placed block
-     * @param data
-     *            Data of the placed block
+     *            BlockData of the placed block
      */
     public void queueBlockPlace(Actor actor, Location loc, BlockData type) {
         queueBlock(actor, loc, null, type);
@@ -145,9 +139,9 @@ public class Consumer extends Thread {
      * @param actor
      *            Actor responsible for replacing the block
      * @param before
-     *            Blockstate of the block before actually being destroyed.
+     *            BlockState of the block before actually being destroyed.
      * @param after
-     *            Blockstate of the block after actually being placed.
+     *            BlockState of the block after actually being placed.
      */
     public void queueBlockReplace(Actor actor, BlockState before, BlockState after) {
         queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), after.getBlockData(), BlockStateCodecs.serialize(before), BlockStateCodecs.serialize(after), null);
@@ -159,11 +153,9 @@ public class Consumer extends Thread {
      * @param actor
      *            Actor responsible for replacing the block
      * @param before
-     *            Blockstate of the block before being replaced.
+     *            BlockState of the block before being replaced.
      * @param typeAfter
-     *            Type of the block after being replaced
-     * @param dataAfter
-     *            Data of the block after being replaced
+     *            BlockData of the block after being replaced
      */
     public void queueBlockReplace(Actor actor, BlockState before, BlockData typeAfter) {
         queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), typeAfter, BlockStateCodecs.serialize(before), null, null);
@@ -175,11 +167,9 @@ public class Consumer extends Thread {
      * @param actor
      *            Actor responsible for replacing the block
      * @param typeBefore
-     *            Type of the block before being replaced
-     * @param dataBefore
-     *            Data of the block before being replaced
+     *            BlockData of the block before being replaced
      * @param after
-     *            Blockstate of the block after actually being placed.
+     *            BlockState of the block after actually being placed.
      */
     public void queueBlockReplace(Actor actor, BlockData typeBefore, BlockState after) {
         queueBlock(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), typeBefore, after.getBlockData(), null, BlockStateCodecs.serialize(after), null);
@@ -196,12 +186,10 @@ public class Consumer extends Thread {
      *            The actor interacting with the container
      * @param container
      *            The respective container. Must be an instance of an InventoryHolder.
-     * @param itemType
-     *            Type of the item taken/stored
-     * @param itemAmount
-     *            Amount of the item taken/stored
-     * @param itemData
-     *            Data of the item taken/stored
+     * @param itemStack
+     *            Item taken/stored, including amount
+     * @param remove
+     *            true if the item was removed
      */
     public void queueChestAccess(Actor actor, BlockState container, ItemStack itemStack, boolean remove) {
         if (!(container instanceof InventoryHolder)) {
@@ -218,13 +206,11 @@ public class Consumer extends Thread {
      * @param loc
      *            The location of the container block
      * @param type
-     *            Type id of the container.
-     * @param itemType
-     *            Type of the item taken/stored
-     * @param itemAmount
-     *            Amount of the item taken/stored
-     * @param itemData
-     *            Data of the item taken/stored
+     *            BlockData of the container.
+     * @param itemStack
+     *            Item taken/stored, including amount
+     * @param remove
+     *            true if the item was removed
      */
     public void queueChestAccess(Actor actor, Location loc, BlockData type, ItemStack itemStack, boolean remove) {
         queueBlock(actor, loc, type, type, null, null, new ChestAccess(itemStack, remove, MaterialConverter.getOrAddMaterialId(itemStack.getType().getKey())));
@@ -253,9 +239,7 @@ public class Consumer extends Thread {
      * @param loc
      *            The location of the inventory block
      * @param type
-     *            The type of the container block
-     * @param data
-     *            The data of the container block
+     *            BlockData of the container block
      * @param inv
      *            The inventory of the container block
      */
@@ -319,7 +303,7 @@ public class Consumer extends Thread {
      * @param victim
      *            Victim Actor. Can't be null.
      * @param weapon
-     *            Item id of the weapon. 0 for no weapon.
+     *            Item of the weapon. null for no weapon.
      */
     public void queueKill(Location location, Actor killer, Actor victim, ItemStack weapon) {
         if (victim == null || !isLogged(location.getWorld())) {
@@ -336,11 +320,9 @@ public class Consumer extends Thread {
      * @param loc
      *            Location of the broken sign
      * @param type
-     *            Type of the sign. Must be 63 or 68.
-     * @param data
-     *            Data of the sign being broken
-     * @param lines
-     *            The four lines on the sign.
+     *            BlockData of the sign.
+     * @param typeState
+     *            Serialized text data of the sign
      */
     public void queueSignBreak(Actor actor, Location loc, BlockData type, byte[] typeState) {
         queueBlock(actor, loc, type, null, typeState, null, null);
@@ -366,9 +348,7 @@ public class Consumer extends Thread {
      * @param loc
      *            Location of the placed sign
      * @param type
-     *            Type of the sign. Must be 63 or 68.
-     * @param data
-     *            Data of the placed sign block
+     *            BlockData of the sign
      * @param lines
      *            The four lines on the sign.
      */
