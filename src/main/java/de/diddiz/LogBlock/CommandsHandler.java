@@ -834,7 +834,7 @@ public class CommandsHandler implements CommandExecutor {
                             return;
                         }
                     }
-                    state.execute("DELETE `" + table + "` FROM `" + table + "-blocks` " + join + params.getWhere());
+                    state.execute("DELETE `" + table + "-blocks` FROM `" + table + "-blocks` " + join + params.getWhere());
                     sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + ". Deleted " + deleted + " entries.");
                 }
                 rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-state` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL");
