@@ -24,7 +24,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 import java.util.logging.Level;
 
 import static de.diddiz.LogBlock.config.Config.*;
@@ -35,9 +34,7 @@ public class LogBlock extends JavaPlugin {
     private MySQLConnectionPool pool;
     private Consumer consumer = null;
     private CommandsHandler commandsHandler;
-    private Updater updater = null;
-    private Timer timer = null;
-    private boolean errorAtLoading = false, noDb = false, connected = true;
+    private boolean noDb = false, connected = true;
     private PlayerInfoLogging playerInfoLogging;
     private Questioner questioner;
     private volatile boolean isCompletelyEnabled;
@@ -58,20 +55,25 @@ public class LogBlock extends JavaPlugin {
         return commandsHandler;
     }
 
-    Updater getUpdater() {
-        return updater;
-    }
-
     @Override
-    public void onLoad() {
+    public void onEnable() {
         logblock = this;
+
+        BukkitUtils.isDoublePlant(Material.AIR); // Force static code to run
+        final PluginManager pm = getPluginManager();
+
         consumer = new Consumer(this);
         try {
-            updater = new Updater(this);
             Config.load(this);
+        } catch (final Exception ex) {
+            getLogger().log(Level.SEVERE, "Could not load LogBlock config! " + ex.getMessage());
+            pm.disablePlugin(this);
+            return;
+        }
+        try {
             getLogger().info("Connecting to " + user + "@" + url + "...");
             pool = new MySQLConnectionPool(url, user, password);
-            final Connection conn = getConnection();
+            final Connection conn = getConnection(true);
             if (conn == null) {
                 noDb = true;
                 return;
@@ -84,6 +86,7 @@ public class LogBlock extends JavaPlugin {
                 st.executeQuery("SET NAMES utf8mb4;");
             }
             conn.close();
+            Updater updater = new Updater(this);
             updater.checkTables();
             MaterialConverter.initializeMaterials(getConnection());
             MaterialConverter.getOrAddMaterialId(Material.AIR.getKey()); // AIR must be the first entry
@@ -94,22 +97,10 @@ public class LogBlock extends JavaPlugin {
             getLogger().log(Level.SEVERE, "Error while loading: ", ex);
         } catch (final Exception ex) {
             getLogger().log(Level.SEVERE, "Error while loading: " + ex.getMessage(), ex);
-            errorAtLoading = true;
-            return;
-        }
-    }
-
-    @Override
-    public void onEnable() {
-        BukkitUtils.isDoublePlant(Material.AIR); // Force static code to run
-        final PluginManager pm = getPluginManager();
-        if (errorAtLoading) {
             pm.disablePlugin(this);
             return;
         }
-        if (noDb) {
-            return;
-        }
+        
         if (pm.getPlugin("WorldEdit") != null) {
             if (Integer.parseInt(pm.getPlugin("WorldEdit").getDescription().getVersion().substring(0, 1)) > 5) {
                 new WorldEditLoggingHook(this).hook();
@@ -211,9 +202,6 @@ public class LogBlock extends JavaPlugin {
     @Override
     public void onDisable() {
         isCompletelyEnabled = false;
-        if (timer != null) {
-            timer.cancel();
-        }
         getServer().getScheduler().cancelTasks(this);
         if (consumer != null) {
             if (logPlayerInfo && playerInfoLogging != null) {
@@ -251,6 +239,10 @@ public class LogBlock extends JavaPlugin {
     }
 
     public Connection getConnection() {
+        return getConnection(false);
+    }
+
+    public Connection getConnection(boolean testConnection) {
         try {
             final Connection conn = pool.getConnection();
             if (!connected) {
@@ -259,7 +251,9 @@ public class LogBlock extends JavaPlugin {
             }
             return conn;
         } catch (final Exception ex) {
-            if (connected) {
+            if (testConnection) {
+                getLogger().log(Level.SEVERE, "Could not connect to the Database! Please check your config! " + ex.getMessage());
+            } else if (connected) {
                 getLogger().log(Level.SEVERE, "Error while fetching connection: ", ex);
                 connected = false;
             } else {

@@ -84,7 +84,12 @@ public class Config {
         def.put("consumer.queueWarningSize", 1000);
         def.put("clearlog.dumpDeletedLog", false);
         def.put("clearlog.enableAutoClearLog", false);
-        def.put("clearlog.auto", Arrays.asList("world \"world\" before 365 days all", "world \"world\" player lavaflow waterflow leavesdecay before 7 days all", "world world_nether before 365 days all", "world world_nether player lavaflow before 7 days all"));
+        final List<String> autoClearlog = new ArrayList<String>();
+        for (final String world : worldNames) {
+            autoClearlog.add("world \"" + world + "\" before 365 days all");
+            autoClearlog.add("world \"" + world + "\" player lavaflow waterflow leavesdecay before 7 days all");
+        }
+        def.put("clearlog.auto", autoClearlog);
         def.put("clearlog.autoClearLogDelay", "6h");
         def.put("logging.logBedExplosionsAsPlayerWhoTriggeredThese", true);
         def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
