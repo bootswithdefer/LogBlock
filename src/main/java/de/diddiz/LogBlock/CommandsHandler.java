@@ -144,7 +144,7 @@ public class CommandsHandler implements CommandExecutor {
                             if (args.length == 1) {
                                 if (logblock.hasPermission(player, "logblock.spawnTools")) {
                                     giveTool(player, tool.item);
-                                    session.toolData.get(tool).enabled = true;
+                                    toolData.enabled = true;
                                 } else {
                                     sender.sendMessage(ChatColor.RED + "You aren't allowed to do this.");
                                 }
@@ -153,7 +153,9 @@ public class CommandsHandler implements CommandExecutor {
                                 player.sendMessage(ChatColor.GREEN + "Tool enabled.");
                             } else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
                                 toolData.enabled = false;
-                                player.getInventory().removeItem(new ItemStack(tool.item, 1));
+                                if (logblock.hasPermission(player, "logblock.spawnTools")) {
+                                    player.getInventory().removeItem(new ItemStack(tool.item, 1));
+                                }
                                 player.sendMessage(ChatColor.GREEN + "Tool disabled.");
                             } else if (args[1].equalsIgnoreCase("mode")) {
                                 if (args.length == 3) {
