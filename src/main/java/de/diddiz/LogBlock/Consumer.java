@@ -61,10 +61,8 @@ public class Consumer extends Thread {
 
     Consumer(LogBlock logblock) {
         this.logblock = logblock;
-        try {
-            Class.forName("PlayerLeaveRow");
-        } catch (final ClassNotFoundException ex) {
-        }
+        PlayerLeaveRow.class.getName(); // preload this class
+        setName("Logblock-Consumer");
     }
 
     /**
