@@ -58,7 +58,7 @@ public final class QueryParams implements Cloneable {
     public List<String> players = new ArrayList<String>();
     public List<String> killers = new ArrayList<String>();
     public List<String> victims = new ArrayList<String>();
-    public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, excludeBlocksMode = false, prepareToolQuery = false, silent = false;
+    public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, excludeBlocksMode = false, prepareToolQuery = false, silent = false, noForcedLimit = false;
     public CuboidRegion sel = null;
     public SummarizationMode sum = SummarizationMode.NONE;
     public List<Material> types = new ArrayList<Material>();
@@ -87,7 +87,7 @@ public final class QueryParams implements Cloneable {
     }
 
     public String getLimit() {
-        if (Config.hardLinesLimit <= 0 || (limit > 0 && limit <= Config.hardLinesLimit)) {
+        if (noForcedLimit || Config.hardLinesLimit <= 0 || (limit > 0 && limit <= Config.hardLinesLimit)) {
             return limit > 0 ? "LIMIT " + limit : "";
         }
         return "LIMIT " + Config.hardLinesLimit;
