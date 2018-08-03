@@ -100,7 +100,9 @@ public class ToolListener implements Listener {
                 final ToolData toolData = entry.getValue();
                 if (toolData.enabled && !logblock.hasPermission(player, "logblock.tools." + tool.name)) {
                     toolData.enabled = false;
-                    player.getInventory().removeItem(new ItemStack(tool.item, 1));
+                    if (tool.removeOnDisable && logblock.hasPermission(player, "logblock.spawnTools")) {
+                        player.getInventory().removeItem(new ItemStack(tool.item, 1));
+                    }
                     player.sendMessage(ChatColor.GREEN + "Tool disabled.");
                 }
             }
@@ -116,9 +118,26 @@ public class ToolListener implements Listener {
                 final Tool tool = entry.getKey();
                 final ToolData toolData = entry.getValue();
                 final Material item = event.getItemDrop().getItemStack().getType();
-                if (item == tool.item && toolData.enabled && !tool.canDrop) {
-                    player.sendMessage(ChatColor.RED + "You cannot drop this tool.");
-                    event.setCancelled(true);
+                if (item == tool.item && toolData.enabled) {
+                    if (tool.dropToDisable) {
+                        toolData.enabled = false;
+                        if (tool.removeOnDisable && logblock.hasPermission(player, "logblock.spawnTools")) {
+                            ItemStack stack = event.getItemDrop().getItemStack();
+                            if (stack.isSimilar(new ItemStack(item))) {
+                                if (stack.getAmount() > 1) {
+                                    stack.setAmount(stack.getAmount() - 1);
+                                    event.getItemDrop().setItemStack(stack);
+                                } else {
+                                    event.getItemDrop().remove();
+                                }
+                            }
+                        }
+                        event.setCancelled(true);
+                        player.sendMessage(ChatColor.GREEN + "Tool disabled.");
+                    } else if (!tool.canDrop) {
+                        player.sendMessage(ChatColor.RED + "You cannot drop this tool.");
+                        event.setCancelled(true);
+                    }
                 }
             }
         }

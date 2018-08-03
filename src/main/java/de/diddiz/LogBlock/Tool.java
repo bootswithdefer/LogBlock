@@ -16,8 +16,9 @@ public class Tool {
     public final ToolMode mode;
     public final PermissionDefault permissionDefault;
     public final boolean removeOnDisable;
+    public final boolean dropToDisable;
 
-    public Tool(String name, List<String> aliases, ToolBehavior leftClickBehavior, ToolBehavior rightClickBehavior, boolean defaultEnabled, Material item, boolean canDrop, QueryParams params, ToolMode mode, PermissionDefault permissionDefault, boolean removeOnDisable) {
+    public Tool(String name, List<String> aliases, ToolBehavior leftClickBehavior, ToolBehavior rightClickBehavior, boolean defaultEnabled, Material item, boolean canDrop, QueryParams params, ToolMode mode, PermissionDefault permissionDefault, boolean removeOnDisable, boolean dropToDisable) {
         this.name = name;
         this.aliases = aliases;
         this.leftClickBehavior = leftClickBehavior;
@@ -29,5 +30,6 @@ public class Tool {
         this.mode = mode;
         this.permissionDefault = permissionDefault;
         this.removeOnDisable = removeOnDisable;
+        this.dropToDisable = dropToDisable;
     }
 }
