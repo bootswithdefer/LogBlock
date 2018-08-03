@@ -825,7 +825,9 @@ class Updater {
                 st.close();
                 conn.close();
             } catch (final SQLException ex) {
-                logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                if (logblock.isCompletelyEnabled()) {
+                    logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                }
             }
         }
     }

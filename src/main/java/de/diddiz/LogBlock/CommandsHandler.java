@@ -426,7 +426,9 @@ public class CommandsHandler implements CommandExecutor {
                     rs.close();
                 }
             } catch (final SQLException ex) {
-                logblock.getLogger().log(Level.SEVERE, "[CommandsHandler] SQL exception on close", ex);
+                if (logblock.isCompletelyEnabled()) {
+                    logblock.getLogger().log(Level.SEVERE, "[CommandsHandler] SQL exception on close", ex);
+                }
             }
         }
     }
@@ -490,8 +492,10 @@ public class CommandsHandler implements CommandExecutor {
                     getSession(sender).lookupCache = null;
                 }
             } catch (final Exception ex) {
-                sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                logblock.getLogger().log(Level.SEVERE, "[Lookup] " + params.getQuery() + ": ", ex);
+                if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
+                    sender.sendMessage(ChatColor.RED + "Exception, check error log");
+                    logblock.getLogger().log(Level.SEVERE, "[Lookup] " + params.getQuery() + ": ", ex);
+                }
             } finally {
                 close();
             }
@@ -546,8 +550,10 @@ public class CommandsHandler implements CommandExecutor {
                 writer.close();
                 sender.sendMessage(ChatColor.GREEN + "Wrote " + counter + " lines.");
             } catch (final Exception ex) {
-                sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                logblock.getLogger().log(Level.SEVERE, "[WriteLogFile] " + params.getQuery() + " (file was " + file.getAbsolutePath() + "): ", ex);
+                if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
+                    sender.sendMessage(ChatColor.RED + "Exception, check error log");
+                    logblock.getLogger().log(Level.SEVERE, "[WriteLogFile] " + params.getQuery() + " (file was " + file.getAbsolutePath() + "): ", ex);
+                }
             } finally {
                 close();
             }
@@ -606,8 +612,10 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.RED + "No block change found to teleport to");
                 }
             } catch (final Exception ex) {
-                sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                logblock.getLogger().log(Level.SEVERE, "[Teleport] " + params.getQuery() + ": ", ex);
+                if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
+                    sender.sendMessage(ChatColor.RED + "Exception, check error log");
+                    logblock.getLogger().log(Level.SEVERE, "[Teleport] " + params.getQuery() + ": ", ex);
+                }
             } finally {
                 close();
             }
@@ -693,8 +701,10 @@ public class CommandsHandler implements CommandExecutor {
                     }
                 }
             } catch (final Exception ex) {
-                sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                logblock.getLogger().log(Level.SEVERE, "[Rollback] " + params.getQuery() + ": ", ex);
+                if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
+                    sender.sendMessage(ChatColor.RED + "Exception, check error log");
+                    logblock.getLogger().log(Level.SEVERE, "[Rollback] " + params.getQuery() + ": ", ex);
+                }
             } finally {
                 close();
             }
@@ -766,8 +776,10 @@ public class CommandsHandler implements CommandExecutor {
                 editor.start();
                 sender.sendMessage(ChatColor.GREEN + "Redo finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
             } catch (final Exception ex) {
-                sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                logblock.getLogger().log(Level.SEVERE, "[Redo] " + params.getQuery() + ": ", ex);
+                if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
+                    sender.sendMessage(ChatColor.RED + "Exception, check error log");
+                    logblock.getLogger().log(Level.SEVERE, "[Redo] " + params.getQuery() + ": ", ex);
+                }
             } finally {
                 close();
             }
@@ -841,8 +853,10 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-chestdata. Deleted " + deleted + " entries.");
                 }
             } catch (final Exception ex) {
-                sender.sendMessage(ChatColor.RED + "Exception, check error log");
-                logblock.getLogger().log(Level.SEVERE, "[ClearLog] Exception: ", ex);
+                if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
+                    sender.sendMessage(ChatColor.RED + "Exception, check error log");
+                    logblock.getLogger().log(Level.SEVERE, "[ClearLog] Exception: ", ex);
+                }
             } finally {
                 close();
             }

@@ -40,9 +40,14 @@ public class LogBlock extends JavaPlugin {
     private boolean errorAtLoading = false, noDb = false, connected = true;
     private PlayerInfoLogging playerInfoLogging;
     private Questioner questioner;
+    private volatile boolean isCompletelyEnabled;
 
     public static LogBlock getInstance() {
         return logblock;
+    }
+
+    public boolean isCompletelyEnabled() {
+        return isCompletelyEnabled;
     }
 
     public Consumer getConsumer() {
@@ -120,7 +125,6 @@ public class LogBlock extends JavaPlugin {
         new DumpedLogImporter(this).run();
         registerEvents();
         consumer.start();
-        getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
         for (final Tool tool : toolsByType.values()) {
             if (pm.getPermission("logblock.tools." + tool.name) == null) {
                 final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
@@ -128,6 +132,8 @@ public class LogBlock extends JavaPlugin {
             }
         }
         questioner = new Questioner(this);
+        isCompletelyEnabled = true;
+        getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
         try {
             Metrics metrics = new Metrics(this);
             metrics.start();
@@ -204,6 +210,7 @@ public class LogBlock extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        isCompletelyEnabled = false;
         if (timer != null) {
             timer.cancel();
         }
