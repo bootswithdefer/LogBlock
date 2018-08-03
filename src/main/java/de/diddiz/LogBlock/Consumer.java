@@ -53,6 +53,7 @@ public class Consumer extends Thread {
     private final Set<Actor> failedPlayers = new HashSet<Actor>();
     private final LogBlock logblock;
     private final Map<Actor, Integer> playerIds = new HashMap<Actor, Integer>();
+    private final Map<Actor, Integer> uncommitedPlayerIds = new HashMap<Actor, Integer>();
     private long addEntryCounter;
     private long nextWarnCounter;
 
@@ -470,7 +471,7 @@ public class Consumer extends Thread {
                 if (r != null) {
                     boolean failOnActors = false;
                     for (final Actor actor : r.getActors()) {
-                        if (!playerIds.containsKey(actor)) {
+                        if (playerIDAsIntIncludeUncommited(actor) == null) {
                             if (!addPlayer(conn, actor)) {
                                 if (failedPlayers.add(actor)) {
                                     logblock.getLogger().warning("[Consumer] Failed to add player " + actor.getName());
@@ -488,6 +489,8 @@ public class Consumer extends Thread {
                     batchHelper.processStatements(conn);
                     conn.commit();
                     currentRows.clear();
+                    playerIds.putAll(uncommitedPlayerIds);
+                    uncommitedPlayerIds.clear();
                 }
             } catch (Exception e) {
                 logblock.getLogger().log(Level.SEVERE, "[Consumer] Could not insert entries!", e);
@@ -507,6 +510,7 @@ public class Consumer extends Thread {
                 }
                 currentRows.clear();
                 batchHelper.reset();
+                uncommitedPlayerIds.clear();
                 if (conn != null) {
                     try {
                         conn.close();
@@ -622,11 +626,11 @@ public class Consumer extends Thread {
         state.execute("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(name) + "','" + uuid + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + uuid + "') LIMIT 1;");
         final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE UUID = '" + uuid + "'");
         if (rs.next()) {
-            playerIds.put(actor, rs.getInt(1));
+            uncommitedPlayerIds.put(actor, rs.getInt(1));
         }
         rs.close();
         state.close();
-        return playerIds.containsKey(actor);
+        return uncommitedPlayerIds.containsKey(actor);
     }
 
     private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, byte[] stateBefore, byte[] stateAfter, ChestAccess ca) {
@@ -678,11 +682,15 @@ public class Consumer extends Thread {
         return "(SELECT playerid FROM `lb-players` WHERE UUID = '" + actor.getUUID() + "')";
     }
 
-    private Integer playerIDAsInt(Actor actor) {
+    private Integer playerIDAsIntIncludeUncommited(Actor actor) {
         if (actor == null) {
             return null;
         }
-        return playerIds.get(actor);
+        Integer id = playerIds.get(actor);
+        if (id != null) {
+            return id;
+        }
+        return uncommitedPlayerIds.get(actor);
     }
 
     private static interface Row {
@@ -727,7 +735,7 @@ public class Consumer extends Thread {
         public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
             PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.RETURN_GENERATED_KEYS);
             smt.setLong(1, date);
-            smt.setInt(2, playerIDAsInt(actor));
+            smt.setInt(2, playerIDAsIntIncludeUncommited(actor));
             smt.setInt(3, replacedMaterial);
             smt.setInt(4, replacedData);
             smt.setInt(5, typeMaterial);
@@ -792,8 +800,8 @@ public class Consumer extends Thread {
         public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
             PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
             smt.setLong(1, date);
-            smt.setInt(2, playerIDAsInt(killer));
-            smt.setInt(3, playerIDAsInt(victim));
+            smt.setInt(2, playerIDAsIntIncludeUncommited(killer));
+            smt.setInt(3, playerIDAsIntIncludeUncommited(victim));
             smt.setInt(4, weapon);
             smt.setInt(5, loc.getBlockX());
             smt.setInt(6, safeY(loc));
@@ -825,7 +833,7 @@ public class Consumer extends Thread {
         public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
             PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
             smt.setLong(1, date);
-            smt.setInt(2, playerIDAsInt(player));
+            smt.setInt(2, playerIDAsIntIncludeUncommited(player));
             smt.setString(3, message);
             batchHelper.addBatch(smt, null);
         }
