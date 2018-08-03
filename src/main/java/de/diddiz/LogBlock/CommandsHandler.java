@@ -153,7 +153,7 @@ public class CommandsHandler implements CommandExecutor {
                                 player.sendMessage(ChatColor.GREEN + "Tool enabled.");
                             } else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
                                 toolData.enabled = false;
-                                if (logblock.hasPermission(player, "logblock.spawnTools")) {
+                                if (tool.removeOnDisable && logblock.hasPermission(player, "logblock.spawnTools")) {
                                     player.getInventory().removeItem(new ItemStack(tool.item, 1));
                                 }
                                 player.sendMessage(ChatColor.GREEN + "Tool disabled.");

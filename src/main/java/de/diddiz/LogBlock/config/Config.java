@@ -126,6 +126,7 @@ public class Config {
         def.put("tools.tool.defaultEnabled", true);
         def.put("tools.tool.item", Material.WOODEN_PICKAXE.name());
         def.put("tools.tool.canDrop", true);
+        def.put("tools.tool.removeOnDisable", true);
         def.put("tools.tool.params", "area 0 all sum none limit 15 desc since 60d silent");
         def.put("tools.tool.mode", "LOOKUP");
         def.put("tools.tool.permissionDefault", "OP");
@@ -135,6 +136,7 @@ public class Config {
         def.put("tools.toolblock.defaultEnabled", true);
         def.put("tools.toolblock.item", Material.BEDROCK.name());
         def.put("tools.toolblock.canDrop", false);
+        def.put("tools.toolblock.removeOnDisable", true);
         def.put("tools.toolblock.params", "area 0 all sum none limit 15 desc since 60d silent");
         def.put("tools.toolblock.mode", "LOOKUP");
         def.put("tools.toolblock.permissionDefault", "OP");
@@ -233,12 +235,13 @@ public class Config {
                 final boolean defaultEnabled = tSec.getBoolean("defaultEnabled", false);
                 final Material item = Material.matchMaterial(tSec.getString("item","OAK_LOG"));
                 final boolean canDrop = tSec.getBoolean("canDrop", false);
+                final boolean removeOnDisable = tSec.getBoolean("removeOnDisable", true);
                 final QueryParams params = new QueryParams(logblock);
                 params.prepareToolQuery = true;
                 params.parseArgs(getConsoleSender(), Arrays.asList(tSec.getString("params").split(" ")), false);
                 final ToolMode mode = ToolMode.valueOf(tSec.getString("mode").toUpperCase());
                 final PermissionDefault pdef = PermissionDefault.valueOf(tSec.getString("permissionDefault").toUpperCase());
-                tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, canDrop, params, mode, pdef));
+                tools.add(new Tool(toolName, aliases, leftClickBehavior, rightClickBehavior, defaultEnabled, item, canDrop, params, mode, pdef, removeOnDisable));
             } catch (final Exception ex) {
                 getLogger().log(Level.WARNING, "Error at parsing tool '" + toolName + "': ", ex);
             }
