@@ -16,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipException;
 
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -258,6 +259,9 @@ public class Utils {
             InputStreamReader reader = new InputStreamReader(new GZIPInputStream(new ByteArrayInputStream(data)), "UTF-8");
             conf.load(reader);
             reader.close();
+            return conf;
+        } catch (ZipException e) {
+            LogBlock.getInstance().getLogger().warning("Could not deserialize YamlConfiguration: " + e.getMessage());
             return conf;
         } catch (IOException e) {
             throw new RuntimeException("IOException should be impossible for ByteArrayInputStream", e);
