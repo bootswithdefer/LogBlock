@@ -87,7 +87,10 @@ public final class QueryParams implements Cloneable {
     }
 
     public String getLimit() {
-        return limit > 0 ? "LIMIT " + limit : "";
+        if (Config.hardLinesLimit <= 0 || (limit > 0 && limit <= Config.hardLinesLimit)) {
+            return limit > 0 ? "LIMIT " + limit : "";
+        }
+        return "LIMIT " + Config.hardLinesLimit;
     }
 
     public String getQuery() {

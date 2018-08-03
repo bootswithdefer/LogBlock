@@ -340,6 +340,7 @@ public class CommandsHandler implements CommandExecutor {
                         final QueryParams params = new QueryParams(logblock);
                         params.since = defaultTime;
                         params.bct = BlockChangeType.ALL;
+                        params.limit = Config.linesLimit;
                         params.parseArgs(sender, argsList);
                         new CommandLookup(sender, params, true);
                     } else {

@@ -40,7 +40,7 @@ public class Config {
     public static Map<String, Tool> toolsByName;
     public static Map<Material, Tool> toolsByType;
     public static int defaultDist, defaultTime;
-    public static int linesPerPage, linesLimit;
+    public static int linesPerPage, linesLimit, hardLinesLimit;
     public static boolean askRollbacks, askRedos, askClearLogs, askClearLogAfterRollback, askRollbackAfterBan;
     public static String banPermission;
     public static Set<Material> hiddenBlocks;
@@ -102,6 +102,7 @@ public class Config {
         def.put("lookup.defaultTime", "30 minutes");
         def.put("lookup.linesPerPage", 15);
         def.put("lookup.linesLimit", 1500);
+        def.put("lookup.hardLinesLimit", 100000);
         try {
             formatter = new SimpleDateFormat(config.getString("lookup.dateFormat", "MM-dd HH:mm:ss"));
         } catch (IllegalArgumentException e) {
@@ -207,6 +208,7 @@ public class Config {
         defaultTime = parseTimeSpec(config.getString("lookup.defaultTime").split(" "));
         linesPerPage = config.getInt("lookup.linesPerPage", 15);
         linesLimit = config.getInt("lookup.linesLimit", 1500);
+        hardLinesLimit = config.getInt("lookup.hardLinesLimit", 100000);
         askRollbacks = config.getBoolean("questioner.askRollbacks", true);
         askRedos = config.getBoolean("questioner.askRedos", true);
         askClearLogs = config.getBoolean("questioner.askClearLogs", true);
