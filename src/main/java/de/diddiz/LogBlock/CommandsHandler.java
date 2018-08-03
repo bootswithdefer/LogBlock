@@ -533,7 +533,7 @@ public class CommandsHandler implements CommandExecutor {
                     return;
                 }
                 state = conn.createStatement();
-                file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".") + ".log");
+                file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".").replace("/", "_") + ".log");
                 sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
                 rs = executeQuery(state, params.getQuery());
                 file.getParentFile().mkdirs();
