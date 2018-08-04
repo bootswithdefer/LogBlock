@@ -825,7 +825,6 @@ public class CommandsHandler implements CommandExecutor {
                 String tableName;
                 params.needId = true;
                 params.needDate = true;
-                params.needPlayer = false;
                 params.needPlayerId = true;
                 if (params.bct == BlockChangeType.CHAT) {
                     params.needMessage = true;
