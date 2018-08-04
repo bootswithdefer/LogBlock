@@ -65,7 +65,7 @@ public final class QueryParams implements Cloneable {
     public List<Integer> typeIds = new ArrayList<Integer>();
     public World world = null;
     public String match = null;
-    public boolean needCount = false, needId = false, needDate = false, needType = false, needData = false, needPlayer = false, needCoords = false, needChestAccess = false, needMessage = false, needKiller = false, needVictim = false, needWeapon = false;
+    public boolean needCount = false, needId = false, needDate = false, needType = false, needData = false, needPlayerId = false, needPlayer = false, needCoords = false, needChestAccess = false, needMessage = false, needKiller = false, needVictim = false, needWeapon = false;
     private final LogBlock logblock;
 
     public QueryParams(LogBlock logblock) {
@@ -160,7 +160,10 @@ public final class QueryParams implements Cloneable {
                     select += "date, ";
                 }
                 if (needPlayer) {
-                    select += "playername, UUID,";
+                    select += "playername, UUID, ";
+                }
+                if (needPlayerId) {
+                    select += "playerid, ";
                 }
                 if (needMessage) {
                     select += "message, ";
@@ -186,6 +189,9 @@ public final class QueryParams implements Cloneable {
                 if (needPlayer || needVictim) {
                     select += "victims.playername as victim, ";
                 }
+                if (needPlayerId) {
+                    select += "killer as killerid, victim as victimid, ";
+                }
                 if (needWeapon) {
                     select += "weapon, ";
                 }
@@ -201,7 +207,7 @@ public final class QueryParams implements Cloneable {
             select += "COUNT(*) AS count ";
         } else {
             if (needId) {
-                select += "`" + getTable() + "`-blocks.id, ";
+                select += "`" + getTable() + "-blocks`.id, ";
             }
             if (needDate) {
                 select += "date, ";
@@ -214,6 +220,9 @@ public final class QueryParams implements Cloneable {
             }
             if (needPlayer) {
                 select += "playername, UUID, ";
+            }
+            if (needPlayerId) {
+                select += "playerid, ";
             }
             if (needCoords) {
                 select += "x, y, z, ";
@@ -305,7 +314,7 @@ public final class QueryParams implements Cloneable {
         } else if (since > 0) {
             title.append("in the last ").append(since).append(" minutes ");
         } else if (before > 0) {
-            title.append("more than ").append(before * -1).append(" minutes ago ");
+            title.append("more than ").append(before).append(" minutes ago ");
         }
         if (loc != null) {
             if (radius > 0) {

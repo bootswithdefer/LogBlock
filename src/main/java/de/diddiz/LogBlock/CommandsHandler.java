@@ -17,8 +17,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitScheduler;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.OutputStreamWriter;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -295,9 +299,10 @@ public class CommandsHandler implements CommandExecutor {
                     }
                 } else if (command.equals("clearlog")) {
                     if (logblock.hasPermission(sender, "logblock.clearlog")) {
-                        final QueryParams params = new QueryParams(logblock, sender, argsToList(args, 1));
-                        params.bct = BlockChangeType.ALL;
+                        final QueryParams params = new QueryParams(logblock);
                         params.limit = -1;
+                        params.bct = BlockChangeType.ALL;
+                        params.parseArgs(sender, argsToList(args, 1));
                         new CommandClearLog(sender, params, true);
                     } else {
                         sender.sendMessage(ChatColor.RED + "You aren't allowed to do this");
@@ -533,7 +538,11 @@ public class CommandsHandler implements CommandExecutor {
                     return;
                 }
                 state = conn.createStatement();
-                file = new File("plugins/LogBlock/log/" + params.getTitle().replace(":", ".").replace("/", "_") + ".log");
+                final File dumpFolder = new File(logblock.getDataFolder(), "log");
+                if (!dumpFolder.exists()) {
+                    dumpFolder.mkdirs();
+                }
+                file = new File(dumpFolder, params.getTitle().replace(":", ".").replace("/", "_").replace("\\", "_") + ".log");
                 sender.sendMessage(ChatColor.GREEN + "Creating " + file.getName());
                 rs = executeQuery(state, params.getQuery());
                 file.getParentFile().mkdirs();
@@ -798,6 +807,7 @@ public class CommandsHandler implements CommandExecutor {
         public void run() {
             try {
                 conn = logblock.getConnection();
+                conn.setAutoCommit(true);
                 state = conn.createStatement();
                 if (conn == null) {
                     sender.sendMessage(ChatColor.RED + "MySQL connection lost");
@@ -806,55 +816,131 @@ public class CommandsHandler implements CommandExecutor {
                 if (!checkRestrictions(sender, params)) {
                     return;
                 }
+                if (params.sum != SummarizationMode.NONE) {
+                    sender.sendMessage(ChatColor.RED + "Cannot summarize on ClearLog");
+                    return;
+                }
+                String tableBase;
+                String deleteFromTables;
+                String tableName;
+                params.needId = true;
+                params.needDate = true;
+                params.needPlayer = false;
+                params.needPlayerId = true;
+                if (params.bct == BlockChangeType.CHAT) {
+                    params.needMessage = true;
+                    tableBase = "lb-chat";
+                    deleteFromTables = "`lb-chat` ";
+                    tableName = "lb-chat";
+                } else if (params.bct == BlockChangeType.KILLS) {
+                    params.needWeapon = true;
+                    params.needCoords = true;
+                    tableBase = params.getTable();
+                    deleteFromTables = "`" + tableBase + "-kills` ";
+                    tableName = tableBase + "-kills";
+                } else {
+                    params.needType = true;
+                    params.needCoords = true;
+                    params.needData = true;
+                    params.needChestAccess = true;
+                    tableBase = params.getTable();
+                    deleteFromTables = "`" + tableBase + "-blocks`, `" + tableBase + "-state`, `" + tableBase + "-chestdata` ";
+                    tableName = tableBase + "-blocks";
+                }
                 final File dumpFolder = new File(logblock.getDataFolder(), "dump");
                 if (!dumpFolder.exists()) {
                     dumpFolder.mkdirs();
                 }
-                final String time = new SimpleDateFormat("yyMMddHHmmss").format(System.currentTimeMillis());
-                int deleted;
-                final String table = params.getTable();
-                final String join = params.players.size() > 0 ? "INNER JOIN `lb-players` USING (playerid) " : "";
-                rs = state.executeQuery("SELECT count(*) FROM `" + table + "-blocks` " + join + params.getWhere());
-                rs.next();
-                if ((deleted = rs.getInt(1)) > 0) {
-                    if (!params.silent && askClearLogs && sender instanceof Player) {
-                        sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
-                        sender.sendMessage(ChatColor.GREEN.toString() + deleted + " blocks found.");
-                        if (!logblock.getQuestioner().ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
-                            sender.sendMessage(ChatColor.RED + "ClearLog aborted");
-                            return;
-                        }
+                rs = state.executeQuery("SELECT count(*) " + params.getFrom() + params.getWhere());
+                int deleted = rs.next() ? rs.getInt(1) : 0;
+                rs.close();
+                if (deleted == 0) {
+                    if (!params.silent) {
+                        sender.sendMessage(ChatColor.GREEN.toString() + deleted + " entries found.");
                     }
-                    if (dumpDeletedLog) {
+                    return;
+                }
+                if (!params.silent && askClearLogs && sender instanceof Player) {
+                    sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
+                    sender.sendMessage(ChatColor.GREEN.toString() + deleted + " entries found.");
+                    if (!logblock.getQuestioner().ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+                        sender.sendMessage(ChatColor.RED + "ClearLog aborted");
+                        return;
+                    }
+                }
+                if (dumpDeletedLog) {
+                    final String time = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(System.currentTimeMillis());
+                    try {
+                        File outFile = new File(dumpFolder, (time + " " + tableName + " " + params.getTitle() + ".sql").replace(':', '.').replace('/', '_').replace('\\', '_'));
+                        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(outFile)), "UTF-8"));
                         try {
-                            state.execute("SELECT * FROM `" + table + "-blocks` " + join + params.getWhere() + "INTO OUTFILE '" + new File(dumpFolder, time + " " + table + " " + params.getTitle().replace(":", ".") + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
-                        } catch (final SQLException ex) {
-                            sender.sendMessage(ChatColor.RED + "Error while dumping log. Make sure your MySQL user has access to the LogBlock folder, or disable clearlog.dumpDeletedLog");
-                            logblock.getLogger().log(Level.SEVERE, "[ClearLog] Exception while dumping log: ", ex);
-                            return;
+                            rs = state.executeQuery("SELECT " + params.getFields() + params.getFrom() + params.getWhere());
+                            while (rs.next()) {
+                                StringBuilder sb = new StringBuilder();
+                                if (params.bct == BlockChangeType.CHAT) {
+                                    sb.append("INSERT INTO `lb-chat` (`id`, `date`, `playerid`, `message`) VALUES (");
+                                    sb.append(rs.getInt("id")).append(", FROM_UNIXTIME(");
+                                    sb.append(rs.getTimestamp("date").getTime() / 1000).append("), ");
+                                    sb.append(rs.getInt("playerid")).append(", '");
+                                    sb.append(Utils.mysqlTextEscape(rs.getString("message")));
+                                    sb.append("');\n");
+                                } else if (params.bct == BlockChangeType.KILLS) {
+                                    sb.append("INSERT INTO `").append(tableBase).append("-kills` (`id`, `date`, `killer`, `victim`, `weapon`, `x`, `y`, `z`) VALUES (");
+                                    sb.append(rs.getInt("id")).append(", FROM_UNIXTIME(");
+                                    sb.append(rs.getTimestamp("date").getTime() / 1000).append("), ");
+                                    sb.append(rs.getInt("killerid")).append(", ");
+                                    sb.append(rs.getInt("victimid")).append(", ");
+                                    sb.append(rs.getInt("weapon")).append(", ");
+                                    sb.append(rs.getInt("x")).append(", ");
+                                    sb.append(rs.getInt("y")).append(", ");
+                                    sb.append(rs.getInt("z"));
+                                    sb.append(");\n");
+                                } else {
+                                    sb.append("INSERT INTO `").append(tableBase).append("-blocks` (`id`, `date`, `playerid`, `replaced`, `replacedData`, `type`, `typeData`, `x`, `y`, `z`) VALUES (");
+                                    sb.append(rs.getInt("id")).append(", FROM_UNIXTIME(");
+                                    sb.append(rs.getTimestamp("date").getTime() / 1000).append("), ");
+                                    sb.append(rs.getInt("playerid")).append(", ");
+                                    sb.append(rs.getInt("replaced")).append(", ");
+                                    sb.append(rs.getInt("replacedData")).append(", ");
+                                    sb.append(rs.getInt("type")).append(", ");
+                                    sb.append(rs.getInt("typeData")).append(", ");
+                                    sb.append(rs.getInt("x")).append(", ");
+                                    sb.append(rs.getInt("y")).append(", ");
+                                    sb.append(rs.getInt("z"));
+                                    sb.append(");\n");
+                                    byte[] replacedState = rs.getBytes("replacedState");
+                                    byte[] typeState = rs.getBytes("typeState");
+                                    if (replacedState != null || typeState != null) {
+                                        sb.append("INSERT INTO `").append(tableBase).append("-state` (`id`, `replacedState`, `typeState`) VALUES (");
+                                        sb.append(rs.getInt("id")).append(", ");
+                                        sb.append(Utils.mysqlPrepareBytesForInsertAllowNull(replacedState)).append(", ");
+                                        sb.append(Utils.mysqlPrepareBytesForInsertAllowNull(typeState));
+                                        sb.append(");\n");
+                                    }
+                                    byte[] item = rs.getBytes("item");
+                                    if (item != null) {
+                                        sb.append("INSERT INTO `").append(tableBase).append("-chestdata` (`id`, `item`, `itemremove`, `itemtype`) VALUES (");
+                                        sb.append(rs.getInt("id")).append(", ");
+                                        sb.append(Utils.mysqlPrepareBytesForInsertAllowNull(item)).append(", ");
+                                        sb.append(rs.getInt("itemremove")).append(", ");
+                                        sb.append(rs.getInt("itemtype"));
+                                        sb.append(");\n");
+                                    }
+                                }
+                                writer.write(sb.toString());
+                            }
+                            rs.close();
+                        } finally {
+                            writer.close();
                         }
+                    } catch (final SQLException ex) {
+                        sender.sendMessage(ChatColor.RED + "Error while dumping log.");
+                        logblock.getLogger().log(Level.SEVERE, "[ClearLog] Exception while dumping log: ", ex);
+                        return;
                     }
-                    state.execute("DELETE `" + table + "-blocks` FROM `" + table + "-blocks` " + join + params.getWhere());
-                    sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + ". Deleted " + deleted + " entries.");
                 }
-                rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-state` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL");
-                rs.next();
-                if ((deleted = rs.getInt(1)) > 0) {
-                    if (dumpDeletedLog) {
-                        state.execute("SELECT id, replacedState, typeState FROM `" + table + "-state` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, time + " " + table + "-state " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
-                    }
-                    state.execute("DELETE `" + table + "-state` FROM `" + table + "-state` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL;");
-                    sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-state. Deleted " + deleted + " entries.");
-                }
-                rs = state.executeQuery("SELECT COUNT(*) FROM `" + table + "-chestdata` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL");
-                rs.next();
-                if ((deleted = rs.getInt(1)) > 0) {
-                    if (dumpDeletedLog) {
-                        state.execute("SELECT id, item, itemremove, itemtype FROM `" + table + "-chestdata` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL INTO OUTFILE '" + new File(dumpFolder, time + " " + table + "-chest " + params.getTitle() + ".csv").getAbsolutePath().replace("\\", "\\\\") + "' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'  LINES TERMINATED BY '\n'");
-                    }
-                    state.execute("DELETE `" + table + "-chestdata` FROM `" + table + "-chestdata` LEFT JOIN `" + table + "-blocks` USING (id) WHERE `" + table + "-blocks`.id IS NULL;");
-                    sender.sendMessage(ChatColor.GREEN + "Cleared out table " + table + "-chestdata. Deleted " + deleted + " entries.");
-                }
+                state.executeUpdate("DELETE " + deleteFromTables + params.getFrom() + params.getWhere());
+                sender.sendMessage(ChatColor.GREEN + "Cleared out table " + tableName + ". Deleted " + deleted + " entries.");
             } catch (final Exception ex) {
                 if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
                     sender.sendMessage(ChatColor.RED + "Exception, check error log");
