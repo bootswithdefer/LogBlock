@@ -93,11 +93,65 @@ public final class QueryParams implements Cloneable {
         return "LIMIT " + Config.hardLinesLimit;
     }
 
-    public String getQuery() {
+    public String getFrom() {
+        if (sum != SummarizationMode.NONE) {
+            throw new IllegalStateException("No implemented for summarization");
+        }
         if (bct == BlockChangeType.CHAT) {
-            String select = "SELECT ";
+            String from = "FROM `lb-chat` ";
+
+            if (needPlayer || players.size() > 0) {
+                from += "INNER JOIN `lb-players` USING (playerid) ";
+            }
+            return from;
+        }
+        if (bct == BlockChangeType.KILLS) {
+            String from = "FROM `" + getTable() + "-kills` ";
+
+            if (needPlayer || needKiller || killers.size() > 0) {
+                from += "INNER JOIN `lb-players` as killers ON (killer=killers.playerid) ";
+            }
+
+            if (needPlayer || needVictim || victims.size() > 0) {
+                from += "INNER JOIN `lb-players` as victims ON (victim=victims.playerid) ";
+            }
+            return from;
+        }
+
+        String from = "FROM `" + getTable() + "-blocks` ";
+        if (needPlayer || players.size() > 0) {
+            from += "INNER JOIN `lb-players` USING (playerid) ";
+        }
+        if (!needCount && needData) {
+            from += "LEFT JOIN `" + getTable() + "-state` USING (id) ";
+        }
+        if (needChestAccess)
+        // If BlockChangeType is CHESTACCESS, we can use more efficient query
+        {
+            if (bct == BlockChangeType.CHESTACCESS) {
+                from += "RIGHT JOIN `" + getTable() + "-chestdata` USING (id) ";
+            } else {
+                from += "LEFT JOIN `" + getTable() + "-chestdata` USING (id) ";
+            }
+        }
+        return from;
+    }
+
+    public String getOrder() {
+        if (sum != SummarizationMode.NONE) {
+            throw new IllegalStateException("No implemented for summarization");
+        }
+        return "ORDER BY date " + order + ", id " + order + " ";
+    }
+
+    public String getFields() {
+        if (sum != SummarizationMode.NONE) {
+            throw new IllegalStateException("No implemented for summarization");
+        }
+        if (bct == BlockChangeType.CHAT) {
+            String select = "";
             if (needCount) {
-                select += "COUNT(*) AS count";
+                select += "COUNT(*) AS count ";
             } else {
                 if (needId) {
                     select += "id, ";
@@ -111,105 +165,84 @@ public final class QueryParams implements Cloneable {
                 if (needMessage) {
                     select += "message, ";
                 }
-                select = select.substring(0, select.length() - 2);
+                select = select.substring(0, select.length() - 2) + " ";
             }
-            String from = "FROM `lb-chat` ";
-
-            if (needPlayer || players.size() > 0) {
-                from += "INNER JOIN `lb-players` USING (playerid) ";
-            }
-            return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
+            return select;
         }
         if (bct == BlockChangeType.KILLS) {
-            if (sum == SummarizationMode.NONE) {
-                String select = "SELECT ";
-                if (needCount) {
-                    select += "COUNT(*) AS count";
-                } else {
-                    if (needId) {
-                        select += "id, ";
-                    }
-                    if (needDate) {
-                        select += "date, ";
-                    }
-                    if (needPlayer || needKiller) {
-                        select += "killers.playername as killer, ";
-                    }
-                    if (needPlayer || needVictim) {
-                        select += "victims.playername as victim, ";
-                    }
-                    if (needWeapon) {
-                        select += "weapon, ";
-                    }
-                    if (needCoords) {
-                        select += "x, y, z, ";
-                    }
-                    select = select.substring(0, select.length() - 2);
-                }
-                String from = "FROM `" + getTable() + "-kills` ";
-
-                if (needPlayer || needKiller || killers.size() > 0) {
-                    from += "INNER JOIN `lb-players` as killers ON (killer=killers.playerid) ";
-                }
-
-                if (needPlayer || needVictim || victims.size() > 0) {
-                    from += "INNER JOIN `lb-players` as victims ON (victim=victims.playerid) ";
-                }
-
-                return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
-            } else if (sum == SummarizationMode.PLAYERS) {
-                return "SELECT playername, UUID, SUM(kills) AS kills, SUM(killed) AS killed FROM ((SELECT killer AS playerid, count(*) AS kills, 0 as killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY killer) UNION (SELECT victim AS playerid, 0 as kills, count(*) AS killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY victim)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(kills) + SUM(killed) " + order + " " + getLimit();
-            }
-        }
-        if (sum == SummarizationMode.NONE) {
-            String select = "SELECT ";
+            String select = "";
             if (needCount) {
-                select += "COUNT(*) AS count";
+                select += "COUNT(*) AS count ";
             } else {
                 if (needId) {
-                    select += "`" + getTable() + "`-blocks.id, ";
+                    select += "id, ";
                 }
                 if (needDate) {
                     select += "date, ";
                 }
-                if (needType) {
-                    select += "replaced, type, ";
+                if (needPlayer || needKiller) {
+                    select += "killers.playername as killer, ";
                 }
-                if (needData) {
-                    select += "replacedData, typeData, ";
+                if (needPlayer || needVictim) {
+                    select += "victims.playername as victim, ";
                 }
-                if (needPlayer) {
-                    select += "playername, UUID, ";
+                if (needWeapon) {
+                    select += "weapon, ";
                 }
                 if (needCoords) {
                     select += "x, y, z, ";
                 }
-                if (needData) {
-                    select += "replacedState, typeState, ";
-                }
-                if (needChestAccess) {
-                    select += "item, itemremove, itemtype, ";
-                }
-                select = select.substring(0, select.length() - 2);
+                select = select.substring(0, select.length() - 2) + " ";
             }
-            String from = "FROM `" + getTable() + "-blocks` ";
-            if (needPlayer || players.size() > 0) {
-                from += "INNER JOIN `lb-players` USING (playerid) ";
+            return select;
+        }
+        String select = "";
+        if (needCount) {
+            select += "COUNT(*) AS count ";
+        } else {
+            if (needId) {
+                select += "`" + getTable() + "`-blocks.id, ";
             }
-            if (!needCount && needData) {
-                from += "LEFT JOIN `" + getTable() + "-state` USING (id) ";
+            if (needDate) {
+                select += "date, ";
             }
-            if (needChestAccess)
-            // If BlockChangeType is CHESTACCESS, we can use more efficient query
-            {
-                if (bct == BlockChangeType.CHESTACCESS) {
-                    from += "RIGHT JOIN `" + getTable() + "-chestdata` USING (id) ";
-                } else {
-                    from += "LEFT JOIN `" + getTable() + "-chestdata` USING (id) ";
-                }
+            if (needType) {
+                select += "replaced, type, ";
             }
-            return select + " " + from + getWhere() + "ORDER BY date " + order + ", id " + order + " " + getLimit();
-        } else if (sum == SummarizationMode.TYPES) {
+            if (needData) {
+                select += "replacedData, typeData, ";
+            }
+            if (needPlayer) {
+                select += "playername, UUID, ";
+            }
+            if (needCoords) {
+                select += "x, y, z, ";
+            }
+            if (needData) {
+                select += "replacedState, typeState, ";
+            }
+            if (needChestAccess) {
+                select += "item, itemremove, itemtype, ";
+            }
+            select = select.substring(0, select.length() - 2) + " ";
+        }
+        return select;
+    }
+
+    public String getQuery() {
+        if (sum == SummarizationMode.NONE) {
+            return "SELECT " + getFields() + getFrom() + getWhere() + getOrder() + getLimit();
+        }
+        if (bct == BlockChangeType.CHAT) {
+            throw new IllegalStateException("Invalid summarization for chat");
+        }
+        if (bct == BlockChangeType.KILLS) {
+            if (sum == SummarizationMode.PLAYERS) {
+                return "SELECT playername, UUID, SUM(kills) AS kills, SUM(killed) AS killed FROM ((SELECT killer AS playerid, count(*) AS kills, 0 as killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY killer) UNION (SELECT victim AS playerid, 0 as kills, count(*) AS killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY victim)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(kills) + SUM(killed) " + order + " " + getLimit();
+            }
+            throw new IllegalStateException("Invalid summarization for kills");
+        }
+        if (sum == SummarizationMode.TYPES) {
             return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
         } else {
             return "SELECT playername, UUID, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-blocks` " + getWhere(BlockChangeType.CREATED) + "GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-blocks` " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
@@ -798,6 +831,9 @@ public final class QueryParams implements Cloneable {
             if (!getWorldConfig(world).isLogging(Logging.KILL)) {
                 throw new IllegalArgumentException("Kill logging not enabled for world '" + world.getName() + "'");
             }
+            if (sum != SummarizationMode.NONE && sum != SummarizationMode.PLAYERS) {
+                throw new IllegalArgumentException("Invalid summarization for kills");
+            }
         }
         if (!prepareToolQuery && bct != BlockChangeType.CHAT) {
             if (world == null) {
@@ -807,8 +843,13 @@ public final class QueryParams implements Cloneable {
                 throw new IllegalArgumentException("This world ('" + world.getName() + "') isn't logged");
             }
         }
-        if (bct == BlockChangeType.CHAT && !Config.isLogging(Logging.CHAT)) {
-            throw new IllegalArgumentException("Chat is not logged");
+        if (bct == BlockChangeType.CHAT) {
+            if (!Config.isLogging(Logging.CHAT)) {
+                throw new IllegalArgumentException("Chat is not logged");
+            }
+            if (sum != SummarizationMode.NONE) {
+                throw new IllegalArgumentException("Invalid summarization for chat");
+            }
         }
     }
 
