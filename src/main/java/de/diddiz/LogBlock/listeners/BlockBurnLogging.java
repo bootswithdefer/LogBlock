@@ -10,6 +10,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockIgniteEvent.IgniteCause;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import static de.diddiz.LogBlock.config.Config.isLogging;
@@ -26,6 +28,29 @@ public class BlockBurnLogging extends LoggingListener {
         if (isLogging(event.getBlock().getWorld(), Logging.FIRE)) {
             smartLogBlockBreak(consumer, new Actor("Fire"), event.getBlock());
             smartLogFallables(consumer, new Actor("Fire"), event.getBlock());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockIgnite(BlockIgniteEvent event) {
+        Actor actor = new Actor("Fire");
+        if (event.getCause() == IgniteCause.FLINT_AND_STEEL) {
+            if(event.getIgnitingEntity() != null) {
+                return; // handled in block place                
+            } else {
+                actor = new Actor("Dispenser");
+            }
+        } else if(event.getCause() == IgniteCause.LIGHTNING) {
+            actor = new Actor("Lightning");
+        } else if(event.getCause() == IgniteCause.EXPLOSION) {
+            actor = new Actor("Explosion");
+        } else if(event.getCause() == IgniteCause.LAVA) {
+            actor = new Actor("Lava");
+        } else if(event.getCause() == IgniteCause.ENDER_CRYSTAL) {
+            actor = new Actor("EnderCrystal");
+        }
+        if (isLogging(event.getBlock().getWorld(), Logging.FIRE)) {
+            consumer.queueBlockPlace(actor, event.getBlock().getLocation(), Material.FIRE.createBlockData());
         }
     }
 
