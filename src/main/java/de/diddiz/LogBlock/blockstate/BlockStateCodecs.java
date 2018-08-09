@@ -2,15 +2,10 @@ package de.diddiz.LogBlock.blockstate;
 
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
-
-import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.util.Utils;
 
 public class BlockStateCodecs {
     private static Map<Material, BlockStateCodec> codecs = new EnumMap<>(Material.class);
@@ -36,44 +31,28 @@ public class BlockStateCodecs {
         return codecs.containsKey(material);
     }
 
-    public static byte[] serialize(BlockState state) {
+    public static YamlConfiguration serialize(BlockState state) {
         BlockStateCodec codec = codecs.get(state.getType());
         if (codec != null) {
             YamlConfiguration serialized = codec.serialize(state);
             if (serialized != null && !serialized.getKeys(false).isEmpty()) {
-                return Utils.serializeYamlConfiguration(serialized);
+                return serialized;
             }
         }
         return null;
     }
 
-    public static void deserialize(BlockState block, byte[] state) {
+    public static void deserialize(BlockState block, YamlConfiguration state) {
         BlockStateCodec codec = codecs.get(block.getType());
         if (codec != null) {
-            YamlConfiguration conf = null;
-            try {
-                if (state != null) {
-                    conf = Utils.deserializeYamlConfiguration(state);
-                }
-            } catch (InvalidConfigurationException e) {
-                LogBlock.getInstance().getLogger().log(Level.SEVERE, "Exception while deserializing BlockState", e);
-            }
-            codec.deserialize(block, conf);
+            codec.deserialize(block, state);
         }
     }
 
-    public static String toString(Material material, byte[] state) {
+    public static String toString(Material material, YamlConfiguration state) {
         BlockStateCodec codec = codecs.get(material);
         if (codec != null) {
-            YamlConfiguration conf = null;
-            try {
-                if (state != null) {
-                    conf = Utils.deserializeYamlConfiguration(state);
-                }
-            } catch (InvalidConfigurationException e) {
-                LogBlock.getInstance().getLogger().log(Level.SEVERE, "Exception while deserializing BlockState", e);
-            }
-            return codec.toString(conf);
+            return codec.toString(state);
         }
         return null;
     }

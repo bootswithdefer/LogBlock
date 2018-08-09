@@ -22,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.util.BukkitUtils;
+import de.diddiz.util.Utils;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -205,7 +206,7 @@ public class WorldEditor implements Runnable {
             if (BlockStateCodecs.hasCodec(replacedBlock.getMaterial())) {
                 state = block.getState();
                 try {
-                    BlockStateCodecs.deserialize(state, replacedState);
+                    BlockStateCodecs.deserialize(state, Utils.deserializeYamlConfiguration(replacedState));
                     state.update();
                 } catch (Exception e) {
                     throw new WorldEditorException("Failed to restore blockstate of " + block.getType() + ": " + e, block.getLocation());

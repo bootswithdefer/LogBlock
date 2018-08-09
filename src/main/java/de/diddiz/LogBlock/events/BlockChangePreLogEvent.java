@@ -2,13 +2,12 @@ package de.diddiz.LogBlock.events;
 
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.ChestAccess;
-import de.diddiz.util.BukkitUtils;
 
-import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 
 public class BlockChangePreLogEvent extends PreLogEvent {
@@ -16,17 +15,19 @@ public class BlockChangePreLogEvent extends PreLogEvent {
     private static final HandlerList handlers = new HandlerList();
     private Location location;
     private BlockData typeBefore, typeAfter;
-    private String signText;
     private ChestAccess chestAccess;
+    private YamlConfiguration stateBefore;
+    private YamlConfiguration stateAfter;
 
     public BlockChangePreLogEvent(Actor owner, Location location, BlockData typeBefore, BlockData typeAfter,
-                                  String signText, ChestAccess chestAccess) {
+            YamlConfiguration stateBefore, YamlConfiguration stateAfter, ChestAccess chestAccess) {
 
         super(owner);
         this.location = location;
         this.typeBefore = typeBefore;
         this.typeAfter = typeAfter;
-        this.signText = signText;
+        this.stateBefore = stateBefore;
+        this.stateAfter = stateAfter;
         this.chestAccess = chestAccess;
     }
 
@@ -64,39 +65,20 @@ public class BlockChangePreLogEvent extends PreLogEvent {
         this.typeAfter = typeAfter;
     }
 
-    public String getSignText() {
-
-        return signText;
+    public YamlConfiguration getStateBefore() {
+        return stateBefore;
     }
 
-    public void setSignText(String[] signText) {
-
-        if (signText != null) {
-            // Check for block
-            Validate.isTrue(isValidSign(), "Must be valid sign block");
-
-            // Check for problems
-            Validate.noNullElements(signText, "No null lines");
-            Validate.isTrue(signText.length == 4, "Sign text must be 4 strings");
-
-            this.signText = signText[0] + "\0" + signText[1] + "\0" + signText[2] + "\0" + signText[3];
-        } else {
-            this.signText = null;
-        }
+    public YamlConfiguration getStateAfter() {
+        return stateAfter;
     }
 
-    private boolean isValidSign() {
+    public void setStateBefore(YamlConfiguration stateBefore) {
+        this.stateBefore = stateBefore;
+    }
 
-        if ((typeAfter.getMaterial() == Material.SIGN || typeAfter.getMaterial() == Material.WALL_SIGN) && BukkitUtils.isEmpty(typeBefore.getMaterial())) {
-            return true;
-        }
-        if ((typeBefore.getMaterial() == Material.SIGN || typeBefore.getMaterial() == Material.WALL_SIGN) && BukkitUtils.isEmpty(typeAfter.getMaterial())) {
-            return true;
-        }
-        if ((typeAfter.getMaterial() == Material.SIGN || typeAfter.getMaterial() == Material.WALL_SIGN) && typeBefore.equals(typeAfter)) {
-            return true;
-        }
-        return false;
+    public void setStateAfter(YamlConfiguration stateAfter) {
+        this.stateAfter = stateAfter;
     }
 
     public ChestAccess getChestAccess() {

@@ -75,7 +75,7 @@ public class BlockChange implements LookupCacheElement {
         String typeDetails = null;
         if (BlockStateCodecs.hasCodec(type.getMaterial())) {
             try {
-                typeDetails = BlockStateCodecs.toString(type.getMaterial(), typeState);
+                typeDetails = BlockStateCodecs.toString(type.getMaterial(), Utils.deserializeYamlConfiguration(typeState));
             } catch (Exception e) {
                 LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not parse BlockState for " + type.getMaterial(), e);
             }
@@ -88,7 +88,7 @@ public class BlockChange implements LookupCacheElement {
         String replacedDetails = null;
         if (BlockStateCodecs.hasCodec(replaced.getMaterial())) {
             try {
-                replacedDetails = BlockStateCodecs.toString(replaced.getMaterial(), replacedState);
+                replacedDetails = BlockStateCodecs.toString(replaced.getMaterial(), Utils.deserializeYamlConfiguration(replacedState));
             } catch (Exception e) {
                 LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not parse BlockState for " + replaced.getMaterial(), e);
             }

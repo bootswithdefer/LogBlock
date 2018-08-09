@@ -11,7 +11,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
@@ -236,12 +235,8 @@ public class Utils {
         if (data == null || data.length == 0) {
             return null;
         }
-        try {
-            return deserializeYamlConfiguration(data).getItemStack("stack");
-        } catch (InvalidConfigurationException e) {
-            LogBlock.getInstance().getLogger().log(Level.SEVERE, "Exception while deserializing ItemStack", e);
-        }
-        return null;
+        YamlConfiguration conf = deserializeYamlConfiguration(data);
+        return conf == null ? null : conf.getItemStack("stack");
     }
 
     public static byte[] saveItemStack(ItemStack stack) {
@@ -253,14 +248,17 @@ public class Utils {
         return serializeYamlConfiguration(conf);
     }
 
-    public static YamlConfiguration deserializeYamlConfiguration(byte[] data) throws InvalidConfigurationException {
+    public static YamlConfiguration deserializeYamlConfiguration(byte[] data) {
+        if (data == null || data.length == 0) {
+            return null;
+        }
         YamlConfiguration conf = new YamlConfiguration();
         try {
             InputStreamReader reader = new InputStreamReader(new GZIPInputStream(new ByteArrayInputStream(data)), "UTF-8");
             conf.load(reader);
             reader.close();
             return conf;
-        } catch (ZipException e) {
+        } catch (ZipException | InvalidConfigurationException e) {
             LogBlock.getInstance().getLogger().warning("Could not deserialize YamlConfiguration: " + e.getMessage());
             return conf;
         } catch (IOException e) {
@@ -269,6 +267,9 @@ public class Utils {
     }
 
     public static byte[] serializeYamlConfiguration(YamlConfiguration conf) {
+        if (conf == null || conf.getKeys(false).isEmpty()) {
+            return null;
+        }
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(baos), "UTF-8");
@@ -278,5 +279,9 @@ public class Utils {
         } catch (IOException e) {
             throw new RuntimeException("IOException should be impossible for ByteArrayOutputStream", e);
         }
+    }
+
+    public static String serializeForSQL(YamlConfiguration conf) {
+        return mysqlPrepareBytesForInsertAllowNull(serializeYamlConfiguration(conf));
     }
 }

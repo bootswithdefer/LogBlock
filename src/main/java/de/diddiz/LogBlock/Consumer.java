@@ -34,6 +34,7 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -325,7 +326,7 @@ public class Consumer extends Thread {
      * @param typeState
      *            Serialized text data of the sign
      */
-    public void queueSignBreak(Actor actor, Location loc, BlockData type, byte[] typeState) {
+    public void queueSignBreak(Actor actor, Location loc, BlockData type, YamlConfiguration typeState) {
         queueBlock(actor, loc, type, null, typeState, null, null);
     }
 
@@ -357,7 +358,7 @@ public class Consumer extends Thread {
         if ((type.getMaterial() != Material.SIGN && type.getMaterial() != Material.WALL_SIGN) || lines == null || lines.length != 4) {
             return;
         }
-        queueBlock(actor, loc, type, type, null, Utils.serializeYamlConfiguration(BlockStateCodecSign.serialize(lines)), null);
+        queueBlock(actor, loc, type, type, null, BlockStateCodecSign.serialize(lines), null);
     }
 
     /**
@@ -633,7 +634,7 @@ public class Consumer extends Thread {
         return uncommitedPlayerIds.containsKey(actor);
     }
 
-    private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, byte[] stateBefore, byte[] stateAfter, ChestAccess ca) {
+    private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, YamlConfiguration stateBefore, YamlConfiguration stateAfter, ChestAccess ca) {
         if (typeBefore == null || typeBefore.getMaterial() == Material.CAVE_AIR || typeBefore.getMaterial() == Material.VOID_AIR) {
             typeBefore = Bukkit.createBlockData(Material.AIR);
         }
@@ -642,7 +643,7 @@ public class Consumer extends Thread {
         }
         if (Config.fireCustomEvents) {
             // Create and call the event
-            BlockChangePreLogEvent event = new BlockChangePreLogEvent(actor, loc, typeBefore, typeAfter, null, ca);
+            BlockChangePreLogEvent event = new BlockChangePreLogEvent(actor, loc, typeBefore, typeAfter, stateBefore, stateAfter, ca);
             logblock.getServer().getPluginManager().callEvent(event);
             if (event.isCancelled()) {
                 return;
@@ -653,7 +654,8 @@ public class Consumer extends Thread {
             loc = event.getLocation();
             typeBefore = event.getTypeBefore();
             typeAfter = event.getTypeAfter();
-            // signtext = event.getSignText();
+            stateBefore = event.getStateBefore();
+            stateAfter = event.getStateAfter();
             ca = event.getChestAccess();
         }
         // Do this last so LogBlock still has final say in what is being added
@@ -668,7 +670,7 @@ public class Consumer extends Thread {
         int typeMaterialId = MaterialConverter.getOrAddMaterialId(typeString);
         int typeStateId = MaterialConverter.getOrAddBlockStateId(typeString);
 
-        addQueueLast(new BlockRow(loc, actor, replacedMaterialId, replacedStateId, stateBefore, typeMaterialId, typeStateId, stateAfter, ca));
+        addQueueLast(new BlockRow(loc, actor, replacedMaterialId, replacedStateId, Utils.serializeYamlConfiguration(stateBefore), typeMaterialId, typeStateId, Utils.serializeYamlConfiguration(stateAfter), ca));
     }
 
     private String playerID(Actor actor) {
