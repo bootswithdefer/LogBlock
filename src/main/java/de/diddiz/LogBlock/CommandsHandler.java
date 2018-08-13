@@ -853,21 +853,15 @@ public class CommandsHandler implements CommandExecutor {
                 rs = state.executeQuery("SELECT count(*) " + params.getFrom() + params.getWhere());
                 int deleted = rs.next() ? rs.getInt(1) : 0;
                 rs.close();
-                if (deleted == 0) {
-                    if (!params.silent) {
-                        sender.sendMessage(ChatColor.GREEN.toString() + deleted + " entries found.");
-                    }
-                    return;
-                }
                 if (!params.silent && askClearLogs && sender instanceof Player) {
                     sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
                     sender.sendMessage(ChatColor.GREEN.toString() + deleted + " entries found.");
-                    if (!logblock.getQuestioner().ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
+                    if (deleted == 0 || !logblock.getQuestioner().ask((Player) sender, "Are you sure you want to continue?", "yes", "no").equals("yes")) {
                         sender.sendMessage(ChatColor.RED + "ClearLog aborted");
                         return;
                     }
                 }
-                if (dumpDeletedLog) {
+                if (deleted > 0 && dumpDeletedLog) {
                     final String time = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss").format(System.currentTimeMillis());
                     try {
                         File outFile = new File(dumpFolder, (time + " " + tableName + " " + params.getTitle() + ".sql").replace(':', '.').replace('/', '_').replace('\\', '_'));
@@ -938,7 +932,9 @@ public class CommandsHandler implements CommandExecutor {
                         return;
                     }
                 }
-                state.executeUpdate("DELETE " + deleteFromTables + params.getFrom() + params.getWhere());
+                if (deleted > 0) {
+                    state.executeUpdate("DELETE " + deleteFromTables + params.getFrom() + params.getWhere());
+                }
                 sender.sendMessage(ChatColor.GREEN + "Cleared out table " + tableName + ". Deleted " + deleted + " entries.");
             } catch (final Exception ex) {
                 if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
