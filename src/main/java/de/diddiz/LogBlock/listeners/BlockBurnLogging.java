@@ -3,6 +3,8 @@ package de.diddiz.LogBlock.listeners;
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import de.diddiz.LogBlock.config.Config;
+
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -16,6 +18,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 
 import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.LoggingUtil.smartLogBlockBreak;
+import static de.diddiz.util.LoggingUtil.smartLogBlockReplace;
 import static de.diddiz.util.LoggingUtil.smartLogFallables;
 
 public class BlockBurnLogging extends LoggingListener {
@@ -26,16 +29,16 @@ public class BlockBurnLogging extends LoggingListener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockBurn(BlockBurnEvent event) {
         if (isLogging(event.getBlock().getWorld(), Logging.FIRE)) {
-            smartLogBlockBreak(consumer, new Actor("Fire"), event.getBlock());
-            smartLogFallables(consumer, new Actor("Fire"), event.getBlock());
+            smartLogBlockReplace(consumer, new Actor("Fire", Config.logFireSpreadAsPlayerWhoCreatedIt ? event.getIgnitingBlock() : null), event.getBlock(), Material.FIRE.createBlockData());
+            smartLogFallables(consumer, new Actor("Fire", Config.logFireSpreadAsPlayerWhoCreatedIt ? event.getIgnitingBlock() : null), event.getBlock());
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockIgnite(BlockIgniteEvent event) {
-        Actor actor = new Actor("Fire");
+        Actor actor = new Actor("Fire", Config.logFireSpreadAsPlayerWhoCreatedIt ? event.getIgnitingBlock() : null);
         if (event.getCause() == IgniteCause.FLINT_AND_STEEL) {
-            if(event.getIgnitingEntity() != null) {
+            if (event.getIgnitingEntity() != null) {
                 return; // handled in block place                
             } else {
                 actor = new Actor("Dispenser");

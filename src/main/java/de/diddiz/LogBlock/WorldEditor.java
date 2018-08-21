@@ -194,7 +194,7 @@ public class WorldEditor implements Runnable {
                     return PerformResult.NO_ACTION;
                 }
             }
-            if (block.getType() != setBlock.getMaterial() && !replaceAnyway.contains(block.getType())) {
+            if (block.getType() != setBlock.getMaterial() && !block.isEmpty() && !replaceAnyway.contains(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
             if (state instanceof InventoryHolder && replacedBlock.getMaterial() != block.getType()) {

@@ -34,6 +34,7 @@ public class Config {
     public static boolean dumpDeletedLog;
     public static boolean logBedExplosionsAsPlayerWhoTriggeredThese;
     public static boolean logCreeperExplosionsAsPlayerWhoTriggeredThese, logPlayerInfo;
+    public static boolean logFireSpreadAsPlayerWhoCreatedIt;
     public static LogKillsLevel logKillsLevel;
     public static Set<Material> dontRollback, replaceAnyway;
     public static int rollbackMaxTime, rollbackMaxArea;
@@ -93,6 +94,7 @@ public class Config {
         def.put("clearlog.autoClearLogDelay", "6h");
         def.put("logging.logBedExplosionsAsPlayerWhoTriggeredThese", true);
         def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
+        def.put("logging.logFireSpreadAsPlayerWhoCreatedIt", true);
         def.put("logging.logKillsLevel", "PLAYERS");
         def.put("logging.logEnvironmentalKills", false);
         def.put("logging.logPlayerInfo", false);
@@ -100,7 +102,7 @@ public class Config {
         def.put("logging.hiddenBlocks", Arrays.asList(Material.AIR.name(), Material.CAVE_AIR.name(), Material.VOID_AIR.name()));
         def.put("logging.ignoredChat", Arrays.asList("/register", "/login"));
         def.put("rollback.dontRollback", Arrays.asList(Material.LAVA.name(), Material.TNT.name(), Material.FIRE.name()));
-        def.put("rollback.replaceAnyway", Arrays.asList(Material.LAVA.name(), Material.WATER.name(), Material.FIRE.name()));
+        def.put("rollback.replaceAnyway", Arrays.asList(Material.LAVA.name(), Material.WATER.name(), Material.FIRE.name(), Material.GRASS_BLOCK.name()));
         def.put("rollback.maxTime", "2 days");
         def.put("rollback.maxArea", 50);
         def.put("lookup.defaultDist", 20);
@@ -169,6 +171,7 @@ public class Config {
         autoClearLogDelay = parseTimeSpec(config.getString("clearlog.autoClearLogDelay").split(" "));
         logBedExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logBedExplosionsAsPlayerWhoTriggeredThese", true);
         logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
+        logFireSpreadAsPlayerWhoCreatedIt = config.getBoolean("logging.logFireSpreadAsPlayerWhoCreatedIt", true);
         logPlayerInfo = config.getBoolean("logging.logPlayerInfo", true);
         try {
             logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel").toUpperCase());

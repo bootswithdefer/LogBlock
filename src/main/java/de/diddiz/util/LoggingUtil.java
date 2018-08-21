@@ -101,6 +101,10 @@ public class LoggingUtil {
     }
 
     public static void smartLogBlockBreak(Consumer consumer, Actor actor, Block origin) {
+        smartLogBlockReplace(consumer, actor, origin, null);
+    }
+
+    public static void smartLogBlockReplace(Consumer consumer, Actor actor, Block origin, BlockData replacedWith) {
 
         WorldConfig wcfg = getWorldConfig(origin.getWorld());
         if (wcfg == null) {
@@ -187,7 +191,11 @@ public class LoggingUtil {
         }
 
         // Do this down here so that the block is added after blocks sitting on it
-        consumer.queueBlockBreak(actor, origin.getState());
+        if (replacedWith == null) {
+            consumer.queueBlockBreak(actor, origin.getState());
+        } else {
+            consumer.queueBlockReplace(actor, origin.getState(), replacedWith);
+        }
     }
 
     public static String checkText(String text) {

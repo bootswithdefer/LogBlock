@@ -12,6 +12,8 @@ import java.util.Collection;
 
 import static de.diddiz.util.BukkitUtils.entityName;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 
 public class Actor {
 
@@ -36,21 +38,38 @@ public class Actor {
 
     final String name;
     final String UUID;
+    final Location blockLocation;
 
     public Actor(String name, String UUID) {
         this.name = name;
         this.UUID = UUID;
+        this.blockLocation = null;
+    }
 
+    public Actor(String name, String UUID, Block block) {
+        this.name = name;
+        this.UUID = UUID;
+        this.blockLocation = block == null ? null : block.getLocation();
     }
 
     public Actor(String name, java.util.UUID UUID) {
         this.name = name;
         this.UUID = UUID.toString();
+        this.blockLocation = null;
+    }
 
+    public Actor(String name, java.util.UUID UUID, Block block) {
+        this.name = name;
+        this.UUID = UUID.toString();
+        this.blockLocation = block == null ? null : block.getLocation();
     }
 
     public Actor(String name) {
         this(name, generateUUID(name));
+    }
+
+    public Actor(String name, Block block) {
+        this(name, generateUUID(name), block);
     }
 
     public Actor(ResultSet rs) throws SQLException {
@@ -63,6 +82,10 @@ public class Actor {
 
     public String getUUID() {
         return UUID;
+    }
+
+    public Location getBlockLocation() {
+        return blockLocation;
     }
 
     public static Actor actorFromEntity(Entity entity) {
