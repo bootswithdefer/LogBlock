@@ -35,6 +35,7 @@ public class Config {
     public static boolean logBedExplosionsAsPlayerWhoTriggeredThese;
     public static boolean logCreeperExplosionsAsPlayerWhoTriggeredThese, logPlayerInfo;
     public static boolean logFireSpreadAsPlayerWhoCreatedIt;
+    public static boolean logFluidFlowAsPlayerWhoTriggeredIt;
     public static LogKillsLevel logKillsLevel;
     public static Set<Material> dontRollback, replaceAnyway;
     public static int rollbackMaxTime, rollbackMaxArea;
@@ -95,6 +96,7 @@ public class Config {
         def.put("logging.logBedExplosionsAsPlayerWhoTriggeredThese", true);
         def.put("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
         def.put("logging.logFireSpreadAsPlayerWhoCreatedIt", true);
+        def.put("logging.logFluidFlowAsPlayerWhoTriggeredIt", false);
         def.put("logging.logKillsLevel", "PLAYERS");
         def.put("logging.logEnvironmentalKills", false);
         def.put("logging.logPlayerInfo", false);
@@ -172,6 +174,7 @@ public class Config {
         logBedExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logBedExplosionsAsPlayerWhoTriggeredThese", true);
         logCreeperExplosionsAsPlayerWhoTriggeredThese = config.getBoolean("logging.logCreeperExplosionsAsPlayerWhoTriggeredThese", false);
         logFireSpreadAsPlayerWhoCreatedIt = config.getBoolean("logging.logFireSpreadAsPlayerWhoCreatedIt", true);
+        logFluidFlowAsPlayerWhoTriggeredIt = config.getBoolean("logging.logFluidFlowAsPlayerWhoTriggeredIt", false);
         logPlayerInfo = config.getBoolean("logging.logPlayerInfo", true);
         try {
             logKillsLevel = LogKillsLevel.valueOf(config.getString("logging.logKillsLevel").toUpperCase());
