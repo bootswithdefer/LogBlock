@@ -710,9 +710,8 @@ public class Consumer extends Thread {
         public BlockRow(Location loc, Actor actor, int replaced, int replacedData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
             super(System.currentTimeMillis() / 1000, loc, actor, replaced, replacedData, replacedState, type, typeData, typeState, ca);
 
-            final String table = getWorldConfig(loc.getWorld()).table;
-            statementString = "INSERT INTO `" + table + "-blocks` (date, playerid, replaced, replaceddata, type, typedata, x, y, z) VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?)";
-            selectActorIdStatementString = "SELECT playerid FROM `" + table + "-blocks` WHERE x = ? AND y = ? AND z = ? ORDER BY date DESC LIMIT 1";
+            statementString = getWorldConfig(loc.getWorld()).insertBlockStatementString;
+            selectActorIdStatementString = getWorldConfig(loc.getWorld()).selectBlockActorIdStatementString;
         }
 
         @Override
@@ -769,17 +768,16 @@ public class Consumer extends Thread {
             batchHelper.addBatch(smt, new IntCallback() {
                 @Override
                 public void call(int id) throws SQLException {
-                    final String table = getWorldConfig(loc.getWorld()).table;
                     PreparedStatement ps;
                     if (typeState != null || replacedState != null) {
-                        ps = batchHelper.getOrPrepareStatement(conn, "INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES(?, ?, ?)", Statement.NO_GENERATED_KEYS);
+                        ps = batchHelper.getOrPrepareStatement(conn, getWorldConfig(loc.getWorld()).insertBlockStateStatementString, Statement.NO_GENERATED_KEYS);
                         ps.setBytes(1, replacedState);
                         ps.setBytes(2, typeState);
                         ps.setInt(3, id);
                         batchHelper.addBatch(ps, null);
                     }
                     if (ca != null) {
-                        ps = batchHelper.getOrPrepareStatement(conn, "INSERT INTO `" + table + "-chestdata` (item, itemremove, id, itemtype) values (?, ?, ?, ?)", Statement.NO_GENERATED_KEYS);
+                        ps = batchHelper.getOrPrepareStatement(conn, getWorldConfig(loc.getWorld()).insertBlockChestDataStatementString, Statement.NO_GENERATED_KEYS);
                         ps.setBytes(1, Utils.saveItemStack(ca.itemStack));
                         ps.setInt(2, ca.remove ? 1 : 0);
                         ps.setInt(3, id);

@@ -12,6 +12,10 @@ import java.util.Map.Entry;
 public class WorldConfig extends LoggingEnabledMapping {
     public final String world;
     public final String table;
+    public final String insertBlockStatementString;
+    public final String selectBlockActorIdStatementString;
+    public final String insertBlockStateStatementString;
+    public final String insertBlockChestDataStatementString;
 
     public WorldConfig(String world, File file) throws IOException {
         this.world = world;
@@ -33,5 +37,10 @@ public class WorldConfig extends LoggingEnabledMapping {
         for (final Logging l : Logging.values()) {
             setLogging(l, config.getBoolean("logging." + l.toString()));
         }
+
+        insertBlockStatementString = "INSERT INTO `" + table + "-blocks` (date, playerid, replaced, replaceddata, type, typedata, x, y, z) VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?)";
+        selectBlockActorIdStatementString = "SELECT playerid FROM `" + table + "-blocks` WHERE x = ? AND y = ? AND z = ? ORDER BY date DESC LIMIT 1";
+        insertBlockStateStatementString = "INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES(?, ?, ?)";
+        insertBlockChestDataStatementString = "INSERT INTO `" + table + "-chestdata` (item, itemremove, id, itemtype) values (?, ?, ?, ?)";
     }
 }
