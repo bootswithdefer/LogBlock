@@ -11,6 +11,8 @@ import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -59,7 +61,17 @@ public class BlockBreakLogging extends LoggingListener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerBucketFill(PlayerBucketFillEvent event) {
         if (isLogging(event.getBlockClicked().getWorld(), Logging.BLOCKBREAK)) {
-            consumer.queueBlockBreak(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getState());
+            BlockData clickedBlockData = event.getBlockClicked().getBlockData();
+            if (clickedBlockData instanceof Waterlogged) {
+                Waterlogged clickedWaterlogged = (Waterlogged) clickedBlockData;
+                if (clickedWaterlogged.isWaterlogged()) {
+                    Waterlogged clickedWaterloggedWithoutWater = (Waterlogged) clickedWaterlogged.clone();
+                    clickedWaterloggedWithoutWater.setWaterlogged(false);
+                    consumer.queueBlockReplace(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getLocation(), clickedWaterlogged, clickedWaterloggedWithoutWater);
+                }
+            } else {
+                consumer.queueBlockBreak(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getState());
+            }
         }
     }
 }

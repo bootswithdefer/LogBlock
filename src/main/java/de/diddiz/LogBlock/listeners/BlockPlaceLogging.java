@@ -6,9 +6,11 @@ import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.util.LoggingUtil;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -35,7 +37,23 @@ public class BlockPlaceLogging extends LoggingListener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
         if (isLogging(event.getPlayer().getWorld(), Logging.BLOCKPLACE)) {
-            consumer.queueBlockPlace(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), Bukkit.createBlockData(event.getBucket() == Material.LAVA_BUCKET ? Material.LAVA : Material.WATER));
+            Material placedMaterial = event.getBucket() == Material.LAVA_BUCKET ? Material.LAVA : Material.WATER;
+            BlockData clickedBlockData = event.getBlockClicked().getBlockData();
+            if (placedMaterial == Material.WATER && clickedBlockData instanceof Waterlogged) {
+                Waterlogged clickedWaterlogged = (Waterlogged) clickedBlockData;
+                if (!clickedWaterlogged.isWaterlogged()) {
+                    Waterlogged clickedWaterloggedWithWater = (Waterlogged) clickedWaterlogged.clone();
+                    clickedWaterloggedWithWater.setWaterlogged(true);
+                    consumer.queueBlockReplace(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getLocation(), clickedWaterlogged, clickedWaterloggedWithWater);
+                }
+            } else {
+                Block placedAt = event.getBlockClicked().getRelative(event.getBlockFace());
+                if (placedAt.isEmpty()) {
+                    consumer.queueBlockPlace(Actor.actorFromEntity(event.getPlayer()), placedAt.getLocation(), placedMaterial.createBlockData());
+                } else {
+                    consumer.queueBlockReplace(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getLocation(), placedAt.getBlockData(), placedMaterial.createBlockData());
+                }
+            }
         }
     }
 }

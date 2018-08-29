@@ -12,6 +12,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockFromToEvent;
@@ -27,9 +28,14 @@ public class FluidFlowLogging extends LoggingListener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockFromTo(BlockFromToEvent event) {
         final WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
-        if (wcfg != null) {
+        if (wcfg != null && (wcfg.isLogging(Logging.WATERFLOW) || wcfg.isLogging(Logging.LAVAFLOW))) {
             final BlockData blockDataFrom = event.getBlock().getBlockData();
-            final Material typeFrom = blockDataFrom.getMaterial();
+            Material typeFrom = blockDataFrom.getMaterial();
+            boolean fromWaterlogged = false;
+            if (blockDataFrom instanceof Waterlogged) {
+                typeFrom = Material.WATER;
+                fromWaterlogged = true;
+            }
 
             Block source = Config.logFluidFlowAsPlayerWhoTriggeredIt ? event.getBlock() : null;
             final Block to = event.getToBlock();
@@ -57,9 +63,9 @@ public class FluidFlowLogging extends LoggingListener {
                     }
                 }
             } else if ((typeFrom == Material.WATER) && wcfg.isLogging(Logging.WATERFLOW)) {
-                Levelled levelledFrom = (Levelled) blockDataFrom;
-                Levelled newBlock = (Levelled) blockDataFrom.clone();
-                newBlock.setLevel(levelledFrom.getLevel() + 1);
+                Levelled levelledFrom = fromWaterlogged ? null : (Levelled) blockDataFrom;
+                Levelled newBlock = (Levelled) Material.WATER.createBlockData();
+                newBlock.setLevel(fromWaterlogged ? 1 : levelledFrom.getLevel() + 1);
                 if (BukkitUtils.isEmpty(typeTo)) {
                     consumer.queueBlockPlace(new Actor("WaterFlow", source), to.getLocation(), newBlock);
                 } else if (BukkitUtils.getNonFluidProofBlocks().contains(typeTo)) {
