@@ -15,6 +15,7 @@ import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
@@ -95,9 +96,25 @@ public class FluidFlowLogging extends LoggingListener {
         }
     }
 
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockForm(BlockFormEvent event) {
+        final WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
+        if (wcfg != null && (wcfg.isLogging(Logging.WATERFLOW) || wcfg.isLogging(Logging.LAVAFLOW))) {
+            if (wcfg.isLogging(Logging.LAVAFLOW) && event.getBlock().getType() == Material.WATER && event.getNewState().getType() == Material.COBBLESTONE) {
+                consumer.queueBlockReplace(new Actor("LavaFlow"), event.getBlock().getBlockData(), event.getNewState());
+            }
+            if (wcfg.isLogging(Logging.WATERFLOW) && event.getBlock().getType() == Material.LAVA) {
+                consumer.queueBlockReplace(new Actor("WaterFlow"), event.getBlock().getBlockData(), event.getNewState());
+            }
+            if (wcfg.isLogging(Logging.WATERFLOW) && BukkitUtils.isConcreteBlock(event.getNewState().getType())) {
+                consumer.queueBlockReplace(new Actor("WaterFlow"), event.getBlock().getBlockData(), event.getNewState());
+            }
+        }
+    }
+
     private static boolean isSurroundedByWater(Block block) {
-        for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.WEST, BlockFace.EAST, BlockFace.SOUTH}) {
-            if(block.getRelative(face).getType() == Material.WATER) {
+        for (final BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.WEST, BlockFace.EAST, BlockFace.SOUTH }) {
+            if (block.getRelative(face).getType() == Material.WATER) {
                 return true;
             }
         }

@@ -47,6 +47,7 @@ public class BukkitUtils {
     private static final EnumSet<Material> pressurePlates;
     private static final EnumSet<Material> woodenDoors;
     private static final EnumSet<Material> slabs;
+    private static final EnumSet<Material> concreteBlocks;
 
     static {
         pressurePlates = EnumSet.noneOf(Material.class);
@@ -352,6 +353,24 @@ public class BukkitUtils {
         bedBlocks.add(Material.RED_BED);
         bedBlocks.add(Material.WHITE_BED);
         bedBlocks.add(Material.YELLOW_BED);
+
+        concreteBlocks = EnumSet.noneOf(Material.class);
+        concreteBlocks.add(Material.BLACK_CONCRETE);
+        concreteBlocks.add(Material.BLUE_CONCRETE);
+        concreteBlocks.add(Material.LIGHT_GRAY_CONCRETE);
+        concreteBlocks.add(Material.BROWN_CONCRETE);
+        concreteBlocks.add(Material.CYAN_CONCRETE);
+        concreteBlocks.add(Material.GRAY_CONCRETE);
+        concreteBlocks.add(Material.GREEN_CONCRETE);
+        concreteBlocks.add(Material.LIGHT_BLUE_CONCRETE);
+        concreteBlocks.add(Material.MAGENTA_CONCRETE);
+        concreteBlocks.add(Material.LIME_CONCRETE);
+        concreteBlocks.add(Material.ORANGE_CONCRETE);
+        concreteBlocks.add(Material.PINK_CONCRETE);
+        concreteBlocks.add(Material.PURPLE_CONCRETE);
+        concreteBlocks.add(Material.RED_CONCRETE);
+        concreteBlocks.add(Material.WHITE_CONCRETE);
+        concreteBlocks.add(Material.YELLOW_CONCRETE);
     }
 
     private static final BlockFace[] relativeBlockFaces = new BlockFace[]{
@@ -492,6 +511,10 @@ public class BukkitUtils {
 
     public static Set<Material> getContainerBlocks() {
         return containerBlocks;
+    }
+
+    public static boolean isConcreteBlock(Material m) {
+        return concreteBlocks.contains(m);
     }
 
     public static String entityName(Entity entity) {
