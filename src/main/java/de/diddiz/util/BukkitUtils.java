@@ -522,10 +522,6 @@ public class BukkitUtils {
         }
     }
 
-    public static short rawData(ItemStack item) {
-        return item.getType() != null ? item.getData() != null ? item.getDurability() : 0 : 0;
-    }
-
     public static int saveSpawnHeight(Location loc) {
         final World world = loc.getWorld();
         final Chunk chunk = world.getChunkAt(loc);

@@ -527,6 +527,7 @@ class Updater {
                                 if (weaponMaterial == null) {
                                     weaponMaterial = Material.AIR;
                                 }
+                                @SuppressWarnings("deprecation")
                                 ItemStack stack = weaponMaterial.getMaxDurability() > 0 ? new ItemStack(weaponMaterial, Math.abs(amount), (short)itemdata) : new ItemStack(weaponMaterial, Math.abs(amount));
                                 insertChestData.setInt(1, id);
                                 insertChestData.setBytes(2, Utils.saveItemStack(stack));
