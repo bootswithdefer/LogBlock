@@ -35,7 +35,7 @@ public class BlockPlaceLogging extends LoggingListener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
         if (isLogging(event.getPlayer().getWorld(), Logging.BLOCKPLACE)) {
-            consumer.queueBlockPlace(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), Bukkit.createBlockData(event.getBucket() == Material.WATER_BUCKET ? Material.WATER : Material.LAVA));
+            consumer.queueBlockPlace(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getRelative(event.getBlockFace()).getLocation(), Bukkit.createBlockData(event.getBucket() == Material.LAVA_BUCKET ? Material.LAVA : Material.WATER));
         }
     }
 }
