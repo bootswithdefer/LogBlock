@@ -92,6 +92,7 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.GOLD + "time [number] [minutes|hours|days] -- Limits time");
                     sender.sendMessage(ChatColor.GOLD + "since <dd.MM.yyyy> <HH:mm:ss> -- Limits time to a fixed point");
                     sender.sendMessage(ChatColor.GOLD + "before <dd.MM.yyyy> <HH:mm:ss> -- Affects only blocks before a fixed time");
+                    sender.sendMessage(ChatColor.GOLD + "force -- Forces replacing not matching blocks");
                     sender.sendMessage(ChatColor.GOLD + "limit <row count> -- Limits the result to count of rows");
                     sender.sendMessage(ChatColor.GOLD + "sum [none|blocks|players] -- Sums the result");
                     sender.sendMessage(ChatColor.GOLD + "asc, desc -- Changes the order of the displayed log");
@@ -673,7 +674,7 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
                 }
                 rs = executeQuery(state, params.getQuery());
-                final WorldEditor editor = new WorldEditor(logblock, params.world);
+                final WorldEditor editor = new WorldEditor(logblock, params.world, params.forceReplace);
 
                 while (rs.next()) {
                     ChestAccess chestaccess = null;
@@ -762,7 +763,7 @@ public class CommandsHandler implements CommandExecutor {
                 if (!params.silent) {
                     sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
                 }
-                final WorldEditor editor = new WorldEditor(logblock, params.world);
+                final WorldEditor editor = new WorldEditor(logblock, params.world, params.forceReplace);
                 while (rs.next()) {
                     ChestAccess chestaccess = null;
                     ItemStack stack = Utils.loadItemStack(rs.getBytes("item"));

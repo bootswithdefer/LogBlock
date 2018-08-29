@@ -50,10 +50,16 @@ public class WorldEditor implements Runnable {
     private int successes = 0, blacklistCollisions = 0;
     private long elapsedTime = 0;
     public LookupCacheElement[] errors;
+    private boolean forceReplace;
 
     public WorldEditor(LogBlock logblock, World world) {
+        this(logblock, world, false);
+    }
+
+    public WorldEditor(LogBlock logblock, World world, boolean forceReplace) {
         this.logblock = logblock;
         this.world = world;
+        this.forceReplace = forceReplace;
     }
 
     public int getSize() {
@@ -170,13 +176,13 @@ public class WorldEditor implements Runnable {
                 return PerformResult.BLACKLISTED;
             }
             final Block block = loc.getBlock();
+            if (!world.isChunkLoaded(block.getChunk())) {
+                world.loadChunk(block.getChunk());
+            }
             if (BukkitUtils.isEmpty(replacedBlock.getMaterial()) && BukkitUtils.isEmpty(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
             BlockState state = block.getState();
-            if (!world.isChunkLoaded(block.getChunk())) {
-                world.loadChunk(block.getChunk());
-            }
             if (setBlock.equals(replacedBlock)) {
                 if (ca != null) {
                     if (state instanceof InventoryHolder && state.getType() == replacedBlock.getMaterial()) {
@@ -194,7 +200,7 @@ public class WorldEditor implements Runnable {
                     return PerformResult.NO_ACTION;
                 }
             }
-            if (block.getType() != setBlock.getMaterial() && !block.isEmpty() && !replaceAnyway.contains(block.getType())) {
+            if (!forceReplace && block.getType() != setBlock.getMaterial() && !block.isEmpty() && !replaceAnyway.contains(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
             if (state instanceof InventoryHolder && replacedBlock.getMaterial() != block.getType()) {

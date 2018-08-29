@@ -50,6 +50,7 @@ public final class QueryParams implements Cloneable {
         keywords.put("killer", 1);
         keywords.put("victim", 1);
         keywords.put("both", 0);
+        keywords.put("force", 0);
     }
     public BlockChangeType bct = BlockChangeType.BOTH;
     public int limit = -1, before = 0, since = 0, radius = -1;
@@ -59,6 +60,7 @@ public final class QueryParams implements Cloneable {
     public List<String> killers = new ArrayList<String>();
     public List<String> victims = new ArrayList<String>();
     public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, excludeBlocksMode = false, prepareToolQuery = false, silent = false, noForcedLimit = false;
+    public boolean forceReplace = false;
     public CuboidRegion sel = null;
     public SummarizationMode sum = SummarizationMode.NONE;
     public List<Material> types = new ArrayList<Material>();
@@ -802,6 +804,8 @@ public final class QueryParams implements Cloneable {
                 needCoords = true;
             } else if (param.equals("silent")) {
                 silent = true;
+            } else if (param.equals("force")) {
+                forceReplace = true;
             } else if (param.equals("search") || param.equals("match")) {
                 if (values.length == 0) {
                     throw new IllegalArgumentException("No arguments for '" + param + "'");
