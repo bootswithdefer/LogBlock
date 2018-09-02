@@ -7,6 +7,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
 import org.bukkit.block.data.Bisected.Half;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
@@ -17,7 +18,6 @@ import org.bukkit.block.data.type.Piston;
 import org.bukkit.block.data.type.PistonHead;
 import org.bukkit.block.data.type.TechnicalPiston.Type;
 import org.bukkit.command.CommandSender;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
@@ -185,7 +185,7 @@ public class WorldEditor implements Runnable {
             BlockState state = block.getState();
             if (setBlock.equals(replacedBlock)) {
                 if (ca != null) {
-                    if (state instanceof InventoryHolder && state.getType() == replacedBlock.getMaterial()) {
+                    if (state instanceof Container && state.getType() == replacedBlock.getMaterial()) {
                         int leftover;
                         try {
                             leftover = modifyContainer(state, new ItemStack(ca.itemStack), !ca.remove);
@@ -203,8 +203,8 @@ public class WorldEditor implements Runnable {
             if (!forceReplace && block.getType() != setBlock.getMaterial() && !block.isEmpty() && !replaceAnyway.contains(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
-            if (state instanceof InventoryHolder && replacedBlock.getMaterial() != block.getType()) {
-                ((InventoryHolder) state).getInventory().clear();
+            if (state instanceof Container && replacedBlock.getMaterial() != block.getType()) {
+                ((Container) state).getSnapshotInventory().clear();
                 state.update();
             }
             block.setBlockData(replacedBlock);
