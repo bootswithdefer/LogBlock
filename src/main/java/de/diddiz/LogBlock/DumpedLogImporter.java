@@ -41,27 +41,51 @@ public class DumpedLogImporter implements Runnable {
                         String line = null;
                         try {
                             logblock.getLogger().info("Trying to import " + sqlFile.getName() + " ...");
+                            // first try batch import the whole file
                             final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
+                            int statements = 0;
                             while ((line = reader.readLine()) != null) {
                                 if (line.endsWith(";")) {
                                     line = line.substring(0, line.length() - 1);
                                 }
-                                if(!line.isEmpty()) {
+                                if (!line.isEmpty()) {
+                                    statements++;
                                     st.addBatch(line);
-                                    successes++;
                                 }
                             }
                             st.executeBatch();
                             conn.commit();
                             reader.close();
                             sqlFile.delete();
+                            successes += statements;
                             logblock.getLogger().info("Successfully imported " + sqlFile.getName() + ".");
-                        } catch (final Exception ex) {
-                            logblock.getLogger().warning("Error while importing: '" + line + "': " + ex.getMessage());
-                            writer.write(line + newline);
-                            errors++;
-                            ex.printStackTrace();
-                            return;
+                        } catch (final Exception ignored) {
+                            // if the batch import did not work, retry line by line
+                            try {
+                                final BufferedReader reader = new BufferedReader(new FileReader(sqlFile));
+                                while ((line = reader.readLine()) != null) {
+                                    if (line.endsWith(";")) {
+                                        line = line.substring(0, line.length() - 1);
+                                    }
+                                    if (!line.isEmpty()) {
+                                        try {
+                                            st.execute(line);
+                                            successes++;
+                                        } catch (final SQLException ex) {
+                                            logblock.getLogger().severe("Error while importing: '" + line + "': " + ex.getMessage());
+                                            writer.write(line + newline);
+                                            errors++;
+                                        }
+                                    }
+                                }
+                                conn.commit();
+                                reader.close();
+                                sqlFile.delete();
+                                logblock.getLogger().info("Successfully imported " + sqlFile.getName() + ".");
+                            } catch (final Exception ex) {
+                                logblock.getLogger().severe("Error while importing " + sqlFile.getName() + ": " + ex.getMessage());
+                                errors++;
+                            }
                         }
                     }
                 } finally {
