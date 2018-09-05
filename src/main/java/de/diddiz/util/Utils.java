@@ -197,7 +197,7 @@ public class Utils {
         private final String ext;
 
         public ExtensionFilenameFilter(String ext) {
-            this.ext = ext;
+            this.ext = "." + ext;
         }
 
         @Override
