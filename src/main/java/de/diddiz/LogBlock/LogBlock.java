@@ -17,7 +17,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -121,12 +120,6 @@ public class LogBlock extends JavaPlugin {
         questioner = new Questioner(this);
         isCompletelyEnabled = true;
         getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
-        try {
-            Metrics metrics = new Metrics(this);
-            metrics.start();
-        } catch (IOException ex) {
-            getLogger().info("Could not start metrics: " + ex.getMessage());
-        }
     }
 
     private void registerEvents() {
