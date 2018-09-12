@@ -70,8 +70,8 @@ public class BlockChange implements LookupCacheElement {
 
     @Override
     public String toString() {
-        BlockData type = MaterialConverter.getBlockData(typeMaterial, typeData);
-        BlockData replaced = MaterialConverter.getBlockData(replacedMaterial, replacedData);
+        BlockData type = getBlockSet();
+        BlockData replaced = getBlockReplaced();
         String typeDetails = null;
         if (BlockStateCodecs.hasCodec(type.getMaterial())) {
             try {
@@ -156,6 +156,14 @@ public class BlockChange implements LookupCacheElement {
             msg.append(" at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ());
         }
         return msg.toString();
+    }
+
+    public BlockData getBlockReplaced() {
+        return MaterialConverter.getBlockData(replacedMaterial, replacedData);
+    }
+
+    public BlockData getBlockSet() {
+        return MaterialConverter.getBlockData(typeMaterial, typeData);
     }
 
     @Override
