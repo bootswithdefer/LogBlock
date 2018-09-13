@@ -37,13 +37,13 @@ public class Actor {
 
     public Actor(String name, String UUID) {
         this.name = name;
-        this.UUID = UUID;
+        this.UUID = UUID == null ? "unknown" : (UUID.length() > 36 ? UUID.substring(0, 36) : UUID);
         this.blockLocation = null;
     }
 
     public Actor(String name, String UUID, Block block) {
         this.name = name;
-        this.UUID = UUID;
+        this.UUID = UUID == null ? "unknown" : (UUID.length() > 36 ? UUID.substring(0, 36) : UUID);
         this.blockLocation = block == null ? null : block.getLocation();
     }
 
