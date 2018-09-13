@@ -51,7 +51,6 @@ import de.diddiz.util.Utils;
 
 public class Consumer extends Thread {
     private final Deque<Row> queue = new ArrayDeque<Row>();
-    private final Set<Actor> failedPlayers = new HashSet<Actor>();
     private final LogBlock logblock;
     private final Map<Actor, Integer> playerIds = new HashMap<Actor, Integer>();
     private final Map<Actor, Integer> uncommitedPlayerIds = new HashMap<Actor, Integer>();
@@ -474,17 +473,15 @@ public class Consumer extends Thread {
                     for (final Actor actor : r.getActors()) {
                         if (playerIDAsIntIncludeUncommited(actor) == null) {
                             if (!addPlayer(conn, actor)) {
-                                if (failedPlayers.add(actor)) {
-                                    logblock.getLogger().warning("[Consumer] Failed to add player " + actor.getName());
-                                }
+                                logblock.getLogger().warning("[Consumer] Failed to add player " + actor.getName());
                                 failOnActors = true; // skip this row
                             }
                         }
                     }
                     if (!failOnActors) {
                         currentRows.add(r);
+                        r.process(conn, batchHelper);
                     }
-                    r.process(conn, batchHelper);
                 }
                 if (currentRows.size() >= (processBatch ? 1 : (Config.forceToProcessAtLeast * 10))) {
                     batchHelper.processStatements(conn);
