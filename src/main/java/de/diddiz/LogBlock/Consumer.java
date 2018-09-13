@@ -552,7 +552,7 @@ public class Consumer extends Thread {
             for (final Actor actor : r.getActors()) {
                 if (!playerIds.containsKey(actor) && !insertedPlayers.contains(actor)) {
                     // Odd query contruction is to work around innodb auto increment behaviour - bug #492
-                    writer.println("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(actor.getName()) + "','" + actor.getUUID() + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + actor.getUUID() + "') LIMIT 1;");
+                    writer.println("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(actor.getName()) + "','" + mysqlTextEscape(actor.getUUID()) + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(actor.getUUID()) + "') LIMIT 1;");
                     insertedPlayers.add(actor);
                 }
             }
@@ -624,8 +624,8 @@ public class Consumer extends Thread {
         String name = actor.getName();
         String uuid = actor.getUUID();
         Statement state = conn.createStatement();
-        state.execute("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(name) + "','" + uuid + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + uuid + "') LIMIT 1;");
-        final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE UUID = '" + uuid + "'");
+        state.execute("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(name) + "','" + mysqlTextEscape(uuid) + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(uuid) + "') LIMIT 1;");
+        final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(uuid) + "'");
         if (rs.next()) {
             uncommitedPlayerIds.put(actor, rs.getInt(1));
         }
@@ -681,7 +681,7 @@ public class Consumer extends Thread {
         if (id != null) {
             return id.toString();
         }
-        return "(SELECT playerid FROM `lb-players` WHERE UUID = '" + actor.getUUID() + "')";
+        return "(SELECT playerid FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(actor.getUUID()) + "')";
     }
 
     private Integer playerIDAsIntIncludeUncommited(Actor actor) {
@@ -884,7 +884,7 @@ public class Consumer extends Thread {
                 return new String[] {
                         "UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "', playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + player.getUUID() + "';" };
             }
-            return new String[] { "UPDATE `lb-players` SET playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + player.getUUID() + "';" };
+            return new String[] { "UPDATE `lb-players` SET playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + mysqlTextEscape(player.getUUID()) + "';" };
         }
 
         @Override
@@ -923,7 +923,7 @@ public class Consumer extends Thread {
         @Override
         public String[] getInserts() {
             if (logPlayerInfo) {
-                return new String[] { "UPDATE `lb-players` SET onlinetime = onlinetime + " + onlineTime + " WHERE lastlogin > 0 && UUID = '" + actor.getUUID() + "';" };
+                return new String[] { "UPDATE `lb-players` SET onlinetime = onlinetime + " + onlineTime + " WHERE lastlogin > 0 && UUID = '" + mysqlTextEscape(actor.getUUID()) + "';" };
             }
             return new String[0];
         }
