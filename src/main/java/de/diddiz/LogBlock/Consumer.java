@@ -473,7 +473,6 @@ public class Consumer extends Thread {
                     for (final Actor actor : r.getActors()) {
                         if (playerIDAsIntIncludeUncommited(actor) == null) {
                             if (!addPlayer(conn, actor)) {
-                                logblock.getLogger().warning("[Consumer] Failed to add player " + actor.getName());
                                 failOnActors = true; // skip this row
                             }
                         }
@@ -621,10 +620,17 @@ public class Consumer extends Thread {
         String name = actor.getName();
         String uuid = actor.getUUID();
         Statement state = conn.createStatement();
-        state.execute("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(name) + "','" + mysqlTextEscape(uuid) + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(uuid) + "') LIMIT 1;");
-        final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(uuid) + "'");
+        String q1 = "INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(name) + "','" + mysqlTextEscape(uuid) + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(uuid) + "') LIMIT 1;";
+        String q2 = "SELECT playerid FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(uuid) + "'";
+        int q1Result = state.executeUpdate(q1);
+        final ResultSet rs = state.executeQuery(q2);
         if (rs.next()) {
             uncommitedPlayerIds.put(actor, rs.getInt(1));
+        } else {
+            logblock.getLogger().warning("[Consumer] Failed to add player " + actor.getName());
+            logblock.getLogger().warning("[Consumer-Debug] Query 1: " + q1);
+            logblock.getLogger().warning("[Consumer-Debug] Query 1 - Result: " + q1Result);
+            logblock.getLogger().warning("[Consumer-Debug] Query 2: " + q2);
         }
         rs.close();
         state.close();

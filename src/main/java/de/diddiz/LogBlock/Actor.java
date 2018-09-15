@@ -28,7 +28,7 @@ public class Actor {
             return false;
         }
         final Actor other = (Actor) obj;
-        return this.UUID == null ? other.UUID == null : this.UUID.equals(other.UUID);
+        return (this.UUID == null) ? (other.UUID == null) : this.UUID.equals(other.UUID);
     }
 
     final String name;
