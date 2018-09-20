@@ -21,6 +21,7 @@ import org.bukkit.block.data.type.Door;
 import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.block.data.type.Repeater;
 import org.bukkit.block.data.type.Switch;
+import org.bukkit.block.data.type.TurtleEgg;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -135,6 +136,19 @@ public class InteractLogging extends LoggingListener {
                         Block trampledCrop = clicked.getRelative(BlockFace.UP);
                         if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
                             consumer.queueBlockBreak(Actor.actorFromEntity(player), trampledCrop.getState());
+                        }
+                    }
+                    break;
+                case TURTLE_EGG:
+                    if (event.getAction() == Action.PHYSICAL) {
+                        TurtleEgg turtleEggData = (TurtleEgg) blockData;
+                        int eggs = turtleEggData.getEggs();
+                        if (eggs > 1) {
+                            TurtleEgg turtleEggData2 = (TurtleEgg) turtleEggData.clone();
+                            turtleEggData2.setEggs(eggs - 1);
+                            consumer.queueBlock(Actor.actorFromEntity(player), loc, turtleEggData, turtleEggData2);
+                        } else {
+                            consumer.queueBlock(Actor.actorFromEntity(player), loc, turtleEggData, Material.AIR.createBlockData());
                         }
                     }
                     break;

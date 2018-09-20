@@ -9,10 +9,12 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.type.TurtleEgg;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityInteractEvent;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
@@ -46,6 +48,18 @@ public class CreatureInteractLogging extends LoggingListener {
                     Block trampledCrop = clicked.getRelative(BlockFace.UP);
                     if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
                         consumer.queueBlockBreak(new Actor("CreatureTrample"), trampledCrop.getState());
+                    }
+                }
+            } else if (type == Material.TURTLE_EGG) {
+                if (wcfg.isLogging(Logging.CREATURECROPTRAMPLE)) {
+                    TurtleEgg turtleEggData = (TurtleEgg) clicked.getBlockData();
+                    int eggs = turtleEggData.getEggs();
+                    if (eggs > 1) {
+                        TurtleEgg turtleEggData2 = (TurtleEgg) turtleEggData.clone();
+                        turtleEggData2.setEggs(eggs - 1);
+                        consumer.queueBlock(new Actor("CreatureTrample"), loc, turtleEggData, turtleEggData2);
+                    } else {
+                        consumer.queueBlock(new Actor("CreatureTrample"), loc, turtleEggData, Material.AIR.createBlockData());
                     }
                 }
             }
