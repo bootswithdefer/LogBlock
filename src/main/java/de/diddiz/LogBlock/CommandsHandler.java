@@ -97,6 +97,7 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.GOLD + "sum [none|blocks|players] -- Sums the result");
                     sender.sendMessage(ChatColor.GOLD + "asc, desc -- Changes the order of the displayed log");
                     sender.sendMessage(ChatColor.GOLD + "coords -- Shows coordinates for each block");
+                    sender.sendMessage(ChatColor.GOLD + "nocache -- Don't set the lookup cache");
                     sender.sendMessage(ChatColor.GOLD + "silent -- Displays lesser messages");
                 } else if (command.equals("permissions")) {
                     sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
@@ -484,7 +485,9 @@ public class CommandsHandler implements CommandExecutor {
                     while (rs.next()) {
                         blockchanges.add(factory.getLookupCacheElement(rs));
                     }
-                    getSession(sender).lookupCache = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
+                    if (!params.noCache) {
+                        getSession(sender).lookupCache = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
+                    }
                     if (blockchanges.size() > linesPerPage) {
                         sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == linesLimit ? " Use 'limit -1' to see all changes." : ""));
                     }
@@ -498,7 +501,9 @@ public class CommandsHandler implements CommandExecutor {
                     showPage(sender, 1);
                 } else {
                     sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
-                    getSession(sender).lookupCache = null;
+                    if (!params.noCache) {
+                        getSession(sender).lookupCache = null;
+                    }
                 }
             } catch (final Exception ex) {
                 if (logblock.isCompletelyEnabled() || !(ex instanceof SQLException)) {
@@ -702,7 +707,9 @@ public class CommandsHandler implements CommandExecutor {
                     return;
                 }
                 editor.start();
-                getSession(sender).lookupCache = editor.errors;
+                if (!params.noCache) {
+                    getSession(sender).lookupCache = editor.errors;
+                }
                 sender.sendMessage(ChatColor.GREEN + "Rollback finished successfully (" + editor.getElapsedTime() + " ms, " + editor.getSuccesses() + "/" + changes + " blocks" + (editor.getErrors() > 0 ? ", " + ChatColor.RED + editor.getErrors() + " errors" + ChatColor.GREEN : "") + (editor.getBlacklistCollisions() > 0 ? ", " + editor.getBlacklistCollisions() + " blacklist collisions" : "") + ")");
                 if (!params.silent && askClearLogAfterRollback && logblock.hasPermission(sender, "logblock.clearlog") && sender instanceof Player) {
                     Thread.sleep(1000);
