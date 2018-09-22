@@ -371,19 +371,24 @@ public class CommandsHandler implements CommandExecutor {
     }
 
     private static void showPage(CommandSender sender, int page) {
-        final Session session = getSession(sender);
-        if (session.lookupCache != null && session.lookupCache.length > 0) {
+        showPage(sender, page, getSession(sender).lookupCache, true);
+    }
+
+    private static void showPage(CommandSender sender, int page, LookupCacheElement[] lookupElements, boolean setSessionPage) {
+        if (lookupElements != null && lookupElements.length > 0) {
             final int startpos = (page - 1) * linesPerPage;
-            if (page > 0 && startpos <= session.lookupCache.length - 1) {
-                final int stoppos = startpos + linesPerPage >= session.lookupCache.length ? session.lookupCache.length - 1 : startpos + linesPerPage - 1;
-                final int numberOfPages = (int) Math.ceil(session.lookupCache.length / (double) linesPerPage);
+            if (page > 0 && startpos <= lookupElements.length - 1) {
+                final int stoppos = startpos + linesPerPage >= lookupElements.length ? lookupElements.length - 1 : startpos + linesPerPage - 1;
+                final int numberOfPages = (int) Math.ceil(lookupElements.length / (double) linesPerPage);
                 if (numberOfPages != 1) {
                     sender.sendMessage(ChatColor.DARK_AQUA + "Page " + page + "/" + numberOfPages);
                 }
                 for (int i = startpos; i <= stoppos; i++) {
-                    sender.sendMessage(ChatColor.GOLD + (session.lookupCache[i].getLocation() != null ? "(" + (i + 1) + ") " : "") + session.lookupCache[i].getMessage());
+                    sender.sendMessage(ChatColor.GOLD + (lookupElements[i].getLocation() != null ? "(" + (i + 1) + ") " : "") + lookupElements[i].getMessage());
                 }
-                session.page = page;
+                if (setSessionPage) {
+                    getSession(sender).page = page;
+                }
             } else {
                 sender.sendMessage(ChatColor.RED + "There isn't a page '" + page + "'");
             }
@@ -485,8 +490,9 @@ public class CommandsHandler implements CommandExecutor {
                     while (rs.next()) {
                         blockchanges.add(factory.getLookupCacheElement(rs));
                     }
+                    LookupCacheElement[] blockChangeArray = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
                     if (!params.noCache) {
-                        getSession(sender).lookupCache = blockchanges.toArray(new LookupCacheElement[blockchanges.size()]);
+                        getSession(sender).lookupCache = blockChangeArray;
                     }
                     if (blockchanges.size() > linesPerPage) {
                         sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == linesLimit ? " Use 'limit -1' to see all changes." : ""));
@@ -498,7 +504,11 @@ public class CommandsHandler implements CommandExecutor {
                             sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player"));
                         }
                     }
-                    showPage(sender, 1);
+                    if (!params.noCache) {
+                        showPage(sender, 1);
+                    } else {
+                        showPage(sender, 1, blockChangeArray, false);
+                    }
                 } else {
                     sender.sendMessage(ChatColor.DARK_AQUA + "No results found.");
                     if (!params.noCache) {
