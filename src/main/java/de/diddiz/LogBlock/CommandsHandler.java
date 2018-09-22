@@ -145,7 +145,7 @@ public class CommandsHandler implements CommandExecutor {
                     if (logblock.hasPermission(sender, "logblock.tools." + tool.name)) {
                         if (sender instanceof Player) {
                             final Player player = (Player) sender;
-                            final Session session = Session.getSession(player.getName());
+                            final Session session = Session.getSession(player);
                             final ToolData toolData = session.toolData.get(tool);
                             if (args.length == 1) {
                                 if (logblock.hasPermission(player, "logblock.spawnTools")) {
