@@ -150,7 +150,7 @@ public class LoggingUtil {
                 Block block = location.getBlock();
                 BlockData blockData = block.getBlockData();
                 if (blockData instanceof Directional) {
-                    if (block.getRelative(((Directional) blockData).getFacing()).equals(origin)) {
+                    if (block.getRelative(((Directional) blockData).getFacing().getOppositeFace()).equals(origin)) {
                         if (wcfg.isLogging(Logging.SIGNTEXT) && block.getType() == Material.WALL_SIGN) {
                             consumer.queueSignBreak(actor, (Sign) block.getState());
                         } else {
