@@ -37,6 +37,9 @@ public class FluidFlowLogging extends LoggingListener {
                 typeFrom = Material.WATER;
                 fromWaterlogged = true;
             }
+            if (typeFrom == Material.SEAGRASS || typeFrom == Material.KELP_PLANT || typeFrom == Material.KELP) {
+                typeFrom = Material.WATER;
+            } 
 
             Block source = Config.logFluidFlowAsPlayerWhoTriggeredIt ? event.getBlock() : null;
             final Block to = event.getToBlock();
