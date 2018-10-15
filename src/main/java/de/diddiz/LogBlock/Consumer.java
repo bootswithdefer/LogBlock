@@ -384,6 +384,10 @@ public class Consumer extends Thread {
         if (hiddenPlayers.contains(player.getName().toLowerCase())) {
             return;
         }
+        while(message.length() > 256) {
+            addQueueLast(new ChatRow(player, message.substring(0, 256)));
+            message = message.substring(256);
+        }
         addQueueLast(new ChatRow(player, message));
     }
 
