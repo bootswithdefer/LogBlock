@@ -419,9 +419,12 @@ public class Consumer extends Thread {
         ArrayList<Row> currentRows = new ArrayList<>();
         Connection conn = null;
         BatchHelper batchHelper = new BatchHelper();
+        int lastCommitsFailed = 0;
         while (true) {
             try {
                 if (conn == null) {
+                    batchHelper.reset();
+                    logblock.getLogger().info("[Consumer] Connecting to the database!");
                     conn = logblock.getConnection();
                     if (conn != null) {
                         // initialize connection
@@ -492,22 +495,27 @@ public class Consumer extends Thread {
                     currentRows.clear();
                     playerIds.putAll(uncommitedPlayerIds);
                     uncommitedPlayerIds.clear();
+                    lastCommitsFailed = 0;
                 }
             } catch (Exception e) {
-                logblock.getLogger().log(Level.SEVERE, "[Consumer] Could not insert entries!", e);
-                boolean retry = false;
+                boolean retry = lastCommitsFailed < 2;
+                String state = "unknown";
                 if (e instanceof SQLException) {
                     // Retry on network errors: SQLSTATE = 08S01 08001 08004 HY000 40001
-                    String state = ((SQLException) e).getSQLState();
-                    retry = state != null && (state.equals("08S01") || state.equals("08001") || state.equals("08004") || state.equals("HY000") || state.equals("40001"));
+                    state = ((SQLException) e).getSQLState();
+                    retry = retry || (state != null && (state.equals("08S01") || state.equals("08001") || state.equals("08004") || state.equals("HY000") || state.equals("40001")));
                 }
+                lastCommitsFailed += 1;
                 if (retry) {
+                    logblock.getLogger().log(Level.WARNING, "[Consumer] Database connection lost, reconnecting! SQLState: " + state);
                     // readd rows to the queue
                     synchronized (queue) {
                         while (!currentRows.isEmpty()) {
                             queue.addFirst(currentRows.remove(currentRows.size() - 1));
                         }
                     }
+                } else {
+                    logblock.getLogger().log(Level.SEVERE, "[Consumer] Could not insert entries! SQLState: " + state, e);
                 }
                 currentRows.clear();
                 batchHelper.reset();
