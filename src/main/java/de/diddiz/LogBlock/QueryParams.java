@@ -98,7 +98,7 @@ public final class QueryParams implements Cloneable {
 
     public String getFrom() {
         if (sum != SummarizationMode.NONE) {
-            throw new IllegalStateException("No implemented for summarization");
+            throw new IllegalStateException("Not implemented for summarization");
         }
         if (bct == BlockChangeType.CHAT) {
             String from = "FROM `lb-chat` ";
@@ -123,13 +123,6 @@ public final class QueryParams implements Cloneable {
 
         String from = "FROM `" + getTable() + "-blocks` ";
 
-        // heuristics - for a small radius using coords index is much faster, but mysql sometimes does not use it
-        if ((loc != null && radius <= 500) || (sel != null && sel.getSizeX() <= 1000)) {
-            if (since < 0 || since > 11000) {
-                from += "USE INDEX (coords) ";
-            }
-        }
-
         if (needPlayer || players.size() > 0) {
             from += "INNER JOIN `lb-players` USING (playerid) ";
         }
@@ -150,14 +143,21 @@ public final class QueryParams implements Cloneable {
 
     public String getOrder() {
         if (sum != SummarizationMode.NONE) {
-            throw new IllegalStateException("No implemented for summarization");
+            throw new IllegalStateException("Not implemented for summarization");
         }
-        return "ORDER BY date " + order + ", id " + order + " ";
+
+        // heuristics, for small time spans this might be faster
+        final int twoDaysInSeconds = 60 * 24 * 2;
+        if (since > 0 && since <= twoDaysInSeconds) {
+            return "ORDER BY date " + order + ", id " + order + " ";
+        }
+
+        return "ORDER BY id " + order + " ";
     }
 
     public String getFields() {
         if (sum != SummarizationMode.NONE) {
-            throw new IllegalStateException("No implemented for summarization");
+            throw new IllegalStateException("Not implemented for summarization");
         }
         if (bct == BlockChangeType.CHAT) {
             String select = "";
