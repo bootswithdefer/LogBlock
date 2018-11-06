@@ -4,6 +4,7 @@ import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
 
 import org.bukkit.Location;
@@ -11,7 +12,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BlockVector;
-import org.bukkit.util.Vector;
 
 public class CuboidRegion implements Cloneable {
 
@@ -19,7 +19,7 @@ public class CuboidRegion implements Cloneable {
     private BlockVector min = new BlockVector();
     private BlockVector max = new BlockVector();
 
-    public CuboidRegion(World world, Vector first, Vector second) {
+    public CuboidRegion(World world, BlockVector3 first, BlockVector3 second) {
         this.world = world;
         this.min.setX(Math.min(first.getBlockX(),second.getBlockX()));
         this.min.setY(Math.min(first.getBlockY(),second.getBlockY()));
@@ -48,15 +48,13 @@ public class CuboidRegion implements Cloneable {
         if (!(selection instanceof com.sk89q.worldedit.regions.CuboidRegion)) {
             throw new IllegalArgumentException("You have to define a cuboid selection");
         }
-        com.sk89q.worldedit.Vector weMin = selection.getMinimumPoint();
-        com.sk89q.worldedit.Vector weMax = selection.getMaximumPoint();
-        Vector min = new Vector(weMin.getBlockX(), weMin.getBlockY(), weMin.getBlockZ());
-        Vector max = new Vector(weMax.getBlockX(), weMax.getBlockY(), weMax.getBlockZ());
+        BlockVector3 min = selection.getMinimumPoint();
+        BlockVector3 max = selection.getMaximumPoint();
         return new CuboidRegion(world, min, max);
     }
 
     public static CuboidRegion fromCorners(World world, Location first, Location second) {
-        return new CuboidRegion(world, first.toVector(), second.toVector());
+        return new CuboidRegion(world, BukkitAdapter.asBlockVector(first), BukkitAdapter.asBlockVector(second));
     }
 
     public World getWorld() {

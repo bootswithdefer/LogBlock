@@ -1,7 +1,6 @@
 package de.diddiz.worldedit;
 
 import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
@@ -9,6 +8,7 @@ import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.event.extent.EditSessionEvent;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extent.AbstractDelegateExtent;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 
@@ -87,12 +87,12 @@ public class WorldEditLoggingHook {
 
                 event.setExtent(new AbstractDelegateExtent(event.getExtent()) {
                     @Override
-                    public final boolean setBlock(Vector position, @SuppressWarnings("rawtypes") BlockStateHolder block) throws WorldEditException {
+                    public final boolean setBlock(BlockVector3 position, @SuppressWarnings("rawtypes") BlockStateHolder block) throws WorldEditException {
                         onBlockChange(position, block);
                         return super.setBlock(position, block);
                     }
                     
-                    protected void onBlockChange(Vector pt, BlockStateHolder<?> block) {
+                    protected void onBlockChange(BlockVector3 pt, BlockStateHolder<?> block) {
 
                         if (event.getStage() != EditSession.Stage.BEFORE_CHANGE) {
                             return;
