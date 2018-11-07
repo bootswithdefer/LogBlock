@@ -1,11 +1,11 @@
 package de.diddiz.LogBlock.listeners;
 
 import de.diddiz.LogBlock.*;
+import de.diddiz.util.BukkitUtils;
 import de.diddiz.worldedit.CuboidRegion;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -53,19 +53,14 @@ public class ToolListener implements Listener {
                     params.sel = null;
                     if (behavior == ToolBehavior.BLOCK) {
                         params.setLocation(block.getRelative(event.getBlockFace()).getLocation());
-                    } else if ((block.getType() != Material.CHEST && block.getType() != Material.TRAPPED_CHEST) || tool.params.radius != 0) {
+                    } else if (tool.params.radius != 0) {
                         params.setLocation(block.getLocation());
                     } else {
-                        if (logblock.getServer().getPluginManager().isPluginEnabled("WorldEdit")) {
-                            for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
-                                if (block.getRelative(face).getType() == block.getType()) {
-                                    params.setSelection(CuboidRegion.fromCorners(event.getPlayer().getWorld(),
-                                            block.getLocation(), block.getRelative(face).getLocation()));
-                                }
-                            }
-                        }
-                        if (params.sel == null) {
+                        Block otherHalfChest = BukkitUtils.getConnectedChest(block);
+                        if (otherHalfChest == null) {
                             params.setLocation(block.getLocation());
+                        } else {
+                            params.setSelection(CuboidRegion.fromCorners(block.getLocation().getWorld(), block.getLocation(), otherHalfChest.getLocation()));
                         }
                     }
                     try {
