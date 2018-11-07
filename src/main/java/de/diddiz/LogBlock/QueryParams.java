@@ -879,11 +879,13 @@ public final class QueryParams implements Cloneable {
 
     public void setLocation(Location loc) {
         this.loc = loc;
+        this.sel = null;
         world = loc.getWorld();
     }
 
     public void setSelection(CuboidRegion container) {
         this.sel = container;
+        this.loc = null;
         world = sel.getWorld();
     }
 
