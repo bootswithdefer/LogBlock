@@ -4,7 +4,6 @@ import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.event.extent.EditSessionEvent;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extent.AbstractDelegateExtent;
@@ -18,7 +17,6 @@ import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.util.BukkitUtils;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -45,20 +43,6 @@ public class WorldEditLoggingHook {
         return new de.diddiz.LogBlock.Actor(weActor.getName());
     }
 
-    private World adapt(com.sk89q.worldedit.world.World weWorld) {
-        if (weWorld == null) {
-            throw new NullPointerException("[Logblock-Worldedit] The provided world was null.");
-        }
-        if (weWorld instanceof BukkitWorld) {
-            return ((BukkitWorld) weWorld).getWorld();
-        }
-        World world = Bukkit.getServer().getWorld(weWorld.getName());
-        if (world == null) {
-            throw new IllegalArgumentException("Can't find a Bukkit world for " + weWorld);
-        }
-        return world;
-    }
-
     public void hook() {
         WorldEdit.getInstance().getEventBus().register(new Object() {
             @Subscribe
@@ -71,9 +55,8 @@ public class WorldEditLoggingHook {
 
                 // Check to ensure the world should be logged
                 final World world;
-                final com.sk89q.worldedit.world.World k = event.getWorld();
                 try {
-                    world = adapt(k);
+                    world = BukkitAdapter.adapt(event.getWorld());
                 } catch (RuntimeException ex) {
                     plugin.getLogger().warning("Failed to register logging for WorldEdit!");
                     plugin.getLogger().log(Level.WARNING, ex.getMessage(), ex);
