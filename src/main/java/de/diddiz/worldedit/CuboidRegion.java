@@ -19,7 +19,7 @@ public class CuboidRegion implements Cloneable {
     private BlockVector min = new BlockVector();
     private BlockVector max = new BlockVector();
 
-    public CuboidRegion(World world, BlockVector3 first, BlockVector3 second) {
+    public CuboidRegion(World world, BlockVector first, BlockVector second) {
         this.world = world;
         this.min.setX(Math.min(first.getBlockX(),second.getBlockX()));
         this.min.setY(Math.min(first.getBlockY(),second.getBlockY()));
@@ -50,11 +50,11 @@ public class CuboidRegion implements Cloneable {
         }
         BlockVector3 min = selection.getMinimumPoint();
         BlockVector3 max = selection.getMaximumPoint();
-        return new CuboidRegion(world, min, max);
+        return new CuboidRegion(world, new BlockVector(min.getBlockX(), min.getBlockY(), min.getBlockZ()), new BlockVector(max.getBlockX(), max.getBlockY(), max.getBlockZ()));
     }
 
     public static CuboidRegion fromCorners(World world, Location first, Location second) {
-        return new CuboidRegion(world, BukkitAdapter.asBlockVector(first), BukkitAdapter.asBlockVector(second));
+        return new CuboidRegion(world, new BlockVector(first.getBlockX(), first.getBlockY(), first.getBlockZ()), new BlockVector(second.getBlockX(), second.getBlockY(), second.getBlockZ()));
     }
 
     public World getWorld() {
@@ -85,7 +85,7 @@ public class CuboidRegion implements Cloneable {
             clone.max = max.clone();
             return clone;
         } catch (final CloneNotSupportedException ex) {
-            throw new Error("RegionContainer should be cloneable", ex);
+            throw new Error("CuboidRegion should be cloneable", ex);
         }
     }
 }
