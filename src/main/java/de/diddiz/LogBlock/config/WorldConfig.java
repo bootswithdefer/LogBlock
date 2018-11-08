@@ -17,6 +17,7 @@ public class WorldConfig extends LoggingEnabledMapping {
     public final String insertBlockStateStatementString;
     public final String insertBlockChestDataStatementString;
     public final String insertEntityStatementString;
+    public final String updateEntityUUIDString;
 
     public WorldConfig(String world, File file) throws IOException {
         this.world = world;
@@ -44,5 +45,6 @@ public class WorldConfig extends LoggingEnabledMapping {
         insertBlockStateStatementString = "INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES(?, ?, ?)";
         insertBlockChestDataStatementString = "INSERT INTO `" + table + "-chestdata` (item, itemremove, id, itemtype) values (?, ?, ?, ?)";
         insertEntityStatementString = "INSERT INTO `" + table + "-entities` (date, playerid, entityid, entitytypeid, x, y, z, action, data) VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?)";
+        updateEntityUUIDString = "UPDATE `" + table + "-entityids` SET entityuuid = ? WHERE entityid = ?";
     }
 }

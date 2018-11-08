@@ -33,8 +33,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
@@ -56,6 +58,7 @@ public class WorldEditor implements Runnable {
     private long elapsedTime = 0;
     public LookupCacheElement[] errors;
     private boolean forceReplace;
+    private HashMap<Integer, UUID> uuidReplacements = new HashMap<>();
 
     public WorldEditor(LogBlock logblock, World world) {
         this(logblock, world, false);
@@ -164,6 +167,11 @@ public class WorldEditor implements Runnable {
         }
     }
 
+    protected UUID getReplacedUUID(int entityid, UUID unreplaced) {
+        UUID replaced = uuidReplacements.get(entityid);
+        return replaced != null ? replaced : unreplaced;
+    }
+
     public static enum PerformResult {
         SUCCESS, BLACKLISTED, NO_ACTION
     }
@@ -182,7 +190,10 @@ public class WorldEditor implements Runnable {
 
         @Override
         public PerformResult perform() throws WorldEditorException {
-            if (changeType == EntityChangeType.KILL && rollback) {
+            if (changeType == (rollback ? EntityChangeType.KILL : EntityChangeType.CREATE)) {
+                // spawn entity
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                Entity result = null;
                 YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
                 double x = deserialized.getDouble("x");
                 double y = deserialized.getDouble("y");
@@ -190,14 +201,39 @@ public class WorldEditor implements Runnable {
                 float yaw = (float) deserialized.getDouble("yaw");
                 float pitch = (float) deserialized.getDouble("pitch");
                 Location location = new Location(world, x, y, z, yaw, pitch);
+                Entity existing = Utils.loadChunksForEntity(location.getChunk(), uuid);
+                if (existing != null) {
+                    return PerformResult.NO_ACTION;
+                }
                 byte[] serializedWorldEditEntity = (byte[]) deserialized.get("worldedit");
                 if (serializedWorldEditEntity != null) {
-                    Entity result = WorldEditHelper.restoreEntity(location, type, serializedWorldEditEntity);
-                    if (result == null) {
-                        throw new WorldEditorException("Could not restore " + type, location);
+                    result = WorldEditHelper.restoreEntity(location, type, serializedWorldEditEntity);
+                }
+                if (result == null) {
+                    throw new WorldEditorException("Could not restore " + type, location);
+                } else {
+                    if (!result.getUniqueId().equals(uuid)) {
+                        logblock.getConsumer().queueEntityUUIDChange(world, entityId, result.getUniqueId());
+                        uuidReplacements.put(entityId, result.getUniqueId());
                     }
+                }
+                return PerformResult.SUCCESS;
+            } else if (changeType == (rollback ? EntityChangeType.CREATE : EntityChangeType.KILL)) {
+                // kill entity
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
+                double x = deserialized.getDouble("x");
+                double y = deserialized.getDouble("y");
+                double z = deserialized.getDouble("z");
+                float yaw = (float) deserialized.getDouble("yaw");
+                float pitch = (float) deserialized.getDouble("pitch");
+                Location location = new Location(world, x, y, z, yaw, pitch);
+                Entity existing = Utils.loadChunksForEntity(location.getChunk(), uuid);
+                if (existing != null) {
+                    existing.remove();
                     return PerformResult.SUCCESS;
                 }
+                return PerformResult.NO_ACTION; // the entity is not there, so we cannot do anything
             }
             return PerformResult.NO_ACTION;
         }

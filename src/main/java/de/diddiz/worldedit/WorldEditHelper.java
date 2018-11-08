@@ -68,14 +68,10 @@ public class WorldEditHelper {
                 if (namedTag.getName().equals("entity") && namedTag.getTag() instanceof CompoundTag) {
                     CompoundTag serializedState = (CompoundTag) namedTag.getTag();
                     BaseEntity state = new BaseEntity(weType, serializedState);
-                    CompoundTag oldNbt = state.getNbtData();
-                    UUID oldUUID = new UUID(oldNbt.getLong("UUIDMost"), oldNbt.getLong("UUIDLeast"));
                     com.sk89q.worldedit.entity.Entity weEntity = weLocation.getExtent().createEntity(weLocation, state);
                     if (weEntity != null) {
                         CompoundTag newNbt = weEntity.getState().getNbtData();
                         newUUID = new UUID(newNbt.getLong("UUIDMost"), newNbt.getLong("UUIDLeast"));
-                        System.out.println("Old UUID: " + oldUUID);
-                        System.out.println("New UUID: " + newUUID);
                     }
                 }
                 return newUUID == null ? null : Bukkit.getEntity(newUUID);

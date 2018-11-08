@@ -753,6 +753,18 @@ public class Consumer extends Thread {
         addQueueLast(new EntityRow(loc, actor, entityType, entityId, changeType, Utils.serializeYamlConfiguration(data)));
     }
 
+    /**
+     * Change the UUID that is stored for an entity in the database. This is needed when an entity is respawned
+     * and now has a different UUID.
+     * 
+     * @param world the world that contains the entity
+     * @param entityId the database id of the entity
+     * @param entityUUID the new UUID of the entity
+     */
+    public void queueEntityUUIDChange(World world, int entityId, UUID entityUUID) {
+        addQueueLast(new EntityUUIDChange(world, entityId, entityUUID));
+    }
+
     private String playerID(Actor actor) {
         if (actor == null) {
             return "NULL";
@@ -1037,9 +1049,9 @@ public class Consumer extends Thread {
             final String table = getWorldConfig(loc.getWorld()).table;
             final String[] inserts = new String[2];
 
-            inserts[0] = "INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) SELECT '" + mysqlTextEscape(entityid.toString()) + "' FROM `" + table + "-entityids` WHERE NOT EXISTS (SELECT NULL FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(entityid.toString()) + "') LIMIT 1";
+            inserts[0] = "INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) SELECT '" + mysqlTextEscape(entityUUID.toString()) + "' FROM `" + table + "-entityids` WHERE NOT EXISTS (SELECT NULL FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(entityUUID.toString()) + "') LIMIT 1";
             int entityTypeId = EntityTypeConverter.getOrAddEntityTypeId(type);
-            inserts[1] = "INSERT INTO `" + table + "-entities` (date, playerid, entityid, entitytypeid, x, y, z, action, data) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + "(SELECT entityid FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(entityid.toString()) + "')"
+            inserts[1] = "INSERT INTO `" + table + "-entities` (date, playerid, entityid, entitytypeid, x, y, z, action, data) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + "(SELECT entityid FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(entityUUID.toString()) + "')"
                     + ", " + entityTypeId + ", '" + loc.getBlockX() + "', " + safeY(loc) + ", '" + loc.getBlockZ() + "', " + changeType.ordinal() + ", " + Utils.mysqlPrepareBytesForInsertAllowNull(data) + ");";
             return inserts;
         }
@@ -1069,10 +1081,10 @@ public class Consumer extends Thread {
                     rs.close();
                 }
             }
-            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
             smt.setLong(1, date);
             smt.setInt(2, sourceActor);
-            smt.setInt(3, getEntityUUID(conn, loc.getWorld(), entityid));
+            smt.setInt(3, getEntityUUID(conn, loc.getWorld(), entityUUID));
             smt.setInt(4, EntityTypeConverter.getOrAddEntityTypeId(type));
             smt.setInt(5, loc.getBlockX());
             smt.setInt(6, safeY(loc));
@@ -1080,6 +1092,42 @@ public class Consumer extends Thread {
             smt.setInt(8, changeType.ordinal());
             smt.setBytes(9, data);
             batchHelper.addBatch(smt, null);
+        }
+    }
+
+    private class EntityUUIDChange implements Row {
+        private final World world;
+        private final int entityId;
+        private final UUID entityUUID;
+        final String updateEntityUUIDString;
+
+        public EntityUUIDChange(World world, int entityId, UUID entityUUID) {
+            this.world = world;
+            this.entityId = entityId;
+            this.entityUUID = entityUUID;
+            updateEntityUUIDString = getWorldConfig(world).updateEntityUUIDString;
+        }
+
+        @Override
+        public String[] getInserts() {
+            final String table = getWorldConfig(world).table;
+            final String[] inserts = new String[1];
+
+            inserts[0] = "UPDATE `" + table + "-entityids` SET entityuuid = '" + mysqlTextEscape(entityUUID.toString()) + "' WHERE entityid = " + entityId;
+            return inserts;
+        }
+
+        @Override
+        public Actor[] getActors() {
+            return new Actor[0];
+        }
+
+        @Override
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, updateEntityUUIDString, Statement.NO_GENERATED_KEYS);
+            smt.setString(1, entityUUID.toString());
+            smt.setInt(2, entityId);
+            smt.executeUpdate();
         }
     }
 

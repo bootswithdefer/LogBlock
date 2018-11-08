@@ -30,7 +30,8 @@ public class EntityChange implements LookupCacheElement {
     public final Location loc;
     public final Actor actor;
     public final EntityType type;
-    public final UUID entityid;
+    public final int entityId;
+    public final UUID entityUUID;
     public final EntityChangeType changeType;
     public final byte[] data;
 
@@ -40,7 +41,8 @@ public class EntityChange implements LookupCacheElement {
         this.loc = loc;
         this.actor = actor;
         this.type = type;
-        this.entityid = entityid;
+        this.entityId = -1;
+        this.entityUUID = entityid;
         this.changeType = changeType;
         this.data = data;
     }
@@ -51,7 +53,8 @@ public class EntityChange implements LookupCacheElement {
         loc = p.needCoords ? new Location(p.world, rs.getInt("x"), rs.getInt("y"), rs.getInt("z")) : null;
         actor = p.needPlayer ? new Actor(rs) : null;
         type = p.needType ? EntityTypeConverter.getEntityType(rs.getInt("entitytypeid")) : null;
-        entityid = p.needData ? UUID.fromString(rs.getString("entityuuid")) : null;
+        entityId = p.needData ? rs.getInt("entityid") : 0;
+        entityUUID = p.needData ? UUID.fromString(rs.getString("entityuuid")) : null;
         changeType = p.needType ? EntityChangeType.valueOf(rs.getInt("action")) : null;
         data = p.needData ? rs.getBytes("data") : null;
     }

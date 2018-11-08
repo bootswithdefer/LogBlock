@@ -270,7 +270,7 @@ public final class QueryParams implements Cloneable {
                     select += "entitytypeid, action, ";
                 }
                 if(needData) {
-                    select += "entityuuid, data, ";
+                    select += "entityid, entityuuid, data, ";
                 }
             }
             select = select.substring(0, select.length() - 2) + " ";
