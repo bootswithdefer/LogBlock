@@ -83,8 +83,8 @@ public class WorldEditor implements Runnable {
         this.sender = sender;
     }
 
-    public void queueEdit(int x, int y, int z, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess item) {
-        edits.add(new Edit(0, new Location(world, x, y, z), null, replaced, replaceData, replacedState, type, typeData, typeState, item));
+    public void queueBlockEdit(int x, int y, int z, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess item) {
+        edits.add(new BlockEdit(0, new Location(world, x, y, z), null, replaced, replaceData, replacedState, type, typeData, typeState, item));
     }
 
     public long getElapsedTime() {
@@ -159,12 +159,16 @@ public class WorldEditor implements Runnable {
         SUCCESS, BLACKLISTED, NO_ACTION
     }
 
-    private class Edit extends BlockChange {
-        public Edit(long time, Location loc, Actor actor, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
+    private interface Edit {
+        PerformResult perform() throws WorldEditorException;
+    }
+
+    private class BlockEdit extends BlockChange implements Edit {
+        public BlockEdit(long time, Location loc, Actor actor, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
             super(time, loc, actor, replaced, replaceData,replacedState , type, typeData, typeState, ca);
         }
 
-        PerformResult perform() throws WorldEditorException {
+        public PerformResult perform() throws WorldEditorException {
             BlockData replacedBlock = getBlockReplaced();
             BlockData setBlock = getBlockSet();
             if (replacedBlock == null || setBlock == null) {
