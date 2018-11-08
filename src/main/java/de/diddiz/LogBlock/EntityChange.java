@@ -51,9 +51,9 @@ public class EntityChange implements LookupCacheElement {
         loc = p.needCoords ? new Location(p.world, rs.getInt("x"), rs.getInt("y"), rs.getInt("z")) : null;
         actor = p.needPlayer ? new Actor(rs) : null;
         type = p.needType ? EntityTypeConverter.getEntityType(rs.getInt("entitytypeid")) : null;
-        entityid = p.needType ? UUID.fromString(rs.getString("entityuuid")) : null;
+        entityid = p.needData ? UUID.fromString(rs.getString("entityuuid")) : null;
         changeType = p.needType ? EntityChangeType.valueOf(rs.getInt("action")) : null;
-        data = p.needType ? rs.getBytes("data") : null;
+        data = p.needData ? rs.getBytes("data") : null;
     }
 
     @Override

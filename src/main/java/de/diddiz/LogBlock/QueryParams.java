@@ -53,6 +53,8 @@ public final class QueryParams implements Cloneable {
         keywords.put("both", 0);
         keywords.put("force", 0);
         keywords.put("nocache", 0);
+        keywords.put("entities", 0);
+        keywords.put("entity", 0);
     }
     public BlockChangeType bct = BlockChangeType.BOTH;
     public int limit = -1, before = 0, since = 0, radius = -1;
@@ -127,7 +129,7 @@ public final class QueryParams implements Cloneable {
             if (needPlayer || players.size() > 0) {
                 from += "INNER JOIN `lb-players` USING (playerid) ";
             }
-            if (!needCount && needType) {
+            if (!needCount && needData) {
                 from += "LEFT JOIN `" + getTable() + "-entityids` USING (entityid) ";
             }
             return from;
@@ -230,16 +232,22 @@ public final class QueryParams implements Cloneable {
             select += "COUNT(*) AS count ";
         } else {
             if (needId) {
-                select += "`" + getTable() + "-blocks`.id, ";
+                if (bct != BlockChangeType.ENTITIES) {
+                    select += "`" + getTable() + "-blocks`.id, ";
+                } else {
+                    select += "`" + getTable() + "-entities`.id, ";
+                }
             }
             if (needDate) {
                 select += "date, ";
             }
-            if (needType) {
-                select += "replaced, type, ";
-            }
-            if (needData) {
-                select += "replacedData, typeData, ";
+            if (bct != BlockChangeType.ENTITIES) {
+                if (needType) {
+                    select += "replaced, type, ";
+                }
+                if (needData) {
+                    select += "replacedData, typeData, ";
+                }
             }
             if (needPlayer) {
                 select += "playername, UUID, ";
@@ -250,11 +258,20 @@ public final class QueryParams implements Cloneable {
             if (needCoords) {
                 select += "x, y, z, ";
             }
-            if (needData) {
-                select += "replacedState, typeState, ";
-            }
-            if (needChestAccess) {
-                select += "item, itemremove, itemtype, ";
+            if (bct != BlockChangeType.ENTITIES) {
+                if (needData) {
+                    select += "replacedState, typeState, ";
+                }
+                if (needChestAccess) {
+                    select += "item, itemremove, itemtype, ";
+                }
+            } else {
+                if (needType) {
+                    select += "entitytypeid, action, ";
+                }
+                if(needData) {
+                    select += "entityuuid, data, ";
+                }
             }
             select = select.substring(0, select.length() - 2) + " ";
         }
@@ -436,32 +453,7 @@ public final class QueryParams implements Cloneable {
                     }
                 }
             }
-
-            if (loc != null) {
-                if (radius == 0) {
-                    compileLocationQuery(
-                            where,
-                            loc.getBlockX(), loc.getBlockX(),
-                            loc.getBlockY(), loc.getBlockY(),
-                            loc.getBlockZ(), loc.getBlockZ()
-                    );
-                } else if (radius > 0) {
-                    compileLocationQuery(
-                            where,
-                            loc.getBlockX() - radius + 1, loc.getBlockX() + radius - 1,
-                            loc.getBlockY() - radius + 1, loc.getBlockY() + radius - 1,
-                            loc.getBlockZ() - radius + 1, loc.getBlockZ() + radius - 1
-                    );
-                }
-
-            } else if (sel != null) {
-                compileLocationQuery(
-                        where,
-                        sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX(),
-                        sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY(),
-                        sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()
-                );
-            }
+        } else if (blockChangeType == BlockChangeType.ENTITIES) {
 
         } else {
             switch (blockChangeType) {
@@ -546,6 +538,8 @@ public final class QueryParams implements Cloneable {
                 default:
                     break;
             }
+        }
+        if(blockChangeType != BlockChangeType.CHAT) {
             if (loc != null) {
                 if (radius == 0) {
                     compileLocationQuery(
@@ -571,7 +565,6 @@ public final class QueryParams implements Cloneable {
                         sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()
                 );
             }
-
         }
         if (!players.isEmpty() && sum != SummarizationMode.PLAYERS && blockChangeType != BlockChangeType.KILLS) {
             if (!excludePlayersMode) {
@@ -802,7 +795,7 @@ public final class QueryParams implements Cloneable {
                 bct = BlockChangeType.CHAT;
             } else if (param.equals("kills")) {
                 bct = BlockChangeType.KILLS;
-            } else if (param.equals("entities")) {
+            } else if (param.equals("entities") || param.equals("entity")) {
                 bct = BlockChangeType.ENTITIES;
             } else if (param.equals("all")) {
                 bct = BlockChangeType.ALL;
@@ -891,6 +884,11 @@ public final class QueryParams implements Cloneable {
             }
             if (sum != SummarizationMode.NONE) {
                 throw new IllegalArgumentException("Invalid summarization for chat");
+            }
+        }
+        if(bct == BlockChangeType.ENTITIES) {
+            if (sum != SummarizationMode.NONE) {
+                throw new IllegalStateException("Summarization not implemented yet");
             }
         }
     }
