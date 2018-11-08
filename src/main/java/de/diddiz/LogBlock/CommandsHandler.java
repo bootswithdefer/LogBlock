@@ -690,14 +690,9 @@ public class CommandsHandler implements CommandExecutor {
                 }
                 rs = executeQuery(state, params.getQuery());
                 final WorldEditor editor = new WorldEditor(logblock, params.world, params.forceReplace);
-
+                WorldEditorEditFactory editFactory = new WorldEditorEditFactory(editor, params, true);
                 while (rs.next()) {
-                    ChestAccess chestaccess = null;
-                    ItemStack stack = Utils.loadItemStack(rs.getBytes("item"));
-                    if (stack != null) {
-                        chestaccess = new ChestAccess(stack, rs.getBoolean("itemremove"), rs.getInt("itemtype"));
-                    }
-                    editor.queueBlockEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("replacedData"), rs.getBytes("replacedState"), rs.getInt("type"), rs.getInt("typeData"), rs.getBytes("typeState"), chestaccess);
+                    editFactory.processRow(rs);
                 }
                 final int changes = editor.getSize();
                 if (changes > 10000) {
@@ -781,13 +776,9 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.DARK_AQUA + "Searching " + params.getTitle() + ":");
                 }
                 final WorldEditor editor = new WorldEditor(logblock, params.world, params.forceReplace);
+                WorldEditorEditFactory editFactory = new WorldEditorEditFactory(editor, params, false);
                 while (rs.next()) {
-                    ChestAccess chestaccess = null;
-                    ItemStack stack = Utils.loadItemStack(rs.getBytes("item"));
-                    if (stack != null) {
-                        chestaccess = new ChestAccess(stack, !rs.getBoolean("itemremove"), rs.getInt("itemtype"));
-                    }
-                    editor.queueBlockEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("typeData"), rs.getBytes("typeState"), rs.getInt("replaced"), rs.getInt("replacedData"), rs.getBytes("replacedState"), chestaccess);
+                    editFactory.processRow(rs);
                 }
                 final int changes = editor.getSize();
                 if (!params.silent) {

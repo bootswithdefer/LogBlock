@@ -18,14 +18,19 @@ import org.bukkit.block.data.type.Piston;
 import org.bukkit.block.data.type.PistonHead;
 import org.bukkit.block.data.type.TechnicalPiston.Type;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.Utils;
+import de.diddiz.worldedit.WorldEditHelper;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +90,10 @@ public class WorldEditor implements Runnable {
 
     public void queueBlockEdit(int x, int y, int z, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess item) {
         edits.add(new BlockEdit(0, new Location(world, x, y, z), null, replaced, replaceData, replacedState, type, typeData, typeState, item));
+    }
+
+    public void queueEntityEdit(ResultSet rs, QueryParams p, boolean rollback) throws SQLException {
+        edits.add(new EntityEdit(rs, p, rollback));
     }
 
     public long getElapsedTime() {
@@ -155,15 +164,46 @@ public class WorldEditor implements Runnable {
         }
     }
 
-    private static enum PerformResult {
+    public static enum PerformResult {
         SUCCESS, BLACKLISTED, NO_ACTION
     }
 
-    private interface Edit {
+    public interface Edit {
         PerformResult perform() throws WorldEditorException;
     }
 
-    private class BlockEdit extends BlockChange implements Edit {
+    public class EntityEdit extends EntityChange implements Edit {
+        private boolean rollback;
+
+        public EntityEdit(ResultSet rs, QueryParams p, boolean rollback) throws SQLException {
+            super(rs, p);
+            this.rollback = rollback;
+        }
+
+        @Override
+        public PerformResult perform() throws WorldEditorException {
+            if (changeType == EntityChangeType.KILL && rollback) {
+                YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
+                double x = deserialized.getDouble("x");
+                double y = deserialized.getDouble("y");
+                double z = deserialized.getDouble("z");
+                float yaw = (float) deserialized.getDouble("yaw");
+                float pitch = (float) deserialized.getDouble("pitch");
+                Location location = new Location(world, x, y, z, yaw, pitch);
+                byte[] serializedWorldEditEntity = (byte[]) deserialized.get("worldedit");
+                if (serializedWorldEditEntity != null) {
+                    Entity result = WorldEditHelper.restoreEntity(location, type, serializedWorldEditEntity);
+                    if (result == null) {
+                        throw new WorldEditorException("Could not restore " + type, location);
+                    }
+                    return PerformResult.SUCCESS;
+                }
+            }
+            return PerformResult.NO_ACTION;
+        }
+    }
+
+    public class BlockEdit extends BlockChange implements Edit {
         public BlockEdit(long time, Location loc, Actor actor, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
             super(time, loc, actor, replaced, replaceData,replacedState , type, typeData, typeState, ca);
         }

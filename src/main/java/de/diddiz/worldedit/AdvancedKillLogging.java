@@ -38,8 +38,8 @@ public class AdvancedKillLogging extends LoggingListener {
         Location location = entity.getLocation();
         YamlConfiguration data = new YamlConfiguration();
         data.set("x", location.getX());
-        data.set("y", location.getX());
-        data.set("z", location.getX());
+        data.set("y", location.getY());
+        data.set("z", location.getZ());
         data.set("yaw", location.getYaw());
         data.set("pitch", location.getPitch());
 
