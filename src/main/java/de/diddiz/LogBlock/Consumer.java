@@ -26,16 +26,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.Inventory;
@@ -43,6 +46,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
 
+import de.diddiz.LogBlock.EntityChange.EntityChangeType;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecSign;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
@@ -52,8 +56,10 @@ import de.diddiz.util.Utils;
 public class Consumer extends Thread {
     private final Deque<Row> queue = new ArrayDeque<Row>();
     private final LogBlock logblock;
-    private final Map<Actor, Integer> playerIds = new HashMap<Actor, Integer>();
-    private final Map<Actor, Integer> uncommitedPlayerIds = new HashMap<Actor, Integer>();
+    private final Map<Actor, Integer> playerIds = new HashMap<>();
+    private final Map<Actor, Integer> uncommitedPlayerIds = new HashMap<>();
+    private final Map<World, Map<UUID, Integer>> uncommitedEntityIds = new HashMap<>();
+
     private long addEntryCounter;
     private long nextWarnCounter;
 
@@ -495,6 +501,7 @@ public class Consumer extends Thread {
                     currentRows.clear();
                     playerIds.putAll(uncommitedPlayerIds);
                     uncommitedPlayerIds.clear();
+                    uncommitedEntityIds.clear();
                     lastCommitsFailed = 0;
                 }
             } catch (Exception e) {
@@ -520,6 +527,7 @@ public class Consumer extends Thread {
                 currentRows.clear();
                 batchHelper.reset();
                 uncommitedPlayerIds.clear();
+                uncommitedEntityIds.clear();
                 if (conn != null) {
                     try {
                         conn.close();
@@ -657,6 +665,48 @@ public class Consumer extends Thread {
         return uncommitedPlayerIds.containsKey(actor);
     }
 
+    private int getEntityUUID(Connection conn, World world, UUID uuid) throws SQLException {
+        Map<UUID, Integer> uncommitedEntityIdsHere = uncommitedEntityIds.get(world);
+        if (uncommitedEntityIdsHere == null) {
+            uncommitedEntityIdsHere = new HashMap<>();
+            uncommitedEntityIds.put(world, uncommitedEntityIdsHere);
+        }
+        Integer existing = uncommitedEntityIdsHere.get(uuid);
+        if (existing != null) {
+            return existing;
+        }
+
+        // Odd query contruction is to work around innodb auto increment behaviour - bug #492
+        final String table = getWorldConfig(world).table;
+        String uuidString = uuid.toString();
+        Statement state = conn.createStatement();
+        String q1 = "INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) SELECT '" + mysqlTextEscape(uuidString) + "' FROM `" + table + "-entityids` WHERE NOT EXISTS (SELECT NULL FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(uuidString) + "') LIMIT 1";
+        String q2 = "SELECT entityid FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(uuidString) + "'";
+        int q1Result = state.executeUpdate(q1);
+        ResultSet rs = state.executeQuery(q2);
+        if (rs.next()) {
+            uncommitedEntityIdsHere.put(uuid, rs.getInt(1));
+        }
+        rs.close();
+        // if there was not any row in the table the query above does not work, so we need to try this one
+        if (!uncommitedEntityIdsHere.containsKey(uuid)) {
+            state.executeUpdate("INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) VALUES ('" + mysqlTextEscape(uuidString) + "')");
+            rs = state.executeQuery(q2);
+            if (rs.next()) {
+                uncommitedEntityIdsHere.put(uuid, rs.getInt(1));
+            } else {
+                logblock.getLogger().warning("[Consumer] Failed to add entity uuid " + uuidString.toString());
+                logblock.getLogger().warning("[Consumer-Debug] World: " + world.getName());
+                logblock.getLogger().warning("[Consumer-Debug] Query 1: " + q1);
+                logblock.getLogger().warning("[Consumer-Debug] Query 1 - Result: " + q1Result);
+                logblock.getLogger().warning("[Consumer-Debug] Query 2: " + q2);
+            }
+            rs.close();
+        }
+        state.close();
+        return uncommitedEntityIdsHere.get(uuid);
+    }
+
     private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, YamlConfiguration stateBefore, YamlConfiguration stateAfter, ChestAccess ca) {
         if (typeBefore == null || typeBefore.getMaterial() == Material.CAVE_AIR || typeBefore.getMaterial() == Material.VOID_AIR) {
             typeBefore = Bukkit.createBlockData(Material.AIR);
@@ -694,6 +744,13 @@ public class Consumer extends Thread {
         int typeStateId = MaterialConverter.getOrAddBlockStateId(typeString);
 
         addQueueLast(new BlockRow(loc, actor, replacedMaterialId, replacedStateId, Utils.serializeYamlConfiguration(stateBefore), typeMaterialId, typeStateId, Utils.serializeYamlConfiguration(stateAfter), ca));
+    }
+
+    public void queueEntityModification(Actor actor, UUID entityId, EntityType entityType, Location loc, EntityChangeType changeType, YamlConfiguration data) {
+        if (actor == null || loc == null || changeType == null || entityId == null || entityType == null || hiddenPlayers.contains(actor.getName().toLowerCase()) || !isLogged(loc.getWorld())) {
+            return;
+        }
+        addQueueLast(new EntityRow(loc, actor, entityType, entityId, changeType, Utils.serializeYamlConfiguration(data)));
     }
 
     private String playerID(Actor actor) {
@@ -961,6 +1018,67 @@ public class Consumer extends Thread {
             PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
             smt.setLong(1, onlineTime);
             smt.setString(2, actor.getUUID());
+            batchHelper.addBatch(smt, null);
+        }
+    }
+
+    private class EntityRow extends EntityChange implements Row {
+        final String statementString;
+        final String selectActorIdStatementString;
+
+        public EntityRow(Location loc, Actor actor, EntityType type, UUID entityid, EntityChangeType changeType, byte[] data) {
+            super(System.currentTimeMillis() / 1000, loc, actor, type, entityid, changeType, data);
+            statementString = getWorldConfig(loc.getWorld()).insertEntityStatementString;
+            selectActorIdStatementString = getWorldConfig(loc.getWorld()).selectBlockActorIdStatementString;
+        }
+
+        @Override
+        public String[] getInserts() {
+            final String table = getWorldConfig(loc.getWorld()).table;
+            final String[] inserts = new String[2];
+
+            inserts[0] = "INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) SELECT '" + mysqlTextEscape(entityid.toString()) + "' FROM `" + table + "-entityids` WHERE NOT EXISTS (SELECT NULL FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(entityid.toString()) + "') LIMIT 1";
+            int entityTypeId = EntityTypeConverter.getOrAddEntityTypeId(type);
+            inserts[1] = "INSERT INTO `" + table + "-entities` (date, playerid, entityid, entitytypeid, x, y, z, action, data) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + "(SELECT entityid FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(entityid.toString()) + "')"
+                    + ", " + entityTypeId + ", '" + loc.getBlockX() + "', " + safeY(loc) + ", '" + loc.getBlockZ() + "', " + changeType.ordinal() + ", " + Utils.mysqlPrepareBytesForInsertAllowNull(data) + ");";
+            return inserts;
+        }
+
+        @Override
+        public Actor[] getActors() {
+            return new Actor[] { actor };
+        }
+
+        @Override
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            int sourceActor = playerIDAsIntIncludeUncommited(actor);
+            Location actorBlockLocation = actor.getBlockLocation();
+            if (actorBlockLocation != null) {
+                Integer tempSourceActor = batchHelper.getUncommitedBlockActor(actorBlockLocation);
+                if (tempSourceActor != null) {
+                    sourceActor = tempSourceActor;
+                } else {
+                    PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, selectActorIdStatementString, Statement.NO_GENERATED_KEYS);
+                    smt.setInt(1, actorBlockLocation.getBlockX());
+                    smt.setInt(2, safeY(actorBlockLocation));
+                    smt.setInt(3, actorBlockLocation.getBlockZ());
+                    ResultSet rs = smt.executeQuery();
+                    if (rs.next()) {
+                        sourceActor = rs.getInt(1);
+                    }
+                    rs.close();
+                }
+            }
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.RETURN_GENERATED_KEYS);
+            smt.setLong(1, date);
+            smt.setInt(2, sourceActor);
+            smt.setInt(3, getEntityUUID(conn, loc.getWorld(), entityid));
+            smt.setInt(4, EntityTypeConverter.getOrAddEntityTypeId(type));
+            smt.setInt(5, loc.getBlockX());
+            smt.setInt(6, safeY(loc));
+            smt.setInt(7, loc.getBlockZ());
+            smt.setInt(8, changeType.ordinal());
+            smt.setBytes(9, data);
             batchHelper.addBatch(smt, null);
         }
     }

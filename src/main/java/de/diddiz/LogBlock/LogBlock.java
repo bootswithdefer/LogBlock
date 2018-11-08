@@ -5,6 +5,8 @@ import de.diddiz.LogBlock.listeners.*;
 import de.diddiz.LogBlock.questioner.Questioner;
 import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.MySQLConnectionPool;
+import de.diddiz.worldedit.AdvancedKillLogging;
+import de.diddiz.worldedit.WorldEditHelper;
 import de.diddiz.worldedit.WorldEditLoggingHook;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -89,6 +91,7 @@ public class LogBlock extends JavaPlugin {
             updater.checkTables();
             MaterialConverter.initializeMaterials(getConnection());
             MaterialConverter.getOrAddMaterialId(Material.AIR.getKey()); // AIR must be the first entry
+            EntityTypeConverter.initializeEntityTypes(getConnection());
             if (updater.update()) {
                 load(this);
             }
@@ -100,7 +103,7 @@ public class LogBlock extends JavaPlugin {
             return;
         }
 
-        if (pm.getPlugin("WorldEdit") != null) {
+        if (WorldEditHelper.hasWorldEdit()) {
             new WorldEditLoggingHook(this).hook();
         }
         commandsHandler = new CommandsHandler(this);
@@ -186,6 +189,7 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.DRAGONEGGTELEPORT)) {
             pm.registerEvents(new DragonEggLogging(this), this);
         }
+        pm.registerEvents(new AdvancedKillLogging(this), this);
     }
 
     @Override

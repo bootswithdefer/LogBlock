@@ -29,7 +29,8 @@ public class CuboidRegion implements Cloneable {
         this.max.setZ(Math.max(first.getBlockZ(),second.getBlockZ()));
     }
 
-    public static CuboidRegion fromPlayerSelection(Player player, Plugin worldEditPlugin) {
+    public static CuboidRegion fromPlayerSelection(Player player) {
+        Plugin worldEditPlugin = player.getServer().getPluginManager().getPlugin("WorldEdit");
         LocalSession session = ((WorldEditPlugin) worldEditPlugin).getSession(player);
         World world = player.getWorld();
         com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(world);

@@ -3,12 +3,13 @@ package de.diddiz.LogBlock;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.util.Utils;
 import de.diddiz.worldedit.CuboidRegion;
+import de.diddiz.worldedit.WorldEditHelper;
+
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 
@@ -117,6 +118,17 @@ public final class QueryParams implements Cloneable {
 
             if (needPlayer || needVictim || victims.size() > 0) {
                 from += "INNER JOIN `lb-players` as victims ON (victim=victims.playerid) ";
+            }
+            return from;
+        }
+        if (bct == BlockChangeType.ENTITIES) {
+            String from = "FROM `" + getTable() + "-entities` ";
+
+            if (needPlayer || players.size() > 0) {
+                from += "INNER JOIN `lb-players` USING (playerid) ";
+            }
+            if (!needCount && needType) {
+                from += "LEFT JOIN `" + getTable() + "-entityids` USING (entityid) ";
             }
             return from;
         }
@@ -262,6 +274,9 @@ public final class QueryParams implements Cloneable {
             }
             throw new IllegalStateException("Invalid summarization for kills");
         }
+        if (bct == BlockChangeType.ENTITIES) {
+            throw new IllegalStateException("Not implemented yet");
+        }
         if (sum == SummarizationMode.TYPES) {
             return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
         } else {
@@ -281,6 +296,8 @@ public final class QueryParams implements Cloneable {
             title.append("chat messages ");
         } else if (bct == BlockChangeType.KILLS) {
             title.append("kills ");
+        } else if (bct == BlockChangeType.ENTITIES) {
+            title.append("entity changes ");
         } else {
             if (!types.isEmpty()) {
                 if (excludeBlocksMode) {
@@ -745,9 +762,8 @@ public final class QueryParams implements Cloneable {
                 if (player == null) {
                     throw new IllegalArgumentException("You have to be a player to use selection");
                 }
-                final Plugin we = player.getServer().getPluginManager().getPlugin("WorldEdit");
-                if (we != null) {
-                    setSelection(CuboidRegion.fromPlayerSelection(player, we));
+                if (WorldEditHelper.hasWorldEdit()) {
+                    setSelection(CuboidRegion.fromPlayerSelection(player));
                 } else {
                     throw new IllegalArgumentException("WorldEdit not found!");
                 }
@@ -786,6 +802,8 @@ public final class QueryParams implements Cloneable {
                 bct = BlockChangeType.CHAT;
             } else if (param.equals("kills")) {
                 bct = BlockChangeType.KILLS;
+            } else if (param.equals("entities")) {
+                bct = BlockChangeType.ENTITIES;
             } else if (param.equals("all")) {
                 bct = BlockChangeType.ALL;
             } else if (param.equals("limit")) {
@@ -963,7 +981,7 @@ public final class QueryParams implements Cloneable {
     }
 
     public static enum BlockChangeType {
-        ALL, BOTH, CHESTACCESS, CREATED, DESTROYED, CHAT, KILLS
+        ALL, BOTH, CHESTACCESS, CREATED, DESTROYED, CHAT, KILLS, ENTITIES
     }
 
     public static enum Order {

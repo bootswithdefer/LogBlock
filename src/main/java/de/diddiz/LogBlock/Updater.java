@@ -779,15 +779,17 @@ class Updater {
         }
         createTable(dbm, state, "lb-materials", "(id INT UNSIGNED NOT NULL, name VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET " + charset);
         createTable(dbm, state, "lb-blockstates", "(id INT UNSIGNED NOT NULL, name VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET " + charset);
+        createTable(dbm, state, "lb-entitytypes", "(id INT UNSIGNED NOT NULL, name VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET " + charset);
 
         for (final WorldConfig wcfg : getLoggedWorlds()) {
             createTable(dbm, state, wcfg.table + "-blocks", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, replaced SMALLINT UNSIGNED NOT NULL, replacedData SMALLINT NOT NULL, type SMALLINT UNSIGNED NOT NULL, typeData SMALLINT NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT UNSIGNED NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
-            // createTable(dbm, state, wcfg.table + "-sign", "(id INT UNSIGNED NOT NULL, signtext VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET " + charset);
             createTable(dbm, state, wcfg.table + "-chestdata", "(id INT UNSIGNED NOT NULL, item MEDIUMBLOB, itemremove TINYINT, itemtype SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (id))");
             createTable(dbm, state, wcfg.table + "-state", "(id INT UNSIGNED NOT NULL, replacedState MEDIUMBLOB NULL, typeState MEDIUMBLOB NULL, PRIMARY KEY (id))");
             if (wcfg.isLogging(Logging.KILL)) {
                 createTable(dbm, state, wcfg.table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer INT UNSIGNED, victim INT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id))");
             }
+            createTable(dbm, state, wcfg.table + "-entityids", "(entityid INT UNSIGNED NOT NULL AUTO_INCREMENT, entityuuid VARCHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL, PRIMARY KEY (entityid), UNIQUE KEY (entityuuid))");
+            createTable(dbm, state, wcfg.table + "-entities", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, entityid INT UNSIGNED NOT NULL, entitytypeid INT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, action TINYINT UNSIGNED NOT NULL, data MEDIUMBLOB NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
         }
         state.close();
         conn.close();

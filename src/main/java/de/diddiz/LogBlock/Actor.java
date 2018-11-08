@@ -3,6 +3,7 @@ package de.diddiz.LogBlock;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.projectiles.BlockProjectileSource;
 import org.bukkit.projectiles.ProjectileSource;
 
@@ -86,9 +87,14 @@ public class Actor {
     public static Actor actorFromEntity(Entity entity) {
         if (entity instanceof Player) {
             return new Actor(entityName(entity), entity.getUniqueId());
-        } else {
-            return new Actor(entityName(entity));
         }
+        if (entity instanceof Projectile) {
+            ProjectileSource shooter = ((Projectile) entity).getShooter();
+            if (shooter != null) {
+                return actorFromProjectileSource(shooter);
+            }
+        }
+        return new Actor(entityName(entity));
     }
 
     public static Actor actorFromEntity(EntityType entity) {
@@ -109,17 +115,19 @@ public class Actor {
 
     /**
      * Generate an Actor object from a String name, trying to guess if it's an online player
-     * and if so, setting the UUID accordingly.  This only checks against currently online
+     * and if so, setting the UUID accordingly. This only checks against currently online
      * players and is a "best effort" attempt for use with the pre-UUID API
      * <p>
      * If you know something is an entity (player or otherwise) use the {@link #actorFromEntity(org.bukkit.entity.Entity) }
      * or {@link #actorFromEntity(org.bukkit.entity.EntityType) } methods
      * <p>
      * If you know something is a server effect (like gravity) use {@link #Actor(java.lang.String)}
+     * 
      * @deprecated Only use this if you have a String of unknown origin
      * 
-     * @param actorName String of unknown origin
-     * @return 
+     * @param actorName
+     *            String of unknown origin
+     * @return
      */
     public static Actor actorFromString(String actorName) {
         Collection<? extends Player> players = Bukkit.getServer().getOnlinePlayers();
