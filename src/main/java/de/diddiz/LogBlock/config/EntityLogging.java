@@ -1,4 +1,4 @@
-package de.diddiz.LogBlock;
+package de.diddiz.LogBlock.config;
 
 import java.util.Arrays;
 import java.util.Collections;

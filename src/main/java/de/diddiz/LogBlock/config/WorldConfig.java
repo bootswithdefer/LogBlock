@@ -1,12 +1,10 @@
 package de.diddiz.LogBlock.config;
 
-import de.diddiz.LogBlock.EntityLogging;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.util.BukkitUtils;
 
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Ambient;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -124,7 +122,7 @@ public class WorldConfig extends LoggingEnabledMapping {
             if (logLiving && LivingEntity.class.isAssignableFrom(entity.getClass()) && !(entity instanceof ArmorStand)) {
                 return true;
             }
-            if (logAnimals && (Animals.class.isAssignableFrom(entity.getClass()) || WaterMob.class.isAssignableFrom(entity.getClass()) || Ambient.class.isAssignableFrom(entity.getClass()))) {
+            if (logAnimals && (Animals.class.isAssignableFrom(entity.getClass()) || WaterMob.class.isAssignableFrom(entity.getClass()))) {
                 return true;
             }
             if (logMonsters && (Monster.class.isAssignableFrom(entity.getClass()) || entity.getType() == EntityType.SLIME || entity.getType() == EntityType.WITHER || entity.getType() == EntityType.ENDER_DRAGON || entity.getType() == EntityType.SHULKER || entity.getType() == EntityType.GHAST)) {

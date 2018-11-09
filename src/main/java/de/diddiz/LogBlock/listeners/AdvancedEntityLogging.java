@@ -34,9 +34,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.EntityChange;
-import de.diddiz.LogBlock.EntityLogging;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.config.Config;
+import de.diddiz.LogBlock.config.EntityLogging;
 import de.diddiz.worldedit.WorldEditHelper;
 
 public class AdvancedEntityLogging extends LoggingListener {
