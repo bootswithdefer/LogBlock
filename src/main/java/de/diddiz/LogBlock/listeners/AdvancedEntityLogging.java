@@ -8,6 +8,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Hanging;
 import org.bukkit.entity.IronGolem;
+import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowman;
@@ -24,6 +25,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.hanging.HangingPlaceEvent;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -98,10 +100,25 @@ public class AdvancedEntityLogging extends LoggingListener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         ItemStack inHand = event.getHand() == EquipmentSlot.HAND ? event.getPlayer().getInventory().getItemInMainHand() : event.getPlayer().getInventory().getItemInOffHand();
-        if (inHand != null) {
+        if (inHand != null && inHand.getType() != Material.AIR) {
             Material mat = inHand.getType();
             if (mat.name().endsWith("_SPAWN_EGG")) {
                 setLastSpawner(event.getPlayer(), null, true);
+            }
+
+            Entity entity = event.getRightClicked();
+            if (entity instanceof ItemFrame) {
+                ItemStack oldItem = ((ItemFrame) entity).getItem();
+                if (oldItem == null || oldItem.getType() == Material.AIR) {
+                    if (Config.isLogging(entity.getWorld(), EntityLogging.MODIFY, entity)) {
+                        Actor actor = Actor.actorFromEntity(event.getPlayer());
+                        YamlConfiguration data = new YamlConfiguration();
+                        inHand = inHand.clone();
+                        inHand.setAmount(1);
+                        data.set("item", inHand);
+                        consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), entity.getLocation(), EntityChange.EntityChangeType.ADDEQUIP, data);
+                    }
+                }
             }
         }
     }
@@ -166,6 +183,54 @@ public class AdvancedEntityLogging extends LoggingListener {
                 actor = new Actor(event.getCause().toString());
             }
             queueEntitySpawnOrKill(entity, actor, EntityChange.EntityChangeType.KILL);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onEntityDamage(EntityDamageEvent event) {
+        Entity entity = event.getEntity();
+        if (entity instanceof ItemFrame) {
+            ItemStack oldItem = ((ItemFrame) entity).getItem();
+            if (oldItem != null && oldItem.getType() != Material.AIR) {
+                if (Config.isLogging(entity.getWorld(), EntityLogging.MODIFY, entity)) {
+                    Actor actor;
+                    if (event instanceof EntityDamageByEntityEvent) {
+                        actor = Actor.actorFromEntity(((EntityDamageByEntityEvent) event).getDamager());
+                    } else {
+                        actor = new Actor(event.getCause().toString());
+                    }
+                    YamlConfiguration data = new YamlConfiguration();
+                    data.set("item", oldItem);
+                    consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), entity.getLocation(), EntityChange.EntityChangeType.REMOVEEQUIP, data);
+                }
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerArmorStandManipulate(PlayerArmorStandManipulateEvent event) {
+        ArmorStand entity = event.getRightClicked();
+        ItemStack oldItem = event.getArmorStandItem();
+        ItemStack newItem = event.getPlayerItem();
+        boolean oldEmpty = oldItem == null || oldItem.getType() == Material.AIR;
+        boolean newEmpty = newItem == null || newItem.getType() == Material.AIR;
+        if ((!oldEmpty || !newEmpty) && Config.isLogging(entity.getWorld(), EntityLogging.MODIFY, entity)) {
+            Actor actor = Actor.actorFromEntity(event.getPlayer());
+            if (!oldEmpty && !newEmpty && newItem.getAmount() > 1) {
+                return;
+            }
+            if (!oldEmpty) {
+                YamlConfiguration data = new YamlConfiguration();
+                data.set("item", oldItem);
+                data.set("slot", event.getSlot().name());
+                consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), entity.getLocation(), EntityChange.EntityChangeType.REMOVEEQUIP, data);
+            }
+            if (!newEmpty) {
+                YamlConfiguration data = new YamlConfiguration();
+                data.set("item", newItem);
+                data.set("slot", event.getSlot().name());
+                consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), entity.getLocation(), EntityChange.EntityChangeType.ADDEQUIP, data);
+            }
         }
     }
 

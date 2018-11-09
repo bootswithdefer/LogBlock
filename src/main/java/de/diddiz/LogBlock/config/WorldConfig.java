@@ -3,7 +3,7 @@ package de.diddiz.LogBlock.config;
 import de.diddiz.LogBlock.EntityLogging;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
-import de.diddiz.util.Utils;
+import de.diddiz.util.BukkitUtils;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Ambient;
@@ -90,7 +90,7 @@ public class WorldConfig extends LoggingEnabledMapping {
             boolean monsters = false;
             boolean living = false;
             for (String type : types) {
-                EntityType et = Utils.matchEntityType(type);
+                EntityType et = BukkitUtils.matchEntityType(type);
                 if (et != null) {
                     logged.add(et);
                 } else {

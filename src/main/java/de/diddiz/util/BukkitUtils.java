@@ -12,10 +12,12 @@ import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Slab.Type;
 import org.bukkit.block.data.type.Stairs;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -745,5 +747,86 @@ public class BukkitUtils {
             }
         }
         return null;
+    }
+
+    public static Entity loadEntityAround(Chunk chunk, UUID uuid) {
+        Entity e = Bukkit.getEntity(uuid);
+        if (e != null) {
+            return e;
+        }
+        if (!chunk.isLoaded()) {
+            chunk.load();
+            e = Bukkit.getEntity(uuid);
+            if (e != null) {
+                return e;
+            }
+        }
+        int chunkx = chunk.getX();
+        int chunkz = chunk.getZ();
+        for (int i = 0; i < 8; i++) {
+            int x = i < 3 ? chunkx - 1 : (i < 5 ? chunkx : chunkx + 1);
+            int z = i == 0 || i == 3 || i == 5 ? chunkz - 1 : (i == 1 || i == 6 ? chunkz : chunkz + 1);
+            if (!chunk.getWorld().isChunkLoaded(x, z)) {
+                chunk.getWorld().loadChunk(x, z);
+                e = Bukkit.getEntity(uuid);
+                if (e != null) {
+                    return e;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static final HashMap<String, EntityType> types = new HashMap<>();
+    static {
+        for (EntityType t : EntityType.values()) {
+            types.put(t.name().toLowerCase(), t);
+            @SuppressWarnings("deprecation")
+            String typeName = t.getName();
+            if (typeName != null) {
+                types.put(typeName.toLowerCase(), t);
+            }
+            Class<? extends Entity> ec = t.getEntityClass();
+            if (ec != null) {
+                types.put(ec.getSimpleName().toLowerCase(), t);
+            }
+        }
+    }
+
+    public static EntityType matchEntityType(String typeName) {
+        return types.get(typeName.toLowerCase());
+    }
+
+    public static ItemStack getItemInSlot(ArmorStand stand, EquipmentSlot slot) {
+        if (slot == EquipmentSlot.HAND) {
+            return stand.getEquipment().getItemInMainHand();
+        } else if (slot == EquipmentSlot.OFF_HAND) {
+            return stand.getEquipment().getItemInOffHand();
+        } else if (slot == EquipmentSlot.FEET) {
+            return stand.getEquipment().getBoots();
+        } else if (slot == EquipmentSlot.LEGS) {
+            return stand.getEquipment().getLeggings();
+        } else if (slot == EquipmentSlot.CHEST) {
+            return stand.getEquipment().getChestplate();
+        } else if (slot == EquipmentSlot.HEAD) {
+            return stand.getEquipment().getHelmet();
+        }
+        return null;
+    }
+
+    public static void setItemInSlot(ArmorStand stand, EquipmentSlot slot, ItemStack stack) {
+        if (slot == EquipmentSlot.HAND) {
+            stand.getEquipment().setItemInMainHand(stack);
+        } else if (slot == EquipmentSlot.OFF_HAND) {
+            stand.getEquipment().setItemInOffHand(stack);
+        } else if (slot == EquipmentSlot.FEET) {
+            stand.getEquipment().setBoots(stack);
+        } else if (slot == EquipmentSlot.LEGS) {
+            stand.getEquipment().setLeggings(stack);
+        } else if (slot == EquipmentSlot.CHEST) {
+            stand.getEquipment().setChestplate(stack);
+        } else if (slot == EquipmentSlot.HEAD) {
+            stand.getEquipment().setHelmet(stack);
+        }
     }
 }

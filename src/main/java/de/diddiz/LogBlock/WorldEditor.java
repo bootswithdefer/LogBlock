@@ -19,7 +19,10 @@ import org.bukkit.block.data.type.PistonHead;
 import org.bukkit.block.data.type.TechnicalPiston.Type;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
@@ -201,7 +204,7 @@ public class WorldEditor implements Runnable {
                 float yaw = (float) deserialized.getDouble("yaw");
                 float pitch = (float) deserialized.getDouble("pitch");
                 Location location = new Location(world, x, y, z, yaw, pitch);
-                Entity existing = Utils.loadChunksForEntity(location.getChunk(), uuid);
+                Entity existing = BukkitUtils.loadEntityAround(location.getChunk(), uuid);
                 if (existing != null) {
                     return PerformResult.NO_ACTION;
                 }
@@ -228,12 +231,60 @@ public class WorldEditor implements Runnable {
                 float yaw = (float) deserialized.getDouble("yaw");
                 float pitch = (float) deserialized.getDouble("pitch");
                 Location location = new Location(world, x, y, z, yaw, pitch);
-                Entity existing = Utils.loadChunksForEntity(location.getChunk(), uuid);
+                Entity existing = BukkitUtils.loadEntityAround(location.getChunk(), uuid);
                 if (existing != null) {
                     existing.remove();
                     return PerformResult.SUCCESS;
                 }
                 return PerformResult.NO_ACTION; // the entity is not there, so we cannot do anything
+            } else if (changeType == (rollback ? EntityChangeType.REMOVEEQUIP : EntityChangeType.ADDEQUIP)) {
+                // set equip
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                Entity existing = BukkitUtils.loadEntityAround(loc.getChunk(), uuid);
+                if (existing != null) {
+                    YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
+                    ItemStack item = deserialized.getItemStack("item");
+                    if (item != null && existing instanceof ItemFrame) {
+                        ItemStack old = ((ItemFrame) existing).getItem();
+                        if (old == null || old.getType() == Material.AIR) {
+                            ((ItemFrame) existing).setItem(item);
+                            return PerformResult.SUCCESS;
+                        }
+                    } else if (item != null && existing instanceof ArmorStand) {
+                        EquipmentSlot slot = EquipmentSlot.valueOf(deserialized.getString("slot"));
+                        ArmorStand stand = (ArmorStand) existing;
+                        ItemStack old = BukkitUtils.getItemInSlot(stand, slot);
+                        if (old == null || old.getType() == Material.AIR) {
+                            BukkitUtils.setItemInSlot(stand, slot, item);
+                            return PerformResult.SUCCESS;
+                        }
+                    }
+                }
+                return PerformResult.NO_ACTION; // the entity is not there, or equip does not match
+            } else if (changeType == (rollback ? EntityChangeType.ADDEQUIP : EntityChangeType.REMOVEEQUIP)) {
+                // remove equip
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                Entity existing = BukkitUtils.loadEntityAround(loc.getChunk(), uuid);
+                if (existing != null) {
+                    YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
+                    ItemStack item = deserialized.getItemStack("item");
+                    if (item != null && existing instanceof ItemFrame) {
+                        ItemStack old = ((ItemFrame) existing).getItem();
+                        if (old != null && old.isSimilar(item)) {
+                            ((ItemFrame) existing).setItem(null);
+                            return PerformResult.SUCCESS;
+                        }
+                    } else if (item != null && existing instanceof ArmorStand) {
+                        EquipmentSlot slot = EquipmentSlot.valueOf(deserialized.getString("slot"));
+                        ArmorStand stand = (ArmorStand) existing;
+                        ItemStack old = BukkitUtils.getItemInSlot(stand, slot);
+                        if (old != null && old.isSimilar(item)) {
+                            BukkitUtils.setItemInSlot(stand, slot, null);
+                            return PerformResult.SUCCESS;
+                        }
+                    }
+                }
+                return PerformResult.NO_ACTION; // the entity is not there, or equip does not match
             }
             return PerformResult.NO_ACTION;
         }

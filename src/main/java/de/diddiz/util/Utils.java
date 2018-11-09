@@ -10,21 +10,15 @@ import java.io.OutputStreamWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipException;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 
 import de.diddiz.LogBlock.LogBlock;
@@ -289,53 +283,5 @@ public class Utils {
 
     public static String serializeForSQL(YamlConfiguration conf) {
         return mysqlPrepareBytesForInsertAllowNull(serializeYamlConfiguration(conf));
-    }
-
-    public static Entity loadChunksForEntity(Chunk chunk, UUID uuid) {
-        Entity e = Bukkit.getEntity(uuid);
-        if (e != null) {
-            return e;
-        }
-        if (!chunk.isLoaded()) {
-            chunk.load();
-            e = Bukkit.getEntity(uuid);
-            if (e != null) {
-                return e;
-            }
-        }
-        int chunkx = chunk.getX();
-        int chunkz = chunk.getZ();
-        for (int i = 0; i < 8; i++) {
-            int x = i < 3 ? chunkx - 1 : (i < 5 ? chunkx : chunkx + 1);
-            int z = i == 0 || i == 3 || i == 5 ? chunkz - 1 : (i == 1 || i == 6 ? chunkz : chunkz + 1);
-            if (!chunk.getWorld().isChunkLoaded(x, z)) {
-                chunk.getWorld().loadChunk(x, z);
-                e = Bukkit.getEntity(uuid);
-                if (e != null) {
-                    return e;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static final HashMap<String, EntityType> types = new HashMap<>();
-    static {
-        for (EntityType t : EntityType.values()) {
-            types.put(t.name().toLowerCase(), t);
-            @SuppressWarnings("deprecation")
-            String typeName = t.getName();
-            if (typeName != null) {
-                types.put(typeName.toLowerCase(), t);
-            }
-            Class<? extends Entity> ec = t.getEntityClass();
-            if (ec != null) {
-                types.put(ec.getSimpleName().toLowerCase(), t);
-            }
-        }
-    }
-
-    public static EntityType matchEntityType(String typeName) {
-        return types.get(typeName.toLowerCase());
     }
 }

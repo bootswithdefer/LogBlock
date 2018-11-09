@@ -5,11 +5,14 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 import org.bukkit.Location;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
 
 import de.diddiz.LogBlock.config.Config;
+import de.diddiz.util.Utils;
 
 public class EntityChange implements LookupCacheElement {
     public static enum EntityChangeType {
@@ -75,9 +78,21 @@ public class EntityChange implements LookupCacheElement {
             } else if (changeType == EntityChangeType.KILL) {
                 msg.append(living ? "killed " : "destroyed ");
             } else if (changeType == EntityChangeType.ADDEQUIP) {
-                msg.append("added an item to ");
+                YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
+                ItemStack stack = conf == null ? null : conf.getItemStack("item");
+                if (stack == null) {
+                    msg.append("added an item to ");
+                } else {
+                    msg.append("added " + stack.getType() + " to ");
+                }
             } else if (changeType == EntityChangeType.REMOVEEQUIP) {
-                msg.append("removed an item from ");
+                YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
+                ItemStack stack = conf == null ? null : conf.getItemStack("item");
+                if (stack == null) {
+                    msg.append("removed an item from ");
+                } else {
+                    msg.append("removed " + stack.getType() + " from ");
+                }
             } else if (changeType == EntityChangeType.MODIFY) {
                 msg.append("modified ");
             }
