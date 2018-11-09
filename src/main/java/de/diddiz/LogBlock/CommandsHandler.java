@@ -671,11 +671,11 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.RED + "Cannot rollback summarized changes");
                     return;
                 }
+                params.needDate = true;
                 params.needCoords = true;
                 params.needType = true;
                 params.needData = true;
                 params.needChestAccess = true;
-                params.order = Order.DESC;
                 params.sum = SummarizationMode.NONE;
                 conn = logblock.getConnection();
                 if (conn == null) {
@@ -695,6 +695,10 @@ public class CommandsHandler implements CommandExecutor {
                 while (rs.next()) {
                     editFactory.processRow(rs);
                 }
+                if (params.order == Order.DESC) {
+                    editor.reverseRowOrder();
+                }
+                editor.sortRows(Order.DESC);
                 final int changes = editor.getSize();
                 if (changes > 10000) {
                     editor.setSender(sender);
@@ -757,11 +761,11 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.RED + "Cannot redo summarized changes");
                     return;
                 }
+                params.needDate = true;
                 params.needCoords = true;
                 params.needType = true;
                 params.needData = true;
                 params.needChestAccess = true;
-                params.order = Order.ASC;
                 params.sum = SummarizationMode.NONE;
                 conn = logblock.getConnection();
                 if (conn == null) {
@@ -781,6 +785,10 @@ public class CommandsHandler implements CommandExecutor {
                 while (rs.next()) {
                     editFactory.processRow(rs);
                 }
+                if (params.order == Order.ASC) {
+                    editor.reverseRowOrder();
+                }
+                editor.sortRows(Order.ASC);
                 final int changes = editor.getSize();
                 if (!params.silent) {
                     sender.sendMessage(ChatColor.GREEN.toString() + changes + " " + (params.bct == BlockChangeType.ENTITIES ? "entities" : "blocks") + " found.");

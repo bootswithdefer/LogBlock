@@ -25,6 +25,7 @@ import org.bukkit.entity.ItemFrame;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
+import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.Utils;
@@ -36,11 +37,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Queue;
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 import static de.diddiz.LogBlock.config.Config.dontRollback;
@@ -49,7 +50,7 @@ import static de.diddiz.util.BukkitUtils.*;
 
 public class WorldEditor implements Runnable {
     private final LogBlock logblock;
-    private final Queue<Edit> edits = new LinkedBlockingQueue<Edit>();
+    private final ArrayList<Edit> edits = new ArrayList<>();
     private final World world;
 
     /**
@@ -62,6 +63,7 @@ public class WorldEditor implements Runnable {
     public LookupCacheElement[] errors;
     private boolean forceReplace;
     private HashMap<Integer, UUID> uuidReplacements = new HashMap<>();
+    private boolean started = false;
 
     public WorldEditor(LogBlock logblock, World world) {
         this(logblock, world, false);
@@ -94,12 +96,32 @@ public class WorldEditor implements Runnable {
         this.sender = sender;
     }
 
-    public void queueBlockEdit(int x, int y, int z, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess item) {
-        edits.add(new BlockEdit(0, new Location(world, x, y, z), null, replaced, replaceData, replacedState, type, typeData, typeState, item));
+    public void queueBlockEdit(long time, int x, int y, int z, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess item) {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        edits.add(new BlockEdit(time, new Location(world, x, y, z), null, replaced, replaceData, replacedState, type, typeData, typeState, item));
     }
 
     public void queueEntityEdit(ResultSet rs, QueryParams p, boolean rollback) throws SQLException {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
         edits.add(new EntityEdit(rs, p, rollback));
+    }
+
+    public void reverseRowOrder() {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        Collections.reverse(edits);
+    }
+
+    public void sortRows(QueryParams.Order order) {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        edits.sort(new EditComparator(order));
     }
 
     public long getElapsedTime() {
@@ -107,6 +129,10 @@ public class WorldEditor implements Runnable {
     }
 
     synchronized public void start() throws Exception {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        started = true;
         final long start = System.currentTimeMillis();
         taskID = logblock.getServer().getScheduler().scheduleSyncRepeatingTask(logblock, this, 0, 1);
         if (taskID == -1) {
@@ -127,7 +153,7 @@ public class WorldEditor implements Runnable {
         float size = edits.size();
         while (!edits.isEmpty() && counter < 100) {
             try {
-                switch (edits.poll().perform()) {
+                switch (edits.remove(edits.size() - 1).perform()) {
                     case SUCCESS:
                         successes++;
                         break;
@@ -181,6 +207,8 @@ public class WorldEditor implements Runnable {
 
     public interface Edit {
         PerformResult perform() throws WorldEditorException;
+        
+        public long getTime();
     }
 
     public class EntityEdit extends EntityChange implements Edit {
@@ -189,6 +217,11 @@ public class WorldEditor implements Runnable {
         public EntityEdit(ResultSet rs, QueryParams p, boolean rollback) throws SQLException {
             super(rs, p);
             this.rollback = rollback;
+        }
+
+        @Override
+        public long getTime() {
+            return date;
         }
 
         @Override
@@ -292,7 +325,12 @@ public class WorldEditor implements Runnable {
 
     public class BlockEdit extends BlockChange implements Edit {
         public BlockEdit(long time, Location loc, Actor actor, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
-            super(time, loc, actor, replaced, replaceData,replacedState , type, typeData, typeState, ca);
+            super(time, loc, actor, replaced, replaceData, replacedState, type, typeData, typeState, ca);
+        }
+
+        @Override
+        public long getTime() {
+            return date;
         }
 
         public PerformResult perform() throws WorldEditorException {
@@ -397,6 +435,20 @@ public class WorldEditor implements Runnable {
                 }
             }
             return PerformResult.SUCCESS;
+        }
+    }
+
+    public static class EditComparator implements Comparator<Edit> {
+        private final int mult;
+        public EditComparator(QueryParams.Order order) {
+            mult = order == Order.DESC ? 1 : -1;
+        }
+
+        @Override
+        public int compare(Edit edit1, Edit edit2) {
+            long time1 = edit1.getTime();
+            long time2 = edit2.getTime();
+            return time1 > time2 ? mult : time1 < time2 ? -mult : 0;
         }
     }
 

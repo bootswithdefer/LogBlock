@@ -30,9 +30,9 @@ public class WorldEditorEditFactory {
             chestaccess = new ChestAccess(stack, rs.getBoolean("itemremove") == rollback, rs.getInt("itemtype"));
         }
         if (rollback) {
-            editor.queueBlockEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("replacedData"), rs.getBytes("replacedState"), rs.getInt("type"), rs.getInt("typeData"), rs.getBytes("typeState"), chestaccess);
+            editor.queueBlockEdit(rs.getTimestamp("date").getTime(), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("replaced"), rs.getInt("replacedData"), rs.getBytes("replacedState"), rs.getInt("type"), rs.getInt("typeData"), rs.getBytes("typeState"), chestaccess);
         } else {
-            editor.queueBlockEdit(rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("typeData"), rs.getBytes("typeState"), rs.getInt("replaced"), rs.getInt("replacedData"), rs.getBytes("replacedState"), chestaccess);
+            editor.queueBlockEdit(rs.getTimestamp("date").getTime(), rs.getInt("x"), rs.getInt("y"), rs.getInt("z"), rs.getInt("type"), rs.getInt("typeData"), rs.getBytes("typeState"), rs.getInt("replaced"), rs.getInt("replacedData"), rs.getBytes("replacedState"), chestaccess);
         }
     }
 }
