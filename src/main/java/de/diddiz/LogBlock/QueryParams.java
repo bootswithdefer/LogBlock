@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock;
 
 import de.diddiz.LogBlock.config.Config;
+import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.Utils;
 import de.diddiz.worldedit.CuboidRegion;
 import de.diddiz.worldedit.WorldEditHelper;
@@ -9,6 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -63,12 +65,14 @@ public final class QueryParams implements Cloneable {
     public List<String> players = new ArrayList<String>();
     public List<String> killers = new ArrayList<String>();
     public List<String> victims = new ArrayList<String>();
-    public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, excludeBlocksMode = false, prepareToolQuery = false, silent = false, noForcedLimit = false;
+    public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, excludeBlocksEntitiesMode = false, prepareToolQuery = false, silent = false, noForcedLimit = false;
     public boolean forceReplace = false, noCache = false;
     public CuboidRegion sel = null;
     public SummarizationMode sum = SummarizationMode.NONE;
     public List<Material> types = new ArrayList<Material>();
     public List<Integer> typeIds = new ArrayList<Integer>();
+    public List<EntityType> entityTypes = new ArrayList<EntityType>();
+    public List<Integer> entityTypeIds = new ArrayList<Integer>();
     public World world = null;
     public String match = null;
     public boolean needCount = false, needId = false, needDate = false, needType = false, needData = false, needPlayerId = false, needPlayer = false, needCoords = false, needChestAccess = false, needMessage = false, needKiller = false, needVictim = false, needWeapon = false;
@@ -314,10 +318,21 @@ public final class QueryParams implements Cloneable {
         } else if (bct == BlockChangeType.KILLS) {
             title.append("kills ");
         } else if (bct == BlockChangeType.ENTITIES) {
-            title.append("entity changes ");
+            if (!entityTypes.isEmpty()) {
+                if (excludeBlocksEntitiesMode) {
+                    title.append("all entities except ");
+                }
+                final String[] entityTypeNames = new String[entityTypes.size()];
+                for (int i = 0; i < entityTypes.size(); i++) {
+                    entityTypeNames[i] = entityTypes.get(i).name();
+                }
+                title.append(listing(entityTypeNames, ", ", " and ")).append(" ");
+            } else {
+                title.append("entity changes ");
+            }
         } else {
             if (!types.isEmpty()) {
-                if (excludeBlocksMode) {
+                if (excludeBlocksEntitiesMode) {
                     title.append("all blocks except ");
                 }
                 final String[] blocknames = new String[types.size()];
@@ -454,12 +469,23 @@ public final class QueryParams implements Cloneable {
                 }
             }
         } else if (blockChangeType == BlockChangeType.ENTITIES) {
-
+            if (!entityTypeIds.isEmpty()) {
+                if (excludeBlocksEntitiesMode) {
+                    where.append("NOT ");
+                }
+                where.append('(');
+                for (final Integer entityType : entityTypeIds) {
+                    where.append("(entitytypeid = ").append(entityType);
+                    where.append(") OR ");
+                }
+                where.delete(where.length() - 4, where.length() - 1);
+                where.append(") AND ");
+            }
         } else {
             switch (blockChangeType) {
                 case ALL:
                     if (!typeIds.isEmpty()) {
-                        if (excludeBlocksMode) {
+                        if (excludeBlocksEntitiesMode) {
                             where.append("NOT ");
                         }
                         where.append('(');
@@ -474,7 +500,7 @@ public final class QueryParams implements Cloneable {
                     break;
                 case BOTH:
                     if (!typeIds.isEmpty()) {
-                        if (excludeBlocksMode) {
+                        if (excludeBlocksEntitiesMode) {
                             where.append("NOT ");
                         }
                         where.append('(');
@@ -490,7 +516,7 @@ public final class QueryParams implements Cloneable {
                     break;
                 case CREATED:
                     if (!typeIds.isEmpty()) {
-                        if (excludeBlocksMode) {
+                        if (excludeBlocksEntitiesMode) {
                             where.append("NOT ");
                         }
                         where.append('(');
@@ -506,7 +532,7 @@ public final class QueryParams implements Cloneable {
                     break;
                 case DESTROYED:
                     if (!typeIds.isEmpty()) {
-                        if (excludeBlocksMode) {
+                        if (excludeBlocksEntitiesMode) {
                             where.append("NOT ");
                         }
                         where.append('(');
@@ -522,7 +548,7 @@ public final class QueryParams implements Cloneable {
                     break;
                 case CHESTACCESS:
                     if (!typeIds.isEmpty()) {
-                        if (excludeBlocksMode) {
+                        if (excludeBlocksEntitiesMode) {
                             where.append("NOT ");
                         }
                         where.append('(');
@@ -722,7 +748,7 @@ public final class QueryParams implements Cloneable {
                 }
                 for (String blockName : values) {
                     if (blockName.startsWith("!")) {
-                        excludeBlocksMode = true;
+                        excludeBlocksEntitiesMode = true;
                         blockName = blockName.substring(1);
                     }
 
@@ -797,6 +823,21 @@ public final class QueryParams implements Cloneable {
                 bct = BlockChangeType.KILLS;
             } else if (param.equals("entities") || param.equals("entity")) {
                 bct = BlockChangeType.ENTITIES;
+                if (values.length > 0) {
+                    for (String entityTypeName : values) {
+                        if (entityTypeName.startsWith("!")) {
+                            excludeBlocksEntitiesMode = true;
+                            entityTypeName = entityTypeName.substring(1);
+                        }
+
+                        final EntityType entityType = BukkitUtils.matchEntityType(entityTypeName);
+                        if (entityType == null) {
+                            throw new IllegalArgumentException("No entity type matching: '" + entityTypeName + "'");
+                        }
+                        entityTypes.add(entityType);
+                        entityTypeIds.add(EntityTypeConverter.getOrAddEntityTypeId(entityType));
+                    }
+                }
             } else if (param.equals("all")) {
                 bct = BlockChangeType.ALL;
             } else if (param.equals("limit")) {
@@ -919,6 +960,8 @@ public final class QueryParams implements Cloneable {
             params.victims = new ArrayList<String>(victims);
             params.typeIds = new ArrayList<Integer>(typeIds);
             params.types = new ArrayList<Material>(types);
+            params.entityTypeIds = new ArrayList<Integer>(entityTypeIds);
+            params.entityTypes = new ArrayList<EntityType>(entityTypes);
             params.loc = loc == null ? null : loc.clone();
             params.sel = sel == null ? null : sel.clone();
             return params;
@@ -963,6 +1006,8 @@ public final class QueryParams implements Cloneable {
         excludePlayersMode = p.excludePlayersMode;
         typeIds.addAll(p.typeIds);
         types.addAll(p.types);
+        entityTypeIds.addAll(p.entityTypeIds);
+        entityTypes.addAll(p.entityTypes);
         loc = p.loc == null ? null : p.loc.clone();
         radius = p.radius;
         sel = p.sel == null ? null : p.sel.clone();
