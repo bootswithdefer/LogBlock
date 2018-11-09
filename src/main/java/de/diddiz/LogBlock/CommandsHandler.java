@@ -699,7 +699,7 @@ public class CommandsHandler implements CommandExecutor {
                     editor.setSender(sender);
                 }
                 if (!params.silent) {
-                    sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
+                    sender.sendMessage(ChatColor.GREEN.toString() + changes + " " + (params.bct == BlockChangeType.ENTITIES ? "entities" : "blocks") + " found.");
                 }
                 if (changes == 0) {
                     if (!params.silent) {
@@ -782,7 +782,7 @@ public class CommandsHandler implements CommandExecutor {
                 }
                 final int changes = editor.getSize();
                 if (!params.silent) {
-                    sender.sendMessage(ChatColor.GREEN.toString() + changes + " blocks found.");
+                    sender.sendMessage(ChatColor.GREEN.toString() + changes + " " + (params.bct == BlockChangeType.ENTITIES ? "entities" : "blocks") + " found.");
                 }
                 if (changes == 0) {
                     if (!params.silent) {
