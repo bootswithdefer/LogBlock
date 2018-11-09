@@ -6,6 +6,7 @@ import de.diddiz.util.ComparableVersion;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
 import org.bukkit.permissions.PermissionDefault;
 
 import java.io.File;
@@ -321,6 +322,11 @@ public class Config {
 
     public static Collection<WorldConfig> getLoggedWorlds() {
         return worldConfigs.values();
+    }
+
+    public static boolean isLogging(World world, EntityLogging logging, Entity entity) {
+        final WorldConfig wcfg = worldConfigs.get(world.getName());
+        return wcfg != null && wcfg.isLogging(logging, entity);
     }
 }
 

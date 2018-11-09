@@ -1,13 +1,30 @@
 package de.diddiz.LogBlock.config;
 
+import de.diddiz.LogBlock.EntityLogging;
+import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import de.diddiz.util.Utils;
+
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Ambient;
+import org.bukkit.entity.Animals;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.WaterMob;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 public class WorldConfig extends LoggingEnabledMapping {
     public final String world;
@@ -18,6 +35,8 @@ public class WorldConfig extends LoggingEnabledMapping {
     public final String insertBlockChestDataStatementString;
     public final String insertEntityStatementString;
     public final String updateEntityUUIDString;
+
+    private final EnumMap<EntityLogging, EntitiyLoggingList> entityLogging = new EnumMap<>(EntityLogging.class);
 
     public WorldConfig(String world, File file) throws IOException {
         this.world = world;
@@ -34,6 +53,12 @@ public class WorldConfig extends LoggingEnabledMapping {
                 config.set(e.getKey(), e.getValue());
             }
         }
+        for (EntityLogging el : EntityLogging.values()) {
+            if (!(config.get("entity." + el.name().toLowerCase()) instanceof List)) {
+                config.set("entity." + el.name().toLowerCase(), el.getDefaultEnabled());
+            }
+            entityLogging.put(el, new EntitiyLoggingList(config.getStringList("entity." + el.name().toLowerCase())));
+        }
         config.save(file);
         table = config.getString("table");
         for (final Logging l : Logging.values()) {
@@ -46,5 +71,66 @@ public class WorldConfig extends LoggingEnabledMapping {
         insertBlockChestDataStatementString = "INSERT INTO `" + table + "-chestdata` (item, itemremove, id, itemtype) values (?, ?, ?, ?)";
         insertEntityStatementString = "INSERT INTO `" + table + "-entities` (date, playerid, entityid, entitytypeid, x, y, z, action, data) VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?)";
         updateEntityUUIDString = "UPDATE `" + table + "-entityids` SET entityuuid = ? WHERE entityid = ?";
+    }
+
+    public boolean isLogging(EntityLogging logging, Entity entity) {
+        return entityLogging.get(logging).isLogging(entity);
+    }
+
+    private class EntitiyLoggingList {
+        private final EnumSet<EntityType> logged = EnumSet.noneOf(EntityType.class);
+        private final boolean logAll;
+        private final boolean logAnimals;
+        private final boolean logMonsters;
+        private final boolean logLiving;
+
+        public EntitiyLoggingList(List<String> types) {
+            boolean all = false;
+            boolean animals = false;
+            boolean monsters = false;
+            boolean living = false;
+            for (String type : types) {
+                EntityType et = Utils.matchEntityType(type);
+                if (et != null) {
+                    logged.add(et);
+                } else {
+                    if (type.equalsIgnoreCase("all")) {
+                        all = true;
+                    } else if (type.equalsIgnoreCase("animal") || type.equalsIgnoreCase("animals")) {
+                        animals = true;
+                    } else if (type.equalsIgnoreCase("monster") || type.equalsIgnoreCase("monsters")) {
+                        monsters = true;
+                    } else if (type.equalsIgnoreCase("living")) {
+                        living = true;
+                    } else {
+                        LogBlock.getInstance().getLogger().log(Level.WARNING, "Unkown entity type in config for " + world + ": " + type);
+                    }
+                }
+            }
+            logAll = all;
+            logAnimals = animals;
+            logMonsters = monsters;
+            logLiving = living;
+        }
+
+        public boolean isLogging(Entity entity) {
+            if (entity == null || (entity instanceof Player)) {
+                return false;
+            }
+            EntityType type = entity.getType();
+            if (logAll || logged.contains(type)) {
+                return true;
+            }
+            if (logLiving && LivingEntity.class.isAssignableFrom(entity.getClass()) && !(entity instanceof ArmorStand)) {
+                return true;
+            }
+            if (logAnimals && (Animals.class.isAssignableFrom(entity.getClass()) || WaterMob.class.isAssignableFrom(entity.getClass()) || Ambient.class.isAssignableFrom(entity.getClass()))) {
+                return true;
+            }
+            if (logMonsters && (Monster.class.isAssignableFrom(entity.getClass()) || entity.getType() == EntityType.SLIME || entity.getType() == EntityType.WITHER || entity.getType() == EntityType.ENDER_DRAGON || entity.getType() == EntityType.SHULKER || entity.getType() == EntityType.GHAST)) {
+                return true;
+            }
+            return false;
+        }
     }
 }
