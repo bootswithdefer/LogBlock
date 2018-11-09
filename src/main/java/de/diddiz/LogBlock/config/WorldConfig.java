@@ -34,7 +34,7 @@ public class WorldConfig extends LoggingEnabledMapping {
     public final String insertEntityStatementString;
     public final String updateEntityUUIDString;
 
-    private final EnumMap<EntityLogging, EntitiyLoggingList> entityLogging = new EnumMap<>(EntityLogging.class);
+    private final EnumMap<EntityLogging, EntityLoggingList> entityLogging = new EnumMap<>(EntityLogging.class);
 
     public WorldConfig(String world, File file) throws IOException {
         this.world = world;
@@ -55,7 +55,7 @@ public class WorldConfig extends LoggingEnabledMapping {
             if (!(config.get("entity." + el.name().toLowerCase()) instanceof List)) {
                 config.set("entity." + el.name().toLowerCase(), el.getDefaultEnabled());
             }
-            entityLogging.put(el, new EntitiyLoggingList(config.getStringList("entity." + el.name().toLowerCase())));
+            entityLogging.put(el, new EntityLoggingList(config.getStringList("entity." + el.name().toLowerCase())));
         }
         config.save(file);
         table = config.getString("table");
@@ -75,14 +75,23 @@ public class WorldConfig extends LoggingEnabledMapping {
         return entityLogging.get(logging).isLogging(entity);
     }
 
-    private class EntitiyLoggingList {
+    public boolean isLoggingAnyEntities() {
+        for (EntityLoggingList list : entityLogging.values()) {
+            if (list.isLoggingAnyEntities()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private class EntityLoggingList {
         private final EnumSet<EntityType> logged = EnumSet.noneOf(EntityType.class);
         private final boolean logAll;
         private final boolean logAnimals;
         private final boolean logMonsters;
         private final boolean logLiving;
 
-        public EntitiyLoggingList(List<String> types) {
+        public EntityLoggingList(List<String> types) {
             boolean all = false;
             boolean animals = false;
             boolean monsters = false;
@@ -129,6 +138,10 @@ public class WorldConfig extends LoggingEnabledMapping {
                 return true;
             }
             return false;
+        }
+
+        public boolean isLoggingAnyEntities() {
+            return logAll || logAnimals || logLiving || logMonsters || !logged.isEmpty();
         }
     }
 }

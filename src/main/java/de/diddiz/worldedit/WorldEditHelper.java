@@ -3,9 +3,11 @@ package de.diddiz.worldedit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -23,7 +25,10 @@ import com.sk89q.jnbt.NamedTag;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.Tag;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.entity.BaseEntity;
+
+import de.diddiz.LogBlock.LogBlock;
 
 public class WorldEditHelper {
     private static boolean checkedForWorldEdit;
@@ -39,6 +44,10 @@ public class WorldEditHelper {
         return hasWorldEdit;
     }
 
+    public static boolean hasFullWorldEdit() {
+        return hasWorldEdit && Internal.hasBukkitImplAdapter();
+    }
+
     public static byte[] serializeEntity(Entity entity) {
         if (!hasWorldEdit()) {
             return null;
@@ -51,10 +60,29 @@ public class WorldEditHelper {
     }
 
     private static class Internal {
-        // private static WorldEditPlugin worldEdit;
+        private static WorldEditPlugin worldEdit;
+        private static Method getBukkitImplAdapter;
 
         public static void setWorldEdit(Plugin worldEdit) {
-            // Internal.worldEdit = (WorldEditPlugin) worldEdit;
+            Internal.worldEdit = (WorldEditPlugin) worldEdit;
+        }
+
+        public static boolean hasBukkitImplAdapter() {
+            if (getBukkitImplAdapter == null) {
+                try {
+                    getBukkitImplAdapter = WorldEditPlugin.class.getDeclaredMethod("getBukkitImplAdapter");
+                    getBukkitImplAdapter.setAccessible(true);
+                } catch (Exception e) {
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Exception while checking for BukkitImplAdapter", e);
+                    return false;
+                }
+            }
+            try {
+                return getBukkitImplAdapter.invoke(worldEdit) != null;
+            } catch (Exception e) {
+                LogBlock.getInstance().getLogger().log(Level.SEVERE, "Exception while checking for BukkitImplAdapter", e);
+                return false;
+            }
         }
 
         public static Entity restoreEntity(Location location, EntityType type, byte[] serialized) {
@@ -90,7 +118,7 @@ public class WorldEditHelper {
                     CompoundTag nbt = state.getNbtData();
                     LinkedHashMap<String, Tag> value = new LinkedHashMap<>(nbt.getValue());
                     value.put("Health", new FloatTag(20.0f));
-                    value.put("Motion", new ListTag(DoubleTag.class, Arrays.asList(new DoubleTag[] {new DoubleTag(0),new DoubleTag(0),new DoubleTag(0)})));
+                    value.put("Motion", new ListTag(DoubleTag.class, Arrays.asList(new DoubleTag[] { new DoubleTag(0), new DoubleTag(0), new DoubleTag(0) })));
                     value.put("Fire", new ShortTag((short) -20));
                     value.put("HurtTime", new ShortTag((short) 0));
                     nbtos.writeNamedTag("entity", new CompoundTag(value));

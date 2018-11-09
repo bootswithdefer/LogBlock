@@ -328,6 +328,15 @@ public class Config {
         final WorldConfig wcfg = worldConfigs.get(world.getName());
         return wcfg != null && wcfg.isLogging(logging, entity);
     }
+
+    public static boolean isLoggingAnyEntities() {
+        for (WorldConfig worldConfig : worldConfigs.values()) {
+            if (worldConfig.isLoggingAnyEntities()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 class LoggingEnabledMapping {
