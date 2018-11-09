@@ -5,7 +5,6 @@ import de.diddiz.LogBlock.listeners.*;
 import de.diddiz.LogBlock.questioner.Questioner;
 import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.MySQLConnectionPool;
-import de.diddiz.worldedit.AdvancedKillLogging;
 import de.diddiz.worldedit.WorldEditHelper;
 import de.diddiz.worldedit.WorldEditLoggingHook;
 import org.bukkit.ChatColor;
@@ -189,7 +188,7 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.DRAGONEGGTELEPORT)) {
             pm.registerEvents(new DragonEggLogging(this), this);
         }
-        pm.registerEvents(new AdvancedKillLogging(this), this);
+        pm.registerEvents(new AdvancedEntityLogging(this), this);
     }
 
     @Override

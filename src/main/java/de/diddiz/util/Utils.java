@@ -294,20 +294,24 @@ public class Utils {
         if (e != null) {
             return e;
         }
-        chunk.load();
-        e = Bukkit.getEntity(uuid);
-        if (e != null) {
-            return e;
+        if (!chunk.isLoaded()) {
+            chunk.load();
+            e = Bukkit.getEntity(uuid);
+            if (e != null) {
+                return e;
+            }
         }
         int chunkx = chunk.getX();
         int chunkz = chunk.getZ();
         for (int i = 0; i < 8; i++) {
             int x = i < 3 ? chunkx - 1 : (i < 5 ? chunkx : chunkx + 1);
             int z = i == 0 || i == 3 || i == 5 ? chunkz - 1 : (i == 1 || i == 6 ? chunkz : chunkz + 1);
-            chunk.getWorld().loadChunk(x, z);
-            e = Bukkit.getEntity(uuid);
-            if (e != null) {
-                return e;
+            if (!chunk.getWorld().isChunkLoaded(x, z)) {
+                chunk.getWorld().loadChunk(x, z);
+                e = Bukkit.getEntity(uuid);
+                if (e != null) {
+                    return e;
+                }
             }
         }
         return null;
