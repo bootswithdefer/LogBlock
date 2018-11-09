@@ -86,6 +86,7 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.GOLD + "block [type1] <type2> <type3> -- List of block types");
                     sender.sendMessage(ChatColor.GOLD + "created, destroyed -- Show only created/destroyed blocks");
                     sender.sendMessage(ChatColor.GOLD + "chestaccess -- Show only chest accesses");
+                    sender.sendMessage(ChatColor.GOLD + "entities [type1] <type2> <type3> -- List of entity types; can not be combined with blocks");
                     sender.sendMessage(ChatColor.GOLD + "area <radius> -- Area around you");
                     sender.sendMessage(ChatColor.GOLD + "selection, sel -- Inside current WorldEdit selection");
                     sender.sendMessage(ChatColor.GOLD + "world [worldname] -- Changes the world");
