@@ -127,7 +127,7 @@ public final class QueryParams implements Cloneable {
             }
             return from;
         }
-        if (bct == BlockChangeType.ENTITIES) {
+        if (bct == BlockChangeType.ENTITIES || bct == BlockChangeType.ENTITIES_CREATED || bct == BlockChangeType.ENTITIES_KILLED) {
             String from = "FROM `" + getTable() + "-entities` ";
 
             if (needPlayer || players.size() > 0) {
@@ -236,7 +236,7 @@ public final class QueryParams implements Cloneable {
             select += "COUNT(*) AS count ";
         } else {
             if (needId) {
-                if (bct != BlockChangeType.ENTITIES) {
+                if (bct != BlockChangeType.ENTITIES && bct != BlockChangeType.ENTITIES_CREATED && bct != BlockChangeType.ENTITIES_KILLED) {
                     select += "`" + getTable() + "-blocks`.id, ";
                 } else {
                     select += "`" + getTable() + "-entities`.id, ";
@@ -245,7 +245,7 @@ public final class QueryParams implements Cloneable {
             if (needDate) {
                 select += "date, ";
             }
-            if (bct != BlockChangeType.ENTITIES) {
+            if (bct != BlockChangeType.ENTITIES && bct != BlockChangeType.ENTITIES_CREATED && bct != BlockChangeType.ENTITIES_KILLED) {
                 if (needType) {
                     select += "replaced, type, ";
                 }
@@ -262,7 +262,7 @@ public final class QueryParams implements Cloneable {
             if (needCoords) {
                 select += "x, y, z, ";
             }
-            if (bct != BlockChangeType.ENTITIES) {
+            if (bct != BlockChangeType.ENTITIES && bct != BlockChangeType.ENTITIES_CREATED && bct != BlockChangeType.ENTITIES_KILLED) {
                 if (needData) {
                     select += "replacedState, typeState, ";
                 }
@@ -295,8 +295,12 @@ public final class QueryParams implements Cloneable {
             }
             throw new IllegalStateException("Invalid summarization for kills");
         }
-        if (bct == BlockChangeType.ENTITIES) {
-            throw new IllegalStateException("Not implemented yet");
+        if (bct == BlockChangeType.ENTITIES || bct == BlockChangeType.ENTITIES_CREATED || bct == BlockChangeType.ENTITIES_KILLED) {
+            if (sum == SummarizationMode.TYPES) {
+                return "SELECT entitytypeid, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT entitytypeid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-entities` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.ENTITIES_CREATED) + "GROUP BY entitytypeid) UNION (SELECT entitytypeid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-entities` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.ENTITIES_KILLED) + "GROUP BY entitytypeid)) AS t GROUP BY entitytypeid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
+            } else {
+                return "SELECT playername, UUID, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-entities` " + getWhere(BlockChangeType.ENTITIES_CREATED) + "GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-entities` " + getWhere(BlockChangeType.ENTITIES_KILLED) + "GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
+            }
         }
         if (sum == SummarizationMode.TYPES) {
             return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
@@ -317,7 +321,7 @@ public final class QueryParams implements Cloneable {
             title.append("chat messages ");
         } else if (bct == BlockChangeType.KILLS) {
             title.append("kills ");
-        } else if (bct == BlockChangeType.ENTITIES) {
+        } else if (bct == BlockChangeType.ENTITIES || bct == BlockChangeType.ENTITIES_CREATED || bct == BlockChangeType.ENTITIES_KILLED) {
             if (!entityTypes.isEmpty()) {
                 if (excludeBlocksEntitiesMode) {
                     title.append("all entities except ");
@@ -395,7 +399,7 @@ public final class QueryParams implements Cloneable {
             title.append("in ").append(friendlyWorldname(world.getName())).append(" ");
         }
         if (sum != SummarizationMode.NONE) {
-            title.append("summed up by ").append(sum == SummarizationMode.TYPES ? "blocks" : "players").append(" ");
+            title.append("summed up by ").append(sum == SummarizationMode.TYPES ? ((bct == BlockChangeType.ENTITIES || bct == BlockChangeType.ENTITIES_CREATED || bct == BlockChangeType.ENTITIES_KILLED) ? "entities" : "blocks") : "players").append(" ");
         }
         title.deleteCharAt(title.length() - 1);
         title.setCharAt(0, String.valueOf(title.charAt(0)).toUpperCase().toCharArray()[0]);
@@ -468,7 +472,7 @@ public final class QueryParams implements Cloneable {
                     }
                 }
             }
-        } else if (blockChangeType == BlockChangeType.ENTITIES) {
+        } else if (blockChangeType == BlockChangeType.ENTITIES || blockChangeType == BlockChangeType.ENTITIES_CREATED || blockChangeType == BlockChangeType.ENTITIES_KILLED) {
             if (!entityTypeIds.isEmpty()) {
                 if (excludeBlocksEntitiesMode) {
                     where.append("NOT ");
@@ -480,6 +484,11 @@ public final class QueryParams implements Cloneable {
                 }
                 where.delete(where.length() - 4, where.length() - 1);
                 where.append(") AND ");
+            }
+            if (blockChangeType == BlockChangeType.ENTITIES_CREATED) {
+                where.append("action = " + EntityChange.EntityChangeType.CREATE.ordinal() + " AND ");
+            } else if (blockChangeType == BlockChangeType.ENTITIES_KILLED) {
+                where.append("action = " + EntityChange.EntityChangeType.KILL.ordinal() + " AND ");
             }
         } else {
             switch (blockChangeType) {
@@ -802,7 +811,7 @@ public final class QueryParams implements Cloneable {
                 }
                 if (values[0].startsWith("p")) {
                     sum = SummarizationMode.PLAYERS;
-                } else if (values[0].startsWith("b")) {
+                } else if (values[0].startsWith("b") || values[0].startsWith("e")) {
                     sum = SummarizationMode.TYPES;
                 } else if (values[0].startsWith("n")) {
                     sum = SummarizationMode.NONE;
@@ -927,11 +936,6 @@ public final class QueryParams implements Cloneable {
                 throw new IllegalArgumentException("Invalid summarization for chat");
             }
         }
-        if(bct == BlockChangeType.ENTITIES) {
-            if (sum != SummarizationMode.NONE) {
-                throw new IllegalStateException("Summarization not implemented yet");
-            }
-        }
     }
 
     public void setLocation(Location loc) {
@@ -1024,7 +1028,7 @@ public final class QueryParams implements Cloneable {
     }
 
     public static enum BlockChangeType {
-        ALL, BOTH, CHESTACCESS, CREATED, DESTROYED, CHAT, KILLS, ENTITIES
+        ALL, BOTH, CHESTACCESS, CREATED, DESTROYED, CHAT, KILLS, ENTITIES, ENTITIES_CREATED, ENTITIES_KILLED,
     }
 
     public static enum Order {

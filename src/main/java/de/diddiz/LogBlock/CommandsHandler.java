@@ -502,7 +502,7 @@ public class CommandsHandler implements CommandExecutor {
                         if (params.bct == BlockChangeType.KILLS && params.sum == SummarizationMode.PLAYERS) {
                             sender.sendMessage(ChatColor.GOLD + "Kills - Killed - Player");
                         } else {
-                            sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player"));
+                            sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? (params.bct == BlockChangeType.ENTITIES ? "Entity" : "Block") : "Player"));
                         }
                     }
                     if (!params.noCache) {
