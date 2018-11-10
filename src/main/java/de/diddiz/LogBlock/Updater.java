@@ -703,8 +703,12 @@ class Updater {
                 logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
             }
-            
+
             config.set("version", "1.13.1");
+        }
+
+        if (configVersion.compareTo(new ComparableVersion("1.13.2")) < 0) {
+            config.set("version", "1.13.2");
         }
 
         // this can always be checked
@@ -718,14 +722,14 @@ class Updater {
             }
             createIndexIfDoesNotExist("lb-materials", "name", "UNIQUE KEY `name` (`name`(250))", st, true);
             createIndexIfDoesNotExist("lb-blockstates", "name", "UNIQUE KEY `name` (`name`(250))", st, true);
-            
+
             st.close();
             conn.close();
         } catch (final SQLException ex) {
             logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
             return false;
         }
-        
+
         logblock.saveConfig();
         return true;
     }
