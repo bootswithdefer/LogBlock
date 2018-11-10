@@ -569,7 +569,7 @@ public class CommandsHandler implements CommandExecutor {
                 file.getParentFile().mkdirs();
                 int counter = 0;
                 if (params.sum != SummarizationMode.NONE) {
-                    writer.write("Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? "Block" : "Player") + newline);
+                    writer.write("Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? (params.bct == BlockChangeType.ENTITIES ? "Entity" : "Block") : "Player") + newline);
                 }
                 final LookupCacheElementFactory factory = new LookupCacheElementFactory(params, sender instanceof Player ? 2 / 3f : 1);
                 while (rs.next()) {
@@ -855,6 +855,13 @@ public class CommandsHandler implements CommandExecutor {
                     tableBase = params.getTable();
                     deleteFromTables = "`" + tableBase + "-kills` ";
                     tableName = tableBase + "-kills";
+                } else if (params.bct == BlockChangeType.ENTITIES || params.bct == BlockChangeType.ENTITIES_CREATED || params.bct == BlockChangeType.ENTITIES_KILLED) {
+                    params.needType = true;
+                    params.needCoords = true;
+                    params.needData = true;
+                    tableBase = params.getTable();
+                    deleteFromTables = "`" + tableBase + "-entities` ";
+                    tableName = tableBase + "-entities";
                 } else {
                     params.needType = true;
                     params.needCoords = true;
@@ -906,6 +913,8 @@ public class CommandsHandler implements CommandExecutor {
                                     sb.append(rs.getInt("y")).append(", ");
                                     sb.append(rs.getInt("z"));
                                     sb.append(");\n");
+                                } else if (params.bct == BlockChangeType.ENTITIES || params.bct == BlockChangeType.ENTITIES_CREATED || params.bct == BlockChangeType.ENTITIES_KILLED) {
+                                    
                                 } else {
                                     sb.append("INSERT INTO `").append(tableBase).append("-blocks` (`id`, `date`, `playerid`, `replaced`, `replacedData`, `type`, `typeData`, `x`, `y`, `z`) VALUES (");
                                     sb.append(rs.getInt("id")).append(", FROM_UNIXTIME(");
@@ -952,6 +961,9 @@ public class CommandsHandler implements CommandExecutor {
                 }
                 if (deleted > 0) {
                     state.executeUpdate("DELETE " + deleteFromTables + params.getFrom() + params.getWhere());
+                    if (params.bct == BlockChangeType.ENTITIES || params.bct == BlockChangeType.ENTITIES_CREATED || params.bct == BlockChangeType.ENTITIES_KILLED) {
+                        state.executeUpdate("DELETE `" + tableBase + "-entityids` FROM `" + tableBase + "-entityids` LEFT JOIN `" + tableBase + "-entities` USING (entityid) WHERE `" + tableBase + "-entities`.entityid IS NULL");
+                    }
                 }
                 sender.sendMessage(ChatColor.GREEN + "Cleared out table " + tableName + ". Deleted " + deleted + " entries.");
             } catch (final Exception ex) {

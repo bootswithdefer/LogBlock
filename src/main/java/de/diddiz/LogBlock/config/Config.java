@@ -91,6 +91,7 @@ public class Config {
         for (final String world : worldNames) {
             autoClearlog.add("world \"" + world + "\" before 365 days all");
             autoClearlog.add("world \"" + world + "\" player lavaflow waterflow leavesdecay before 7 days all");
+            autoClearlog.add("world \"" + world + "\" entities before 365 days");
         }
         def.put("clearlog.auto", autoClearlog);
         def.put("clearlog.autoClearLogDelay", "6h");
