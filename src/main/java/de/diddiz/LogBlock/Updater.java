@@ -720,8 +720,8 @@ class Updater {
             if (isLogging(Logging.CHAT)) {
                 checkCharset("lb-chat", "message", st, true);
             }
-            createIndexIfDoesNotExist("lb-materials", "name", "UNIQUE KEY `name` (`name`(250))", st, true);
-            createIndexIfDoesNotExist("lb-blockstates", "name", "UNIQUE KEY `name` (`name`(250))", st, true);
+            createIndexIfDoesNotExist("lb-materials", "name", "UNIQUE KEY `name` (`name`(150))", st, true);
+            createIndexIfDoesNotExist("lb-blockstates", "name", "UNIQUE KEY `name` (`name`(150))", st, true);
 
             st.close();
             conn.close();
