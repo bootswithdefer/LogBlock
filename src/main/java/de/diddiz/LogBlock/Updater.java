@@ -488,12 +488,21 @@ class Updater {
                                 done++;
                             }
                             entries.close();
+                            int failedRows = 0;
                             if (hadRow) {
-                                insertStatement.executeBatch();
+                                try {
+                                    insertStatement.executeBatch();
+                                } catch (BatchUpdateException e) {
+                                    for (int result : e.getUpdateCounts()) {
+                                        if (result == Statement.EXECUTE_FAILED) {
+                                            failedRows++;
+                                        }
+                                    }
+                                }
                                 deleteStatement.executeBatch();
                             }
                             conn.commit();
-                            logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
+                            logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " " + (failedRows > 0 ? "Duplicates: " + failedRows + " " : "") + "(" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                         }
                         insertStatement.close();
                         deleteStatement.close();
