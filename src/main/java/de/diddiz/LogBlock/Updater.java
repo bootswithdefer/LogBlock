@@ -552,10 +552,19 @@ class Updater {
                             if (!anyRow) {
                                 break;
                             }
-                            insertChestData.executeBatch();
+                            int failedRows = 0;
+                            try {
+                                insertChestData.executeBatch();
+                            } catch (BatchUpdateException e) {
+                                for (int result : e.getUpdateCounts()) {
+                                    if (result == Statement.EXECUTE_FAILED) {
+                                        failedRows++;
+                                    }
+                                }
+                            }
                             deleteChest.executeBatch();
                             conn.commit();
-                            logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
+                            logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " " + (failedRows > 0 ? "Duplicates: " + failedRows + " " : "") + "(" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                         }
                         insertChestData.close();
                         deleteChest.close();
@@ -693,10 +702,19 @@ class Updater {
                                 if (!anyRow) {
                                     break;
                                 }
-                                insertSignState.executeBatch();
+                                int failedRows = 0;
+                                try {
+                                    insertSignState.executeBatch();
+                                } catch (BatchUpdateException e) {
+                                    for (int result : e.getUpdateCounts()) {
+                                        if (result == Statement.EXECUTE_FAILED) {
+                                            failedRows++;
+                                        }
+                                    }
+                                }
                                 deleteSign.executeBatch();
                                 conn.commit();
-                                logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " (" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
+                                logblock.getLogger().info("Done: " + done + "/" + rowsToConvert + " " + (failedRows > 0 ? "Duplicates: " + failedRows + " " : "") + "(" + (rowsToConvert > 0 ? (done * 100 / rowsToConvert) : 100) + "%)");
                             }
                             insertSignState.close();
                             deleteSign.close();
