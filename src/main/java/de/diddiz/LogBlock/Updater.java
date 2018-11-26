@@ -427,12 +427,12 @@ class Updater {
                     logblock.getLogger().info("Processing world " + wcfg.world + "...");
                     logblock.getLogger().info("Processing block changes...");
                     boolean hadRow = true;
-                    int rowsToConvert = 0;
-                    int done = 0;
+                    long rowsToConvert = 0;
+                    long done = 0;
                     try {
                         ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "`");
                         if (rs.next()) {
-                            rowsToConvert = rs.getInt(1);
+                            rowsToConvert = rs.getLong(1);
                             logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table);
                         }
                         rs.close();
@@ -516,7 +516,7 @@ class Updater {
                     try {
                         ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "-chest`");
                         if (rs.next()) {
-                            rowsToConvert = rs.getInt(1);
+                            rowsToConvert = rs.getLong(1);
                             logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-chest");
                         }
                         rs.close();
@@ -579,7 +579,7 @@ class Updater {
                         try {
                             ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "-kills`");
                             if (rs.next()) {
-                                rowsToConvert = rs.getInt(1);
+                                rowsToConvert = rs.getLong(1);
                                 logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-kills");
                             }
                             rs.close();
@@ -656,12 +656,12 @@ class Updater {
                     rsCol.close();
                     conn.commit();
                     if (wcfg.isLogging(Logging.SIGNTEXT)) {
-                        int rowsToConvert = 0;
-                        int done = 0;
+                        long rowsToConvert = 0;
+                        long done = 0;
                         try {
                             ResultSet rs = st.executeQuery("SELECT count(*) as rowcount FROM `" + wcfg.table + "-sign`");
                             if (rs.next()) {
-                                rowsToConvert = rs.getInt(1);
+                                rowsToConvert = rs.getLong(1);
                                 logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-sign");
                             }
                             rs.close();
