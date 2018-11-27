@@ -42,7 +42,9 @@ public class MaterialConverter {
             materialString = blockDataString.substring(0, dataPart);
         }
         Integer key = materialToID.get(materialString);
-        while (key == null) {
+        int tries = 0;
+        while (key == null && tries < 10) {
+            tries++;
             key = nextMaterialId;
             Connection conn = LogBlock.getInstance().getConnection();
             try {
@@ -58,8 +60,12 @@ public class MaterialConverter {
                 } else {
                     initializeMaterials(conn);
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not update lb-materials", e);
+                reinitializeMaterialsCatchException();
+                if (tries == 10) {
+                    throw new RuntimeException(e);
+                }
             } finally {
                 try {
                     conn.close();
@@ -79,7 +85,9 @@ public class MaterialConverter {
         }
         String materialString = blockDataString.substring(dataPart);
         Integer key = blockStateToID.get(materialString);
-        while (key == null) {
+        int tries = 0;
+        while (key == null && tries < 10) {
+            tries++;
             key = nextBlockStateId;
             Connection conn = LogBlock.getInstance().getConnection();
             try {
@@ -95,8 +103,12 @@ public class MaterialConverter {
                 } else {
                     initializeMaterials(conn);
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not update lb-blockstates", e);
+                reinitializeMaterialsCatchException();
+                if (tries == 10) {
+                    throw new RuntimeException(e);
+                }
             } finally {
                 try {
                     conn.close();
@@ -119,6 +131,21 @@ public class MaterialConverter {
 
     public static Material getMaterial(int materialId) {
         return materialKeyToMaterial.get(idToMaterial[materialId]);
+    }
+
+    private static void reinitializeMaterialsCatchException() {
+        Connection conn = LogBlock.getInstance().getConnection();
+        try {
+            initializeMaterials(conn);
+        } catch (Exception e) {
+            LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not reinitialize lb-materials", e);
+        } finally {
+            try {
+                conn.close();
+            } catch (Exception e) {
+                // ignored
+            }
+        }
     }
 
     public static void initializeMaterials(Connection connection) throws SQLException {

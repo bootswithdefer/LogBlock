@@ -18,7 +18,9 @@ public class EntityTypeConverter {
 
     public static int getOrAddEntityTypeId(EntityType entityType) {
         Integer key = entityTypeToId.get(entityType);
-        while (key == null) {
+        int tries = 0;
+        while (key == null && tries < 10) {
+            tries++;
             key = nextEntityTypeId;
             Connection conn = LogBlock.getInstance().getConnection();
             try {
@@ -34,8 +36,12 @@ public class EntityTypeConverter {
                 } else {
                     initializeEntityTypes(conn);
                 }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not update lb-entitytypes", e);
+                reinitializeEntityTypesCatchException();
+                if (tries == 10) {
+                    throw new RuntimeException(e);
+                }
             } finally {
                 try {
                     conn.close();
@@ -50,6 +56,21 @@ public class EntityTypeConverter {
 
     public static EntityType getEntityType(int entityTypeId) {
         return idToEntityType[entityTypeId];
+    }
+
+    private static void reinitializeEntityTypesCatchException() {
+        Connection conn = LogBlock.getInstance().getConnection();
+        try {
+            initializeEntityTypes(conn);
+        } catch (Exception e) {
+            LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not reinitialize lb-entitytypes", e);
+        } finally {
+            try {
+                conn.close();
+            } catch (Exception e) {
+                // ignored
+            }
+        }
     }
 
     public static void initializeEntityTypes(Connection connection) throws SQLException {
