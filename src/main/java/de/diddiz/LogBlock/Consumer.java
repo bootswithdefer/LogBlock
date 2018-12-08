@@ -54,6 +54,10 @@ import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
 import de.diddiz.util.Utils;
 
 public class Consumer extends Thread {
+    private static final int MAX_SHUTDOWN_TIME_MILLIS = 20000;
+    private static final int WAIT_FOR_CONNECTION_TIME_MILLIS = 10000;
+    private static final int RETRIES_ON_UNKNOWN_CONNECTION_ERROR = 2;
+
     private final Deque<Row> queue = new ArrayDeque<Row>();
     private final LogBlock logblock;
     private final Map<Actor, Integer> playerIds = new HashMap<>();
@@ -448,7 +452,7 @@ public class Consumer extends Thread {
                         // wait for a connection
                         logblock.getLogger().severe("[Consumer] Could not connect to the database!");
                         try {
-                            Thread.sleep(10000);
+                            Thread.sleep(WAIT_FOR_CONNECTION_TIME_MILLIS);
                         } catch (InterruptedException e) {
                             // ignore
                         }
@@ -460,7 +464,7 @@ public class Consumer extends Thread {
                 synchronized (queue) {
                     if (shutdown) {
                         // Give this thread some time to process the remaining entries
-                        if (queue.isEmpty() || System.currentTimeMillis() - shutdownInitialized > 20000) {
+                        if (queue.isEmpty() || System.currentTimeMillis() - shutdownInitialized > MAX_SHUTDOWN_TIME_MILLIS) {
                             if (currentRows.isEmpty()) {
                                 break;
                             } else {
@@ -505,7 +509,7 @@ public class Consumer extends Thread {
                     lastCommitsFailed = 0;
                 }
             } catch (Exception e) {
-                boolean retry = lastCommitsFailed < 2;
+                boolean retry = lastCommitsFailed < RETRIES_ON_UNKNOWN_CONNECTION_ERROR;
                 String state = "unknown";
                 if (e instanceof SQLException) {
                     // Retry on network errors: SQLSTATE = 08S01 08001 08004 HY000 40001
