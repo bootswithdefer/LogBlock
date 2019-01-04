@@ -39,7 +39,9 @@ public class WorldEditHelper {
             checkedForWorldEdit = true;
             Plugin worldEdit = Bukkit.getPluginManager().getPlugin("WorldEdit");
             hasWorldEdit = worldEdit != null;
-            Internal.setWorldEdit(worldEdit);
+            if (worldEdit != null) {
+                Internal.setWorldEdit(worldEdit);
+            }
         }
         return hasWorldEdit;
     }
