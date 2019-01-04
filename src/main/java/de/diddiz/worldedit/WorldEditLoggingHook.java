@@ -70,12 +70,12 @@ public class WorldEditLoggingHook {
 
                 event.setExtent(new AbstractDelegateExtent(event.getExtent()) {
                     @Override
-                    public final boolean setBlock(BlockVector3 position, @SuppressWarnings("rawtypes") BlockStateHolder block) throws WorldEditException {
+                    public final <B extends BlockStateHolder<B>> boolean setBlock(BlockVector3 position, B block) throws WorldEditException {
                         onBlockChange(position, block);
                         return super.setBlock(position, block);
                     }
                     
-                    protected void onBlockChange(BlockVector3 pt, BlockStateHolder<?> block) {
+                    protected <B extends BlockStateHolder<B>> void onBlockChange(BlockVector3 pt, B block) {
 
                         if (event.getStage() != EditSession.Stage.BEFORE_CHANGE) {
                             return;
