@@ -832,7 +832,13 @@ public class Consumer extends Thread {
             if (replacedState != null || typeState != null) {
                 inserts[1] = "INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES(" + Utils.mysqlPrepareBytesForInsertAllowNull(replacedState) + ", " + Utils.mysqlPrepareBytesForInsertAllowNull(typeState) + ", LAST_INSERT_ID());";
             } else if (ca != null) {
-                inserts[1] = "INSERT INTO `" + table + "-chestdata` (id, item, itemremove, itemtype) values (LAST_INSERT_ID(), '" + Utils.mysqlEscapeBytes(Utils.saveItemStack(ca.itemStack)) + "', " + (ca.remove ? 1 : 0) + ", " + ca.itemType + ");";
+                try {
+                    inserts[1] = "INSERT INTO `" + table + "-chestdata` (id, item, itemremove, itemtype) values (LAST_INSERT_ID(), '" + Utils.mysqlEscapeBytes(Utils.saveItemStack(ca.itemStack)) + "', " + (ca.remove ? 1 : 0) + ", " + ca.itemType + ");";
+                } catch (Exception e) {
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not serialize ItemStack " + e.getMessage(), e);
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Problematic row: " + toString());
+                    return new String[0];
+                }
             }
             return inserts;
         }
@@ -844,9 +850,20 @@ public class Consumer extends Thread {
 
         @Override
         public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            byte[] serializedItemStack = null;
+            if (ca != null) {
+                try {
+                    serializedItemStack = Utils.saveItemStack(ca.itemStack);
+                } catch (Exception e) {
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not serialize ItemStack " + e.getMessage(), e);
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Problematic row: " + toString());
+                    return;
+                }
+            }
+            final byte[] finalSerializedItemStack = serializedItemStack;
             int sourceActor = playerIDAsIntIncludeUncommited(actor);
             Location actorBlockLocation = actor.getBlockLocation();
-            if(actorBlockLocation != null) {
+            if (actorBlockLocation != null) {
                 Integer tempSourceActor = batchHelper.getUncommitedBlockActor(actorBlockLocation);
                 if(tempSourceActor != null) {
                     sourceActor = tempSourceActor;
@@ -886,7 +903,7 @@ public class Consumer extends Thread {
                     }
                     if (ca != null) {
                         ps = batchHelper.getOrPrepareStatement(conn, getWorldConfig(loc.getWorld()).insertBlockChestDataStatementString, Statement.NO_GENERATED_KEYS);
-                        ps.setBytes(1, Utils.saveItemStack(ca.itemStack));
+                        ps.setBytes(1, finalSerializedItemStack);
                         ps.setInt(2, ca.remove ? 1 : 0);
                         ps.setInt(3, id);
                         ps.setInt(4, ca.itemType);
