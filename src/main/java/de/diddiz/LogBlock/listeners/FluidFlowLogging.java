@@ -53,7 +53,7 @@ public class FluidFlowLogging extends LoggingListener {
                         consumer.queueBlockReplace(new Actor("LavaFlow", source), to.getState(), Material.COBBLESTONE.createBlockData());
                     } else {
                         Levelled newBlock = (Levelled) blockDataFrom.clone();
-                        newBlock.setLevel(levelledFrom.getLevel() + 1);
+                        newBlock.setLevel(Math.min(levelledFrom.getMaximumLevel(), levelledFrom.getLevel() + 1));
                         if (BukkitUtils.isEmpty(typeTo)) {
                             consumer.queueBlockPlace(new Actor("LavaFlow", source), to.getLocation(), newBlock);
                         } else {
@@ -70,7 +70,7 @@ public class FluidFlowLogging extends LoggingListener {
             } else if ((typeFrom == Material.WATER) && wcfg.isLogging(Logging.WATERFLOW)) {
                 Levelled levelledFrom = fromWaterlogged ? null : (Levelled) blockDataFrom;
                 Levelled newBlock = (Levelled) Material.WATER.createBlockData();
-                newBlock.setLevel(fromWaterlogged ? 1 : levelledFrom.getLevel() + 1);
+                newBlock.setLevel(fromWaterlogged ? 1 : Math.min(levelledFrom.getMaximumLevel(), levelledFrom.getLevel() + 1));
                 if (BukkitUtils.isEmpty(typeTo)) {
                     consumer.queueBlockPlace(new Actor("WaterFlow", source), to.getLocation(), newBlock);
                 } else if (BukkitUtils.getNonFluidProofBlocks().contains(typeTo)) {
