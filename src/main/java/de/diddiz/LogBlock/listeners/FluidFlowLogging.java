@@ -45,6 +45,7 @@ public class FluidFlowLogging extends LoggingListener {
             Block source = Config.logFluidFlowAsPlayerWhoTriggeredIt ? event.getBlock() : null;
             final Block to = event.getToBlock();
             final Material typeTo = to.getType();
+            boolean down = event.getFace() == BlockFace.DOWN;
             final boolean canFlow = BukkitUtils.isEmpty(typeTo) || BukkitUtils.getNonFluidProofBlocks().contains(typeTo);
             if (typeFrom == Material.LAVA && wcfg.isLogging(Logging.LAVAFLOW)) {
                 Levelled levelledFrom = (Levelled) blockDataFrom;
@@ -53,7 +54,7 @@ public class FluidFlowLogging extends LoggingListener {
                         consumer.queueBlockReplace(new Actor("LavaFlow", source), to.getState(), Material.COBBLESTONE.createBlockData());
                     } else {
                         Levelled newBlock = (Levelled) blockDataFrom.clone();
-                        newBlock.setLevel(Math.min(levelledFrom.getMaximumLevel(), levelledFrom.getLevel() + 1));
+                        newBlock.setLevel(down ? 1 : levelledFrom.getLevel() + 1);
                         if (BukkitUtils.isEmpty(typeTo)) {
                             consumer.queueBlockPlace(new Actor("LavaFlow", source), to.getLocation(), newBlock);
                         } else {
@@ -61,7 +62,7 @@ public class FluidFlowLogging extends LoggingListener {
                         }
                     }
                 } else if (typeTo == Material.WATER) {
-                    if (event.getFace() == BlockFace.DOWN) {
+                    if (down) {
                         consumer.queueBlockReplace(new Actor("LavaFlow", source), to.getState(), Material.STONE.createBlockData());
                     } else {
                         consumer.queueBlockReplace(new Actor("LavaFlow", source), to.getState(), Material.COBBLESTONE.createBlockData());
@@ -70,7 +71,7 @@ public class FluidFlowLogging extends LoggingListener {
             } else if ((typeFrom == Material.WATER) && wcfg.isLogging(Logging.WATERFLOW)) {
                 Levelled levelledFrom = fromWaterlogged ? null : (Levelled) blockDataFrom;
                 Levelled newBlock = (Levelled) Material.WATER.createBlockData();
-                newBlock.setLevel(fromWaterlogged ? 1 : Math.min(levelledFrom.getMaximumLevel(), levelledFrom.getLevel() + 1));
+                newBlock.setLevel(fromWaterlogged || down ? 1 : levelledFrom.getLevel() + 1);
                 if (BukkitUtils.isEmpty(typeTo)) {
                     consumer.queueBlockPlace(new Actor("WaterFlow", source), to.getLocation(), newBlock);
                 } else if (BukkitUtils.getNonFluidProofBlocks().contains(typeTo)) {
