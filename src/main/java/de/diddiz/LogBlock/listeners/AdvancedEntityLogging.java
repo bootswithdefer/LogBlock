@@ -34,10 +34,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.EntityChange;
+import de.diddiz.LogBlock.EntityChange.EntityChangeType;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.EntityLogging;
 import de.diddiz.worldedit.WorldEditHelper;
+import java.util.UUID;
 
 public class AdvancedEntityLogging extends LoggingListener {
 
@@ -45,20 +47,26 @@ public class AdvancedEntityLogging extends LoggingListener {
     private Class<? extends Entity> lastSpawning;
     private boolean lastSpawnerEgg;
 
+    // serialize them before the death event
+    private UUID lastEntityDamagedForDeathUUID;
+    private byte[] lastEntityDamagedForDeathSerialized;
+
     public AdvancedEntityLogging(LogBlock lb) {
         super(lb);
         new BukkitRunnable() {
             @Override
             public void run() {
-                resetLastSpawner();
+                resetOnTick();
             }
         }.runTaskTimer(lb, 1, 1);
     }
 
-    private void resetLastSpawner() {
+    private void resetOnTick() {
         lastSpawner = null;
         lastSpawning = null;
         lastSpawnerEgg = false;
+        lastEntityDamagedForDeathUUID = null;
+        lastEntityDamagedForDeathSerialized = null;
     }
 
     private void setLastSpawner(Player player, Class<? extends Entity> spawning, boolean spawnEgg) {
@@ -145,7 +153,7 @@ public class AdvancedEntityLogging extends LoggingListener {
                 queueEntitySpawnOrKill(entity, actor, EntityChange.EntityChangeType.CREATE);
             }
         }
-        resetLastSpawner();
+        resetOnTick();
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -205,6 +213,10 @@ public class AdvancedEntityLogging extends LoggingListener {
                 }
             }
         }
+        if (Config.isLogging(entity.getWorld(), EntityLogging.DESTROY, entity)) {
+            lastEntityDamagedForDeathUUID = entity.getUniqueId();
+            lastEntityDamagedForDeathSerialized = WorldEditHelper.serializeEntity(entity);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -242,7 +254,11 @@ public class AdvancedEntityLogging extends LoggingListener {
         data.set("z", location.getZ());
         data.set("yaw", location.getYaw());
         data.set("pitch", location.getPitch());
-        data.set("worldedit", WorldEditHelper.serializeEntity(entity));
+        if (changeType == EntityChangeType.KILL && entity.getUniqueId().equals(lastEntityDamagedForDeathUUID)) {
+            data.set("worldedit", lastEntityDamagedForDeathSerialized);
+        } else {
+            data.set("worldedit", WorldEditHelper.serializeEntity(entity));
+        }
         consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), location, changeType, data);
     }
 }
