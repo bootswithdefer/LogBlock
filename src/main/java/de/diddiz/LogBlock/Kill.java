@@ -43,8 +43,10 @@ public class Kill implements LookupCacheElement {
         if (loc != null) {
             msg.append(" at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ());
         }
-        String weaponName = prettyItemName(MaterialConverter.getMaterial(weapon));
-        msg.append(" with " + weaponName); // + ("aeiou".contains(weaponName.substring(0, 1)) ? "an " : "a " )
+        if (weapon != 0) {
+            String weaponName = prettyItemName(MaterialConverter.getMaterial(weapon));
+            msg.append(" with " + weaponName); // + ("aeiou".contains(weaponName.substring(0, 1)) ? "an " : "a " )
+        }
         return msg.toString();
     }
 

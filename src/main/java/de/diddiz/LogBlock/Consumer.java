@@ -280,7 +280,8 @@ public class Consumer extends Thread {
             weapon = ((Player) killer).getInventory().getItemInMainHand();
         }
         if (killer instanceof Projectile) {
-            weapon = new ItemStack(itemIDfromProjectileEntity(killer));
+            Material projectileMaterial = itemIDfromProjectileEntity(killer);
+            weapon = projectileMaterial == null ? null : new ItemStack(projectileMaterial);
             ProjectileSource ps = ((Projectile) killer).getShooter();
             if (ps == null) {
                 killerActor = Actor.actorFromEntity(killer);
