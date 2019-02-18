@@ -157,7 +157,7 @@ public class InteractLogging extends LoggingListener {
                 case PUMPKIN:
                     if ((wcfg.isLogging(Logging.BLOCKBREAK) || wcfg.isLogging(Logging.BLOCKPLACE)) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                         ItemStack inHand = event.getItem();
-                        if (inHand.getType() == Material.SHEARS) {
+                        if (inHand != null && inHand.getType() == Material.SHEARS) {
                             BlockFace clickedFace = event.getBlockFace();
                             Directional newBlockData = (Directional) Material.CARVED_PUMPKIN.createBlockData();
                             if (clickedFace == BlockFace.NORTH || clickedFace == BlockFace.SOUTH || clickedFace == BlockFace.EAST || clickedFace == BlockFace.WEST) {
