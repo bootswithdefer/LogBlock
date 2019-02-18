@@ -12,6 +12,7 @@ import org.bukkit.Note.Tone;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Cake;
 import org.bukkit.block.data.type.Comparator;
@@ -27,6 +28,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 
@@ -140,7 +142,7 @@ public class InteractLogging extends LoggingListener {
                     }
                     break;
                 case TURTLE_EGG:
-                    if (event.getAction() == Action.PHYSICAL) {
+                    if (wcfg.isLogging(Logging.BLOCKBREAK) && event.getAction() == Action.PHYSICAL) {
                         TurtleEgg turtleEggData = (TurtleEgg) blockData;
                         int eggs = turtleEggData.getEggs();
                         if (eggs > 1) {
@@ -149,6 +151,30 @@ public class InteractLogging extends LoggingListener {
                             consumer.queueBlock(Actor.actorFromEntity(player), loc, turtleEggData, turtleEggData2);
                         } else {
                             consumer.queueBlock(Actor.actorFromEntity(player), loc, turtleEggData, Material.AIR.createBlockData());
+                        }
+                    }
+                    break;
+                case PUMPKIN:
+                    if ((wcfg.isLogging(Logging.BLOCKBREAK) || wcfg.isLogging(Logging.BLOCKPLACE)) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                        ItemStack inHand = event.getItem();
+                        if (inHand.getType() == Material.SHEARS) {
+                            BlockFace clickedFace = event.getBlockFace();
+                            Directional newBlockData = (Directional) Material.CARVED_PUMPKIN.createBlockData();
+                            if (clickedFace == BlockFace.NORTH || clickedFace == BlockFace.SOUTH || clickedFace == BlockFace.EAST || clickedFace == BlockFace.WEST) {
+                                newBlockData.setFacing(clickedFace);
+                            } else {
+                                // use player distance to calculate the facing
+                                Location playerLoc = player.getLocation();
+                                playerLoc.subtract(0.5, 0, 0.5);
+                                double dx = playerLoc.getX() - loc.getX();
+                                double dz = playerLoc.getZ() - loc.getZ();
+                                if (Math.abs(dx) > Math.abs(dz)) {
+                                    newBlockData.setFacing(dx > 0 ? BlockFace.EAST : BlockFace.WEST);
+                                } else {
+                                    newBlockData.setFacing(dz > 0 ? BlockFace.SOUTH : BlockFace.NORTH);
+                                }
+                            }
+                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
                         }
                     }
                     break;

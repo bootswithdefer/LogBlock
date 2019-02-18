@@ -161,7 +161,8 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.CHESTACCESS)) {
             pm.registerEvents(new ChestAccessLogging(this), this);
         }
-        if (isLogging(Logging.SWITCHINTERACT) || isLogging(Logging.DOORINTERACT) || isLogging(Logging.CAKEEAT) || isLogging(Logging.DIODEINTERACT) || isLogging(Logging.COMPARATORINTERACT) || isLogging(Logging.NOTEBLOCKINTERACT) || isLogging(Logging.PRESUREPLATEINTERACT) || isLogging(Logging.TRIPWIREINTERACT) || isLogging(Logging.CROPTRAMPLE)) {
+        if (isLogging(Logging.BLOCKBREAK) || isLogging(Logging.BLOCKPLACE) || isLogging(Logging.SWITCHINTERACT) || isLogging(Logging.DOORINTERACT) || isLogging(Logging.CAKEEAT) || isLogging(Logging.DIODEINTERACT) || isLogging(Logging.COMPARATORINTERACT) || isLogging(Logging.NOTEBLOCKINTERACT)
+                || isLogging(Logging.PRESUREPLATEINTERACT) || isLogging(Logging.TRIPWIREINTERACT) || isLogging(Logging.CROPTRAMPLE)) {
             pm.registerEvents(new InteractLogging(this), this);
         }
         if (isLogging(Logging.CREATURECROPTRAMPLE)) {
