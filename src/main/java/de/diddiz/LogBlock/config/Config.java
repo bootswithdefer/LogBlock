@@ -341,13 +341,17 @@ public class Config {
 }
 
 class LoggingEnabledMapping {
-    private final boolean[] logging = new boolean[Logging.length];
+    private final EnumSet<Logging> logging = EnumSet.noneOf(Logging.class);
 
     public void setLogging(Logging l, boolean enabled) {
-        logging[l.ordinal()] = enabled;
+        if (enabled) {
+            logging.add(l);
+        } else {
+            logging.remove(l);
+        }
     }
 
     public boolean isLogging(Logging l) {
-        return logging[l.ordinal()];
+        return logging.contains(l);
     }
 }
