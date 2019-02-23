@@ -160,12 +160,16 @@ public class AdvancedEntityLogging extends LoggingListener {
     public void onEntityDeath(EntityDeathEvent event) {
         LivingEntity entity = event.getEntity();
         if (Config.isLogging(entity.getWorld(), EntityLogging.DESTROY, entity)) {
-            Actor actor;
+            Actor actor = null;
             EntityDamageEvent lastDamage = entity.getLastDamageCause();
             if (lastDamage instanceof EntityDamageByEntityEvent) {
-                actor = Actor.actorFromEntity(((EntityDamageByEntityEvent) lastDamage).getDamager());
-            } else {
-                actor = new Actor(lastDamage.getCause().toString());
+                Entity damager = ((EntityDamageByEntityEvent) lastDamage).getDamager();
+                if (damager != null) {
+                    actor = Actor.actorFromEntity(damager);
+                }
+            }
+            if (actor == null) {
+                actor = new Actor(lastDamage == null ? "UNKNOWN" : lastDamage.getCause().toString());
             }
             queueEntitySpawnOrKill(entity, actor, EntityChange.EntityChangeType.KILL);
         }
