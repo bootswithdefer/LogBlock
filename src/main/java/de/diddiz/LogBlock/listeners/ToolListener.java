@@ -31,7 +31,7 @@ public class ToolListener implements Listener {
         handler = logblock.getCommandsHandler();
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getMaterial() != null) {
             final Action action = event.getAction();
