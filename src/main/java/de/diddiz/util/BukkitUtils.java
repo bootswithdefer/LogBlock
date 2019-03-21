@@ -829,4 +829,68 @@ public class BukkitUtils {
             stand.getEquipment().setHelmet(stack);
         }
     }
+
+    public static ItemStack[] deepCopy(ItemStack[] of) {
+        ItemStack[] result = new ItemStack[of.length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = of[i] == null ? null : new ItemStack(of[i]);
+        }
+        return result;
+    }
+
+    private static int getFirstPartialItemStack(ItemStack item, ItemStack[] contents, int start) {
+        for (int i = start; i < contents.length; i++) {
+            ItemStack content = contents[i];
+            if (content != null && content.isSimilar(item) && content.getAmount() < content.getMaxStackSize()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static int getFirstFreeItemStack(ItemStack[] contents, int start) {
+        for (int i = start; i < contents.length; i++) {
+            ItemStack content = contents[i];
+            if (content == null || content.getAmount() == 0 || content.getType() == Material.AIR) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static boolean hasInventoryStorageSpaceFor(Inventory inv, ItemStack... items) {
+        ItemStack[] contents = deepCopy(inv.getStorageContents());
+        for (ItemStack item : items) {
+            if (item != null && item.getType() != Material.AIR) {
+                int remaining = item.getAmount();
+                // fill partial stacks
+                int firstPartial = -1;
+                while (remaining > 0) {
+                    firstPartial = getFirstPartialItemStack(item, contents, firstPartial + 1);
+                    if (firstPartial < 0) {
+                        break;
+                    }
+                    ItemStack content = contents[firstPartial];
+                    int add = Math.min(content.getMaxStackSize() - content.getAmount(), remaining);
+                    content.setAmount(content.getAmount() + add);
+                    remaining -= add;
+                }
+                // create new stacks
+                int firstFree = -1;
+                while (remaining > 0) {
+                    firstFree = getFirstFreeItemStack(contents, firstFree + 1);
+                    if (firstFree < 0) {
+                        return false; // no free place found
+                    }
+                    ItemStack content = new ItemStack(item);
+                    contents[firstFree] = content;
+                    // max stack size might return -1, in this case assume 1
+                    int add = Math.min(Math.max(content.getMaxStackSize(), 1), remaining);
+                    content.setAmount(add);
+                    remaining -= add;
+                }
+            }
+        }
+        return true;
+    }
 }

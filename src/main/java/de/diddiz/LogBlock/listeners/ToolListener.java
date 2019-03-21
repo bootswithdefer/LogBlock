@@ -116,8 +116,8 @@ public class ToolListener implements Listener {
                 if (item == tool.item && toolData.enabled) {
                     if (tool.dropToDisable) {
                         toolData.enabled = false;
+                        ItemStack stack = event.getItemDrop().getItemStack();
                         if (tool.removeOnDisable && logblock.hasPermission(player, "logblock.spawnTools")) {
-                            ItemStack stack = event.getItemDrop().getItemStack();
                             if (stack.isSimilar(new ItemStack(item))) {
                                 if (stack.getAmount() > 1) {
                                     stack.setAmount(stack.getAmount() - 1);
@@ -127,7 +127,9 @@ public class ToolListener implements Listener {
                                 }
                             }
                         }
-                        event.setCancelled(true);
+                        if (BukkitUtils.hasInventoryStorageSpaceFor(player.getInventory(), stack)) {
+                            event.setCancelled(true);
+                        }
                         player.sendMessage(ChatColor.GREEN + "Tool disabled.");
                     } else if (!tool.canDrop) {
                         player.sendMessage(ChatColor.RED + "You cannot drop this tool.");
