@@ -455,9 +455,19 @@ public class ComparableVersion
         return items.compareTo( o.items );
     }
 
+    public int compareTo( String version )
+    {
+        return compareTo(new ComparableVersion(version));
+    }
+
     public String toString()
     {
         return value;
+    }
+
+    public String toCanonicalString()
+    {
+        return canonical;
     }
 
     public boolean equals( Object o )

@@ -27,7 +27,6 @@ import static de.diddiz.LogBlock.config.Config.getLoggedWorlds;
 import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.BukkitUtils.friendlyWorldname;
 import de.diddiz.util.ComparableVersion;
-import java.util.regex.Pattern;
 
 class Updater {
     private final LogBlock logblock;
@@ -42,11 +41,6 @@ class Updater {
     boolean update() {
         final ConfigurationSection config = logblock.getConfig();
         String versionString = config.getString("version");
-        if (Pattern.matches("1\\.\\d{2}",versionString)) {
-            versionString = "1." + versionString.charAt(2) + "." + versionString.charAt(3);
-            config.set("version",versionString);
-            logblock.saveConfig();
-        }
         ComparableVersion configVersion = new ComparableVersion(versionString);
         // if (configVersion.compareTo(new ComparableVersion(logblock.getDescription().getVersion().replace(" (manually compiled)", ""))) >= 0) {
         // return false;
@@ -686,8 +680,8 @@ class Updater {
 
                                         Material replacedMaterial = MaterialConverter.getBlockData(replaced, -1).getMaterial();
                                         Material typeMaterial = MaterialConverter.getBlockData(type, -1).getMaterial();
-                                        boolean wasSign = replacedMaterial == Material.SIGN || replacedMaterial == Material.WALL_SIGN;
-                                        boolean isSign = typeMaterial == Material.SIGN || typeMaterial == Material.WALL_SIGN;
+                                        boolean wasSign = replacedMaterial == Material.OAK_SIGN || replacedMaterial == Material.OAK_WALL_SIGN;
+                                        boolean isSign = typeMaterial == Material.OAK_SIGN || typeMaterial == Material.OAK_WALL_SIGN;
 
                                         insertSignState.setInt(1, id);
                                         insertSignState.setBytes(2, wasSign ? bytes : null);
@@ -737,6 +731,10 @@ class Updater {
 
         if (configVersion.compareTo(new ComparableVersion("1.13.2")) < 0) {
             config.set("version", "1.13.2");
+        }
+
+        if (configVersion.compareTo(new ComparableVersion("1.14.0")) < 0) {
+            config.set("version", "1.14.0");
         }
 
         // this can always be checked
@@ -834,6 +832,84 @@ class Updater {
             if (!dbm.getTables(null, null, table, null).next()) {
                 throw new SQLException("Table " + table + " not found and failed to create");
             }
+        }
+    }
+
+    /**
+     * Update materials that were renamed
+     */
+    public void updateMaterialsPost1_13() {
+        final ConfigurationSection config = logblock.getConfig();
+        String previousMinecraftVersion = config.getString("previousMinecraftVersion");
+        if (previousMinecraftVersion == null) {
+            previousMinecraftVersion = "1.13";
+        }
+        ComparableVersion comparablePreviousMinecraftVersion = new ComparableVersion(previousMinecraftVersion);
+        String currentMinecraftVersion = logblock.getServer().getVersion();
+        currentMinecraftVersion = currentMinecraftVersion.substring(currentMinecraftVersion.indexOf("(MC: ") + 5);
+        currentMinecraftVersion = currentMinecraftVersion.substring(0, currentMinecraftVersion.indexOf(" "));
+        logblock.getLogger().info("[Updater] Current Minecraft Version: '" + currentMinecraftVersion + "'");
+        ComparableVersion comparableCurrentMinecraftVersion = new ComparableVersion(currentMinecraftVersion);
+
+        if (comparablePreviousMinecraftVersion.compareTo("1.14") < 0 && comparableCurrentMinecraftVersion.compareTo("1.14") >= 0) {
+            logblock.getLogger().info("[Updater] Upgrading Materials to 1.14");
+            renameMaterial("minecraft:sign", "minecraft:oak_sign", true);
+            renameMaterial("minecraft:wall_sign", "minecraft:oak_wall_sign", true);
+            renameMaterial("minecraft:stone_slab", "minecraft:smooth_stone_slab", false);
+            renameMaterial("minecraft:rose_red", "minecraft:red_dye", true);
+            renameMaterial("minecraft:dandelion_yellow", "minecraft:yellow_dye", true);
+            renameMaterial("minecraft:cactus_green", "minecraft:green_dye", true);
+        }
+
+        config.set("previousMinecraftVersion", currentMinecraftVersion);
+        logblock.saveConfig();
+    }
+
+    private void renameMaterial(String oldName, String newName, boolean mergeOnCollision) {
+        logblock.getLogger().info("[Updater] Renaming " + oldName + " to " + newName);
+        final Connection conn = logblock.getConnection();
+        try {
+            conn.setAutoCommit(false);
+            PreparedStatement stSelectMaterial = conn.prepareStatement("SELECT id FROM `lb-materials` WHERE name = ?");
+            stSelectMaterial.setString(1, oldName);
+            ResultSet rs = stSelectMaterial.executeQuery();
+            if (!rs.next()) {
+                logblock.getLogger().info("[Updater] Skipped because " + oldName + " does not exist..");
+            } else {
+                int oldId = rs.getInt(1);
+                stSelectMaterial.setString(1, newName);
+                rs = stSelectMaterial.executeQuery();
+                if (rs.next()) {
+                    int newId = rs.getInt(1);
+                    if (!mergeOnCollision) {
+                        logblock.getLogger().info("[Updater] Skipped because " + newName + " already exists..");
+                    } else {
+                        Statement st = conn.createStatement();
+                        int rows = 0;
+                        for (final WorldConfig wcfg : getLoggedWorlds()) {
+                            rows += st.executeUpdate("UPDATE `" + wcfg.table + "-blocks` SET replaced = " + newId + " WHERE replaced = " + oldId);
+                            rows += st.executeUpdate("UPDATE `" + wcfg.table + "-blocks` SET type = " + newId + " WHERE type = " + oldId);
+                            rows += st.executeUpdate("UPDATE `" + wcfg.table + "-chestdata` SET itemtype = " + newId + " WHERE itemtype = " + oldId);
+                        }
+                        st.execute("DELETE FROM `lb-materials` WHERE id = " + oldId);
+                        st.close();
+                        logblock.getLogger().info("[Updater] Successfully merged " + rows + " entries..");
+                    }
+                } else {
+                    PreparedStatement stRenameMaterial = conn.prepareStatement("UPDATE `lb-materials` SET name = ? WHERE id = ?");
+                    stRenameMaterial.setString(1, newName);
+                    stRenameMaterial.setInt(2, oldId);
+                    if (stRenameMaterial.executeUpdate() > 0) {
+                        logblock.getLogger().info("[Updater] Successfully renamed..");
+                    }
+                    stRenameMaterial.close();
+                }
+            }
+            stSelectMaterial.close();
+            conn.commit();
+            conn.close();
+        } catch (final SQLException ex) {
+            logblock.getLogger().log(Level.SEVERE, "[Updater] Error: " + ex.getMessage(), ex);
         }
     }
 

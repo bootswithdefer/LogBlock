@@ -164,7 +164,12 @@ public class BukkitUtils {
 
         // Blocks that break when they are attached to a block
         relativeBreakable = EnumSet.noneOf(Material.class);
-        relativeBreakable.add(Material.WALL_SIGN);
+        relativeBreakable.add(Material.ACACIA_WALL_SIGN);
+        relativeBreakable.add(Material.BIRCH_WALL_SIGN);
+        relativeBreakable.add(Material.DARK_OAK_WALL_SIGN);
+        relativeBreakable.add(Material.JUNGLE_WALL_SIGN);
+        relativeBreakable.add(Material.OAK_WALL_SIGN);
+        relativeBreakable.add(Material.SPRUCE_WALL_SIGN);
         relativeBreakable.add(Material.LADDER);
         relativeBreakable.addAll(buttons);
         relativeBreakable.add(Material.REDSTONE_WALL_TORCH);
@@ -189,7 +194,12 @@ public class BukkitUtils {
         relativeTopBreakable.add(Material.ACTIVATOR_RAIL);
         relativeTopBreakable.add(Material.RAIL);
         relativeTopBreakable.add(Material.REDSTONE_WIRE);
-        relativeTopBreakable.add(Material.SIGN);
+        relativeTopBreakable.add(Material.ACACIA_SIGN);
+        relativeTopBreakable.add(Material.BIRCH_SIGN);
+        relativeTopBreakable.add(Material.DARK_OAK_SIGN);
+        relativeTopBreakable.add(Material.JUNGLE_SIGN);
+        relativeTopBreakable.add(Material.OAK_SIGN);
+        relativeTopBreakable.add(Material.SPRUCE_SIGN);
         relativeTopBreakable.addAll(pressurePlates);
         relativeTopBreakable.add(Material.SNOW);
         relativeTopBreakable.add(Material.REPEATER);
@@ -205,8 +215,18 @@ public class BukkitUtils {
 
         // Blocks that break falling entities
         fallingEntityKillers = EnumSet.noneOf(Material.class);
-        fallingEntityKillers.add(Material.SIGN);
-        fallingEntityKillers.add(Material.WALL_SIGN);
+        fallingEntityKillers.add(Material.ACACIA_SIGN);
+        fallingEntityKillers.add(Material.ACACIA_WALL_SIGN);
+        fallingEntityKillers.add(Material.BIRCH_SIGN);
+        fallingEntityKillers.add(Material.BIRCH_WALL_SIGN);
+        fallingEntityKillers.add(Material.DARK_OAK_SIGN);
+        fallingEntityKillers.add(Material.DARK_OAK_WALL_SIGN);
+        fallingEntityKillers.add(Material.JUNGLE_SIGN);
+        fallingEntityKillers.add(Material.JUNGLE_WALL_SIGN);
+        fallingEntityKillers.add(Material.OAK_SIGN);
+        fallingEntityKillers.add(Material.OAK_WALL_SIGN);
+        fallingEntityKillers.add(Material.SPRUCE_SIGN);
+        fallingEntityKillers.add(Material.SPRUCE_WALL_SIGN);
         fallingEntityKillers.addAll(pressurePlates);
         fallingEntityKillers.addAll(saplings);
         fallingEntityKillers.add(Material.DANDELION);

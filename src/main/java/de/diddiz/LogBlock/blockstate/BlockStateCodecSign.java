@@ -12,7 +12,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class BlockStateCodecSign implements BlockStateCodec {
     @Override
     public Material[] getApplicableMaterials() {
-        return new Material[] { Material.WALL_SIGN, Material.SIGN };
+        return new Material[] { Material.ACACIA_SIGN, Material.ACACIA_WALL_SIGN, Material.BIRCH_SIGN, Material.BIRCH_WALL_SIGN, Material.DARK_OAK_SIGN, Material.DARK_OAK_WALL_SIGN, Material.JUNGLE_SIGN, Material.JUNGLE_WALL_SIGN, Material.OAK_SIGN, Material.OAK_WALL_SIGN, Material.SPRUCE_SIGN, Material.SPRUCE_WALL_SIGN };
     }
 
     @Override

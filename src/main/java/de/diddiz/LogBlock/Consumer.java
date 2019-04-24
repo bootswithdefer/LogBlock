@@ -34,8 +34,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Sign;
+import org.bukkit.block.data.type.WallSign;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -326,34 +327,6 @@ public class Consumer extends Thread {
     }
 
     /**
-     * Logs an actor breaking a sign along with its contents
-     *
-     * @param actor
-     *            Actor responsible for breaking the sign
-     * @param loc
-     *            Location of the broken sign
-     * @param type
-     *            BlockData of the sign.
-     * @param typeState
-     *            Serialized text data of the sign
-     */
-    public void queueSignBreak(Actor actor, Location loc, BlockData type, YamlConfiguration typeState) {
-        queueBlock(actor, loc, type, null, typeState, null, null);
-    }
-
-    /**
-     * Logs an actor breaking a sign along with its contents
-     *
-     * @param actor
-     *            Actor responsible for breaking the sign
-     * @param sign
-     *            The sign being broken
-     */
-    public void queueSignBreak(Actor actor, Sign sign) {
-        queueSignBreak(actor, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getBlockData(), BlockStateCodecs.serialize(sign));
-    }
-
-    /**
      * Logs an actor placing a sign along with its contents
      *
      * @param actor
@@ -365,23 +338,11 @@ public class Consumer extends Thread {
      * @param lines
      *            The four lines on the sign.
      */
-    public void queueSignPlace(Actor actor, Location loc, BlockData type, String[] lines) {
-        if ((type.getMaterial() != Material.SIGN && type.getMaterial() != Material.WALL_SIGN) || lines == null || lines.length != 4) {
+    public void queueSignChange(Actor actor, Location loc, BlockData type, String[] lines) {
+        if ((!(type instanceof Sign) && !(type instanceof WallSign)) || lines == null || lines.length != 4) {
             return;
         }
         queueBlock(actor, loc, type, type, null, BlockStateCodecSign.serialize(lines), null);
-    }
-
-    /**
-     * Logs an actor placing a sign along with its contents
-     *
-     * @param actor
-     *            Actor placing the sign
-     * @param sign
-     *            The palced sign object
-     */
-    public void queueSignPlace(Actor actor, Sign sign) {
-        queueSignPlace(actor, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getBlockData(), sign.getLines());
     }
 
     public void queueChat(Actor player, String message) {

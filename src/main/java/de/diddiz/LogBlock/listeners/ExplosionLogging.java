@@ -11,7 +11,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.Sign;
 import org.bukkit.entity.*;
 import org.bukkit.entity.minecart.ExplosiveMinecart;
 import org.bukkit.event.EventHandler;
@@ -114,9 +113,7 @@ public class ExplosionLogging extends LoggingListener {
             }
             for (final Block block : event.blockList()) {
                 final Material type = block.getType();
-                if (wcfg.isLogging(Logging.SIGNTEXT) & (type == Material.SIGN || type == Material.WALL_SIGN)) {
-                    consumer.queueSignBreak(actor, (Sign) block.getState());
-                } else if (wcfg.isLogging(Logging.CHESTACCESS) && (getContainerBlocks().contains(type))) {
+                if (wcfg.isLogging(Logging.CHESTACCESS) && (getContainerBlocks().contains(type))) {
                     consumer.queueContainerBreak(actor, block.getState());
                 } else {
                     consumer.queueBlockBreak(actor, block.getState());
@@ -171,9 +168,7 @@ public class ExplosionLogging extends LoggingListener {
                 }
 
                 final Material type = block.getType();
-                if (wcfg.isLogging(Logging.SIGNTEXT) & (type == Material.SIGN || type == Material.WALL_SIGN)) {
-                    consumer.queueSignBreak(actor, (Sign) block.getState());
-                } else if (wcfg.isLogging(Logging.CHESTACCESS) && (getContainerBlocks().contains(type))) {
+                if (wcfg.isLogging(Logging.CHESTACCESS) && (getContainerBlocks().contains(type))) {
                     consumer.queueContainerBreak(actor, block.getState());
                 } else {
                     consumer.queueBlockBreak(actor, block.getState());

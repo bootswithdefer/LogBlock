@@ -2,14 +2,12 @@ package de.diddiz.util;
 
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.Consumer;
-import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 
@@ -113,9 +111,7 @@ public class LoggingUtil {
 
         Block checkBlock = origin.getRelative(BlockFace.UP);
         if (BukkitUtils.getRelativeTopBreakabls().contains(checkBlock.getType())) {
-            if (wcfg.isLogging(Logging.SIGNTEXT) && checkBlock.getType() == Material.SIGN) {
-                consumer.queueSignBreak(actor, (Sign) checkBlock.getState());
-            } else if (checkBlock.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(checkBlock.getType())) {
+            if (checkBlock.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(checkBlock.getType())) {
                 Block doorBlock = checkBlock;
                 // If the doorBlock is the top half a door the player simply punched a door
                 // this will be handled later.
@@ -151,11 +147,7 @@ public class LoggingUtil {
                 BlockData blockData = block.getBlockData();
                 if (blockData instanceof Directional) {
                     if (block.getRelative(((Directional) blockData).getFacing().getOppositeFace()).equals(origin)) {
-                        if (wcfg.isLogging(Logging.SIGNTEXT) && block.getType() == Material.WALL_SIGN) {
-                            consumer.queueSignBreak(actor, (Sign) block.getState());
-                        } else {
-                            consumer.queueBlockBreak(actor, block.getState());
-                        }
+                        consumer.queueBlockBreak(actor, block.getState());
                     }
                 }
             }

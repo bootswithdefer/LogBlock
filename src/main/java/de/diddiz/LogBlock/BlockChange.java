@@ -15,7 +15,9 @@ import org.bukkit.block.data.type.Comparator;
 import org.bukkit.block.data.type.DaylightDetector;
 import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.block.data.type.Repeater;
+import org.bukkit.block.data.type.Sign;
 import org.bukkit.block.data.type.Switch;
+import org.bukkit.block.data.type.WallSign;
 import org.bukkit.inventory.ItemStack;
 
 import java.sql.ResultSet;
@@ -140,7 +142,7 @@ public class BlockChange implements LookupCacheElement {
                 msg.append("stepped on ").append(type.getMaterial().name());
             } else if (type.getMaterial() == Material.TRIPWIRE) {
                 msg.append("ran into ").append(type.getMaterial().name());
-            } else if (type.getMaterial() == Material.SIGN || type.getMaterial() == Material.WALL_SIGN) {
+            } else if (type instanceof Sign || type instanceof WallSign) {
                 msg.append("edited a ").append(type.getMaterial().name()).append(" to ").append(typeDetails);
             } else {
                 msg.append("replaced ").append(replaced.getMaterial().name()).append(replacedDetails).append(" with ").append(type.getMaterial().name()).append(typeDetails);    
