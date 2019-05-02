@@ -847,7 +847,12 @@ class Updater {
         ComparableVersion comparablePreviousMinecraftVersion = new ComparableVersion(previousMinecraftVersion);
         String currentMinecraftVersion = logblock.getServer().getVersion();
         currentMinecraftVersion = currentMinecraftVersion.substring(currentMinecraftVersion.indexOf("(MC: ") + 5);
-        currentMinecraftVersion = currentMinecraftVersion.substring(0, currentMinecraftVersion.indexOf(" "));
+        int currentVersionEnd = currentMinecraftVersion.indexOf(" ");
+        int currentVersionEnd2 = currentMinecraftVersion.indexOf(")");
+        if(currentVersionEnd2 >= 0 && (currentVersionEnd < 0 || currentVersionEnd2 < currentVersionEnd)) {
+            currentVersionEnd = currentVersionEnd2;
+        }
+        currentMinecraftVersion = currentMinecraftVersion.substring(0, currentVersionEnd);
         logblock.getLogger().info("[Updater] Current Minecraft Version: '" + currentMinecraftVersion + "'");
         ComparableVersion comparableCurrentMinecraftVersion = new ComparableVersion(currentMinecraftVersion);
 
