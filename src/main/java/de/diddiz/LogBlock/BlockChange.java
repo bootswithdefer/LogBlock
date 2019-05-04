@@ -72,6 +72,9 @@ public class BlockChange implements LookupCacheElement {
     public String toString() {
         BlockData type = getBlockSet();
         BlockData replaced = getBlockReplaced();
+        if (type == null || replaced == null) {
+            return "Unknown block modification";
+        }
         String typeDetails = null;
         if (BlockStateCodecs.hasCodec(type.getMaterial())) {
             try {

@@ -55,7 +55,7 @@ public class EntityTypeConverter {
     }
 
     public static EntityType getEntityType(int entityTypeId) {
-        return idToEntityType[entityTypeId];
+        return entityTypeId >= 0 && entityTypeId < idToEntityType.length ? idToEntityType[entityTypeId] : null;
     }
 
     private static void reinitializeEntityTypesCatchException() {
@@ -78,8 +78,15 @@ public class EntityTypeConverter {
         ResultSet rs = smt.executeQuery("SELECT id, name FROM `lb-entitytypes`");
         while (rs.next()) {
             int key = rs.getInt(1);
-            EntityType entityType = EntityType.valueOf(rs.getString(2));
-            internalAddEntityType(key, entityType);
+            try {
+                EntityType entityType = EntityType.valueOf(rs.getString(2));
+                internalAddEntityType(key, entityType);
+            } catch (IllegalArgumentException ignored) {
+                // the key is used, but not available in this version
+                if (nextEntityTypeId <= key) {
+                    nextEntityTypeId = key + 1;
+                }
+            }
         }
         rs.close();
         smt.close();

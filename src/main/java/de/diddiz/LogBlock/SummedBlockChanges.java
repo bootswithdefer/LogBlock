@@ -5,6 +5,7 @@ import org.bukkit.Location;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import static de.diddiz.util.Utils.spaces;
 
@@ -30,6 +31,6 @@ public class SummedBlockChanges implements LookupCacheElement {
 
     @Override
     public String getMessage() {
-        return created + spaces((int) ((10 - String.valueOf(created).length()) / spaceFactor)) + destroyed + spaces((int) ((10 - String.valueOf(destroyed).length()) / spaceFactor)) + (actor != null ? actor.getName() : MaterialConverter.getMaterial(type).toString());
+        return created + spaces((int) ((10 - String.valueOf(created).length()) / spaceFactor)) + destroyed + spaces((int) ((10 - String.valueOf(destroyed).length()) / spaceFactor)) + (actor != null ? actor.getName() : Objects.toString(MaterialConverter.getMaterial(type)));
     }
 }
