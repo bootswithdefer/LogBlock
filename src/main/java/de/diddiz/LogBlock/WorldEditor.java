@@ -226,6 +226,9 @@ public class WorldEditor implements Runnable {
 
         @Override
         public PerformResult perform() throws WorldEditorException {
+            if (type == null) {
+                throw new WorldEditorException("Unkown entity type for entity " + entityUUID, loc);
+            }
             if (changeType == (rollback ? EntityChangeType.KILL : EntityChangeType.CREATE)) {
                 // spawn entity
                 UUID uuid = getReplacedUUID(entityId, entityUUID);

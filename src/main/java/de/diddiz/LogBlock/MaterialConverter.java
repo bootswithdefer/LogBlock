@@ -122,15 +122,27 @@ public class MaterialConverter {
     }
 
     public static BlockData getBlockData(int materialId, int blockStateId) {
-        String material = idToMaterial[materialId];
-        if (blockStateId >= 0) {
+        String material = materialId >= 0 && materialId < idToMaterial.length ? idToMaterial[materialId] : null;
+        if (material == null) {
+            return null;
+        }
+        if (blockStateId >= 0 && blockStateId < idToBlockState.length && idToBlockState[blockStateId] != null) {
             material = material + idToBlockState[blockStateId];
         }
-        return Bukkit.createBlockData(material);
+        try {
+            return Bukkit.createBlockData(material);
+        } catch (IllegalArgumentException ignored) {
+            // fall back to create the default block data for the material
+            try {
+                return Bukkit.createBlockData(idToMaterial[materialId]);
+            } catch (IllegalArgumentException ignored2) {
+                return null;
+            }
+        }
     }
 
     public static Material getMaterial(int materialId) {
-        return materialKeyToMaterial.get(idToMaterial[materialId]);
+        return materialId >= 0 && materialId < idToMaterial.length ? materialKeyToMaterial.get(idToMaterial[materialId]) : null;
     }
 
     private static void reinitializeMaterialsCatchException() {
