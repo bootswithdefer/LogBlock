@@ -88,7 +88,6 @@ public class LogBlock extends JavaPlugin {
             conn.close();
             Updater updater = new Updater(this);
             updater.checkTables();
-            updater.updateMaterialsPost1_13();
             MaterialConverter.initializeMaterials(getConnection());
             MaterialConverter.getOrAddMaterialId(Material.AIR.getKey()); // AIR must be the first entry
             EntityTypeConverter.initializeEntityTypes(getConnection());
