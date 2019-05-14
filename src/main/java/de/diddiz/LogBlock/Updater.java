@@ -733,8 +733,8 @@ class Updater {
             config.set("version", "1.13.2");
         }
 
-        if (configVersion.compareTo(new ComparableVersion("1.14.0")) < 0) {
-            config.set("version", "1.14.0");
+        if (configVersion.compareTo(new ComparableVersion("1.14.1")) < 0) {
+            config.set("version", "1.14.1");
         }
 
         // this can always be checked
