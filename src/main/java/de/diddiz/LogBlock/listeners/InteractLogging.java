@@ -221,16 +221,18 @@ public class InteractLogging extends LoggingListener {
                 case JUNGLE_WALL_SIGN:
                 case ACACIA_WALL_SIGN:
                 case DARK_OAK_WALL_SIGN:
-                    ItemStack stack = event.getItem();
-                    if (stack != null && BukkitUtils.isDye(stack.getType())) {
-                        final BlockState before = event.getClickedBlock().getState();
-                        if (before instanceof Sign) {
-                            DyeColor newColor = BukkitUtils.dyeToDyeColor(stack.getType());
-                            Sign signBefore = (Sign) before;
-                            if (newColor != null && signBefore.getColor() != newColor) {
-                                final Sign signAfter = (Sign) event.getClickedBlock().getState();
-                                signAfter.setColor(newColor);
-                                consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                    if (wcfg.isLogging(Logging.SIGNTEXT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                        ItemStack stack = event.getItem();
+                        if (stack != null && BukkitUtils.isDye(stack.getType())) {
+                            final BlockState before = event.getClickedBlock().getState();
+                            if (before instanceof Sign) {
+                                DyeColor newColor = BukkitUtils.dyeToDyeColor(stack.getType());
+                                Sign signBefore = (Sign) before;
+                                if (newColor != null && signBefore.getColor() != newColor) {
+                                    final Sign signAfter = (Sign) event.getClickedBlock().getState();
+                                    signAfter.setColor(newColor);
+                                    consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                }
                             }
                         }
                     }
