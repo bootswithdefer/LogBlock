@@ -3,7 +3,7 @@ package de.diddiz.LogBlock.blockstate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
+import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
@@ -27,9 +27,18 @@ public class BlockStateCodecSign implements BlockStateCodec {
                     break;
                 }
             }
-            if (hasText) {
+            DyeColor signColor = sign.getColor();
+            if (signColor == null) {
+                signColor = DyeColor.BLACK;
+            }
+            if (hasText || signColor != DyeColor.BLACK) {
                 YamlConfiguration conf = new YamlConfiguration();
-                conf.set("lines", Arrays.asList(lines));
+                if (hasText) {
+                    conf.set("lines", Arrays.asList(lines));
+                }
+                if (signColor != DyeColor.BLACK) {
+                    conf.set("color", signColor.name());
+                }
                 return conf;
             }
         }
@@ -49,14 +58,25 @@ public class BlockStateCodecSign implements BlockStateCodec {
     public void deserialize(BlockState state, YamlConfiguration conf) {
         if (state instanceof Sign) {
             Sign sign = (Sign) state;
+            DyeColor signColor = DyeColor.BLACK;
             List<String> lines = Collections.emptyList();
             if (conf != null) {
-                lines = conf.getStringList("lines");
+                if (conf.contains("lines")) {
+                    lines = conf.getStringList("lines");
+                }
+                if (conf.contains("color")) {
+                    try {
+                        signColor = DyeColor.valueOf(conf.getString("color"));
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        // ignored
+                    }
+                }
             }
             for (int i = 0; i < 4; i++) {
                 String line = lines.size() > i && lines.get(i) != null ? lines.get(i) : "";
                 sign.setLine(i, line);
             }
+            sign.setColor(signColor);
         }
     }
 

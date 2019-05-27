@@ -50,6 +50,7 @@ public class BukkitUtils {
     private static final EnumSet<Material> woodenDoors;
     private static final EnumSet<Material> slabs;
     private static final EnumSet<Material> concreteBlocks;
+    private static final EnumMap<Material, DyeColor> dyes;
 
     static {
         pressurePlates = EnumSet.noneOf(Material.class);
@@ -393,6 +394,24 @@ public class BukkitUtils {
         concreteBlocks.add(Material.RED_CONCRETE);
         concreteBlocks.add(Material.WHITE_CONCRETE);
         concreteBlocks.add(Material.YELLOW_CONCRETE);
+
+        dyes = new EnumMap<>(Material.class);
+        dyes.put(Material.BLACK_DYE, DyeColor.BLACK);
+        dyes.put(Material.BLUE_DYE, DyeColor.BLUE);
+        dyes.put(Material.LIGHT_GRAY_DYE, DyeColor.LIGHT_GRAY);
+        dyes.put(Material.BROWN_DYE, DyeColor.BROWN);
+        dyes.put(Material.CYAN_DYE, DyeColor.CYAN);
+        dyes.put(Material.GRAY_DYE, DyeColor.GRAY);
+        dyes.put(Material.GREEN_DYE, DyeColor.GREEN);
+        dyes.put(Material.LIGHT_BLUE_DYE, DyeColor.LIGHT_BLUE);
+        dyes.put(Material.MAGENTA_DYE, DyeColor.MAGENTA);
+        dyes.put(Material.LIME_DYE, DyeColor.LIME);
+        dyes.put(Material.ORANGE_DYE, DyeColor.ORANGE);
+        dyes.put(Material.PINK_DYE, DyeColor.PINK);
+        dyes.put(Material.PURPLE_DYE, DyeColor.PURPLE);
+        dyes.put(Material.RED_DYE, DyeColor.RED);
+        dyes.put(Material.WHITE_DYE, DyeColor.WHITE);
+        dyes.put(Material.YELLOW_DYE, DyeColor.YELLOW);
     }
 
     private static final BlockFace[] relativeBlockFaces = new BlockFace[]{
@@ -725,6 +744,14 @@ public class BukkitUtils {
 
     public static boolean isBed(Material type) {
         return bedBlocks.contains(type);
+    }
+
+    public static boolean isDye(Material type) {
+        return dyes.containsKey(type);
+    }
+
+    public static DyeColor dyeToDyeColor(Material type) {
+        return dyes.get(type);
     }
 
     public static Block getConnectedChest(Block chestBlock) {

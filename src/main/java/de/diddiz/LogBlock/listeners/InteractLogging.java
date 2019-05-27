@@ -5,12 +5,15 @@ import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.util.BukkitUtils;
+import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Note;
 import org.bukkit.Note.Tone;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Openable;
@@ -178,23 +181,60 @@ public class InteractLogging extends LoggingListener {
                         }
                     }
                     break;
-                default:
-                    if (BukkitUtils.isButton(type) || type == Material.LEVER) {
-                        if (wcfg.isLogging(Logging.SWITCHINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                            Switch newBlockData = (Switch) blockData.clone();
-                            if (!newBlockData.isPowered() || type == Material.LEVER) {
-                                newBlockData.setPowered(!newBlockData.isPowered());
+                case OAK_DOOR:
+                case SPRUCE_DOOR:
+                case BIRCH_DOOR:
+                case JUNGLE_DOOR:
+                case ACACIA_DOOR:
+                case DARK_OAK_DOOR:
+                    if (wcfg.isLogging(Logging.DOORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                        Door newBlockData = (Door) blockData.clone();
+                        newBlockData.setOpen(!newBlockData.isOpen());
+                        consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                    }
+                    break;
+                case STONE_BUTTON:
+                case OAK_BUTTON:
+                case SPRUCE_BUTTON:
+                case BIRCH_BUTTON:
+                case JUNGLE_BUTTON:
+                case ACACIA_BUTTON:
+                case DARK_OAK_BUTTON:
+                case LEVER:
+                    if (wcfg.isLogging(Logging.SWITCHINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                        Switch newBlockData = (Switch) blockData.clone();
+                        if (!newBlockData.isPowered() || type == Material.LEVER) {
+                            newBlockData.setPowered(!newBlockData.isPowered());
+                        }
+                        consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                    }
+                    break;
+                case OAK_SIGN:
+                case SPRUCE_SIGN:
+                case BIRCH_SIGN:
+                case JUNGLE_SIGN:
+                case ACACIA_SIGN:
+                case DARK_OAK_SIGN:
+                case OAK_WALL_SIGN:
+                case SPRUCE_WALL_SIGN:
+                case BIRCH_WALL_SIGN:
+                case JUNGLE_WALL_SIGN:
+                case ACACIA_WALL_SIGN:
+                case DARK_OAK_WALL_SIGN:
+                    ItemStack stack = event.getItem();
+                    if (stack != null && BukkitUtils.isDye(stack.getType())) {
+                        final BlockState before = event.getClickedBlock().getState();
+                        if (before instanceof Sign) {
+                            DyeColor newColor = BukkitUtils.dyeToDyeColor(stack.getType());
+                            Sign signBefore = (Sign) before;
+                            if (newColor != null && signBefore.getColor() != newColor) {
+                                final Sign signAfter = (Sign) event.getClickedBlock().getState();
+                                signAfter.setColor(newColor);
+                                consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
                             }
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
                         }
                     }
-                    if (BukkitUtils.isWoodenDoor(type)) {
-                        if (wcfg.isLogging(Logging.DOORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                            Door newBlockData = (Door) blockData.clone();
-                            newBlockData.setOpen(!newBlockData.isOpen());
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
-                        }
-                    }
+                default:
             }
         }
     }
