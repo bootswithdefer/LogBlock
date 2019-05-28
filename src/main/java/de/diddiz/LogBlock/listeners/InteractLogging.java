@@ -236,6 +236,7 @@ public class InteractLogging extends LoggingListener {
                             }
                         }
                     }
+                    break;
                 default:
             }
         }
