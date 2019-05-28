@@ -25,6 +25,7 @@ public class BlockStateCodecs {
         registerCodec(new BlockStateCodecSkull());
         registerCodec(new BlockStateCodecBanner());
         registerCodec(new BlockStateCodecSpawner());
+        registerCodec(new BlockStateCodecLectern());
     }
 
     public static boolean hasCodec(Material material) {

@@ -13,6 +13,7 @@ import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.Powerable;
 import org.bukkit.block.data.type.Comparator;
 import org.bukkit.block.data.type.DaylightDetector;
+import org.bukkit.block.data.type.Lectern;
 import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.block.data.type.Repeater;
 import org.bukkit.block.data.type.Sign;
@@ -141,6 +142,8 @@ public class BlockChange implements LookupCacheElement {
                 msg.append("set ").append(type.getMaterial().name()).append(" to ").append(((Comparator) type).getMode());
             } else if (type.getMaterial() == Material.DAYLIGHT_DETECTOR) {
                 msg.append("set ").append(type.getMaterial().name()).append(" to ").append(((DaylightDetector) type).isInverted() ? "inverted" : "normal");
+            } else if (type instanceof Lectern) {
+                msg.append("changed the book on a ").append(type.getMaterial().name()).append(" to").append(replacedDetails.length() == 0 ? "empty" : replacedDetails);
             } else if (type instanceof Powerable) {
                 msg.append("stepped on ").append(type.getMaterial().name());
             } else if (type.getMaterial() == Material.TRIPWIRE) {

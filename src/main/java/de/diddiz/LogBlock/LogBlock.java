@@ -189,6 +189,9 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.DRAGONEGGTELEPORT)) {
             pm.registerEvents(new DragonEggLogging(this), this);
         }
+        if (isLogging(Logging.LECTERNBOOKCHANGE)) {
+            pm.registerEvents(new LecternLogging(this), this);
+        }
         if (Config.isLoggingAnyEntities()) {
             if (!WorldEditHelper.hasFullWorldEdit()) {
                 getLogger().severe("No compatible WorldEdit found, entity logging will not work!");

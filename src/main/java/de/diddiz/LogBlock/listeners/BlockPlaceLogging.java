@@ -29,7 +29,9 @@ public class BlockPlaceLogging extends LoggingListener {
             final BlockState before = event.getBlockReplacedState();
             final BlockState after = event.getBlockPlaced().getState();
             final Actor actor = Actor.actorFromEntity(event.getPlayer());
-            
+            if (before.getType() == Material.LECTERN && after.getType() == Material.LECTERN && !Config.isLogging(event.getBlock().getWorld(), Logging.LECTERNBOOKCHANGE)) {
+                return;
+            }
             LoggingUtil.smartLogBlockPlace(consumer, actor, before, after);
         }
     }
