@@ -73,10 +73,18 @@ public class BlockChange implements LookupCacheElement {
 
     @Override
     public String toString() {
+        final StringBuilder msg = new StringBuilder();
+        if (date > 0) {
+            msg.append(Config.formatter.format(date)).append(" ");
+        }
+        if (actor != null) {
+            msg.append(actor.getName()).append(" ");
+        }
         BlockData type = getBlockSet();
         BlockData replaced = getBlockReplaced();
         if (type == null || replaced == null) {
-            return "Unknown block modification";
+            msg.append("did an unknown block modification");
+            return msg.toString();
         }
         String typeDetails = null;
         if (BlockStateCodecs.hasCodec(type.getMaterial())) {
@@ -103,13 +111,6 @@ public class BlockChange implements LookupCacheElement {
             replacedDetails = "";
         } else {
             replacedDetails = " " + replacedDetails;
-        }
-        final StringBuilder msg = new StringBuilder();
-        if (date > 0) {
-            msg.append(Config.formatter.format(date)).append(" ");
-        }
-        if (actor != null) {
-            msg.append(actor.getName()).append(" ");
         }
         if (type.getMaterial().equals(replaced.getMaterial())) {
             if (BukkitUtils.isEmpty(type.getMaterial())) {

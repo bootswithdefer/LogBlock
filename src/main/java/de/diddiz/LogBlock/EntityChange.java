@@ -71,32 +71,36 @@ public class EntityChange implements LookupCacheElement {
         if (actor != null) {
             msg.append(actor.getName()).append(" ");
         }
-        if (type != null) {
-            boolean living = LivingEntity.class.isAssignableFrom(type.getEntityClass()) && !ArmorStand.class.isAssignableFrom(type.getDeclaringClass());
-            if (changeType == EntityChangeType.CREATE) {
-                msg.append("created ");
-            } else if (changeType == EntityChangeType.KILL) {
-                msg.append(living ? "killed " : "destroyed ");
-            } else if (changeType == EntityChangeType.ADDEQUIP) {
-                YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
-                ItemStack stack = conf == null ? null : conf.getItemStack("item");
-                if (stack == null) {
-                    msg.append("added an item to ");
-                } else {
-                    msg.append("added " + stack.getType() + " to ");
-                }
-            } else if (changeType == EntityChangeType.REMOVEEQUIP) {
-                YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
-                ItemStack stack = conf == null ? null : conf.getItemStack("item");
-                if (stack == null) {
-                    msg.append("removed an item from ");
-                } else {
-                    msg.append("removed " + stack.getType() + " from ");
-                }
-            } else if (changeType == EntityChangeType.MODIFY) {
-                msg.append("modified ");
+        if (changeType == EntityChangeType.CREATE) {
+            msg.append("created ");
+        } else if (changeType == EntityChangeType.KILL) {
+            boolean living = type != null && LivingEntity.class.isAssignableFrom(type.getEntityClass()) && !ArmorStand.class.isAssignableFrom(type.getDeclaringClass());
+            msg.append(living ? "killed " : "destroyed ");
+        } else if (changeType == EntityChangeType.ADDEQUIP) {
+            YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
+            ItemStack stack = conf == null ? null : conf.getItemStack("item");
+            if (stack == null) {
+                msg.append("added an item to ");
+            } else {
+                msg.append("added " + stack.getType() + " to ");
             }
+        } else if (changeType == EntityChangeType.REMOVEEQUIP) {
+            YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
+            ItemStack stack = conf == null ? null : conf.getItemStack("item");
+            if (stack == null) {
+                msg.append("removed an item from ");
+            } else {
+                msg.append("removed " + stack.getType() + " from ");
+            }
+        } else if (changeType == EntityChangeType.MODIFY) {
+            msg.append("modified ");
+        } else {
+            msg.append("did an unknown action to ");
+        }
+        if (type != null) {
             msg.append(type.name());
+        } else {
+            msg.append("an unknown entity");
         }
         if (loc != null) {
             msg.append(" at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ());
