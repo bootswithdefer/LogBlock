@@ -589,9 +589,6 @@ public class BukkitUtils {
     public static int saveSpawnHeight(Location loc) {
         final World world = loc.getWorld();
         final Chunk chunk = world.getChunkAt(loc);
-        if (!world.isChunkLoaded(chunk)) {
-            world.loadChunk(chunk);
-        }
         final int x = loc.getBlockX(), z = loc.getBlockZ();
         int y = loc.getBlockY();
         boolean lower = world.getBlockAt(x, y, z).isEmpty(), upper = world.getBlockAt(x, y + 1, z).isEmpty();
@@ -814,7 +811,7 @@ public class BukkitUtils {
             int x = i < 3 ? chunkx - 1 : (i < 5 ? chunkx : chunkx + 1);
             int z = i == 0 || i == 3 || i == 5 ? chunkz - 1 : (i == 1 || i == 6 ? chunkz : chunkz + 1);
             if (!chunk.getWorld().isChunkLoaded(x, z)) {
-                chunk.getWorld().loadChunk(x, z);
+                chunk.getWorld().getChunkAt(x, z);
                 e = Bukkit.getEntity(uuid);
                 if (e != null) {
                     return e;

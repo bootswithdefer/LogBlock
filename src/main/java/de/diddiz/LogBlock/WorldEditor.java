@@ -348,9 +348,6 @@ public class WorldEditor implements Runnable {
                 return PerformResult.BLACKLISTED;
             }
             final Block block = loc.getBlock();
-            if (!world.isChunkLoaded(block.getChunk())) {
-                world.loadChunk(block.getChunk());
-            }
             if (BukkitUtils.isEmpty(replacedBlock.getMaterial()) && BukkitUtils.isEmpty(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
