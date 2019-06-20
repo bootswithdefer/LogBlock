@@ -799,7 +799,7 @@ public class BukkitUtils {
             return e;
         }
         if (!chunk.isLoaded()) {
-            chunk.load();
+            chunk.getWorld().getChunkAt(chunk.getX(), chunk.getZ());
             e = Bukkit.getEntity(uuid);
             if (e != null) {
                 return e;
