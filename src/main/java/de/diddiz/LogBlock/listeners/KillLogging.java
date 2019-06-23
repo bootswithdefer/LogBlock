@@ -16,7 +16,6 @@ import org.bukkit.event.entity.EntityDeathEvent;
 
 import static de.diddiz.LogBlock.config.Config.*;
 
-
 public class KillLogging extends LoggingListener {
 
     public KillLogging(LogBlock lb) {

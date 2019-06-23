@@ -20,7 +20,7 @@ import static de.diddiz.LogBlock.config.Config.mb4;
 
 public class LoggingUtil {
 
-    public static void smartLogBlockPlace(Consumer consumer, Actor actor, BlockState replaced, BlockState placed) {       
+    public static void smartLogBlockPlace(Consumer consumer, Actor actor, BlockState replaced, BlockState placed) {
         Location loc = replaced.getLocation();
         if (!placed.getType().hasGravity() || !BukkitUtils.canDirectlyFallIn(replaced.getBlock().getRelative(BlockFace.DOWN).getType())) {
             if (BukkitUtils.isEmpty(replaced.getType())) {
@@ -141,32 +141,32 @@ public class LoggingUtil {
             } else {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
-        } else if(typeAbove == Material.LANTERN) {
+        } else if (typeAbove == Material.LANTERN) {
             Lantern lantern = (Lantern) checkBlock.getBlockData();
-            if(!lantern.isHanging()) {
+            if (!lantern.isHanging()) {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
-        }else if(typeAbove == Material.BELL) {
+        } else if (typeAbove == Material.BELL) {
             Bell bell = (Bell) checkBlock.getBlockData();
-            if(bell.getAttachment() == Attachment.FLOOR) {
+            if (bell.getAttachment() == Attachment.FLOOR) {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
         }
-        
+
         checkBlock = origin.getRelative(BlockFace.DOWN);
         Material typeBelow = checkBlock.getType();
-        if(typeBelow == Material.LANTERN) {
+        if (typeBelow == Material.LANTERN) {
             Lantern lantern = (Lantern) checkBlock.getBlockData();
-            if(lantern.isHanging()) {
+            if (lantern.isHanging()) {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
-        } else if(typeBelow == Material.BELL) {
+        } else if (typeBelow == Material.BELL) {
             Bell bell = (Bell) checkBlock.getBlockData();
-            if(bell.getAttachment() == Attachment.CEILING) {
-                consumer.queueBlockBreak(actor, checkBlock.getState()); 
+            if (bell.getAttachment() == Attachment.CEILING) {
+                consumer.queueBlockBreak(actor, checkBlock.getState());
             }
         }
-        
+
         List<Location> relativeBreakables = BukkitUtils.getBlocksNearby(origin, BukkitUtils.getRelativeBreakables());
         if (relativeBreakables.size() != 0) {
             for (Location location : relativeBreakables) {

@@ -21,12 +21,12 @@ public class CuboidRegion implements Cloneable {
 
     public CuboidRegion(World world, BlockVector first, BlockVector second) {
         this.world = world;
-        this.min.setX(Math.min(first.getBlockX(),second.getBlockX()));
-        this.min.setY(Math.min(first.getBlockY(),second.getBlockY()));
-        this.min.setZ(Math.min(first.getBlockZ(),second.getBlockZ()));
-        this.max.setX(Math.max(first.getBlockX(),second.getBlockX()));
-        this.max.setY(Math.max(first.getBlockY(),second.getBlockY()));
-        this.max.setZ(Math.max(first.getBlockZ(),second.getBlockZ()));
+        this.min.setX(Math.min(first.getBlockX(), second.getBlockX()));
+        this.min.setY(Math.min(first.getBlockY(), second.getBlockY()));
+        this.min.setZ(Math.min(first.getBlockZ(), second.getBlockZ()));
+        this.max.setX(Math.max(first.getBlockX(), second.getBlockX()));
+        this.max.setY(Math.max(first.getBlockY(), second.getBlockY()));
+        this.max.setZ(Math.max(first.getBlockZ(), second.getBlockZ()));
     }
 
     public static CuboidRegion fromPlayerSelection(Player player) {

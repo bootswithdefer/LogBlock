@@ -102,7 +102,7 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(ChatColor.GOLD + "silent -- Displays lesser messages");
                 } else if (command.equals("permissions")) {
                     sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
-                    for (final String permission : new String[]{"me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions", "spawnTools"}) {
+                    for (final String permission : new String[] { "me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions", "spawnTools" }) {
                         if (logblock.hasPermission(sender, "logblock." + permission)) {
                             sender.sendMessage(ChatColor.GOLD + "logblock." + permission);
                         }
@@ -659,15 +659,15 @@ public class CommandsHandler implements CommandExecutor {
         @Override
         public void run() {
             try {
-                if(params.bct == BlockChangeType.CHAT) {
+                if (params.bct == BlockChangeType.CHAT) {
                     sender.sendMessage(ChatColor.RED + "Chat cannot be rolled back");
                     return;
                 }
-                if(params.bct == BlockChangeType.KILLS) {
+                if (params.bct == BlockChangeType.KILLS) {
                     sender.sendMessage(ChatColor.RED + "Kills cannot be rolled back");
                     return;
                 }
-                if(params.sum != SummarizationMode.NONE) {
+                if (params.sum != SummarizationMode.NONE) {
                     sender.sendMessage(ChatColor.RED + "Cannot rollback summarized changes");
                     return;
                 }
@@ -749,15 +749,15 @@ public class CommandsHandler implements CommandExecutor {
         @Override
         public void run() {
             try {
-                if(params.bct == BlockChangeType.CHAT) {
+                if (params.bct == BlockChangeType.CHAT) {
                     sender.sendMessage(ChatColor.RED + "Chat cannot be redone");
                     return;
                 }
-                if(params.bct == BlockChangeType.KILLS) {
+                if (params.bct == BlockChangeType.KILLS) {
                     sender.sendMessage(ChatColor.RED + "Kills cannot be redone");
                     return;
                 }
-                if(params.sum != SummarizationMode.NONE) {
+                if (params.sum != SummarizationMode.NONE) {
                     sender.sendMessage(ChatColor.RED + "Cannot redo summarized changes");
                     return;
                 }
@@ -914,7 +914,7 @@ public class CommandsHandler implements CommandExecutor {
                                     sb.append(rs.getInt("z"));
                                     sb.append(");\n");
                                 } else if (params.bct == BlockChangeType.ENTITIES || params.bct == BlockChangeType.ENTITIES_CREATED || params.bct == BlockChangeType.ENTITIES_KILLED) {
-                                    
+
                                 } else {
                                     sb.append("INSERT INTO `").append(tableBase).append("-blocks` (`id`, `date`, `playerid`, `replaced`, `replacedData`, `type`, `typeData`, `x`, `y`, `z`) VALUES (");
                                     sb.append(rs.getInt("id")).append(", FROM_UNIXTIME(");

@@ -273,7 +273,7 @@ public final class QueryParams implements Cloneable {
                 if (needType) {
                     select += "entitytypeid, action, ";
                 }
-                if(needData) {
+                if (needData) {
                     select += "entityid, entityuuid, data, ";
                 }
             }
@@ -291,21 +291,26 @@ public final class QueryParams implements Cloneable {
         }
         if (bct == BlockChangeType.KILLS) {
             if (sum == SummarizationMode.PLAYERS) {
-                return "SELECT playername, UUID, SUM(kills) AS kills, SUM(killed) AS killed FROM ((SELECT killer AS playerid, count(*) AS kills, 0 as killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY killer) UNION (SELECT victim AS playerid, 0 as kills, count(*) AS killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY victim)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(kills) + SUM(killed) " + order + " " + getLimit();
+                return "SELECT playername, UUID, SUM(kills) AS kills, SUM(killed) AS killed FROM ((SELECT killer AS playerid, count(*) AS kills, 0 as killed FROM `" + getTable() + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY killer) UNION (SELECT victim AS playerid, 0 as kills, count(*) AS killed FROM `" + getTable()
+                        + "-kills` INNER JOIN `lb-players` as killers ON (killer=killers.playerid) INNER JOIN `lb-players` as victims ON (victim=victims.playerid) " + getWhere(BlockChangeType.KILLS) + "GROUP BY victim)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(kills) + SUM(killed) " + order + " " + getLimit();
             }
             throw new IllegalStateException("Invalid summarization for kills");
         }
         if (bct == BlockChangeType.ENTITIES || bct == BlockChangeType.ENTITIES_CREATED || bct == BlockChangeType.ENTITIES_KILLED) {
             if (sum == SummarizationMode.TYPES) {
-                return "SELECT entitytypeid, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT entitytypeid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-entities` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.ENTITIES_CREATED) + "GROUP BY entitytypeid) UNION (SELECT entitytypeid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-entities` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.ENTITIES_KILLED) + "GROUP BY entitytypeid)) AS t GROUP BY entitytypeid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
+                return "SELECT entitytypeid, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT entitytypeid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-entities` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.ENTITIES_CREATED) + "GROUP BY entitytypeid) UNION (SELECT entitytypeid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-entities` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.ENTITIES_KILLED)
+                        + "GROUP BY entitytypeid)) AS t GROUP BY entitytypeid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
             } else {
-                return "SELECT playername, UUID, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-entities` " + getWhere(BlockChangeType.ENTITIES_CREATED) + "GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-entities` " + getWhere(BlockChangeType.ENTITIES_KILLED) + "GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
+                return "SELECT playername, UUID, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-entities` " + getWhere(BlockChangeType.ENTITIES_CREATED) + "GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-entities` " + getWhere(BlockChangeType.ENTITIES_KILLED)
+                        + "GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
             }
         }
         if (sum == SummarizationMode.TYPES) {
-            return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
+            return "SELECT type, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT type, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.CREATED) + "GROUP BY type) UNION (SELECT replaced AS type, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-blocks` INNER JOIN `lb-players` USING (playerid) " + getWhere(BlockChangeType.DESTROYED)
+                    + "GROUP BY replaced)) AS t GROUP BY type ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
         } else {
-            return "SELECT playername, UUID, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-blocks` " + getWhere(BlockChangeType.CREATED) + "GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-blocks` " + getWhere(BlockChangeType.DESTROYED) + "GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
+            return "SELECT playername, UUID, SUM(created) AS created, SUM(destroyed) AS destroyed FROM ((SELECT playerid, count(*) AS created, 0 AS destroyed FROM `" + getTable() + "-blocks` " + getWhere(BlockChangeType.CREATED) + "GROUP BY playerid) UNION (SELECT playerid, 0 AS created, count(*) AS destroyed FROM `" + getTable() + "-blocks` " + getWhere(BlockChangeType.DESTROYED)
+                    + "GROUP BY playerid)) AS t INNER JOIN `lb-players` USING (playerid) GROUP BY playerid ORDER BY SUM(created) + SUM(destroyed) " + order + " " + getLimit();
         }
     }
 
@@ -574,22 +579,20 @@ public final class QueryParams implements Cloneable {
                     break;
             }
         }
-        if(blockChangeType != BlockChangeType.CHAT) {
+        if (blockChangeType != BlockChangeType.CHAT) {
             if (loc != null) {
                 if (radius == 0) {
                     compileLocationQuery(
                             where,
                             loc.getBlockX(), loc.getBlockX(),
                             loc.getBlockY(), loc.getBlockY(),
-                            loc.getBlockZ(), loc.getBlockZ()
-                    );
+                            loc.getBlockZ(), loc.getBlockZ());
                 } else if (radius > 0) {
                     compileLocationQuery(
                             where,
                             loc.getBlockX() - radius + 1, loc.getBlockX() + radius - 1,
                             loc.getBlockY() - radius + 1, loc.getBlockY() + radius - 1,
-                            loc.getBlockZ() - radius + 1, loc.getBlockZ() + radius - 1
-                    );
+                            loc.getBlockZ() - radius + 1, loc.getBlockZ() + radius - 1);
                 }
 
             } else if (sel != null) {
@@ -597,8 +600,7 @@ public final class QueryParams implements Cloneable {
                         where,
                         sel.getMinimumPoint().getBlockX(), sel.getMaximumPoint().getBlockX(),
                         sel.getMinimumPoint().getBlockY(), sel.getMaximumPoint().getBlockY(),
-                        sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ()
-                );
+                        sel.getMinimumPoint().getBlockZ(), sel.getMaximumPoint().getBlockZ());
             }
         }
         if (!players.isEmpty() && sum != SummarizationMode.PLAYERS && blockChangeType != BlockChangeType.KILLS) {
@@ -1028,14 +1030,26 @@ public final class QueryParams implements Cloneable {
     }
 
     public static enum BlockChangeType {
-        ALL, BOTH, CHESTACCESS, CREATED, DESTROYED, CHAT, KILLS, ENTITIES, ENTITIES_CREATED, ENTITIES_KILLED,
+        ALL,
+        BOTH,
+        CHESTACCESS,
+        CREATED,
+        DESTROYED,
+        CHAT,
+        KILLS,
+        ENTITIES,
+        ENTITIES_CREATED,
+        ENTITIES_KILLED,
     }
 
     public static enum Order {
-        ASC, DESC
+        ASC,
+        DESC
     }
 
     public static enum SummarizationMode {
-        NONE, PLAYERS, TYPES
+        NONE,
+        PLAYERS,
+        TYPES
     }
 }

@@ -16,12 +16,6 @@ public class SnowFormLogging extends LoggingListener {
         super(lb);
     }
 
-//	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-//	public void onLeavesDecay(LeavesDecayEvent event) {
-//		if (isLogging(event.getBlock().getWorld(), Logging.SNOWFORM))
-//			consumer.queueBlockBreak("LeavesDecay", event.getBlock().getState());
-//	}
-
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockForm(BlockFormEvent event) {
         if (isLogging(event.getBlock().getWorld(), Logging.SNOWFORM)) {

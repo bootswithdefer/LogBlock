@@ -325,12 +325,12 @@ public class LogBlock extends JavaPlugin {
             conn.close();
         }
     }
-    
+
     @Override
     public File getFile() {
         return super.getFile();
     }
-    
+
     public Questioner getQuestioner() {
         return questioner;
     }

@@ -21,7 +21,7 @@ public class WorldEditorEditFactory {
 
     public void processRow(ResultSet rs) throws SQLException {
         if (params.bct == BlockChangeType.ENTITIES) {
-            editor.queueEntityEdit(rs, params, rollback); 
+            editor.queueEntityEdit(rs, params, rollback);
             return;
         }
         ChestAccess chestaccess = null;

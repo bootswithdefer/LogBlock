@@ -141,14 +141,14 @@ public class BukkitUtils {
         singleBlockPlants.add(Material.WHITE_TULIP);
         singleBlockPlants.add(Material.PINK_TULIP);
         singleBlockPlants.add(Material.RED_TULIP);
-        singleBlockPlants.add(Material.OXEYE_DAISY);        
+        singleBlockPlants.add(Material.OXEYE_DAISY);
         singleBlockPlants.add(Material.BROWN_MUSHROOM);
         singleBlockPlants.add(Material.RED_MUSHROOM);
         singleBlockPlants.add(Material.SWEET_BERRY_BUSH);
         singleBlockPlants.add(Material.LILY_OF_THE_VALLEY);
         singleBlockPlants.add(Material.CORNFLOWER);
         singleBlockPlants.add(Material.WITHER_ROSE);
-        
+
         doublePlants = EnumSet.noneOf(Material.class);
         doublePlants.add(Material.TALL_GRASS);
         doublePlants.add(Material.LARGE_FERN);
@@ -157,7 +157,7 @@ public class BukkitUtils {
         doublePlants.add(Material.LILAC);
         doublePlants.add(Material.SUNFLOWER);
         doublePlants.add(Material.PEONY);
-        
+
         blockEquivalents = new HashSet<Set<Integer>>(7);
         blockEquivalents.add(new HashSet<Integer>(Arrays.asList(2, 3, 60)));
         blockEquivalents.add(new HashSet<Integer>(Arrays.asList(8, 9, 79)));
@@ -218,9 +218,9 @@ public class BukkitUtils {
         relativeTopBreakable.addAll(doublePlants);
         relativeTopBreakable.add(Material.BAMBOO);
         relativeTopBreakable.add(Material.BAMBOO_SAPLING);
-        for(Material m : Material.values()) {
-            if(m.name().startsWith("POTTED_")) {
-                relativeTopBreakable.add(m);  
+        for (Material m : Material.values()) {
+            if (m.name().startsWith("POTTED_")) {
+                relativeTopBreakable.add(m);
             }
         }
 
@@ -249,7 +249,7 @@ public class BukkitUtils {
         fallingEntityKillers.add(Material.WHITE_TULIP);
         fallingEntityKillers.add(Material.PINK_TULIP);
         fallingEntityKillers.add(Material.RED_TULIP);
-        fallingEntityKillers.add(Material.OXEYE_DAISY);        
+        fallingEntityKillers.add(Material.OXEYE_DAISY);
         fallingEntityKillers.add(Material.BROWN_MUSHROOM);
         fallingEntityKillers.add(Material.RED_MUSHROOM);
         fallingEntityKillers.addAll(doublePlants);
@@ -336,8 +336,8 @@ public class BukkitUtils {
         projectileItems.put(EntityType.ARROW, Material.ARROW);
         projectileItems.put(EntityType.EGG, Material.EGG);
         projectileItems.put(EntityType.ENDER_PEARL, Material.ENDER_PEARL);
-        projectileItems.put(EntityType.SMALL_FIREBALL, Material.FIRE_CHARGE);    // Fire charge
-        projectileItems.put(EntityType.FIREBALL, Material.FIRE_CHARGE);        // Fire charge
+        projectileItems.put(EntityType.SMALL_FIREBALL, Material.FIRE_CHARGE); // Fire charge
+        projectileItems.put(EntityType.FIREBALL, Material.FIRE_CHARGE); // Fire charge
         projectileItems.put(EntityType.FISHING_HOOK, Material.FISHING_ROD);
         projectileItems.put(EntityType.SNOWBALL, Material.SNOWBALL);
         projectileItems.put(EntityType.SPLASH_POTION, Material.SPLASH_POTION);
@@ -429,7 +429,7 @@ public class BukkitUtils {
         dyes.put(Material.YELLOW_DYE, DyeColor.YELLOW);
     }
 
-    private static final BlockFace[] relativeBlockFaces = new BlockFace[]{
+    private static final BlockFace[] relativeBlockFaces = new BlockFace[] {
             BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.UP, BlockFace.DOWN
     };
 
@@ -556,7 +556,7 @@ public class BukkitUtils {
     public static Set<Material> getFallingEntityKillers() {
         return fallingEntityKillers;
     }
-    
+
     public static Set<Material> getNonFluidProofBlocks() {
         return nonFluidProofBlocks;
     }
@@ -654,7 +654,7 @@ public class BukkitUtils {
     public static Material itemIDfromProjectileEntity(Entity e) {
         return projectileItems.get(e.getType());
     }
-    
+
     public static boolean isDoublePlant(Material m) {
         return doublePlants.contains(m);
     }
@@ -799,7 +799,7 @@ public class BukkitUtils {
             if (face.getType() == chestBlock.getType()) {
                 // check is the neighbour connects to this chest
                 org.bukkit.block.data.type.Chest otherChestData = (org.bukkit.block.data.type.Chest) face.getBlockData();
-                if(otherChestData.getType() != wantedChestType || otherChestData.getFacing() != chestFace) {
+                if (otherChestData.getType() != wantedChestType || otherChestData.getFacing() != chestFace) {
                     return null;
                 }
                 return face;

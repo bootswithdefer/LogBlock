@@ -22,7 +22,7 @@ public class MaterialConverter {
     private static String[] idToBlockState = new String[10];
     private static HashMap<String, Integer> blockStateToID = new HashMap<>();
     private static int nextBlockStateId;
-    
+
     private static HashMap<String, Material> materialKeyToMaterial = new HashMap<>();
 
     static {

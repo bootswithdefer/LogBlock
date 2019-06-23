@@ -65,4 +65,3 @@ public class CreatureInteractLogging extends LoggingListener {
         }
     }
 }
-

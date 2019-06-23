@@ -357,7 +357,7 @@ public class Consumer extends Thread {
         if (hiddenPlayers.contains(player.getName().toLowerCase())) {
             return;
         }
-        while(message.length() > 256) {
+        while (message.length() > 256) {
             addQueueLast(new ChatRow(player, message.substring(0, 256)));
             message = message.substring(256);
         }
@@ -827,7 +827,7 @@ public class Consumer extends Thread {
             Location actorBlockLocation = actor.getBlockLocation();
             if (actorBlockLocation != null) {
                 Integer tempSourceActor = batchHelper.getUncommitedBlockActor(actorBlockLocation);
-                if(tempSourceActor != null) {
+                if (tempSourceActor != null) {
                     sourceActor = tempSourceActor;
                 } else {
                     PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, selectActorIdStatementString, Statement.NO_GENERATED_KEYS);

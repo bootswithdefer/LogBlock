@@ -431,7 +431,7 @@ class Updater {
                             logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table);
                         }
                         rs.close();
-                        
+
                         PreparedStatement deleteStatement = conn.prepareStatement("DELETE FROM `" + wcfg.table + "` WHERE id = ?");
                         PreparedStatement insertStatement = conn.prepareStatement("INSERT INTO `" + wcfg.table + "-blocks` (id, date, playerid, replaced, replacedData, type, typeData, x, y, z) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 
@@ -515,7 +515,7 @@ class Updater {
                             logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-chest");
                         }
                         rs.close();
-                        
+
                         PreparedStatement insertChestData = conn.prepareStatement("INSERT INTO `" + wcfg.table + "-chestdata` (id, item, itemremove, itemtype) VALUES (?, ?, ?, ?)");
                         PreparedStatement deleteChest = conn.prepareStatement("DELETE FROM `" + wcfg.table + "-chest` WHERE id = ?");
                         while (true) {
@@ -532,13 +532,13 @@ class Updater {
                                     weaponMaterial = Material.AIR;
                                 }
                                 @SuppressWarnings("deprecation")
-                                ItemStack stack = weaponMaterial.getMaxDurability() > 0 ? new ItemStack(weaponMaterial, Math.abs(amount), (short)itemdata) : new ItemStack(weaponMaterial, Math.abs(amount));
+                                ItemStack stack = weaponMaterial.getMaxDurability() > 0 ? new ItemStack(weaponMaterial, Math.abs(amount), (short) itemdata) : new ItemStack(weaponMaterial, Math.abs(amount));
                                 insertChestData.setInt(1, id);
                                 insertChestData.setBytes(2, Utils.saveItemStack(stack));
                                 insertChestData.setInt(3, amount >= 0 ? 0 : 1);
                                 insertChestData.setInt(4, MaterialConverter.getOrAddMaterialId(weaponMaterial.getKey()));
                                 insertChestData.addBatch();
-                                
+
                                 deleteChest.setInt(1, id);
                                 deleteChest.addBatch();
                                 done++;
@@ -578,7 +578,7 @@ class Updater {
                                 logblock.getLogger().info("Converting " + rowsToConvert + " entries in " + wcfg.table + "-kills");
                             }
                             rs.close();
-                            
+
                             PreparedStatement updateWeaponStatement = conn.prepareStatement("UPDATE `" + wcfg.table + "-kills` SET weapon = ? WHERE id = ?");
                             for (int start = 0;; start += OTHER_CONVERT_BATCH_SIZE) {
                                 rs = st.executeQuery("SELECT id, weapon FROM `" + wcfg.table + "-kills` ORDER BY id ASC LIMIT " + start + "," + OTHER_CONVERT_BATCH_SIZE);
@@ -855,7 +855,7 @@ class Updater {
         currentMinecraftVersion = currentMinecraftVersion.substring(currentMinecraftVersion.indexOf("(MC: ") + 5);
         int currentVersionEnd = currentMinecraftVersion.indexOf(" ");
         int currentVersionEnd2 = currentMinecraftVersion.indexOf(")");
-        if(currentVersionEnd2 >= 0 && (currentVersionEnd < 0 || currentVersionEnd2 < currentVersionEnd)) {
+        if (currentVersionEnd2 >= 0 && (currentVersionEnd < 0 || currentVersionEnd2 < currentVersionEnd)) {
             currentVersionEnd = currentVersionEnd2;
         }
         currentMinecraftVersion = currentMinecraftVersion.substring(0, currentVersionEnd);
@@ -944,6 +944,7 @@ class Updater {
     public static class MaterialUpdater1_13 {
         BlockData[][] blockDataMapping;
         Material[][] itemMapping = new Material[10][];
+
         public MaterialUpdater1_13(LogBlock plugin) throws IOException {
             blockDataMapping = new BlockData[256][16];
             try (JarFile file = new JarFile(plugin.getFile())) {

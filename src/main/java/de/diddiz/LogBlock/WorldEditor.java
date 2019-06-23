@@ -91,7 +91,6 @@ public class WorldEditor implements Runnable {
         return blacklistCollisions;
     }
 
-
     public void setSender(CommandSender sender) {
         this.sender = sender;
     }
@@ -202,12 +201,14 @@ public class WorldEditor implements Runnable {
     }
 
     public static enum PerformResult {
-        SUCCESS, BLACKLISTED, NO_ACTION
+        SUCCESS,
+        BLACKLISTED,
+        NO_ACTION
     }
 
     public interface Edit {
         PerformResult perform() throws WorldEditorException;
-        
+
         public long getTime();
     }
 
@@ -440,6 +441,7 @@ public class WorldEditor implements Runnable {
 
     public static class EditComparator implements Comparator<Edit> {
         private final int mult;
+
         public EditComparator(QueryParams.Order order) {
             mult = order == Order.DESC ? 1 : -1;
         }

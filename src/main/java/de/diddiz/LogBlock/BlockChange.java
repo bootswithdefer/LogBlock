@@ -127,7 +127,7 @@ public class BlockChange implements LookupCacheElement {
                 msg.append("opened ").append(type.getMaterial().name());
             } else if (type instanceof Openable) {
                 // Door, Trapdoor, Fence gate
-                msg.append(((Openable)type).isOpen() ? "opened" : "closed").append(" ").append(type.getMaterial().name());
+                msg.append(((Openable) type).isOpen() ? "opened" : "closed").append(" ").append(type.getMaterial().name());
             } else if (type.getMaterial() == Material.LEVER) {
                 msg.append("switched ").append(type.getMaterial().name()).append(" ").append(((Switch) type).isPowered() ? "on" : "off");
             } else if (type instanceof Switch) {
@@ -152,7 +152,7 @@ public class BlockChange implements LookupCacheElement {
             } else if (type instanceof Sign || type instanceof WallSign) {
                 msg.append("edited a ").append(type.getMaterial().name()).append(" to ").append(typeDetails);
             } else {
-                msg.append("replaced ").append(replaced.getMaterial().name()).append(replacedDetails).append(" with ").append(type.getMaterial().name()).append(typeDetails);    
+                msg.append("replaced ").append(replaced.getMaterial().name()).append(replacedDetails).append(" with ").append(type.getMaterial().name()).append(typeDetails);
             }
         } else if (BukkitUtils.isEmpty(type.getMaterial())) {
             msg.append("destroyed ").append(replaced.getMaterial().name()).append(replacedDetails);

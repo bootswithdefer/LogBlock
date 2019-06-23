@@ -58,7 +58,9 @@ public class Config {
     public static boolean mb4 = false;
 
     public static enum LogKillsLevel {
-        PLAYERS, MONSTERS, ANIMALS;
+        PLAYERS,
+        MONSTERS,
+        ANIMALS;
     }
 
     public static void load(LogBlock logblock) throws DataFormatException, IOException {
@@ -158,10 +160,10 @@ public class Config {
             }
         }
         logblock.saveConfig();
-        
+
         ComparableVersion configVersion = new ComparableVersion(config.getString("version"));
         boolean oldConfig = configVersion.compareTo(new ComparableVersion(logblock.getDescription().getVersion().replace(" (manually compiled)", ""))) < 0;
-        
+
         url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + getStringIncludingInts(config, "mysql.database");
         user = getStringIncludingInts(config, "mysql.user");
         password = getStringIncludingInts(config, "mysql.password");
@@ -246,7 +248,7 @@ public class Config {
                 final ToolBehavior leftClickBehavior = ToolBehavior.valueOf(tSec.getString("leftClickBehavior").toUpperCase());
                 final ToolBehavior rightClickBehavior = ToolBehavior.valueOf(tSec.getString("rightClickBehavior").toUpperCase());
                 final boolean defaultEnabled = tSec.getBoolean("defaultEnabled", false);
-                final Material item = Material.matchMaterial(tSec.getString("item","OAK_LOG"));
+                final Material item = Material.matchMaterial(tSec.getString("item", "OAK_LOG"));
                 final boolean canDrop = tSec.getBoolean("canDrop", false);
                 final boolean removeOnDisable = tSec.getBoolean("removeOnDisable", true);
                 final boolean dropToDisable = tSec.getBoolean("dropToDisable", false);
