@@ -74,26 +74,30 @@ public class WorldEditLoggingHook {
                         onBlockChange(position, block);
                         return super.setBlock(position, block);
                     }
-                    
+
                     protected <B extends BlockStateHolder<B>> void onBlockChange(BlockVector3 pt, B block) {
 
                         if (event.getStage() != EditSession.Stage.BEFORE_CHANGE) {
                             return;
                         }
 
-                        Location location = new Location(world, pt.getBlockX(), pt.getBlockY(), pt.getBlockZ());
-                        Block origin = location.getBlock();
-                        Material typeBefore = origin.getType();
+                        Location location = BukkitAdapter.adapt(world, pt);
+                        Block blockBefore = location.getBlock();
+                        BlockData blockDataBefore = blockBefore.getBlockData();
+                        Material typeBefore = blockDataBefore.getMaterial();
 
-                        // Check to see if we've broken a sign
-                        if (BlockStateCodecs.hasCodec(typeBefore)) {
-                            plugin.getConsumer().queueBlockBreak(lbActor, origin.getState());
-                        } else if (!origin.isEmpty()) {
-                            plugin.getConsumer().queueBlockBreak(lbActor, location, origin.getBlockData());
-                        }
-                        BlockData newBlock = BukkitAdapter.adapt(block);
-                        if (newBlock != null && !BukkitUtils.isEmpty(newBlock.getMaterial())) {
-                            plugin.getConsumer().queueBlockPlace(lbActor, location, newBlock);
+                        BlockData blockDataNew = BukkitAdapter.adapt(block);
+
+                        if (!blockDataBefore.equals(blockDataNew)) {
+                            // Check to see if we've broken a sign
+                            if (BlockStateCodecs.hasCodec(typeBefore)) {
+                                plugin.getConsumer().queueBlockBreak(lbActor, blockBefore.getState());
+                            } else if (!BukkitUtils.isEmpty(typeBefore)) {
+                                plugin.getConsumer().queueBlockBreak(lbActor, location, blockDataBefore);
+                            }
+                            if (!BukkitUtils.isEmpty(blockDataNew.getMaterial())) {
+                                plugin.getConsumer().queueBlockPlace(lbActor, location, blockDataNew);
+                            }
                         }
                     }
                 });
