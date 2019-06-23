@@ -290,8 +290,8 @@ class Updater {
                 int done = 0;
 
                 conn.setAutoCommit(false);
-                Map<String, Integer> players = new HashMap<String, Integer>();
-                List<String> names = new ArrayList<String>(UUID_CONVERT_BATCH_SIZE);
+                Map<String, Integer> players = new HashMap<>();
+                List<String> names = new ArrayList<>(UUID_CONVERT_BATCH_SIZE);
                 Map<String, UUID> response;
                 rs = st.executeQuery("SELECT playerid,playername FROM `lb-players` WHERE LENGTH(UUID)=0 LIMIT " + Integer.toString(UUID_CONVERT_BATCH_SIZE));
                 while (rs.next()) {

@@ -22,7 +22,7 @@ public class UUIDFetcher {
     private static final JSONParser jsonParser = new JSONParser();
 
     public static Map<String, UUID> getUUIDs(List<String> names) throws Exception {
-        Map<String, UUID> uuidMap = new HashMap<String, UUID>();
+        Map<String, UUID> uuidMap = new HashMap<>();
         HttpURLConnection connection = createConnection();
         String body = JSONArray.toJSONString(names);
         writeBody(connection, body);

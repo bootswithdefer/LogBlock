@@ -60,7 +60,7 @@ public class Consumer extends Thread {
     private static final int RETURN_IDLE_CONNECTION_TIME_MILLIS = 120000;
     private static final int RETRIES_ON_UNKNOWN_CONNECTION_ERROR = 2;
 
-    private final Deque<Row> queue = new ArrayDeque<Row>();
+    private final Deque<Row> queue = new ArrayDeque<>();
     private final LogBlock logblock;
     private final Map<Actor, Integer> playerIds = new HashMap<>();
     private final Map<Actor, Integer> uncommitedPlayerIds = new HashMap<>();
@@ -534,7 +534,7 @@ public class Consumer extends Thread {
 
     public void writeToFile() throws FileNotFoundException {
         final long time = System.currentTimeMillis();
-        final Set<Actor> insertedPlayers = new HashSet<Actor>();
+        final Set<Actor> insertedPlayers = new HashSet<>();
         int counter = 0;
         new File("plugins/LogBlock/import/").mkdirs();
         PrintWriter writer = new PrintWriter(new File("plugins/LogBlock/import/queue-" + time + "-0.sql"));
@@ -734,7 +734,7 @@ public class Consumer extends Thread {
     /**
      * Change the UUID that is stored for an entity in the database. This is needed when an entity is respawned
      * and now has a different UUID.
-     * 
+     *
      * @param world the world that contains the entity
      * @param entityId the database id of the entity
      * @param entityUUID the new UUID of the entity
@@ -1128,10 +1128,12 @@ public class Consumer extends Thread {
 
     private int safeY(Location loc) {
         int safeY = loc.getBlockY();
-        if (safeY < 0)
+        if (safeY < 0) {
             safeY = 0;
-        if (safeY > 65535)
+        }
+        if (safeY > 65535) {
             safeY = 65535;
+        }
         return safeY;
     }
 

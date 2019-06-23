@@ -287,7 +287,7 @@ public class LogBlock extends JavaPlugin {
         try {
             state = conn.createStatement();
             final ResultSet rs = state.executeQuery(params.getQuery());
-            final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
+            final List<BlockChange> blockchanges = new ArrayList<>();
             while (rs.next()) {
                 blockchanges.add(new BlockChange(rs, params));
             }

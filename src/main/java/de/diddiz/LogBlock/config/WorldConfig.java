@@ -38,7 +38,7 @@ public class WorldConfig extends LoggingEnabledMapping {
 
     public WorldConfig(String world, File file) throws IOException {
         this.world = world;
-        final Map<String, Object> def = new HashMap<String, Object>();
+        final Map<String, Object> def = new HashMap<>();
         // "Before MySQL 5.1.6, database and table names cannot contain "/", "\", ".", or characters that are not permitted in file names" - MySQL manual
         // They _can_ contain spaces, but replace them as well
         def.put("table", "lb-" + file.getName().substring(0, file.getName().length() - 4).replaceAll("[ ./\\\\]", "_"));

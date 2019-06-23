@@ -10,7 +10,6 @@ public abstract class PreLogEvent extends Event implements Cancellable {
     protected Actor owner;
 
     public PreLogEvent(Actor owner) {
-
         this.owner = owner;
     }
 
@@ -21,8 +20,8 @@ public abstract class PreLogEvent extends Event implements Cancellable {
      * @deprecated {@link #getOwnerActor() } returns an object encapsulating
      * name and uuid.  Names are not guaranteed to be unique.
      */
+    @Deprecated
     public String getOwner() {
-
         return owner.getName();
     }
 
@@ -41,17 +40,16 @@ public abstract class PreLogEvent extends Event implements Cancellable {
      * @param owner The player/monster/cause who is involved in this event
      */
     public void setOwner(Actor owner) {
-
         this.owner = owner;
     }
 
+    @Override
     public boolean isCancelled() {
-
         return cancelled;
     }
 
+    @Override
     public void setCancelled(boolean cancelled) {
-
         this.cancelled = cancelled;
     }
 }

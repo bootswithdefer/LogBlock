@@ -62,17 +62,17 @@ public final class QueryParams implements Cloneable {
     public int limit = -1, before = 0, since = 0, radius = -1;
     public Location loc = null;
     public Order order = Order.DESC;
-    public List<String> players = new ArrayList<String>();
-    public List<String> killers = new ArrayList<String>();
-    public List<String> victims = new ArrayList<String>();
+    public List<String> players = new ArrayList<>();
+    public List<String> killers = new ArrayList<>();
+    public List<String> victims = new ArrayList<>();
     public boolean excludePlayersMode = false, excludeKillersMode = false, excludeVictimsMode = false, excludeBlocksEntitiesMode = false, prepareToolQuery = false, silent = false, noForcedLimit = false;
     public boolean forceReplace = false, noCache = false;
     public CuboidRegion sel = null;
     public SummarizationMode sum = SummarizationMode.NONE;
-    public List<Material> types = new ArrayList<Material>();
-    public List<Integer> typeIds = new ArrayList<Integer>();
-    public List<EntityType> entityTypes = new ArrayList<EntityType>();
-    public List<Integer> entityTypeIds = new ArrayList<Integer>();
+    public List<Material> types = new ArrayList<>();
+    public List<Integer> typeIds = new ArrayList<>();
+    public List<EntityType> entityTypes = new ArrayList<>();
+    public List<Integer> entityTypeIds = new ArrayList<>();
     public World world = null;
     public String match = null;
     public boolean needCount = false, needId = false, needDate = false, needType = false, needData = false, needPlayerId = false, needPlayer = false, needCoords = false, needChestAccess = false, needMessage = false, needKiller = false, needVictim = false, needWeapon = false;
@@ -961,13 +961,13 @@ public final class QueryParams implements Cloneable {
     public QueryParams clone() {
         try {
             final QueryParams params = (QueryParams) super.clone();
-            params.players = new ArrayList<String>(players);
-            params.killers = new ArrayList<String>(killers);
-            params.victims = new ArrayList<String>(victims);
-            params.typeIds = new ArrayList<Integer>(typeIds);
-            params.types = new ArrayList<Material>(types);
-            params.entityTypeIds = new ArrayList<Integer>(entityTypeIds);
-            params.entityTypes = new ArrayList<EntityType>(entityTypes);
+            params.players = new ArrayList<>(players);
+            params.killers = new ArrayList<>(killers);
+            params.victims = new ArrayList<>(victims);
+            params.typeIds = new ArrayList<>(typeIds);
+            params.types = new ArrayList<>(types);
+            params.entityTypeIds = new ArrayList<>(entityTypeIds);
+            params.entityTypes = new ArrayList<>(entityTypes);
             params.loc = loc == null ? null : loc.clone();
             params.sel = sel == null ? null : sel.clone();
             return params;

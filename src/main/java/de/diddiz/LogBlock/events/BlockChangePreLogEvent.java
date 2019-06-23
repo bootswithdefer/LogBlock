@@ -19,9 +19,7 @@ public class BlockChangePreLogEvent extends PreLogEvent {
     private YamlConfiguration stateBefore;
     private YamlConfiguration stateAfter;
 
-    public BlockChangePreLogEvent(Actor owner, Location location, BlockData typeBefore, BlockData typeAfter,
-            YamlConfiguration stateBefore, YamlConfiguration stateAfter, ChestAccess chestAccess) {
-
+    public BlockChangePreLogEvent(Actor owner, Location location, BlockData typeBefore, BlockData typeAfter, YamlConfiguration stateBefore, YamlConfiguration stateAfter, ChestAccess chestAccess) {
         super(owner);
         this.location = location;
         this.typeBefore = typeBefore;
@@ -32,17 +30,14 @@ public class BlockChangePreLogEvent extends PreLogEvent {
     }
 
     public Location getLocation() {
-
         return location;
     }
 
     public void setLocation(Location location) {
-
         this.location = location;
     }
 
     public BlockData getTypeBefore() {
-
         return typeBefore;
     }
 
@@ -54,7 +49,6 @@ public class BlockChangePreLogEvent extends PreLogEvent {
     }
 
     public BlockData getTypeAfter() {
-
         return typeAfter;
     }
 
@@ -82,22 +76,19 @@ public class BlockChangePreLogEvent extends PreLogEvent {
     }
 
     public ChestAccess getChestAccess() {
-
         return chestAccess;
     }
 
     public void setChestAccess(ChestAccess chestAccess) {
-
         this.chestAccess = chestAccess;
     }
 
+    @Override
     public HandlerList getHandlers() {
-
         return handlers;
     }
 
     public static HandlerList getHandlerList() {
-
         return handlers;
     }
 }

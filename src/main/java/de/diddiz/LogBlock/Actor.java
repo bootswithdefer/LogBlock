@@ -122,13 +122,14 @@ public class Actor {
      * or {@link #actorFromEntity(org.bukkit.entity.EntityType) } methods
      * <p>
      * If you know something is a server effect (like gravity) use {@link #Actor(java.lang.String)}
-     * 
+     *
      * @deprecated Only use this if you have a String of unknown origin
-     * 
+     *
      * @param actorName
      *            String of unknown origin
      * @return
      */
+    @Deprecated
     public static Actor actorFromString(String actorName) {
         Collection<? extends Player> players = Bukkit.getServer().getOnlinePlayers();
         for (Player p : players) {

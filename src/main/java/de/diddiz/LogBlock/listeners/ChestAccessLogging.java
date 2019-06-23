@@ -22,7 +22,7 @@ import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.BukkitUtils.*;
 
 public class ChestAccessLogging extends LoggingListener {
-    private final Map<HumanEntity, ItemStack[]> containers = new HashMap<HumanEntity, ItemStack[]>();
+    private final Map<HumanEntity, ItemStack[]> containers = new HashMap<>();
 
     public ChestAccessLogging(LogBlock lb) {
         super(lb);

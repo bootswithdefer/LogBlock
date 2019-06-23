@@ -85,8 +85,9 @@ public class BlockStateCodecSign implements BlockStateCodec {
         if (conf != null) {
             StringBuilder sb = new StringBuilder();
             for (String line : conf.getStringList("lines")) {
-                if (sb.length() > 0)
+                if (sb.length() > 0) {
                     sb.append(" ");
+                }
                 sb.append("[").append(line).append("]");
             }
             return sb.toString();

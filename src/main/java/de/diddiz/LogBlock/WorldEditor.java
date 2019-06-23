@@ -147,7 +147,7 @@ public class WorldEditor implements Runnable {
 
     @Override
     public synchronized void run() {
-        final List<WorldEditorException> errorList = new ArrayList<WorldEditorException>();
+        final List<WorldEditorException> errorList = new ArrayList<>();
         int counter = 0;
         float size = edits.size();
         while (!edits.isEmpty() && counter < 100) {
@@ -337,6 +337,7 @@ public class WorldEditor implements Runnable {
             return date;
         }
 
+        @Override
         public PerformResult perform() throws WorldEditorException {
             BlockData replacedBlock = getBlockReplaced();
             BlockData setBlock = getBlockSet();

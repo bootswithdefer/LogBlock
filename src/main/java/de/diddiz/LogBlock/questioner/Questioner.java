@@ -15,7 +15,7 @@ import de.diddiz.LogBlock.LogBlock;
 
 public class Questioner {
     private final LogBlock logBlock;
-    private final ConcurrentHashMap<UUID, Question> questions = new ConcurrentHashMap<UUID, Question>();
+    private final ConcurrentHashMap<UUID, Question> questions = new ConcurrentHashMap<>();
 
     public Questioner(LogBlock logBlock) {
         this.logBlock = logBlock;
@@ -42,6 +42,7 @@ public class Questioner {
     }
 
     private class QuestionsReaper implements Runnable {
+        @Override
         public void run() {
             if (questions.isEmpty()) {
                 return;

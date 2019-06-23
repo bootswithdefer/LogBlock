@@ -124,7 +124,7 @@ public class CommandsHandler implements CommandExecutor {
                             final WorldConfig wcfg = getWorldConfig(world.getName());
                             if (wcfg != null) {
                                 sender.sendMessage(ChatColor.DARK_AQUA + "Currently logging in " + world.getName() + ":");
-                                final List<String> logging = new ArrayList<String>();
+                                final List<String> logging = new ArrayList<>();
                                 for (final Logging l : Logging.values()) {
                                     if (wcfg.isLogging(l)) {
                                         logging.add(l.toString());
@@ -343,7 +343,7 @@ public class CommandsHandler implements CommandExecutor {
                     }
                 } else if (command.equals("lookup") || QueryParams.isKeyWord(args[0])) {
                     if (logblock.hasPermission(sender, "logblock.lookup")) {
-                        final List<String> argsList = new ArrayList<String>(Arrays.asList(args));
+                        final List<String> argsList = new ArrayList<>(Arrays.asList(args));
                         if (command.equals("lookup")) {
                             argsList.remove(0);
                         }
@@ -486,7 +486,7 @@ public class CommandsHandler implements CommandExecutor {
                 sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
                 if (rs.next()) {
                     rs.beforeFirst();
-                    final List<LookupCacheElement> blockchanges = new ArrayList<LookupCacheElement>();
+                    final List<LookupCacheElement> blockchanges = new ArrayList<>();
                     final LookupCacheElementFactory factory = new LookupCacheElementFactory(params, sender instanceof Player ? 2 / 3f : 1);
                     while (rs.next()) {
                         blockchanges.add(factory.getLookupCacheElement(rs));
@@ -989,7 +989,7 @@ public class CommandsHandler implements CommandExecutor {
     }
 
     private static List<String> argsToList(String[] arr, int offset) {
-        final List<String> list = new ArrayList<String>(Arrays.asList(arr));
+        final List<String> list = new ArrayList<>(Arrays.asList(arr));
         for (int i = 0; i < offset; i++) {
             list.remove(0);
         }

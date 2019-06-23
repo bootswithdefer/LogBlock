@@ -181,7 +181,7 @@ public class Utils {
      * @return A new list with the quoted arguments parsed to single values
      */
     public static List<String> parseQuotes(List<String> args) {
-        List<String> newArguments = new ArrayList<String>();
+        List<String> newArguments = new ArrayList<>();
         String subjectString = join(args.toArray(new String[args.size()]), " ");
 
         Pattern regex = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'");

@@ -65,9 +65,9 @@ public class Config {
 
     public static void load(LogBlock logblock) throws DataFormatException, IOException {
         final ConfigurationSection config = logblock.getConfig();
-        final Map<String, Object> def = new HashMap<String, Object>();
+        final Map<String, Object> def = new HashMap<>();
         def.put("version", logblock.getDescription().getVersion());
-        final List<String> worldNames = new ArrayList<String>();
+        final List<String> worldNames = new ArrayList<>();
         for (final World world : getWorlds()) {
             worldNames.add(world.getName());
         }
@@ -91,7 +91,7 @@ public class Config {
         def.put("consumer.queueWarningSize", 1000);
         def.put("clearlog.dumpDeletedLog", false);
         def.put("clearlog.enableAutoClearLog", false);
-        final List<String> autoClearlog = new ArrayList<String>();
+        final List<String> autoClearlog = new ArrayList<>();
         for (final String world : worldNames) {
             autoClearlog.add("world \"" + world + "\" before 365 days all");
             autoClearlog.add("world \"" + world + "\" player lavaflow waterflow leavesdecay before 7 days all");
@@ -189,11 +189,11 @@ public class Config {
             throw new DataFormatException("logging.logKillsLevel doesn't appear to be a valid log level. Allowed are 'PLAYERS', 'MONSTERS' and 'ANIMALS'");
         }
         logEnvironmentalKills = config.getBoolean("logging.logEnvironmentalKills", false);
-        hiddenPlayers = new HashSet<String>();
+        hiddenPlayers = new HashSet<>();
         for (final String playerName : config.getStringList("logging.hiddenPlayers")) {
             hiddenPlayers.add(playerName.toLowerCase().trim());
         }
-        hiddenBlocks = new HashSet<Material>();
+        hiddenBlocks = new HashSet<>();
         for (final String blocktype : config.getStringList("logging.hiddenBlocks")) {
             final Material mat = Material.matchMaterial(blocktype);
             if (mat != null) {
@@ -202,11 +202,11 @@ public class Config {
                 throw new DataFormatException("Not a valid material in hiddenBlocks: '" + blocktype + "'");
             }
         }
-        ignoredChat = new ArrayList<String>();
+        ignoredChat = new ArrayList<>();
         for (String chatCommand : config.getStringList("logging.ignoredChat")) {
             ignoredChat.add(chatCommand.toLowerCase());
         }
-        dontRollback = new HashSet<Material>();
+        dontRollback = new HashSet<>();
         for (String e : config.getStringList("rollback.dontRollback")) {
             Material mat = Material.matchMaterial(e);
             if (mat != null) {
@@ -215,7 +215,7 @@ public class Config {
                 throw new DataFormatException("Not a valid material in dontRollback: '" + e + "'");
             }
         }
-        replaceAnyway = new HashSet<Material>();
+        replaceAnyway = new HashSet<>();
         for (String e : config.getStringList("rollback.replaceAnyway")) {
             Material mat = Material.matchMaterial(e);
             if (mat != null) {
@@ -239,7 +239,7 @@ public class Config {
         safetyIdCheck = config.getBoolean("safety.id.check", true);
         debug = config.getBoolean("debug", false);
         banPermission = config.getString("questioner.banPermission");
-        final List<Tool> tools = new ArrayList<Tool>();
+        final List<Tool> tools = new ArrayList<>();
         final ConfigurationSection toolsSec = config.getConfigurationSection("tools");
         for (final String toolName : toolsSec.getKeys(false)) {
             try {
@@ -262,8 +262,8 @@ public class Config {
                 getLogger().log(Level.WARNING, "Error at parsing tool '" + toolName + "': ", ex);
             }
         }
-        toolsByName = new HashMap<String, Tool>();
-        toolsByType = new HashMap<Material, Tool>();
+        toolsByName = new HashMap<>();
+        toolsByType = new HashMap<>();
         for (final Tool tool : tools) {
             toolsByType.put(tool.item, tool);
             toolsByName.put(tool.name.toLowerCase(), tool);
@@ -272,7 +272,7 @@ public class Config {
             }
         }
         final List<String> loggedWorlds = config.getStringList("loggedWorlds");
-        worldConfigs = new HashMap<String, WorldConfig>();
+        worldConfigs = new HashMap<>();
         if (loggedWorlds.isEmpty()) {
             throw new DataFormatException("No worlds configured");
         }

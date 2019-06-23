@@ -158,14 +158,14 @@ public class BukkitUtils {
         doublePlants.add(Material.SUNFLOWER);
         doublePlants.add(Material.PEONY);
 
-        blockEquivalents = new HashSet<Set<Integer>>(7);
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(2, 3, 60)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(8, 9, 79)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(10, 11)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(61, 62)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(73, 74)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(75, 76)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(93, 94)));
+        blockEquivalents = new HashSet<>(7);
+        blockEquivalents.add(new HashSet<>(Arrays.asList(2, 3, 60)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(8, 9, 79)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(10, 11)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(61, 62)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(73, 74)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(75, 76)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(93, 94)));
 
         // Blocks that break when they are attached to a block
         relativeBreakable = EnumSet.noneOf(Material.class);
@@ -332,7 +332,7 @@ public class BukkitUtils {
         // containerBlocks.add(Material.ENDER_CHEST);
 
         // It doesn't seem like you could injure people with some of these, but they exist, so....
-        projectileItems = new EnumMap<EntityType, Material>(EntityType.class);
+        projectileItems = new EnumMap<>(EntityType.class);
         projectileItems.put(EntityType.ARROW, Material.ARROW);
         projectileItems.put(EntityType.EGG, Material.EGG);
         projectileItems.put(EntityType.ENDER_PEARL, Material.ENDER_PEARL);
@@ -441,7 +441,7 @@ public class BukkitUtils {
      * @return List of block locations around the block that are of the type specified by the integer list parameter
      */
     public static List<Location> getBlocksNearby(org.bukkit.block.Block block, Set<Material> type) {
-        ArrayList<Location> blocks = new ArrayList<Location>();
+        ArrayList<Location> blocks = new ArrayList<>();
         for (BlockFace blockFace : relativeBlockFaces) {
             if (type.contains(block.getRelative(blockFace).getType())) {
                 blocks.add(block.getRelative(blockFace).getLocation());
@@ -478,7 +478,7 @@ public class BukkitUtils {
     }
 
     public static ItemStack[] compareInventories(ItemStack[] items1, ItemStack[] items2) {
-        final ArrayList<ItemStack> diff = new ArrayList<ItemStack>();
+        final ArrayList<ItemStack> diff = new ArrayList<>();
         for (ItemStack current : items2) {
             diff.add(new ItemStack(current));
         }
@@ -506,7 +506,7 @@ public class BukkitUtils {
     }
 
     public static ItemStack[] compressInventory(ItemStack[] items) {
-        final ArrayList<ItemStack> compressed = new ArrayList<ItemStack>();
+        final ArrayList<ItemStack> compressed = new ArrayList<>();
         for (final ItemStack item : items) {
             if (item != null) {
                 boolean found = false;
