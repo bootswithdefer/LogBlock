@@ -1,22 +1,33 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.Session.getSession;
+import static de.diddiz.LogBlock.config.Config.askClearLogAfterRollback;
+import static de.diddiz.LogBlock.config.Config.askClearLogs;
+import static de.diddiz.LogBlock.config.Config.askRedos;
+import static de.diddiz.LogBlock.config.Config.askRollbacks;
+import static de.diddiz.LogBlock.config.Config.defaultTime;
+import static de.diddiz.LogBlock.config.Config.dumpDeletedLog;
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+import static de.diddiz.LogBlock.config.Config.linesLimit;
+import static de.diddiz.LogBlock.config.Config.linesPerPage;
+import static de.diddiz.LogBlock.config.Config.rollbackMaxArea;
+import static de.diddiz.LogBlock.config.Config.rollbackMaxTime;
+import static de.diddiz.LogBlock.config.Config.toolsByName;
+import static de.diddiz.LogBlock.config.Config.toolsByType;
+import static de.diddiz.util.BukkitUtils.giveTool;
+import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
+import static de.diddiz.util.TypeColor.DEFAULT;
+import static de.diddiz.util.TypeColor.ERROR;
+import static de.diddiz.util.TypeColor.HEADER;
+import static de.diddiz.util.Utils.isInt;
+import static de.diddiz.util.Utils.listing;
+
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
 import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.util.Utils;
-
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitScheduler;
-
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -32,13 +43,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-
-import static de.diddiz.LogBlock.Session.getSession;
-import static de.diddiz.LogBlock.config.Config.*;
-import static de.diddiz.util.BukkitUtils.giveTool;
-import static de.diddiz.util.BukkitUtils.saveSpawnHeight;
-import static de.diddiz.util.Utils.isInt;
-import static de.diddiz.util.Utils.listing;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitScheduler;
 
 public class CommandsHandler implements CommandExecutor {
     private final LogBlock logblock;
@@ -382,19 +395,19 @@ public class CommandsHandler implements CommandExecutor {
                 final int stoppos = startpos + linesPerPage >= lookupElements.length ? lookupElements.length - 1 : startpos + linesPerPage - 1;
                 final int numberOfPages = (int) Math.ceil(lookupElements.length / (double) linesPerPage);
                 if (numberOfPages != 1) {
-                    sender.sendMessage(ChatColor.DARK_AQUA + "Page " + page + "/" + numberOfPages);
+                    sender.sendMessage(HEADER + "Page " + page + "/" + numberOfPages);
                 }
                 for (int i = startpos; i <= stoppos; i++) {
-                    sender.sendMessage(ChatColor.GOLD + (lookupElements[i].getLocation() != null ? "(" + (i + 1) + ") " : "") + lookupElements[i].getMessage());
+                    sender.sendMessage(DEFAULT + (lookupElements[i].getLocation() != null ? "(" + (i + 1) + ") " : "") + lookupElements[i].getMessage());
                 }
                 if (setSessionPage) {
                     getSession(sender).page = page;
                 }
             } else {
-                sender.sendMessage(ChatColor.RED + "There isn't a page '" + page + "'");
+                sender.sendMessage(ERROR + "There isn't a page '" + page + "'");
             }
         } else {
-            sender.sendMessage(ChatColor.RED + "No blocks in lookup cache");
+            sender.sendMessage(ERROR + "No blocks in lookup cache");
         }
     }
 

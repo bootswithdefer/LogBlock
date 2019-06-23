@@ -1,13 +1,18 @@
 package de.diddiz.LogBlock;
 
-import de.diddiz.LogBlock.config.Config;
+import static de.diddiz.util.ActionColor.DESTROY;
+import static de.diddiz.util.MessagingUtil.brackets;
+import static de.diddiz.util.MessagingUtil.prettyDate;
+import static de.diddiz.util.MessagingUtil.prettyLocation;
+import static de.diddiz.util.MessagingUtil.prettyMaterial;
+import static de.diddiz.util.TypeColor.DEFAULT;
+
 import de.diddiz.util.BukkitUtils;
-
-import org.bukkit.Location;
-import org.bukkit.Material;
-
+import de.diddiz.util.MessagingUtil.BracketType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.bukkit.Location;
+import org.bukkit.Material;
 
 public class Kill implements LookupCacheElement {
     final long id, date;
@@ -37,15 +42,15 @@ public class Kill implements LookupCacheElement {
     public String toString() {
         final StringBuilder msg = new StringBuilder();
         if (date > 0) {
-            msg.append(Config.formatter.format(date)).append(" ");
+            msg.append(brackets(prettyDate(date), BracketType.STANDARD)).append(' ');
         }
-        msg.append(killerName).append(" killed ").append(victimName);
+        msg.append(killerName).append(DESTROY).append(" killed ").append(DEFAULT).append(victimName);
         if (loc != null) {
-            msg.append(" at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ());
+            msg.append(" at ").append(prettyLocation(loc));
         }
         if (weapon != 0) {
             String weaponName = prettyItemName(MaterialConverter.getMaterial(weapon));
-            msg.append(" with " + weaponName); // + ("aeiou".contains(weaponName.substring(0, 1)) ? "an " : "a " )
+            msg.append(" with ").append(weaponName); // + ("aeiou".contains(weaponName.substring(0, 1)) ? "an " : "a " )
         }
         return msg.toString();
     }
@@ -62,8 +67,8 @@ public class Kill implements LookupCacheElement {
 
     public String prettyItemName(Material t) {
         if (t == null || BukkitUtils.isEmpty(t)) {
-            return "fist";
+            return prettyMaterial("fist");
         }
-        return t.toString().replace('_', ' ').toLowerCase();
+        return prettyMaterial(t.toString().replace('_', ' '));
     }
 }

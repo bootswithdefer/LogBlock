@@ -1,6 +1,27 @@
 package de.diddiz.util;
 
-import org.bukkit.*;
+import static de.diddiz.util.MessagingUtil.prettyMaterial;
+import static de.diddiz.util.TypeColor.DEFAULT;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
+import org.bukkit.DyeColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -23,10 +44,6 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-
-import java.io.File;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class BukkitUtils {
     private static final Set<Set<Integer>> blockEquivalents;
@@ -673,10 +690,11 @@ public class BukkitUtils {
 
     public static String toString(ItemStack stack) {
         if (stack == null || stack.getAmount() == 0 || isEmpty(stack.getType())) {
-            return "nothing";
+            return prettyMaterial("nothing");
         }
         StringBuilder sb = new StringBuilder();
-        sb.append(stack.getAmount()).append("x ").append(stack.getType().name());
+        sb.append(stack.getAmount()).append("x ").append(prettyMaterial(stack.getType()));
+        sb.append(TypeColor.STATE);
         ItemMeta meta = stack.getItemMeta();
         boolean metaStarted = false;
         if (meta.hasEnchants()) {
@@ -690,8 +708,8 @@ public class BukkitUtils {
                         sb.append(", ");
                     }
                     sb.append(formatMinecraftKey(e.getKey().getKey().getKey()));
-                    if (e.getValue().intValue() > 1) {
-                        sb.append(" ").append(maybeToRoman(e.getValue().intValue() - 1));
+                    if (e.getValue() > 1) {
+                        sb.append(" ").append(maybeToRoman(e.getValue() - 1));
                     }
                 }
             }
@@ -709,8 +727,8 @@ public class BukkitUtils {
                             sb.append(", ");
                         }
                         sb.append(formatMinecraftKey(e.getKey().getKey().getKey()));
-                        if (e.getValue().intValue() > 1) {
-                            sb.append(" ").append(maybeToRoman(e.getValue().intValue() - 1));
+                        if (e.getValue() > 1) {
+                            sb.append(" ").append(maybeToRoman(e.getValue() - 1));
                         }
                     }
                 }
@@ -719,6 +737,7 @@ public class BukkitUtils {
         if (metaStarted) {
             sb.append("]");
         }
+        sb.append(DEFAULT);
         return sb.toString();
     }
 

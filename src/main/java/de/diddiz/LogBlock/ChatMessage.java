@@ -1,11 +1,14 @@
 package de.diddiz.LogBlock;
 
-import org.bukkit.Location;
+import static de.diddiz.util.ActionColor.CREATE;
+import static de.diddiz.util.LoggingUtil.checkText;
+import static de.diddiz.util.MessagingUtil.brackets;
 
+import de.diddiz.util.MessagingUtil.BracketType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static de.diddiz.util.LoggingUtil.checkText;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
 
 public class ChatMessage implements LookupCacheElement {
     final long id, date;
@@ -35,6 +38,6 @@ public class ChatMessage implements LookupCacheElement {
 
     @Override
     public String getMessage() {
-        return (player != null ? "<" + player.getName() + "> " : "") + (message != null ? message : "");
+        return (playerName != null ? brackets(ChatColor.WHITE + playerName, BracketType.ANGLE) + ' ' : "") + (message != null ? CREATE + message : "");
     }
 }

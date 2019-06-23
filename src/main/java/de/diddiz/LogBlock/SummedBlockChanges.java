@@ -1,13 +1,16 @@
 package de.diddiz.LogBlock;
 
-import de.diddiz.LogBlock.QueryParams.SummarizationMode;
-import org.bukkit.Location;
+import static de.diddiz.util.ActionColor.CREATE;
+import static de.diddiz.util.ActionColor.DESTROY;
+import static de.diddiz.util.MessagingUtil.prettyMaterial;
+import static de.diddiz.util.TypeColor.DEFAULT;
+import static de.diddiz.util.Utils.spaces;
 
+import de.diddiz.LogBlock.QueryParams.SummarizationMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-
-import static de.diddiz.util.Utils.spaces;
+import org.bukkit.Location;
 
 public class SummedBlockChanges implements LookupCacheElement {
     private final int type;
@@ -31,6 +34,10 @@ public class SummedBlockChanges implements LookupCacheElement {
 
     @Override
     public String getMessage() {
-        return created + spaces((int) ((10 - String.valueOf(created).length()) / spaceFactor)) + destroyed + spaces((int) ((10 - String.valueOf(destroyed).length()) / spaceFactor)) + (actor != null ? actor.getName() : Objects.toString(MaterialConverter.getMaterial(type)));
+        StringBuilder builder = new StringBuilder();
+        builder.append(CREATE).append(created).append(spaces((int) ((10 - String.valueOf(created).length()) / spaceFactor)));
+        builder.append(DESTROY).append(destroyed).append(spaces((int) ((10 - String.valueOf(destroyed).length()) / spaceFactor)));
+        builder.append(actor != null ? DEFAULT + actor.getName() : prettyMaterial(Objects.toString(MaterialConverter.getMaterial(type))));
+        return builder.toString();
     }
 }
