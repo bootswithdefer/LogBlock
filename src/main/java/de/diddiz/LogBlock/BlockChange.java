@@ -154,16 +154,16 @@ public class BlockChange implements LookupCacheElement {
             } else if (type.getMaterial() == Material.TRIPWIRE) {
                 msg.append(INTERACT).append("ran into ").append(prettyMaterial(type.getMaterial()));
             } else if (type instanceof Sign || type instanceof WallSign) {
-                msg.append(DESTROY).append("edited a ").append(prettyMaterial(type.getMaterial())).append(CREATE).append(" to ").append(prettyState(typeDetails));
+                msg.append(CREATE).append("edited a ").append(prettyMaterial(type.getMaterial())).append(CREATE).append(" to ").append(prettyState(typeDetails));
             } else {
-                msg.append(DESTROY).append("replaced ").append(prettyMaterial(replaced.getMaterial())).append(prettyState(replacedDetails)).append(CREATE).append(" with ").append(prettyMaterial(type.getMaterial())).append(prettyState(typeDetails));
+                msg.append(CREATE).append("replaced ").append(prettyMaterial(replaced.getMaterial())).append(prettyState(replacedDetails)).append(CREATE).append(" with ").append(prettyMaterial(type.getMaterial())).append(prettyState(typeDetails));
             }
         } else if (BukkitUtils.isEmpty(type.getMaterial())) {
             msg.append(DESTROY).append("destroyed ").append(prettyMaterial(replaced.getMaterial())).append(prettyState(replacedDetails));
         } else if (BukkitUtils.isEmpty(replaced.getMaterial())) {
             msg.append(CREATE).append("created ").append(prettyMaterial(type.getMaterial())).append(prettyState(typeDetails));
         } else {
-            msg.append(DESTROY).append("replaced ").append(prettyMaterial(replaced.getMaterial())).append(prettyState(replacedDetails)).append(CREATE).append(" with ").append(type.getMaterial().name()).append(typeDetails);
+            msg.append(CREATE).append("replaced ").append(prettyMaterial(replaced.getMaterial())).append(prettyState(replacedDetails)).append(CREATE).append(" with ").append(type.getMaterial().name()).append(typeDetails);
         }
         if (loc != null) {
             msg.append(" at: ").append(prettyLocation(loc));
