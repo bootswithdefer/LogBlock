@@ -144,6 +144,10 @@ public class BukkitUtils {
         singleBlockPlants.add(Material.OXEYE_DAISY);        
         singleBlockPlants.add(Material.BROWN_MUSHROOM);
         singleBlockPlants.add(Material.RED_MUSHROOM);
+        singleBlockPlants.add(Material.SWEET_BERRY_BUSH);
+        singleBlockPlants.add(Material.LILY_OF_THE_VALLEY);
+        singleBlockPlants.add(Material.CORNFLOWER);
+        singleBlockPlants.add(Material.WITHER_ROSE);
         
         doublePlants = EnumSet.noneOf(Material.class);
         doublePlants.add(Material.TALL_GRASS);
@@ -178,6 +182,7 @@ public class BukkitUtils {
         relativeBreakable.add(Material.WALL_TORCH);
         relativeBreakable.add(Material.TRIPWIRE_HOOK);
         relativeBreakable.add(Material.COCOA);
+        relativeBreakable.add(Material.BELL);
 
         // Blocks that break when they are on top of a block
         relativeTopBreakable = EnumSet.noneOf(Material.class);
@@ -206,13 +211,18 @@ public class BukkitUtils {
         relativeTopBreakable.add(Material.REPEATER);
         relativeTopBreakable.add(Material.COMPARATOR);
         relativeTopBreakable.add(Material.TORCH);
-        relativeTopBreakable.add(Material.WALL_TORCH);
         relativeTopBreakable.add(Material.REDSTONE_TORCH);
-        relativeTopBreakable.add(Material.REDSTONE_WALL_TORCH);
         relativeTopBreakable.addAll(woodenDoors);
         relativeTopBreakable.add(Material.IRON_DOOR);
         relativeTopBreakable.addAll(carpets);
         relativeTopBreakable.addAll(doublePlants);
+        relativeTopBreakable.add(Material.BAMBOO);
+        relativeTopBreakable.add(Material.BAMBOO_SAPLING);
+        for(Material m : Material.values()) {
+            if(m.name().startsWith("POTTED_")) {
+                relativeTopBreakable.add(m);  
+            }
+        }
 
         // Blocks that break falling entities
         fallingEntityKillers = EnumSet.noneOf(Material.class);
@@ -314,6 +324,10 @@ public class BukkitUtils {
         containerBlocks.add(Material.RED_SHULKER_BOX);
         containerBlocks.add(Material.WHITE_SHULKER_BOX);
         containerBlocks.add(Material.YELLOW_SHULKER_BOX);
+        containerBlocks.add(Material.BARREL);
+        containerBlocks.add(Material.BLAST_FURNACE);
+        containerBlocks.add(Material.SMOKER);
+        containerBlocks.add(Material.LECTERN);
         // Doesn't actually have a block inventory
         // containerBlocks.add(Material.ENDER_CHEST);
 
@@ -329,6 +343,7 @@ public class BukkitUtils {
         projectileItems.put(EntityType.SPLASH_POTION, Material.SPLASH_POTION);
         projectileItems.put(EntityType.THROWN_EXP_BOTTLE, Material.EXPERIENCE_BOTTLE);
         projectileItems.put(EntityType.WITHER_SKULL, Material.WITHER_SKELETON_SKULL);
+        projectileItems.put(EntityType.FIREWORK, Material.FIREWORK_ROCKET);
 
         nonFluidProofBlocks = EnumSet.noneOf(Material.class);
         nonFluidProofBlocks.addAll(singleBlockPlants);
@@ -588,7 +603,7 @@ public class BukkitUtils {
 
     public static int saveSpawnHeight(Location loc) {
         final World world = loc.getWorld();
-        final Chunk chunk = world.getChunkAt(loc);
+        world.getChunkAt(loc);
         final int x = loc.getBlockX(), z = loc.getBlockZ();
         int y = loc.getBlockY();
         boolean lower = world.getBlockAt(x, y, z).isEmpty(), upper = world.getBlockAt(x, y + 1, z).isEmpty();

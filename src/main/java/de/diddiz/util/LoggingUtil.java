@@ -10,7 +10,9 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
-
+import org.bukkit.block.data.type.Bell;
+import org.bukkit.block.data.type.Bell.Attachment;
+import org.bukkit.block.data.type.Lantern;
 import java.util.List;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
@@ -110,8 +112,9 @@ public class LoggingUtil {
         }
 
         Block checkBlock = origin.getRelative(BlockFace.UP);
-        if (BukkitUtils.getRelativeTopBreakabls().contains(checkBlock.getType())) {
-            if (checkBlock.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(checkBlock.getType())) {
+        Material typeAbove = checkBlock.getType();
+        if (BukkitUtils.getRelativeTopBreakabls().contains(typeAbove)) {
+            if (typeAbove == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(typeAbove)) {
                 Block doorBlock = checkBlock;
                 // If the doorBlock is the top half a door the player simply punched a door
                 // this will be handled later.
@@ -123,7 +126,7 @@ public class LoggingUtil {
                     }
                     consumer.queueBlockBreak(actor, checkBlock.getState());
                 }
-            } else if (BukkitUtils.isDoublePlant(checkBlock.getType())) {
+            } else if (BukkitUtils.isDoublePlant(typeAbove)) {
                 Block plantBlock = checkBlock;
                 // If the plantBlock is the top half of a double plant the player simply
                 // punched the plant this will be handled later.
@@ -138,16 +141,48 @@ public class LoggingUtil {
             } else {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
+        } else if(typeAbove == Material.LANTERN) {
+            Lantern lantern = (Lantern) checkBlock.getBlockData();
+            if(!lantern.isHanging()) {
+                consumer.queueBlockBreak(actor, checkBlock.getState());
+            }
+        }else if(typeAbove == Material.BELL) {
+            Bell bell = (Bell) checkBlock.getBlockData();
+            if(bell.getAttachment() == Attachment.FLOOR) {
+                consumer.queueBlockBreak(actor, checkBlock.getState());
+            }
         }
-
+        
+        checkBlock = origin.getRelative(BlockFace.DOWN);
+        Material typeBelow = checkBlock.getType();
+        if(typeBelow == Material.LANTERN) {
+            Lantern lantern = (Lantern) checkBlock.getBlockData();
+            if(lantern.isHanging()) {
+                consumer.queueBlockBreak(actor, checkBlock.getState());
+            }
+        } else if(typeBelow == Material.BELL) {
+            Bell bell = (Bell) checkBlock.getBlockData();
+            if(bell.getAttachment() == Attachment.CEILING) {
+                consumer.queueBlockBreak(actor, checkBlock.getState()); 
+            }
+        }
+        
         List<Location> relativeBreakables = BukkitUtils.getBlocksNearby(origin, BukkitUtils.getRelativeBreakables());
         if (relativeBreakables.size() != 0) {
             for (Location location : relativeBreakables) {
                 Block block = location.getBlock();
                 BlockData blockData = block.getBlockData();
                 if (blockData instanceof Directional) {
-                    if (block.getRelative(((Directional) blockData).getFacing().getOppositeFace()).equals(origin)) {
-                        consumer.queueBlockBreak(actor, block.getState());
+                    if (blockData.getMaterial() == Material.BELL) {
+                        if (((Bell) blockData).getAttachment() == Attachment.SINGLE_WALL) {
+                            if (block.getRelative(((Bell) blockData).getFacing()).equals(origin)) {
+                                consumer.queueBlockBreak(actor, block.getState());
+                            }
+                        }
+                    } else {
+                        if (block.getRelative(((Directional) blockData).getFacing().getOppositeFace()).equals(origin)) {
+                            consumer.queueBlockBreak(actor, block.getState());
+                        }
                     }
                 }
             }
