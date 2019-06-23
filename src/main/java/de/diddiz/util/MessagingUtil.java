@@ -5,6 +5,7 @@ import static de.diddiz.util.TypeColor.DEFAULT;
 import de.diddiz.LogBlock.config.Config;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 
 public class MessagingUtil {
     public static String brackets(String string, BracketType type) {
@@ -33,6 +34,10 @@ public class MessagingUtil {
 
     public static String prettyMaterial(Material material) {
         return prettyMaterial(material.name());
+    }
+
+    public static String prettyEntityType(EntityType type) {
+        return prettyMaterial(type.name());
     }
 
     public static String prettyLocation(Location loc) {

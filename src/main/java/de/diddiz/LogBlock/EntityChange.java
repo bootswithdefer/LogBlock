@@ -1,18 +1,25 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.util.ActionColor.CREATE;
+import static de.diddiz.util.ActionColor.DESTROY;
+import static de.diddiz.util.ActionColor.INTERACT;
+import static de.diddiz.util.MessagingUtil.brackets;
+import static de.diddiz.util.MessagingUtil.prettyDate;
+import static de.diddiz.util.MessagingUtil.prettyEntityType;
+import static de.diddiz.util.MessagingUtil.prettyLocation;
+import static de.diddiz.util.MessagingUtil.prettyMaterial;
+
+import de.diddiz.util.MessagingUtil.BracketType;
+import de.diddiz.util.Utils;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
-
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
-
-import de.diddiz.LogBlock.config.Config;
-import de.diddiz.util.Utils;
 
 public class EntityChange implements LookupCacheElement {
     public static enum EntityChangeType {
@@ -66,44 +73,44 @@ public class EntityChange implements LookupCacheElement {
     public String toString() {
         final StringBuilder msg = new StringBuilder();
         if (date > 0) {
-            msg.append(Config.formatter.format(date)).append(" ");
+            msg.append(brackets(prettyDate(date), BracketType.STANDARD)).append(' ');
         }
         if (actor != null) {
             msg.append(actor.getName()).append(" ");
         }
         if (changeType == EntityChangeType.CREATE) {
-            msg.append("created ");
+            msg.append(CREATE).append("created ");
         } else if (changeType == EntityChangeType.KILL) {
             boolean living = type != null && LivingEntity.class.isAssignableFrom(type.getEntityClass()) && !ArmorStand.class.isAssignableFrom(type.getDeclaringClass());
-            msg.append(living ? "killed " : "destroyed ");
+            msg.append(DESTROY).append(living ? "killed " : "destroyed ");
         } else if (changeType == EntityChangeType.ADDEQUIP) {
             YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
             ItemStack stack = conf == null ? null : conf.getItemStack("item");
             if (stack == null) {
-                msg.append("added an item to ");
+                msg.append(CREATE).append("added an item to ");
             } else {
-                msg.append("added " + stack.getType() + " to ");
+                msg.append(CREATE).append("added ").append(prettyMaterial(stack.getType())).append(" to ");
             }
         } else if (changeType == EntityChangeType.REMOVEEQUIP) {
             YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
             ItemStack stack = conf == null ? null : conf.getItemStack("item");
             if (stack == null) {
-                msg.append("removed an item from ");
+                msg.append(DESTROY).append("removed an item from ");
             } else {
-                msg.append("removed " + stack.getType() + " from ");
+                msg.append(DESTROY).append("removed ").append(prettyMaterial(stack.getType())).append(" from ");
             }
         } else if (changeType == EntityChangeType.MODIFY) {
-            msg.append("modified ");
+            msg.append(INTERACT).append("modified ");
         } else {
-            msg.append("did an unknown action to ");
+            msg.append(INTERACT).append("did an unknown action to ");
         }
         if (type != null) {
-            msg.append(type.name());
+            msg.append(prettyEntityType(type));
         } else {
-            msg.append("an unknown entity");
+            msg.append(prettyMaterial("an unknown entity"));
         }
         if (loc != null) {
-            msg.append(" at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ());
+            msg.append(" at: ").append(prettyLocation(loc));
         }
         return msg.toString();
     }
