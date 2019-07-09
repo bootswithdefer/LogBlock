@@ -29,10 +29,18 @@ public class LecternLogging extends LoggingListener {
             if (before.getType() == Material.LECTERN && after.getType() == Material.LECTERN) {
                 Lectern lecternBefore = (Lectern) before.getBlock().getState();
                 ItemStack book = lecternBefore.getSnapshotInventory().getItem(0);
-                lecternBefore.getSnapshotInventory().setItem(0, null);
+                try {
+                    lecternBefore.getSnapshotInventory().setItem(0, null);
+                } catch (NullPointerException e) {
+                    //ignored
+                }
                 lecternBefore.setBlockData(before.getBlockData());
                 consumer.queueBlockReplace(Actor.actorFromEntity(event.getPlayer()), lecternBefore, after);
-                lecternBefore.getSnapshotInventory().setItem(0, book);
+                try {
+                    lecternBefore.getSnapshotInventory().setItem(0, book);
+                } catch (NullPointerException e) {
+                    //ignored
+                }
             }
         }
     }
@@ -43,7 +51,11 @@ public class LecternLogging extends LoggingListener {
         if (wcfg != null && wcfg.isLogging(Logging.LECTERNBOOKCHANGE)) {
             Lectern oldState = event.getLectern();
             Lectern newState = (Lectern) oldState.getBlock().getState();
-            newState.getSnapshotInventory().setItem(0, null);
+            try {
+                newState.getSnapshotInventory().setItem(0, null);
+            } catch (NullPointerException e) {
+                //ignored
+            }
             org.bukkit.block.data.type.Lectern oldBlockData = (org.bukkit.block.data.type.Lectern) oldState.getBlockData();
             org.bukkit.block.data.type.Lectern blockData = (org.bukkit.block.data.type.Lectern) Material.LECTERN.createBlockData();
             blockData.setFacing(oldBlockData.getFacing());

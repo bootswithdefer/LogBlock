@@ -34,7 +34,11 @@ public class BlockStateCodecLectern implements BlockStateCodec {
             if (conf != null) {
                 book = conf.getItemStack("book");
             }
-            lectern.getSnapshotInventory().setItem(0, book);
+            try {
+                lectern.getSnapshotInventory().setItem(0, book);
+            } catch (NullPointerException e) {
+                //ignored
+            }
         }
     }
 

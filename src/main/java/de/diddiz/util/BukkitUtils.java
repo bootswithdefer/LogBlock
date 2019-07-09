@@ -344,7 +344,6 @@ public class BukkitUtils {
         containerBlocks.add(Material.BARREL);
         containerBlocks.add(Material.BLAST_FURNACE);
         containerBlocks.add(Material.SMOKER);
-        containerBlocks.add(Material.LECTERN);
         // Doesn't actually have a block inventory
         // containerBlocks.add(Material.ENDER_CHEST);
 
