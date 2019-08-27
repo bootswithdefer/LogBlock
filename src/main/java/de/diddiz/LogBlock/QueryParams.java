@@ -2,8 +2,8 @@ package de.diddiz.LogBlock;
 
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.util.BukkitUtils;
+import de.diddiz.util.CuboidRegion;
 import de.diddiz.util.Utils;
-import de.diddiz.worldedit.CuboidRegion;
 import de.diddiz.worldedit.WorldEditHelper;
 
 import org.bukkit.Location;
@@ -792,11 +792,7 @@ public final class QueryParams implements Cloneable {
                 if (player == null) {
                     throw new IllegalArgumentException("You have to be a player to use selection");
                 }
-                if (WorldEditHelper.hasWorldEdit()) {
-                    setSelection(CuboidRegion.fromPlayerSelection(player));
-                } else {
-                    throw new IllegalArgumentException("WorldEdit not found!");
-                }
+                setSelection(WorldEditHelper.getSelectedRegion(player));
             } else if (param.equals("time") || param.equals("since")) {
                 since = values.length > 0 ? parseTimeSpec(values) : defaultTime;
                 if (since == -1) {

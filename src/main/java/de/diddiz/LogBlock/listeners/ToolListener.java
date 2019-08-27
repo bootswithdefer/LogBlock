@@ -2,7 +2,7 @@ package de.diddiz.LogBlock.listeners;
 
 import de.diddiz.LogBlock.*;
 import de.diddiz.util.BukkitUtils;
-import de.diddiz.worldedit.CuboidRegion;
+import de.diddiz.util.CuboidRegion;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
