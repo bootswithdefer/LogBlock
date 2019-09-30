@@ -11,10 +11,12 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-
+import org.bukkit.util.BlockVector;
 import com.sk89q.jnbt.CompoundTag;
 import com.sk89q.jnbt.DoubleTag;
 import com.sk89q.jnbt.FloatTag;
@@ -24,11 +26,15 @@ import com.sk89q.jnbt.NBTOutputStream;
 import com.sk89q.jnbt.NamedTag;
 import com.sk89q.jnbt.ShortTag;
 import com.sk89q.jnbt.Tag;
+import com.sk89q.worldedit.IncompleteRegionException;
+import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldedit.entity.BaseEntity;
-
+import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.regions.Region;
 import de.diddiz.LogBlock.LogBlock;
+import de.diddiz.util.CuboidRegion;
 
 public class WorldEditHelper {
     private static boolean checkedForWorldEdit;
@@ -58,7 +64,17 @@ public class WorldEditHelper {
     }
 
     public static Entity restoreEntity(Location location, EntityType type, byte[] serialized) {
+        if (!hasWorldEdit()) {
+            return null;
+        }
         return Internal.restoreEntity(location, type, serialized);
+    }
+
+    public static CuboidRegion getSelectedRegion(Player player) throws IllegalArgumentException {
+        if (!hasWorldEdit()) {
+            throw new IllegalArgumentException("WorldEdit not found!");
+        }
+        return Internal.getSelectedRegion(player);
     }
 
     private static class Internal {
@@ -133,5 +149,28 @@ public class WorldEditHelper {
             return null;
         }
 
+        public static CuboidRegion getSelectedRegion(Player player) throws IllegalArgumentException {
+            LocalSession session = worldEdit.getSession(player);
+            World world = player.getWorld();
+            com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(world);
+            if (!weWorld.equals(session.getSelectionWorld())) {
+                throw new IllegalArgumentException("No selection defined");
+            }
+            Region selection;
+            try {
+                selection = session.getSelection(weWorld);
+            } catch (IncompleteRegionException e) {
+                throw new IllegalArgumentException("No selection defined");
+            }
+            if (selection == null) {
+                throw new IllegalArgumentException("No selection defined");
+            }
+            if (!(selection instanceof com.sk89q.worldedit.regions.CuboidRegion)) {
+                throw new IllegalArgumentException("You have to define a cuboid selection");
+            }
+            BlockVector3 min = selection.getMinimumPoint();
+            BlockVector3 max = selection.getMaximumPoint();
+            return new CuboidRegion(world, new BlockVector(min.getBlockX(), min.getBlockY(), min.getBlockZ()), new BlockVector(max.getBlockX(), max.getBlockY(), max.getBlockZ()));
+        }
     }
 }

@@ -1,16 +1,7 @@
-package de.diddiz.worldedit;
-
-import com.sk89q.worldedit.IncompleteRegionException;
-import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.regions.Region;
+package de.diddiz.util;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BlockVector;
 
 public class CuboidRegion implements Cloneable {
@@ -27,31 +18,6 @@ public class CuboidRegion implements Cloneable {
         this.max.setX(Math.max(first.getBlockX(), second.getBlockX()));
         this.max.setY(Math.max(first.getBlockY(), second.getBlockY()));
         this.max.setZ(Math.max(first.getBlockZ(), second.getBlockZ()));
-    }
-
-    public static CuboidRegion fromPlayerSelection(Player player) {
-        Plugin worldEditPlugin = player.getServer().getPluginManager().getPlugin("WorldEdit");
-        LocalSession session = ((WorldEditPlugin) worldEditPlugin).getSession(player);
-        World world = player.getWorld();
-        com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(world);
-        if (!weWorld.equals(session.getSelectionWorld())) {
-            throw new IllegalArgumentException("No selection defined");
-        }
-        Region selection;
-        try {
-            selection = session.getSelection(weWorld);
-        } catch (IncompleteRegionException e) {
-            throw new IllegalArgumentException("No selection defined");
-        }
-        if (selection == null) {
-            throw new IllegalArgumentException("No selection defined");
-        }
-        if (!(selection instanceof com.sk89q.worldedit.regions.CuboidRegion)) {
-            throw new IllegalArgumentException("You have to define a cuboid selection");
-        }
-        BlockVector3 min = selection.getMinimumPoint();
-        BlockVector3 max = selection.getMaximumPoint();
-        return new CuboidRegion(world, new BlockVector(min.getBlockX(), min.getBlockY(), min.getBlockZ()), new BlockVector(max.getBlockX(), max.getBlockY(), max.getBlockZ()));
     }
 
     public static CuboidRegion fromCorners(World world, Location first, Location second) {
