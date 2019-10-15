@@ -11,6 +11,7 @@ import org.bukkit.Note;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.Powerable;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.data.type.Comparator;
 import org.bukkit.block.data.type.DaylightDetector;
 import org.bukkit.block.data.type.Lectern;
@@ -123,14 +124,20 @@ public class BlockChange implements LookupCacheElement {
                 } else {
                     msg.append("put ").append(BukkitUtils.toString(ca.itemStack)).append(" into ").append(type.getMaterial().name());
                 }
+            } else if (type instanceof Waterlogged && ((Waterlogged) type).isWaterlogged() != ((Waterlogged) replaced).isWaterlogged()) {
+                if (((Waterlogged) type).isWaterlogged()) {
+                    msg.append("waterlogged ").append(type.getMaterial().name());
+                } else {
+                    msg.append("dried ").append(type.getMaterial().name());
+                }
             } else if (BukkitUtils.getContainerBlocks().contains(type.getMaterial())) {
                 msg.append("opened ").append(type.getMaterial().name());
-            } else if (type instanceof Openable) {
+            } else if (type instanceof Openable && ((Openable) type).isOpen() != ((Openable) replaced).isOpen()) {
                 // Door, Trapdoor, Fence gate
                 msg.append(((Openable) type).isOpen() ? "opened" : "closed").append(" ").append(type.getMaterial().name());
-            } else if (type.getMaterial() == Material.LEVER) {
+            } else if (type.getMaterial() == Material.LEVER && ((Switch) type).isPowered() != ((Switch) replaced).isPowered()) {
                 msg.append("switched ").append(type.getMaterial().name()).append(" ").append(((Switch) type).isPowered() ? "on" : "off");
-            } else if (type instanceof Switch) {
+            } else if (type instanceof Switch && ((Switch) type).isPowered() != ((Switch) replaced).isPowered()) {
                 msg.append("pressed ").append(type.getMaterial().name());
             } else if (type.getMaterial() == Material.CAKE) {
                 msg.append("ate a piece of ").append(type.getMaterial().name());
