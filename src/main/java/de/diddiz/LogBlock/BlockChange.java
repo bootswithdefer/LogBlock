@@ -130,9 +130,9 @@ public class BlockChange implements LookupCacheElement {
                 }
             } else if (type instanceof Waterlogged && ((Waterlogged) type).isWaterlogged() != ((Waterlogged) replaced).isWaterlogged()) {
                 if (((Waterlogged) type).isWaterlogged()) {
-                    msg.append(CREATE).append("waterlogged ").append(type.getMaterial().name());
+                    msg.append(CREATE).append("waterlogged ").append(prettyMaterial(type.getMaterial()));
                 } else {
-                    msg.append(DESTROY).append("dried ").append(type.getMaterial().name());
+                    msg.append(DESTROY).append("dried ").append(prettyMaterial(type.getMaterial()));
                 }
             } else if (BukkitUtils.getContainerBlocks().contains(type.getMaterial())) {
                 msg.append(INTERACT).append("opened ").append(prettyMaterial(type.getMaterial()));
