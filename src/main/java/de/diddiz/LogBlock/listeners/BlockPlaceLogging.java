@@ -54,7 +54,14 @@ public class BlockPlaceLogging extends LoggingListener {
             if (placedAt.isEmpty()) {
                 consumer.queueBlockPlace(Actor.actorFromEntity(event.getPlayer()), placedAt.getLocation(), placedMaterial.createBlockData());
             } else {
-                consumer.queueBlockReplace(Actor.actorFromEntity(event.getPlayer()), placedAt.getLocation(), placedAt.getBlockData(), placedMaterial.createBlockData());
+                BlockData placedAtBlock = placedAt.getBlockData();
+                if (placedAtBlock instanceof Waterlogged && !(((Waterlogged) placedAtBlock).isWaterlogged())) {
+                    Waterlogged clickedWaterloggedWithWater = (Waterlogged) placedAtBlock.clone();
+                    clickedWaterloggedWithWater.setWaterlogged(true);
+                    consumer.queueBlockReplace(Actor.actorFromEntity(event.getPlayer()), placedAt.getLocation(), placedAtBlock, clickedWaterloggedWithWater);
+                } else {
+                    consumer.queueBlockReplace(Actor.actorFromEntity(event.getPlayer()), placedAt.getLocation(), placedAtBlock, placedMaterial.createBlockData());
+                }
             }
         }
     }

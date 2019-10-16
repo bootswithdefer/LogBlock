@@ -22,6 +22,7 @@ import org.bukkit.Note;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.Powerable;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.data.type.Comparator;
 import org.bukkit.block.data.type.DaylightDetector;
 import org.bukkit.block.data.type.Lectern;
@@ -127,14 +128,20 @@ public class BlockChange implements LookupCacheElement {
                 } else {
                     msg.append(CREATE).append("put ").append(BukkitUtils.toString(ca.itemStack)).append(" into ").append(prettyMaterial(type.getMaterial()));
                 }
+            } else if (type instanceof Waterlogged && ((Waterlogged) type).isWaterlogged() != ((Waterlogged) replaced).isWaterlogged()) {
+                if (((Waterlogged) type).isWaterlogged()) {
+                    msg.append(CREATE).append("waterlogged ").append(type.getMaterial().name());
+                } else {
+                    msg.append(DESTROY).append("dried ").append(type.getMaterial().name());
+                }
             } else if (BukkitUtils.getContainerBlocks().contains(type.getMaterial())) {
                 msg.append(INTERACT).append("opened ").append(prettyMaterial(type.getMaterial()));
-            } else if (type instanceof Openable) {
+            } else if (type instanceof Openable && ((Openable) type).isOpen() != ((Openable) replaced).isOpen()) {
                 // Door, Trapdoor, Fence gate
                 msg.append(INTERACT).append(((Openable) type).isOpen() ? "opened" : "closed").append(" ").append(prettyMaterial(type.getMaterial()));
-            } else if (type.getMaterial() == Material.LEVER) {
+            } else if (type.getMaterial() == Material.LEVER && ((Switch) type).isPowered() != ((Switch) replaced).isPowered()) {
                 msg.append(INTERACT).append("switched ").append(prettyMaterial(type.getMaterial())).append(" ").append(prettyState(((Switch) type).isPowered() ? "on" : "off"));
-            } else if (type instanceof Switch) {
+            } else if (type instanceof Switch && ((Switch) type).isPowered() != ((Switch) replaced).isPowered()) {
                 msg.append(INTERACT).append("pressed ").append(prettyMaterial(type.getMaterial()));
             } else if (type.getMaterial() == Material.CAKE) {
                 msg.append(DESTROY).append("ate a piece of ").append(prettyMaterial(type.getMaterial()));
