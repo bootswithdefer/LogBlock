@@ -15,6 +15,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static de.diddiz.LogBlock.Session.getSession;
 import static de.diddiz.LogBlock.config.Config.*;
@@ -780,6 +781,34 @@ public final class QueryParams implements Cloneable {
                             typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
                         }
                         typeTags.add(tag);
+                    } else if (blockName.contains("*")) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int ci = 0; ci < blockName.length(); ci++) {
+                            char c = blockName.charAt(ci);
+                            if (!Character.isAlphabetic(c)) {
+                                if (c == '*') {
+                                    sb.append('.');
+                                } else {
+                                    sb.append('\\');
+                                }
+                            }
+                            sb.append(c);
+                        }
+                        String blockNamePattern = sb.toString();
+                        Pattern pattern = Pattern.compile(blockNamePattern, Pattern.CASE_INSENSITIVE);
+                        ArrayList<Material> matched = new ArrayList<>();
+                        for (Material mat : Material.values()) {
+                            if (pattern.matcher(mat.name()).matches()) {
+                                matched.add(mat);
+                            }
+                        }
+                        if (matched.isEmpty()) {
+                            throw new IllegalArgumentException("No material matching: '" + blockName + "'");
+                        }
+                        for (Material mat : matched) {
+                            types.add(mat);
+                            typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
+                        }
                     } else {
                         final Material mat = Material.matchMaterial(blockName);
                         if (mat == null) {
