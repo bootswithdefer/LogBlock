@@ -5,9 +5,10 @@ import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.CuboidRegion;
 import de.diddiz.util.Utils;
 import de.diddiz.worldedit.WorldEditHelper;
-
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
@@ -70,6 +71,7 @@ public final class QueryParams implements Cloneable {
     public CuboidRegion sel = null;
     public SummarizationMode sum = SummarizationMode.NONE;
     public List<Material> types = new ArrayList<>();
+    public List<Tag<?>> typeTags = new ArrayList<>();
     public List<Integer> typeIds = new ArrayList<>();
     public List<EntityType> entityTypes = new ArrayList<>();
     public List<Integer> entityTypeIds = new ArrayList<>();
@@ -340,13 +342,16 @@ public final class QueryParams implements Cloneable {
                 title.append("entity changes ");
             }
         } else {
-            if (!types.isEmpty()) {
+            if (!types.isEmpty() || !typeTags.isEmpty()) {
                 if (excludeBlocksEntitiesMode) {
                     title.append("all blocks except ");
                 }
-                final String[] blocknames = new String[types.size()];
+                final String[] blocknames = new String[types.size() + typeTags.size()];
                 for (int i = 0; i < types.size(); i++) {
                     blocknames[i] = types.get(i).name();
+                }
+                for (int i = 0; i < typeTags.size(); i++) {
+                    blocknames[i + types.size()] = "#" + typeTags.get(i).getKey().getKey().toUpperCase();
                 }
                 title.append(listing(blocknames, ", ", " and ")).append(" ");
             } else {
@@ -762,13 +767,27 @@ public final class QueryParams implements Cloneable {
                         excludeBlocksEntitiesMode = true;
                         blockName = blockName.substring(1);
                     }
-
-                    final Material mat = Material.matchMaterial(blockName);
-                    if (mat == null) {
-                        throw new IllegalArgumentException("No material matching: '" + blockName + "'");
+                    if (blockName.startsWith("#")) {
+                        String tagName = blockName.substring(1).toLowerCase();
+                        Tag<Material> tag = logblock.getServer().getTag(Tag.REGISTRY_BLOCKS, NamespacedKey.minecraft(tagName), Material.class);
+                        if (tag == null || tag.getValues().isEmpty()) {
+                            tag = logblock.getServer().getTag(Tag.REGISTRY_ITEMS, NamespacedKey.minecraft(tagName), Material.class);
+                            if (tag == null || tag.getValues().isEmpty()) {
+                                throw new IllegalArgumentException("No block tag matching: '" + blockName + "'");
+                            }
+                        }
+                        for (Material mat : tag.getValues()) {
+                            typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
+                        }
+                        typeTags.add(tag);
+                    } else {
+                        final Material mat = Material.matchMaterial(blockName);
+                        if (mat == null) {
+                            throw new IllegalArgumentException("No material matching: '" + blockName + "'");
+                        }
+                        types.add(mat);
+                        typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
                     }
-                    types.add(mat);
-                    typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
                 }
             } else if (param.equals("area")) {
                 if (player == null && !prepareToolQuery && loc == null) {
@@ -962,6 +981,7 @@ public final class QueryParams implements Cloneable {
             params.victims = new ArrayList<>(victims);
             params.typeIds = new ArrayList<>(typeIds);
             params.types = new ArrayList<>(types);
+            params.typeTags = new ArrayList<>(typeTags);
             params.entityTypeIds = new ArrayList<>(entityTypeIds);
             params.entityTypes = new ArrayList<>(entityTypes);
             params.loc = loc == null ? null : loc.clone();
@@ -1008,6 +1028,7 @@ public final class QueryParams implements Cloneable {
         excludePlayersMode = p.excludePlayersMode;
         typeIds.addAll(p.typeIds);
         types.addAll(p.types);
+        typeTags.addAll(p.typeTags);
         entityTypeIds.addAll(p.entityTypeIds);
         entityTypes.addAll(p.entityTypes);
         loc = p.loc == null ? null : p.loc.clone();
