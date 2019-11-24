@@ -78,6 +78,10 @@ public class Consumer extends Thread {
         setName("Logblock-Consumer");
     }
 
+    public LogBlock getLogblock() {
+        return logblock;
+    }
+
     /**
      * Logs any block change. Don't try to combine broken and placed blocks. Queue two block changes or use the queueBLockReplace methods.
      *
