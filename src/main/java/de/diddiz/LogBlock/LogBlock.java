@@ -36,6 +36,7 @@ public class LogBlock extends JavaPlugin {
     private CommandsHandler commandsHandler;
     private boolean noDb = false, connected = true;
     private PlayerInfoLogging playerInfoLogging;
+    private ScaffoldingLogging scaffoldingLogging;
     private Questioner questioner;
     private volatile boolean isCompletelyEnabled;
 
@@ -153,7 +154,7 @@ public class LogBlock extends JavaPlugin {
             pm.registerEvents(new SnowFadeLogging(this), this);
         }
         if (isLogging(Logging.SCAFFOLDING)) {
-            pm.registerEvents(new ScaffoldingLogging(this), this);
+            pm.registerEvents(scaffoldingLogging = new ScaffoldingLogging(this), this);
         }
         if (isLogging(Logging.CREEPEREXPLOSION) || isLogging(Logging.TNTEXPLOSION) || isLogging(Logging.GHASTFIREBALLEXPLOSION) || isLogging(Logging.ENDERDRAGON) || isLogging(Logging.MISCEXPLOSION)) {
             pm.registerEvents(new ExplosionLogging(this), this);
@@ -336,5 +337,9 @@ public class LogBlock extends JavaPlugin {
 
     public Questioner getQuestioner() {
         return questioner;
+    }
+
+    public ScaffoldingLogging getScaffoldingLogging() {
+        return scaffoldingLogging;
     }
 }

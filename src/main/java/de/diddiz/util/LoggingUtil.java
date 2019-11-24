@@ -2,6 +2,7 @@ package de.diddiz.util;
 
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.Consumer;
+import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -97,6 +98,9 @@ public class LoggingUtil {
                 break;
             }
             checkBlock = checkBlock.getRelative(BlockFace.UP);
+        }
+        if (wcfg.isLogging(Logging.SCAFFOLDING) && checkBlock.getType() == Material.SCAFFOLDING && consumer.getLogblock().getScaffoldingLogging() != null) {
+            consumer.getLogblock().getScaffoldingLogging().addScaffoldingBreaker(actor, checkBlock);
         }
     }
 

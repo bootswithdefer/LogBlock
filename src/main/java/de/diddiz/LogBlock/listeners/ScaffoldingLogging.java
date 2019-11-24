@@ -11,7 +11,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -19,6 +18,7 @@ import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 
 import static de.diddiz.LogBlock.config.Config.isLogging;
+import static de.diddiz.util.LoggingUtil.smartLogFallables;
 
 public class ScaffoldingLogging extends LoggingListener {
     private final static long MAX_SCAFFOLDING_LOG_TIME_MS = 2000;
@@ -27,7 +27,7 @@ public class ScaffoldingLogging extends LoggingListener {
 
     private final ArrayDeque<ScaffoldingBreaker> scaffoldingBreakersList = new ArrayDeque<>();
     private final HashMap<Location, ScaffoldingBreaker> scaffoldingBreakersByLocation = new HashMap<>();
-    private final HashMap<Location, Player> scaffoldingPlacersByLocation = new HashMap<>();
+    private final HashMap<Location, Actor> scaffoldingPlacersByLocation = new HashMap<>();
 
     public ScaffoldingLogging(LogBlock lb) {
         super(lb);
@@ -39,22 +39,23 @@ public class ScaffoldingLogging extends LoggingListener {
         if (isLogging(block.getWorld(), Logging.SCAFFOLDING)) {
             final Material type = block.getType();
             if (type == Material.SCAFFOLDING) {
-                Player placer = scaffoldingPlacersByLocation.get(block.getLocation());
+                Actor actor = scaffoldingPlacersByLocation.get(block.getLocation()); // get placer before cleanupScaffoldingBreakers
                 cleanupScaffoldingBreakers();
-                if (placer != null) {
-                    consumer.queueBlockReplace(Actor.actorFromEntity(placer), block.getState(), event.getNewState());
-                    return;
-                }
-                Player breaker = getScaffoldingBreaker(block);
-                if (breaker != null) {
-                    for (BlockFace dir : NEIGHBOURS_SIDES_AND_UP) {
-                        Block otherBlock = block.getRelative(dir);
-                        if (otherBlock.getType() == Material.SCAFFOLDING) {
-                            addScaffoldingBreaker(breaker, otherBlock);
+                if (actor == null) {
+                    actor = getScaffoldingBreaker(block);
+                    if (actor != null) {
+                        for (BlockFace dir : NEIGHBOURS_SIDES_AND_UP) {
+                            Block otherBlock = block.getRelative(dir);
+                            if (otherBlock.getType() == Material.SCAFFOLDING) {
+                                addScaffoldingBreaker(actor, otherBlock);
+                            }
                         }
+                    } else {
+                        actor = new Actor("ScaffoldingFall");
                     }
                 }
-                consumer.queueBlockReplace(breaker == null ? new Actor("ScaffoldingFall") : Actor.actorFromEntity(breaker), block.getState(), event.getNewState());
+                consumer.queueBlockReplace(actor, block.getState(), event.getNewState());
+                smartLogFallables(consumer, actor, block);
             }
         }
     }
@@ -69,11 +70,11 @@ public class ScaffoldingLogging extends LoggingListener {
                 for (BlockFace dir : NEIGHBOURS_SIDES_AND_UP) {
                     otherBlock = block.getRelative(dir);
                     if (otherBlock.getType() == Material.SCAFFOLDING) {
-                        addScaffoldingBreaker(event.getPlayer(), otherBlock);
+                        addScaffoldingBreaker(Actor.actorFromEntity(event.getPlayer()), otherBlock);
                     }
                 }
             } else if ((otherBlock = block.getRelative(BlockFace.UP)).getType() == Material.SCAFFOLDING) {
-                addScaffoldingBreaker(event.getPlayer(), otherBlock);
+                addScaffoldingBreaker(Actor.actorFromEntity(event.getPlayer()), otherBlock);
             }
         }
     }
@@ -84,13 +85,13 @@ public class ScaffoldingLogging extends LoggingListener {
         if (isLogging(block.getWorld(), Logging.SCAFFOLDING)) {
             cleanupScaffoldingBreakers();
             if (block.getType() == Material.SCAFFOLDING) {
-                scaffoldingPlacersByLocation.put(block.getLocation(), event.getPlayer());
+                scaffoldingPlacersByLocation.put(block.getLocation(), Actor.actorFromEntity(event.getPlayer()));
             }
         }
     }
 
-    private void addScaffoldingBreaker(Player player, Block block) {
-        ScaffoldingBreaker breaker = new ScaffoldingBreaker(player, block.getLocation());
+    public void addScaffoldingBreaker(Actor actor, Block block) {
+        ScaffoldingBreaker breaker = new ScaffoldingBreaker(actor, block.getLocation());
         scaffoldingBreakersList.addLast(breaker);
         scaffoldingBreakersByLocation.put(breaker.getLocation(), breaker);
 
@@ -109,14 +110,14 @@ public class ScaffoldingLogging extends LoggingListener {
         }
     }
 
-    private Player getScaffoldingBreaker(Block block) {
+    private Actor getScaffoldingBreaker(Block block) {
         if (scaffoldingBreakersList.isEmpty()) {
             return null;
         }
 
         ScaffoldingBreaker breaker = scaffoldingBreakersByLocation.get(block.getLocation());
         if (breaker != null) {
-            return breaker.getBreaker();
+            return breaker.getActor();
         }
 
         // Search all connected scaffoldings
@@ -130,7 +131,7 @@ public class ScaffoldingLogging extends LoggingListener {
 
             breaker = scaffoldingBreakersByLocation.get(loc);
             if (breaker != null) {
-                return breaker.getBreaker();
+                return breaker.getActor();
             }
 
             for (BlockFace dir : NEIGHBOURS_SIDES_AND_BELOW) {
@@ -145,18 +146,18 @@ public class ScaffoldingLogging extends LoggingListener {
     }
 
     class ScaffoldingBreaker {
-        protected final Player breaker;
+        protected final Actor actor;
         protected final long time;
         protected final Location location;
 
-        public ScaffoldingBreaker(Player breaker, Location location) {
-            this.breaker = breaker;
+        public ScaffoldingBreaker(Actor actor, Location location) {
+            this.actor = actor;
             this.location = location;
             this.time = System.currentTimeMillis();
         }
 
-        public Player getBreaker() {
-            return breaker;
+        public Actor getActor() {
+            return actor;
         }
 
         public Location getLocation() {
