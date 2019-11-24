@@ -43,7 +43,8 @@ public enum Logging {
     BEDEXPLOSION(true),
     DRAGONEGGTELEPORT(true),
     DAYLIGHTDETECTORINTERACT,
-    LECTERNBOOKCHANGE(true);
+    LECTERNBOOKCHANGE(true),
+    SCAFFOLDING(true);
 
     public static final int length = Logging.values().length;
     private final boolean defaultEnabled;

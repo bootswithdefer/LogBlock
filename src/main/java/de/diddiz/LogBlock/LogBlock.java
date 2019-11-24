@@ -152,6 +152,9 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.SNOWFADE)) {
             pm.registerEvents(new SnowFadeLogging(this), this);
         }
+        if (isLogging(Logging.SCAFFOLDING)) {
+            pm.registerEvents(new ScaffoldingLogging(this), this);
+        }
         if (isLogging(Logging.CREEPEREXPLOSION) || isLogging(Logging.TNTEXPLOSION) || isLogging(Logging.GHASTFIREBALLEXPLOSION) || isLogging(Logging.ENDERDRAGON) || isLogging(Logging.MISCEXPLOSION)) {
             pm.registerEvents(new ExplosionLogging(this), this);
         }
