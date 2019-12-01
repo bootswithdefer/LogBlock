@@ -38,6 +38,7 @@ import de.diddiz.LogBlock.EntityChange.EntityChangeType;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.EntityLogging;
+import de.diddiz.util.LoggingUtil;
 import de.diddiz.worldedit.WorldEditHelper;
 import java.util.UUID;
 
@@ -163,7 +164,7 @@ public class AdvancedEntityLogging extends LoggingListener {
             Actor actor = null;
             EntityDamageEvent lastDamage = entity.getLastDamageCause();
             if (lastDamage instanceof EntityDamageByEntityEvent) {
-                Entity damager = ((EntityDamageByEntityEvent) lastDamage).getDamager();
+                Entity damager = LoggingUtil.getRealDamager(((EntityDamageByEntityEvent) lastDamage).getDamager());
                 if (damager != null) {
                     actor = Actor.actorFromEntity(damager);
                 }
@@ -190,7 +191,8 @@ public class AdvancedEntityLogging extends LoggingListener {
         if (Config.isLogging(entity.getWorld(), EntityLogging.DESTROY, entity)) {
             Actor actor;
             if (event instanceof HangingBreakByEntityEvent) {
-                actor = Actor.actorFromEntity(((HangingBreakByEntityEvent) event).getRemover());
+                Entity damager = LoggingUtil.getRealDamager(((HangingBreakByEntityEvent) event).getRemover());
+                actor = Actor.actorFromEntity(damager);
             } else {
                 actor = new Actor(event.getCause().toString());
             }
@@ -207,7 +209,8 @@ public class AdvancedEntityLogging extends LoggingListener {
                 if (Config.isLogging(entity.getWorld(), EntityLogging.MODIFY, entity)) {
                     Actor actor;
                     if (event instanceof EntityDamageByEntityEvent) {
-                        actor = Actor.actorFromEntity(((EntityDamageByEntityEvent) event).getDamager());
+                        Entity damager = LoggingUtil.getRealDamager(((EntityDamageByEntityEvent) event).getDamager());
+                        actor = Actor.actorFromEntity(damager);
                     } else {
                         actor = new Actor(event.getCause().toString());
                     }

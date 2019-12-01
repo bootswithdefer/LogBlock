@@ -14,6 +14,10 @@ import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.Bell;
 import org.bukkit.block.data.type.Bell.Attachment;
 import org.bukkit.block.data.type.Lantern;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.TNTPrimed;
+import org.bukkit.projectiles.ProjectileSource;
 import java.util.List;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
@@ -237,5 +241,21 @@ public class LoggingUtil {
             return text;
         }
         return text.replaceAll("[^\\u0000-\\uFFFF]", "?");
+    }
+
+    public static Entity getRealDamager(Entity damager) {
+        if (damager instanceof Projectile) {
+            ProjectileSource realDamager = ((Projectile) damager).getShooter();
+            if (realDamager instanceof Entity) {
+                damager = (Entity) realDamager;
+            }
+        }
+        if (damager instanceof TNTPrimed) {
+            Entity realRemover = ((TNTPrimed) damager).getSource();
+            if (realRemover != null) {
+                damager = realRemover;
+            }
+        }
+        return damager;
     }
 }
