@@ -3,17 +3,18 @@ package de.diddiz.LogBlock;
 import static de.diddiz.util.ActionColor.CREATE;
 import static de.diddiz.util.ActionColor.DESTROY;
 import static de.diddiz.util.ActionColor.INTERACT;
-import static de.diddiz.util.MessagingUtil.brackets;
+import static de.diddiz.util.MessagingUtil.createTextComponentWithColor;
 import static de.diddiz.util.MessagingUtil.prettyDate;
 import static de.diddiz.util.MessagingUtil.prettyEntityType;
 import static de.diddiz.util.MessagingUtil.prettyLocation;
 import static de.diddiz.util.MessagingUtil.prettyMaterial;
 
-import de.diddiz.util.MessagingUtil.BracketType;
 import de.diddiz.util.Utils;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
@@ -71,57 +72,64 @@ public class EntityChange implements LookupCacheElement {
 
     @Override
     public String toString() {
-        final StringBuilder msg = new StringBuilder();
+        return BaseComponent.toPlainText(getLogMessage());
+    }
+
+    @Override
+    public BaseComponent[] getLogMessage() {
+        TextComponent msg = new TextComponent();
         if (date > 0) {
-            msg.append(brackets(prettyDate(date), BracketType.STANDARD)).append(' ');
+            msg.addExtra(prettyDate(date));
+            msg.addExtra(" ");
         }
         if (actor != null) {
-            msg.append(actor.getName()).append(" ");
+            msg.addExtra(actor.getName());
+            msg.addExtra(" ");
         }
         if (changeType == EntityChangeType.CREATE) {
-            msg.append(CREATE).append("created ");
+            msg.addExtra(createTextComponentWithColor("created ", CREATE.getColor()));
         } else if (changeType == EntityChangeType.KILL) {
             boolean living = type != null && LivingEntity.class.isAssignableFrom(type.getEntityClass()) && !ArmorStand.class.isAssignableFrom(type.getDeclaringClass());
-            msg.append(DESTROY).append(living ? "killed " : "destroyed ");
+            msg.addExtra(createTextComponentWithColor(living ? "killed " : "destroyed ", DESTROY.getColor()));
         } else if (changeType == EntityChangeType.ADDEQUIP) {
             YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
             ItemStack stack = conf == null ? null : conf.getItemStack("item");
             if (stack == null) {
-                msg.append(CREATE).append("added an item to ");
+                msg.addExtra(createTextComponentWithColor("added an item to ", CREATE.getColor()));
             } else {
-                msg.append(CREATE).append("added ").append(prettyMaterial(stack.getType())).append(" to ");
+                msg.addExtra(createTextComponentWithColor("added ", CREATE.getColor()));
+                msg.addExtra(prettyMaterial(stack.getType()));
+                msg.addExtra(" to ");
             }
         } else if (changeType == EntityChangeType.REMOVEEQUIP) {
             YamlConfiguration conf = Utils.deserializeYamlConfiguration(data);
             ItemStack stack = conf == null ? null : conf.getItemStack("item");
             if (stack == null) {
-                msg.append(DESTROY).append("removed an item from ");
+                msg.addExtra(createTextComponentWithColor("removed an item from ", DESTROY.getColor()));
             } else {
-                msg.append(DESTROY).append("removed ").append(prettyMaterial(stack.getType())).append(" from ");
+                msg.addExtra(createTextComponentWithColor("removed ", DESTROY.getColor()));
+                msg.addExtra(prettyMaterial(stack.getType()));
+                msg.addExtra(" from ");
             }
         } else if (changeType == EntityChangeType.MODIFY) {
-            msg.append(INTERACT).append("modified ");
+            msg.addExtra(createTextComponentWithColor("modified ", INTERACT.getColor()));
         } else {
-            msg.append(INTERACT).append("did an unknown action to ");
+            msg.addExtra(createTextComponentWithColor("did an unknown action to ", INTERACT.getColor()));
         }
         if (type != null) {
-            msg.append(prettyEntityType(type));
+            msg.addExtra(prettyEntityType(type));
         } else {
-            msg.append(prettyMaterial("an unknown entity"));
+            msg.addExtra(prettyMaterial("an unknown entity"));
         }
         if (loc != null) {
-            msg.append(" at: ").append(prettyLocation(loc));
+            msg.addExtra(" at ");
+            msg.addExtra(prettyLocation(loc));
         }
-        return msg.toString();
+        return new BaseComponent[] { msg };
     }
 
     @Override
     public Location getLocation() {
         return loc;
-    }
-
-    @Override
-    public String getMessage() {
-        return toString();
     }
 }

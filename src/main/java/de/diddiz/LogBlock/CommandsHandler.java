@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -398,7 +400,15 @@ public class CommandsHandler implements CommandExecutor {
                     sender.sendMessage(HEADER + "Page " + page + "/" + numberOfPages);
                 }
                 for (int i = startpos; i <= stoppos; i++) {
-                    sender.sendMessage(DEFAULT + (lookupElements[i].getLocation() != null ? "(" + (i + 1) + ") " : "") + lookupElements[i].getMessage());
+                    TextComponent message = new TextComponent();
+                    message.setColor(DEFAULT.getColor());
+                    if (lookupElements[i].getLocation() != null) {
+                        message.addExtra(new TextComponent("(" + (i + 1) + ") "));
+                    }
+                    for (BaseComponent component : lookupElements[i].getLogMessage()) {
+                        message.addExtra(component);
+                    }
+                    sender.spigot().sendMessage(message);
                 }
                 if (setSessionPage) {
                     getSession(sender).page = page;
@@ -586,7 +596,7 @@ public class CommandsHandler implements CommandExecutor {
                 }
                 final LookupCacheElementFactory factory = new LookupCacheElementFactory(params, sender instanceof Player ? 2 / 3f : 1);
                 while (rs.next()) {
-                    writer.write(factory.getLookupCacheElement(rs).getMessage() + newline);
+                    writer.write(BaseComponent.toPlainText(factory.getLookupCacheElement(rs).getLogMessage()) + newline);
                     counter++;
                 }
                 writer.close();

@@ -3,7 +3,8 @@ package de.diddiz.LogBlock;
 import static de.diddiz.util.ActionColor.CREATE;
 import static de.diddiz.util.ActionColor.DESTROY;
 import static de.diddiz.util.ActionColor.INTERACT;
-import static de.diddiz.util.MessagingUtil.brackets;
+import static de.diddiz.util.TypeColor.DEFAULT;
+import static de.diddiz.util.MessagingUtil.createTextComponentWithColor;
 import static de.diddiz.util.MessagingUtil.prettyDate;
 import static de.diddiz.util.MessagingUtil.prettyLocation;
 import static de.diddiz.util.MessagingUtil.prettyMaterial;
@@ -11,11 +12,12 @@ import static de.diddiz.util.MessagingUtil.prettyState;
 
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.MessagingUtil.BracketType;
 import de.diddiz.util.Utils;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Note;
@@ -99,18 +101,25 @@ public class BlockChange implements LookupCacheElement {
 
     @Override
     public String toString() {
-        final StringBuilder msg = new StringBuilder();
+        return BaseComponent.toPlainText(getLogMessage());
+    }
+
+    @Override
+    public BaseComponent[] getLogMessage() {
+        TextComponent msg = new TextComponent();
         if (date > 0) {
-            msg.append(brackets(prettyDate(date), BracketType.STANDARD)).append(' ');
+            msg.addExtra(prettyDate(date));
+            msg.addExtra(" ");
         }
         if (actor != null) {
-            msg.append(actor.getName()).append(" ");
+            msg.addExtra(actor.getName());
+            msg.addExtra(" ");
         }
         BlockData type = getBlockSet();
         BlockData replaced = getBlockReplaced();
         if (type == null || replaced == null) {
-            msg.append("did an unknown block modification");
-            return msg.toString();
+            msg.addExtra("did an unknown block modification");
+            return new BaseComponent[] { msg };
         }
 
         // Process type details once for later use.
@@ -119,63 +128,114 @@ public class BlockChange implements LookupCacheElement {
 
         if (type.getMaterial().equals(replaced.getMaterial())) {
             if (BukkitUtils.isEmpty(type.getMaterial())) {
-                msg.append(INTERACT).append("did an unspecified action");
+                msg.addExtra(createTextComponentWithColor("did an unspecified action", INTERACT.getColor()));
             } else if (ca != null) {
                 if (ca.itemStack == null) {
-                    msg.append(INTERACT).append("looked inside ").append(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(createTextComponentWithColor("looked inside ", INTERACT.getColor()));
+                    msg.addExtra(prettyMaterial(type.getMaterial()));
                 } else if (ca.remove) {
-                    msg.append(DESTROY).append("took ").append(BukkitUtils.toString(ca.itemStack)).append(" from ").append(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(createTextComponentWithColor("took ", DESTROY.getColor()));
+                    msg.addExtra(BukkitUtils.toString(ca.itemStack));
+                    msg.addExtra(createTextComponentWithColor(" from ", DESTROY.getColor()));
+                    msg.addExtra(prettyMaterial(type.getMaterial()));
                 } else {
-                    msg.append(CREATE).append("put ").append(BukkitUtils.toString(ca.itemStack)).append(" into ").append(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(createTextComponentWithColor("put ", CREATE.getColor()));
+                    msg.addExtra(BukkitUtils.toString(ca.itemStack));
+                    msg.addExtra(createTextComponentWithColor(" into ", CREATE.getColor()));
+                    msg.addExtra(prettyMaterial(type.getMaterial()));
                 }
             } else if (type instanceof Waterlogged && ((Waterlogged) type).isWaterlogged() != ((Waterlogged) replaced).isWaterlogged()) {
                 if (((Waterlogged) type).isWaterlogged()) {
-                    msg.append(CREATE).append("waterlogged ").append(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(createTextComponentWithColor("waterlogged ", CREATE.getColor()));
+                    msg.addExtra(prettyMaterial(type.getMaterial()));
                 } else {
-                    msg.append(DESTROY).append("dried ").append(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(createTextComponentWithColor("dried ", DESTROY.getColor()));
+                    msg.addExtra(prettyMaterial(type.getMaterial()));
                 }
             } else if (BukkitUtils.getContainerBlocks().contains(type.getMaterial())) {
-                msg.append(INTERACT).append("opened ").append(prettyMaterial(type.getMaterial()));
+                msg.addExtra(createTextComponentWithColor("opened ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
             } else if (type instanceof Openable && ((Openable) type).isOpen() != ((Openable) replaced).isOpen()) {
                 // Door, Trapdoor, Fence gate
-                msg.append(INTERACT).append(((Openable) type).isOpen() ? "opened" : "closed").append(" ").append(prettyMaterial(type.getMaterial()));
+                msg.addExtra(createTextComponentWithColor(((Openable) type).isOpen() ? "opened " : "closed ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
             } else if (type.getMaterial() == Material.LEVER && ((Switch) type).isPowered() != ((Switch) replaced).isPowered()) {
-                msg.append(INTERACT).append("switched ").append(prettyMaterial(type.getMaterial())).append(" ").append(prettyState(((Switch) type).isPowered() ? "on" : "off"));
+                msg.addExtra(createTextComponentWithColor("switched ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyState(((Switch) type).isPowered() ? " on" : " off"));
             } else if (type instanceof Switch && ((Switch) type).isPowered() != ((Switch) replaced).isPowered()) {
-                msg.append(INTERACT).append("pressed ").append(prettyMaterial(type.getMaterial()));
+                msg.addExtra(createTextComponentWithColor("pressed ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
             } else if (type.getMaterial() == Material.CAKE) {
-                msg.append(DESTROY).append("ate a piece of ").append(prettyMaterial(type.getMaterial()));
+                msg.addExtra(createTextComponentWithColor("ate a piece of ", DESTROY.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
             } else if (type.getMaterial() == Material.NOTE_BLOCK) {
                 Note note = ((NoteBlock) type).getNote();
-                msg.append(INTERACT).append("set ").append(prettyMaterial(type.getMaterial())).append(" to ").append(prettyState(note.getTone().name() + (note.isSharped() ? "#" : "")));
+                msg.addExtra(createTextComponentWithColor("set ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(" to ");
+                msg.addExtra(prettyState(note.getTone().name() + (note.isSharped() ? "#" : "")));
             } else if (type.getMaterial() == Material.REPEATER) {
-                msg.append(INTERACT).append("set ").append(prettyMaterial(type.getMaterial())).append(" to ").append(prettyState(((Repeater) type).getDelay())).append(" ticks delay");
+                msg.addExtra(createTextComponentWithColor("set ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(" to ");
+                msg.addExtra(prettyState(((Repeater) type).getDelay()));
+                msg.addExtra(createTextComponentWithColor(" ticks delay", DEFAULT.getColor()));
             } else if (type.getMaterial() == Material.COMPARATOR) {
-                msg.append(INTERACT).append("set ").append(prettyMaterial(type.getMaterial())).append(" to ").append(prettyState(((Comparator) type).getMode()));
+                msg.addExtra(createTextComponentWithColor("set ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(" to ");
+                msg.addExtra(prettyState(((Comparator) type).getMode()));
             } else if (type.getMaterial() == Material.DAYLIGHT_DETECTOR) {
-                msg.append(INTERACT).append("set ").append(prettyMaterial(type.getMaterial())).append(" to ").append(prettyState(((DaylightDetector) type).isInverted() ? "inverted" : "normal"));
+                msg.addExtra(createTextComponentWithColor("set ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(" to ");
+                msg.addExtra(prettyState(((DaylightDetector) type).isInverted() ? "inverted" : "normal"));
             } else if (type instanceof Lectern) {
-                msg.append(INTERACT).append("changed the book on a ").append(prettyMaterial(type.getMaterial())).append(" to").append(prettyState(typeDetails.length() == 0 ? " empty" : typeDetails));
+                msg.addExtra(createTextComponentWithColor("changed the book on a ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(" to");
+                msg.addExtra(prettyState(typeDetails.length() == 0 ? " empty" : typeDetails));
             } else if (type instanceof Powerable) {
-                msg.append(INTERACT).append("stepped on ").append(prettyMaterial(type.getMaterial()));
+                msg.addExtra(createTextComponentWithColor("stepped on ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
             } else if (type.getMaterial() == Material.TRIPWIRE) {
-                msg.append(INTERACT).append("ran into ").append(prettyMaterial(type.getMaterial()));
+                msg.addExtra(createTextComponentWithColor("ran into ", INTERACT.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
             } else if (type instanceof Sign || type instanceof WallSign) {
-                msg.append(CREATE).append("edited a ").append(prettyMaterial(type.getMaterial())).append(CREATE).append(" to ").append(prettyState(typeDetails));
+                msg.addExtra(createTextComponentWithColor("edited a ", CREATE.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(createTextComponentWithColor(" to ", CREATE.getColor()));
+                msg.addExtra(prettyState(typeDetails));
             } else {
-                msg.append(CREATE).append("replaced ").append(prettyMaterial(replaced.getMaterial())).append(prettyState(replacedDetails)).append(CREATE).append(" with ").append(prettyMaterial(type.getMaterial())).append(prettyState(typeDetails));
+                msg.addExtra(createTextComponentWithColor("replaced ", CREATE.getColor()));
+                msg.addExtra(prettyMaterial(replaced.getMaterial()));
+                msg.addExtra(prettyState(replacedDetails));
+                msg.addExtra(createTextComponentWithColor(" with ", CREATE.getColor()));
+                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyState(typeDetails));
             }
         } else if (BukkitUtils.isEmpty(type.getMaterial())) {
-            msg.append(DESTROY).append("destroyed ").append(prettyMaterial(replaced.getMaterial())).append(prettyState(replacedDetails));
+            msg.addExtra(createTextComponentWithColor("destroyed ", DESTROY.getColor()));
+            msg.addExtra(prettyMaterial(replaced.getMaterial()));
+            msg.addExtra(prettyState(replacedDetails));
         } else if (BukkitUtils.isEmpty(replaced.getMaterial())) {
-            msg.append(CREATE).append("created ").append(prettyMaterial(type.getMaterial())).append(prettyState(typeDetails));
+            msg.addExtra(createTextComponentWithColor("created ", CREATE.getColor()));
+            msg.addExtra(prettyMaterial(type.getMaterial()));
+            msg.addExtra(prettyState(typeDetails));
         } else {
-            msg.append(CREATE).append("replaced ").append(prettyMaterial(replaced.getMaterial())).append(prettyState(replacedDetails)).append(CREATE).append(" with ").append(type.getMaterial().name()).append(typeDetails);
+            msg.addExtra(createTextComponentWithColor("replaced ", CREATE.getColor()));
+            msg.addExtra(prettyMaterial(replaced.getMaterial()));
+            msg.addExtra(prettyState(replacedDetails));
+            msg.addExtra(createTextComponentWithColor(" with ", CREATE.getColor()));
+            msg.addExtra(prettyMaterial(type.getMaterial()));
+            msg.addExtra(prettyState(typeDetails));
         }
         if (loc != null) {
-            msg.append(" at: ").append(prettyLocation(loc));
+            msg.addExtra(" at ");
+            msg.addExtra(prettyLocation(loc));
         }
-        return msg.toString();
+        return new BaseComponent[] { msg };
     }
 
     public BlockData getBlockReplaced() {
@@ -189,10 +249,5 @@ public class BlockChange implements LookupCacheElement {
     @Override
     public Location getLocation() {
         return loc;
-    }
-
-    @Override
-    public String getMessage() {
-        return toString();
     }
 }

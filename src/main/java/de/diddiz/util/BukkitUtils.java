@@ -1,8 +1,6 @@
 package de.diddiz.util;
 
 import static de.diddiz.util.MessagingUtil.prettyMaterial;
-import static de.diddiz.util.TypeColor.DEFAULT;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +13,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.HoverEvent.Action;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -686,29 +688,26 @@ public class BukkitUtils {
         return m == Material.AIR || m == Material.CAVE_AIR || m == Material.VOID_AIR;
     }
 
-    public static String toString(ItemStack stack) {
+    public static TextComponent toString(ItemStack stack) {
         if (stack == null || stack.getAmount() == 0 || isEmpty(stack.getType())) {
             return prettyMaterial("nothing");
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append(stack.getAmount()).append("x ").append(prettyMaterial(stack.getType()));
-        sb.append(TypeColor.STATE);
+        TextComponent msg = MessagingUtil.createTextComponentWithColor(stack.getAmount() + "x ", TypeColor.DEFAULT.getColor());
+        msg.addExtra(prettyMaterial(stack.getType()));
+
         ItemMeta meta = stack.getItemMeta();
+        TextComponent hover = MessagingUtil.createTextComponentWithColor("", TypeColor.STATE.getColor());
         boolean metaStarted = false;
         if (meta.hasEnchants()) {
             Map<Enchantment, Integer> enchants = meta.getEnchants();
             if (!enchants.isEmpty()) {
                 for (Entry<Enchantment, Integer> e : enchants.entrySet()) {
                     if (!metaStarted) {
-                        sb.append(" [");
                         metaStarted = true;
                     } else {
-                        sb.append(", ");
+                        hover.addExtra("\n");
                     }
-                    sb.append(formatMinecraftKey(e.getKey().getKey().getKey()));
-                    if (e.getValue() > 1) {
-                        sb.append(" ").append(maybeToRoman(e.getValue() - 1));
-                    }
+                    hover.addExtra(formatMinecraftKey(e.getKey().getKey().getKey()) + ((e.getKey().getMaxLevel() != 1 || e.getValue() != 1) ? " " + maybeToRoman(e.getValue()) : ""));
                 }
             }
         }
@@ -719,24 +718,20 @@ public class BukkitUtils {
                 if (!enchants.isEmpty()) {
                     for (Entry<Enchantment, Integer> e : enchants.entrySet()) {
                         if (!metaStarted) {
-                            sb.append(" [");
                             metaStarted = true;
                         } else {
-                            sb.append(", ");
+                            hover.addExtra("\n");
                         }
-                        sb.append(formatMinecraftKey(e.getKey().getKey().getKey()));
-                        if (e.getValue() > 1) {
-                            sb.append(" ").append(maybeToRoman(e.getValue() - 1));
-                        }
+                        hover.addExtra(formatMinecraftKey(e.getKey().getKey().getKey()) + ((e.getKey().getMaxLevel() != 1 || e.getValue() != 1) ? " " + maybeToRoman(e.getValue()) : ""));
                     }
                 }
             }
         }
         if (metaStarted) {
-            sb.append("]");
+            msg.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new BaseComponent[] { hover }));
         }
-        sb.append(DEFAULT);
-        return sb.toString();
+
+        return msg;
     }
 
     private static final String[] romanNumbers = new String[] { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "XI", "X" };

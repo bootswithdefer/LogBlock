@@ -1,6 +1,6 @@
 package de.diddiz.util;
 
-import org.bukkit.ChatColor;
+import net.md_5.bungee.api.ChatColor;
 
 public enum ActionColor {
     DESTROY(ChatColor.RED),

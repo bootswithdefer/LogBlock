@@ -1,12 +1,10 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.util.ActionColor.CREATE;
-import static de.diddiz.util.ActionColor.DESTROY;
-import static de.diddiz.util.TypeColor.DEFAULT;
-import static de.diddiz.util.Utils.spaces;
-
+import de.diddiz.util.MessagingUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 
 public class SummedKills implements LookupCacheElement {
@@ -27,12 +25,7 @@ public class SummedKills implements LookupCacheElement {
     }
 
     @Override
-    public String getMessage() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(CREATE).append(kills).append(spaces((int) ((6 - String.valueOf(kills).length()) / spaceFactor)));
-        builder.append(DESTROY).append(killed).append(spaces((int) ((7 - String.valueOf(killed).length()) / spaceFactor)));
-        builder.append(DEFAULT).append(player.getName());
-        return builder.toString();
-
+    public BaseComponent[] getLogMessage() {
+        return MessagingUtil.formatSummarizedChanges(kills, killed, new TextComponent(player.getName()), 6, 7, spaceFactor);
     }
 }

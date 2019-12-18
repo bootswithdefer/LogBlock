@@ -1,13 +1,16 @@
 package de.diddiz.LogBlock;
 
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
+import de.diddiz.util.MessagingUtil;
 import org.bukkit.Location;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 
-import static de.diddiz.util.Utils.spaces;
+import static de.diddiz.util.MessagingUtil.prettyMaterial;
 
 public class SummedEntityChanges implements LookupCacheElement {
     private final int type;
@@ -30,7 +33,7 @@ public class SummedEntityChanges implements LookupCacheElement {
     }
 
     @Override
-    public String getMessage() {
-        return created + spaces((int) ((10 - String.valueOf(created).length()) / spaceFactor)) + destroyed + spaces((int) ((10 - String.valueOf(destroyed).length()) / spaceFactor)) + (actor != null ? actor.getName() : Objects.toString(EntityTypeConverter.getEntityType(type)));
+    public BaseComponent[] getLogMessage() {
+        return MessagingUtil.formatSummarizedChanges(created, destroyed, actor != null ? new TextComponent(actor.getName()) : prettyMaterial(Objects.toString(EntityTypeConverter.getEntityType(type))), 10, 10, spaceFactor);
     }
 }

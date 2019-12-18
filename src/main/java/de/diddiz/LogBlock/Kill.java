@@ -1,16 +1,15 @@
 package de.diddiz.LogBlock;
 
 import static de.diddiz.util.ActionColor.DESTROY;
-import static de.diddiz.util.MessagingUtil.brackets;
 import static de.diddiz.util.MessagingUtil.prettyDate;
 import static de.diddiz.util.MessagingUtil.prettyLocation;
 import static de.diddiz.util.MessagingUtil.prettyMaterial;
-import static de.diddiz.util.TypeColor.DEFAULT;
-
 import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.MessagingUtil.BracketType;
+import de.diddiz.util.MessagingUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
@@ -40,19 +39,7 @@ public class Kill implements LookupCacheElement {
 
     @Override
     public String toString() {
-        final StringBuilder msg = new StringBuilder();
-        if (date > 0) {
-            msg.append(brackets(prettyDate(date), BracketType.STANDARD)).append(' ');
-        }
-        msg.append(killerName).append(DESTROY).append(" killed ").append(DEFAULT).append(victimName);
-        if (loc != null) {
-            msg.append(" at ").append(prettyLocation(loc));
-        }
-        if (weapon != 0) {
-            String weaponName = prettyItemName(MaterialConverter.getMaterial(weapon));
-            msg.append(" with ").append(weaponName); // + ("aeiou".contains(weaponName.substring(0, 1)) ? "an " : "a " )
-        }
-        return msg.toString();
+        return BaseComponent.toPlainText(getLogMessage());
     }
 
     @Override
@@ -61,11 +48,26 @@ public class Kill implements LookupCacheElement {
     }
 
     @Override
-    public String getMessage() {
-        return toString();
+    public BaseComponent[] getLogMessage() {
+        TextComponent msg = new TextComponent();
+        if (date > 0) {
+            msg.addExtra(prettyDate(date));
+            msg.addExtra(" ");
+        }
+        msg.addExtra(MessagingUtil.createTextComponentWithColor(killerName + " killed ", DESTROY.getColor()));
+        msg.addExtra(new TextComponent(victimName));
+        if (loc != null) {
+            msg.addExtra(" at ");
+            msg.addExtra(prettyLocation(loc));
+        }
+        if (weapon != 0) {
+            msg.addExtra(" with ");
+            msg.addExtra(prettyItemName(MaterialConverter.getMaterial(weapon)));
+        }
+        return new BaseComponent[] { msg };
     }
 
-    public String prettyItemName(Material t) {
+    public TextComponent prettyItemName(Material t) {
         if (t == null || BukkitUtils.isEmpty(t)) {
             return prettyMaterial("fist");
         }

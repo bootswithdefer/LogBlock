@@ -43,6 +43,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 
 import static de.diddiz.LogBlock.config.Config.dontRollback;
 import static de.diddiz.LogBlock.config.Config.replaceAnyway;
@@ -184,7 +186,7 @@ public class WorldEditor implements Runnable {
                     file.getParentFile().mkdirs();
                     final PrintWriter writer = new PrintWriter(file);
                     for (final LookupCacheElement err : errorList) {
-                        writer.println(err.getMessage());
+                        writer.println(BaseComponent.toPlainText(err.getLogMessage()));
                     }
                     writer.close();
                 } catch (final Exception ex) {
@@ -471,6 +473,11 @@ public class WorldEditor implements Runnable {
         @Override
         public Location getLocation() {
             return loc;
+        }
+
+        @Override
+        public BaseComponent[] getLogMessage() {
+            return TextComponent.fromLegacyText(getMessage());
         }
     }
 }
