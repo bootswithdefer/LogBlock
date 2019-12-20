@@ -59,6 +59,8 @@ public class Config {
     // Not loaded from config - checked at runtime
     public static boolean mb4 = false;
 
+    public static final String CURRENT_CONFIG_VERSION = "1.15.1";
+
     public static enum LogKillsLevel {
         PLAYERS,
         MONSTERS,
@@ -68,7 +70,7 @@ public class Config {
     public static void load(LogBlock logblock) throws DataFormatException, IOException {
         final ConfigurationSection config = logblock.getConfig();
         final Map<String, Object> def = new HashMap<>();
-        def.put("version", logblock.getDescription().getVersion());
+        def.put("version", CURRENT_CONFIG_VERSION);
         final List<String> worldNames = new ArrayList<>();
         for (final World world : getWorlds()) {
             worldNames.add(world.getName());
