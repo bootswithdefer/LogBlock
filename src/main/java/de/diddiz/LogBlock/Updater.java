@@ -737,6 +737,10 @@ class Updater {
             config.set("version", "1.14.1");
         }
 
+        if (configVersion.compareTo(new ComparableVersion("1.15.1")) < 0) {
+            config.set("version", "1.15.1");
+        }
+
         // this can always be checked
         try {
             final Connection conn = logblock.getConnection();
