@@ -8,9 +8,13 @@ import static de.diddiz.util.Utils.spaces;
 import de.diddiz.LogBlock.config.Config;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.EntityType;
 
 public class MessagingUtil {
@@ -36,7 +40,9 @@ public class MessagingUtil {
     }
 
     public static TextComponent prettyDate(long date) {
-        return brackets(BracketType.STANDARD, createTextComponentWithColor(Config.formatter.format(date), TypeColor.DATE.getColor()));
+        TextComponent tc = brackets(BracketType.STANDARD, createTextComponentWithColor(Config.formatterShort.format(date), TypeColor.DATE.getColor()));
+        tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(Config.formatter.format(date)).create()));
+        return tc;
     }
 
     public static TextComponent prettyState(String stateName) {
@@ -59,21 +65,39 @@ public class MessagingUtil {
         return prettyMaterial(material.name());
     }
 
+    public static TextComponent prettyMaterial(BlockData material) {
+        TextComponent tc = prettyMaterial(material.getMaterial());
+        String bdString = material.getAsString();
+        int bracket = bdString.indexOf("[");
+        if (bracket >= 0) {
+            int bracket2 = bdString.indexOf("]", bracket);
+            if (bracket2 >= 0) {
+                String state = bdString.substring(bracket + 1, bracket2).replace(',', '\n');
+                tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(state).create()));
+            }
+        }
+        return tc;
+    }
+
     public static TextComponent prettyEntityType(EntityType type) {
         return prettyMaterial(type.name());
     }
 
-    public static TextComponent prettyLocation(Location loc) {
-        return prettyLocation(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+    public static TextComponent prettyLocation(Location loc, int entryId) {
+        return prettyLocation(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), entryId);
     }
 
-    public static TextComponent prettyLocation(Number x, Number y, Number z) {
-        TextComponent tc = createTextComponentWithColor("X: ", DEFAULT.getColor());
-        tc.addExtra(createTextComponentWithColor(Integer.toString(x.intValue()), TypeColor.COORDINATE.getColor()));
-        tc.addExtra(createTextComponentWithColor(", Y: ", DEFAULT.getColor()));
-        tc.addExtra(createTextComponentWithColor(Integer.toString(y.intValue()), TypeColor.COORDINATE.getColor()));
-        tc.addExtra(createTextComponentWithColor(", Z: ", DEFAULT.getColor()));
-        tc.addExtra(createTextComponentWithColor(Integer.toString(z.intValue()), TypeColor.COORDINATE.getColor()));
+    public static TextComponent prettyLocation(int x, int y, int z, int entryId) {
+        TextComponent tc = createTextComponentWithColor("", DEFAULT.getColor());
+        tc.addExtra(createTextComponentWithColor(Integer.toString(x), TypeColor.COORDINATE.getColor()));
+        tc.addExtra(createTextComponentWithColor(", ", DEFAULT.getColor()));
+        tc.addExtra(createTextComponentWithColor(Integer.toString(y), TypeColor.COORDINATE.getColor()));
+        tc.addExtra(createTextComponentWithColor(", ", DEFAULT.getColor()));
+        tc.addExtra(createTextComponentWithColor(Integer.toString(z), TypeColor.COORDINATE.getColor()));
+        if (entryId > 0) {
+            tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lb tp " + entryId));
+            tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Teleport here").create()));
+        }
         return tc;
     }
 

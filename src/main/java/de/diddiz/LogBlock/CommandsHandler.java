@@ -405,7 +405,7 @@ public class CommandsHandler implements CommandExecutor {
                     if (lookupElements[i].getLocation() != null) {
                         message.addExtra(new TextComponent("(" + (i + 1) + ") "));
                     }
-                    for (BaseComponent component : lookupElements[i].getLogMessage()) {
+                    for (BaseComponent component : lookupElements[i].getLogMessage(i + 1)) {
                         message.addExtra(component);
                     }
                     sender.spigot().sendMessage(message);

@@ -101,11 +101,11 @@ public class BlockChange implements LookupCacheElement {
 
     @Override
     public String toString() {
-        return BaseComponent.toPlainText(getLogMessage());
+        return BaseComponent.toPlainText(getLogMessage(-1));
     }
 
     @Override
-    public BaseComponent[] getLogMessage() {
+    public BaseComponent[] getLogMessage(int entry) {
         TextComponent msg = new TextComponent();
         if (date > 0) {
             msg.addExtra(prettyDate(date));
@@ -132,108 +132,108 @@ public class BlockChange implements LookupCacheElement {
             } else if (ca != null) {
                 if (ca.itemStack == null) {
                     msg.addExtra(createTextComponentWithColor("looked inside ", INTERACT.getColor()));
-                    msg.addExtra(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(prettyMaterial(type));
                 } else if (ca.remove) {
                     msg.addExtra(createTextComponentWithColor("took ", DESTROY.getColor()));
                     msg.addExtra(BukkitUtils.toString(ca.itemStack));
                     msg.addExtra(createTextComponentWithColor(" from ", DESTROY.getColor()));
-                    msg.addExtra(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(prettyMaterial(type));
                 } else {
                     msg.addExtra(createTextComponentWithColor("put ", CREATE.getColor()));
                     msg.addExtra(BukkitUtils.toString(ca.itemStack));
                     msg.addExtra(createTextComponentWithColor(" into ", CREATE.getColor()));
-                    msg.addExtra(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(prettyMaterial(type));
                 }
             } else if (type instanceof Waterlogged && ((Waterlogged) type).isWaterlogged() != ((Waterlogged) replaced).isWaterlogged()) {
                 if (((Waterlogged) type).isWaterlogged()) {
                     msg.addExtra(createTextComponentWithColor("waterlogged ", CREATE.getColor()));
-                    msg.addExtra(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(prettyMaterial(type));
                 } else {
                     msg.addExtra(createTextComponentWithColor("dried ", DESTROY.getColor()));
-                    msg.addExtra(prettyMaterial(type.getMaterial()));
+                    msg.addExtra(prettyMaterial(type));
                 }
             } else if (BukkitUtils.getContainerBlocks().contains(type.getMaterial())) {
                 msg.addExtra(createTextComponentWithColor("opened ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
             } else if (type instanceof Openable && ((Openable) type).isOpen() != ((Openable) replaced).isOpen()) {
                 // Door, Trapdoor, Fence gate
                 msg.addExtra(createTextComponentWithColor(((Openable) type).isOpen() ? "opened " : "closed ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
             } else if (type.getMaterial() == Material.LEVER && ((Switch) type).isPowered() != ((Switch) replaced).isPowered()) {
                 msg.addExtra(createTextComponentWithColor("switched ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
                 msg.addExtra(prettyState(((Switch) type).isPowered() ? " on" : " off"));
             } else if (type instanceof Switch && ((Switch) type).isPowered() != ((Switch) replaced).isPowered()) {
                 msg.addExtra(createTextComponentWithColor("pressed ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
             } else if (type.getMaterial() == Material.CAKE) {
                 msg.addExtra(createTextComponentWithColor("ate a piece of ", DESTROY.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
             } else if (type.getMaterial() == Material.NOTE_BLOCK) {
                 Note note = ((NoteBlock) type).getNote();
                 msg.addExtra(createTextComponentWithColor("set ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
                 msg.addExtra(" to ");
                 msg.addExtra(prettyState(note.getTone().name() + (note.isSharped() ? "#" : "")));
             } else if (type.getMaterial() == Material.REPEATER) {
                 msg.addExtra(createTextComponentWithColor("set ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
                 msg.addExtra(" to ");
                 msg.addExtra(prettyState(((Repeater) type).getDelay()));
                 msg.addExtra(createTextComponentWithColor(" ticks delay", DEFAULT.getColor()));
             } else if (type.getMaterial() == Material.COMPARATOR) {
                 msg.addExtra(createTextComponentWithColor("set ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
                 msg.addExtra(" to ");
                 msg.addExtra(prettyState(((Comparator) type).getMode()));
             } else if (type.getMaterial() == Material.DAYLIGHT_DETECTOR) {
                 msg.addExtra(createTextComponentWithColor("set ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
                 msg.addExtra(" to ");
                 msg.addExtra(prettyState(((DaylightDetector) type).isInverted() ? "inverted" : "normal"));
             } else if (type instanceof Lectern) {
                 msg.addExtra(createTextComponentWithColor("changed the book on a ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
                 msg.addExtra(" to");
                 msg.addExtra(prettyState(typeDetails.length() == 0 ? " empty" : typeDetails));
             } else if (type instanceof Powerable) {
                 msg.addExtra(createTextComponentWithColor("stepped on ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
             } else if (type.getMaterial() == Material.TRIPWIRE) {
                 msg.addExtra(createTextComponentWithColor("ran into ", INTERACT.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
             } else if (type instanceof Sign || type instanceof WallSign) {
                 msg.addExtra(createTextComponentWithColor("edited a ", CREATE.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
                 msg.addExtra(createTextComponentWithColor(" to ", CREATE.getColor()));
                 msg.addExtra(prettyState(typeDetails));
             } else {
                 msg.addExtra(createTextComponentWithColor("replaced ", CREATE.getColor()));
-                msg.addExtra(prettyMaterial(replaced.getMaterial()));
+                msg.addExtra(prettyMaterial(replaced));
                 msg.addExtra(prettyState(replacedDetails));
                 msg.addExtra(createTextComponentWithColor(" with ", CREATE.getColor()));
-                msg.addExtra(prettyMaterial(type.getMaterial()));
+                msg.addExtra(prettyMaterial(type));
                 msg.addExtra(prettyState(typeDetails));
             }
         } else if (BukkitUtils.isEmpty(type.getMaterial())) {
             msg.addExtra(createTextComponentWithColor("destroyed ", DESTROY.getColor()));
-            msg.addExtra(prettyMaterial(replaced.getMaterial()));
+            msg.addExtra(prettyMaterial(replaced));
             msg.addExtra(prettyState(replacedDetails));
         } else if (BukkitUtils.isEmpty(replaced.getMaterial())) {
             msg.addExtra(createTextComponentWithColor("created ", CREATE.getColor()));
-            msg.addExtra(prettyMaterial(type.getMaterial()));
+            msg.addExtra(prettyMaterial(type));
             msg.addExtra(prettyState(typeDetails));
         } else {
             msg.addExtra(createTextComponentWithColor("replaced ", CREATE.getColor()));
-            msg.addExtra(prettyMaterial(replaced.getMaterial()));
+            msg.addExtra(prettyMaterial(replaced));
             msg.addExtra(prettyState(replacedDetails));
             msg.addExtra(createTextComponentWithColor(" with ", CREATE.getColor()));
-            msg.addExtra(prettyMaterial(type.getMaterial()));
+            msg.addExtra(prettyMaterial(type));
             msg.addExtra(prettyState(typeDetails));
         }
         if (loc != null) {
             msg.addExtra(" at ");
-            msg.addExtra(prettyLocation(loc));
+            msg.addExtra(prettyLocation(loc, entry));
         }
         return new BaseComponent[] { msg };
     }

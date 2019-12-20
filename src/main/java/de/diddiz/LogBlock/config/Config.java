@@ -52,6 +52,7 @@ public class Config {
     public static Set<String> hiddenPlayers;
     public static List<String> ignoredChat;
     public static SimpleDateFormat formatter;
+    public static SimpleDateFormat formatterShort;
     public static boolean safetyIdCheck;
     public static boolean debug;
     public static boolean logEnvironmentalKills;
@@ -121,11 +122,17 @@ public class Config {
         def.put("lookup.linesLimit", 1500);
         def.put("lookup.hardLinesLimit", 100000);
         try {
-            formatter = new SimpleDateFormat(config.getString("lookup.dateFormat", "MM-dd HH:mm:ss"));
+            formatter = new SimpleDateFormat(config.getString("lookup.dateFormat", "yyyy-MM-dd HH:mm:ss"));
         } catch (IllegalArgumentException e) {
             throw new DataFormatException("Invalid specification for  date format, please see http://docs.oracle.com/javase/1.4.2/docs/api/java/text/SimpleDateFormat.html : " + e.getMessage());
         }
-        def.put("lookup.dateFormat", "MM-dd HH:mm:ss");
+        def.put("lookup.dateFormat", "yyyy-MM-dd HH:mm:ss");
+        try {
+            formatterShort = new SimpleDateFormat(config.getString("lookup.dateFormatShort", "MM-dd HH:mm"));
+        } catch (IllegalArgumentException e) {
+            throw new DataFormatException("Invalid specification for  date format, please see http://docs.oracle.com/javase/1.4.2/docs/api/java/text/SimpleDateFormat.html : " + e.getMessage());
+        }
+        def.put("lookup.dateFormatShort", "MM-dd HH:mm");
         def.put("questioner.askRollbacks", true);
         def.put("questioner.askRedos", true);
         def.put("questioner.askClearLogs", true);

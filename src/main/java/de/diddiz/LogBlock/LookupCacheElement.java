@@ -6,5 +6,9 @@ import org.bukkit.Location;
 public interface LookupCacheElement {
     public Location getLocation();
 
-    public BaseComponent[] getLogMessage();
+    public default BaseComponent[] getLogMessage() {
+        return getLogMessage(-1);
+    }
+
+    public BaseComponent[] getLogMessage(int entry);
 }
