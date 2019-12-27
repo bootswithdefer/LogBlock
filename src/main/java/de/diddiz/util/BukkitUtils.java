@@ -738,7 +738,7 @@ public class BukkitUtils {
 
     private static String maybeToRoman(int value) {
         if (value > 0 && value <= 10) {
-            return romanNumbers[value];
+            return romanNumbers[value - 1];
         }
         return Integer.toString(value);
     }
