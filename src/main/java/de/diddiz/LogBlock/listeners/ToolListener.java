@@ -1,6 +1,7 @@
 package de.diddiz.LogBlock.listeners;
 
 import de.diddiz.LogBlock.*;
+import de.diddiz.LogBlock.events.ToolUseEvent;
 import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.CuboidRegion;
 import org.bukkit.ChatColor;
@@ -65,6 +66,9 @@ public class ToolListener implements Listener {
                     }
                     try {
                         params.validate();
+                        if (this.callToolUseEvent(new ToolUseEvent(player, tool, behavior, params))) {
+                            return;
+                        }
                         if (toolData.mode == ToolMode.ROLLBACK) {
                             handler.new CommandRollback(player, params, true);
                         } else if (toolData.mode == ToolMode.REDO) {
@@ -83,6 +87,11 @@ public class ToolListener implements Listener {
                 }
             }
         }
+    }
+
+    private boolean callToolUseEvent(ToolUseEvent event) {
+        this.logblock.getServer().getPluginManager().callEvent(event);
+        return event.isCancelled();
     }
 
     @EventHandler
