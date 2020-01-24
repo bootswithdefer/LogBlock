@@ -45,7 +45,8 @@ public enum Logging {
     DRAGONEGGTELEPORT(true),
     DAYLIGHTDETECTORINTERACT,
     LECTERNBOOKCHANGE(true),
-    SCAFFOLDING(true);
+    SCAFFOLDING(true),
+    SHULKER_BOX_CONTENT;
 
     public static final int length = Logging.values().length;
     private final boolean defaultEnabled;

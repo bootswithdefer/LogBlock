@@ -40,7 +40,7 @@ public class BlockBreakLogging extends LoggingListener {
             final Block origin = event.getBlock();
             final Material type = origin.getType();
 
-            if (wcfg.isLogging(Logging.CHESTACCESS) && BukkitUtils.getContainerBlocks().contains(type)) {
+            if (wcfg.isLogging(Logging.CHESTACCESS) && BukkitUtils.getContainerBlocks().contains(type) && !BukkitUtils.getShulkerBoxBlocks().contains(type)) {
                 consumer.queueContainerBreak(actor, origin.getState());
             } else if (type == Material.ICE) {
                 // When in creative mode ice doesn't form water

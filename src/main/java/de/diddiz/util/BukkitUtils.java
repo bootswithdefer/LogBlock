@@ -55,6 +55,7 @@ public class BukkitUtils {
 
     private static final Set<Material> cropBlocks;
     private static final Set<Material> containerBlocks;
+    private static final Set<Material> shulkerBoxBlocks;
 
     private static final Set<Material> singleBlockPlants;
     private static final Set<Material> doublePlants;
@@ -316,6 +317,26 @@ public class BukkitUtils {
         cropBlocks.add(Material.POTATO);
         cropBlocks.add(Material.BEETROOT);
 
+        // Shulker Boxes
+        shulkerBoxBlocks = EnumSet.noneOf(Material.class);
+        shulkerBoxBlocks.add(Material.SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.BLACK_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.BLUE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.LIGHT_GRAY_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.BROWN_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.CYAN_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.GRAY_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.GREEN_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.LIGHT_BLUE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.MAGENTA_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.LIME_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.ORANGE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.PINK_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.PURPLE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.RED_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.WHITE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.YELLOW_SHULKER_BOX);
+
         // Container Blocks
         containerBlocks = EnumSet.noneOf(Material.class);
         containerBlocks.add(Material.CHEST);
@@ -325,23 +346,7 @@ public class BukkitUtils {
         containerBlocks.add(Material.HOPPER);
         containerBlocks.add(Material.BREWING_STAND);
         containerBlocks.add(Material.FURNACE);
-        containerBlocks.add(Material.SHULKER_BOX);
-        containerBlocks.add(Material.BLACK_SHULKER_BOX);
-        containerBlocks.add(Material.BLUE_SHULKER_BOX);
-        containerBlocks.add(Material.LIGHT_GRAY_SHULKER_BOX);
-        containerBlocks.add(Material.BROWN_SHULKER_BOX);
-        containerBlocks.add(Material.CYAN_SHULKER_BOX);
-        containerBlocks.add(Material.GRAY_SHULKER_BOX);
-        containerBlocks.add(Material.GREEN_SHULKER_BOX);
-        containerBlocks.add(Material.LIGHT_BLUE_SHULKER_BOX);
-        containerBlocks.add(Material.MAGENTA_SHULKER_BOX);
-        containerBlocks.add(Material.LIME_SHULKER_BOX);
-        containerBlocks.add(Material.ORANGE_SHULKER_BOX);
-        containerBlocks.add(Material.PINK_SHULKER_BOX);
-        containerBlocks.add(Material.PURPLE_SHULKER_BOX);
-        containerBlocks.add(Material.RED_SHULKER_BOX);
-        containerBlocks.add(Material.WHITE_SHULKER_BOX);
-        containerBlocks.add(Material.YELLOW_SHULKER_BOX);
+        containerBlocks.addAll(shulkerBoxBlocks);
         containerBlocks.add(Material.BARREL);
         containerBlocks.add(Material.BLAST_FURNACE);
         containerBlocks.add(Material.SMOKER);
@@ -584,6 +589,10 @@ public class BukkitUtils {
 
     public static Set<Material> getContainerBlocks() {
         return containerBlocks;
+    }
+
+    public static Set<Material> getShulkerBoxBlocks() {
+        return shulkerBoxBlocks;
     }
 
     public static boolean isConcreteBlock(Material m) {

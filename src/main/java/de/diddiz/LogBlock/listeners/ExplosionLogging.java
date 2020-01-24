@@ -113,7 +113,7 @@ public class ExplosionLogging extends LoggingListener {
             }
             for (final Block block : event.blockList()) {
                 final Material type = block.getType();
-                if (wcfg.isLogging(Logging.CHESTACCESS) && (getContainerBlocks().contains(type))) {
+                if (wcfg.isLogging(Logging.CHESTACCESS) && getContainerBlocks().contains(type) && !BukkitUtils.getShulkerBoxBlocks().contains(type)) {
                     consumer.queueContainerBreak(actor, block.getState());
                 } else {
                     consumer.queueBlockBreak(actor, block.getState());
@@ -168,7 +168,7 @@ public class ExplosionLogging extends LoggingListener {
                 }
 
                 final Material type = block.getType();
-                if (wcfg.isLogging(Logging.CHESTACCESS) && (getContainerBlocks().contains(type))) {
+                if (wcfg.isLogging(Logging.CHESTACCESS) && getContainerBlocks().contains(type) && !BukkitUtils.getShulkerBoxBlocks().contains(type)) {
                     consumer.queueContainerBreak(actor, block.getState());
                 } else {
                     consumer.queueBlockBreak(actor, block.getState());
