@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Bee;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Hanging;
 import org.bukkit.entity.IronGolem;
@@ -223,6 +224,17 @@ public class AdvancedEntityLogging extends LoggingListener {
         if (Config.isLogging(entity.getWorld(), EntityLogging.DESTROY, entity)) {
             lastEntityDamagedForDeathUUID = entity.getUniqueId();
             lastEntityDamagedForDeathSerialized = WorldEditHelper.serializeEntity(entity);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        Entity damager = event.getDamager();
+        if (damager instanceof Bee && !((Bee) damager).hasStung()) {
+            if (Config.isLogging(damager.getWorld(), EntityLogging.MODIFY, damager)) {
+                Actor actor = Actor.actorFromEntity(event.getEntity());
+                consumer.queueEntityModification(actor, damager.getUniqueId(), damager.getType(), damager.getLocation(), EntityChange.EntityChangeType.GET_STUNG, null);
+            }
         }
     }
 

@@ -20,6 +20,7 @@ import org.bukkit.block.data.type.TechnicalPiston.Type;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Bee;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.inventory.EquipmentSlot;
@@ -324,6 +325,12 @@ public class WorldEditor implements Runnable {
                     }
                 }
                 return PerformResult.NO_ACTION; // the entity is not there, or equip does not match
+            } else if (changeType == EntityChangeType.GET_STUNG) {
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                Entity existing = BukkitUtils.loadEntityAround(loc.getChunk(), uuid);
+                if (existing != null && existing instanceof Bee) {
+                    ((Bee) existing).setHasStung(!rollback);
+                }
             }
             return PerformResult.NO_ACTION;
         }

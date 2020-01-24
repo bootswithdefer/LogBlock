@@ -28,7 +28,8 @@ public class EntityChange implements LookupCacheElement {
         KILL,
         MODIFY,
         ADDEQUIP,
-        REMOVEEQUIP;
+        REMOVEEQUIP,
+        GET_STUNG;
 
         private static EntityChangeType[] values = values();
 
@@ -113,6 +114,8 @@ public class EntityChange implements LookupCacheElement {
             }
         } else if (changeType == EntityChangeType.MODIFY) {
             msg.addExtra(createTextComponentWithColor("modified ", INTERACT.getColor()));
+        } else if (changeType == EntityChangeType.GET_STUNG) {
+            msg.addExtra(createTextComponentWithColor("got stung by ", DESTROY.getColor()));
         } else {
             msg.addExtra(createTextComponentWithColor("did an unknown action to ", INTERACT.getColor()));
         }
