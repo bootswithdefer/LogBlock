@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerBucketFillEvent;
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.isLogging;
 import static de.diddiz.util.LoggingUtil.smartLogBlockBreak;
+import static de.diddiz.util.LoggingUtil.smartLogBlockReplace;
 import static de.diddiz.util.LoggingUtil.smartLogFallables;
 
 public class BlockBreakLogging extends LoggingListener {
@@ -44,9 +45,9 @@ public class BlockBreakLogging extends LoggingListener {
             } else if (type == Material.ICE) {
                 // When in creative mode ice doesn't form water
                 if (event.getPlayer().getGameMode().equals(GameMode.CREATIVE)) {
-                    consumer.queueBlockBreak(actor, origin.getState());
+                    smartLogBlockBreak(consumer, actor, origin);
                 } else {
-                    consumer.queueBlockReplace(actor, origin.getState(), Bukkit.createBlockData(Material.WATER));
+                    smartLogBlockReplace(consumer, actor, origin, Bukkit.createBlockData(Material.WATER));
                 }
             } else {
                 smartLogBlockBreak(consumer, actor, origin);
