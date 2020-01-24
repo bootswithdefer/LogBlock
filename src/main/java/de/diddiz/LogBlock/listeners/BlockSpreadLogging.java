@@ -51,6 +51,18 @@ public class BlockSpreadLogging extends LoggingListener {
                 }
                 name = "MushroomSpread";
                 break;
+            case BAMBOO:
+            case BAMBOO_SAPLING: {
+                if (!isLogging(world, Logging.BAMBOOGROWTH)) {
+                    return;
+                }
+                name = "BambooGrowth";
+                if (type == Material.BAMBOO_SAPLING) {
+                    // bamboo sapling gets replaced by bamboo
+                    consumer.queueBlockReplace(new Actor(name), event.getSource().getState(), Material.BAMBOO.createBlockData());
+                }
+                break;
+            }
             default:
                 return;
         }

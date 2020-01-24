@@ -34,6 +34,7 @@ public enum Logging {
     MYCELIUMSPREAD,
     VINEGROWTH,
     MUSHROOMSPREAD,
+    BAMBOOGROWTH,
     WITHER(true),
     WITHER_SKULL(true),
     BONEMEALSTRUCTUREGROW,
