@@ -380,7 +380,7 @@ public class WorldEditor implements Runnable {
                     return PerformResult.NO_ACTION;
                 }
             }
-            if (!forceReplace && block.getType() != setBlock.getMaterial() && !block.isEmpty() && !replaceAnyway.contains(block.getType())) {
+            if (!forceReplace && !BukkitUtils.isSimilarForRollback(setBlock.getMaterial(), block.getType()) && !block.isEmpty() && !replaceAnyway.contains(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
             if (state instanceof Container && replacedBlock.getMaterial() != block.getType()) {

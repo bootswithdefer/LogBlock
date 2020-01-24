@@ -964,4 +964,32 @@ public class BukkitUtils {
         }
         return true;
     }
+
+    public static boolean isSimilarForRollback(Material expected, Material found) {
+        if (expected == found) {
+            return true;
+        }
+        switch (expected) {
+            case DIRT:
+            case MYCELIUM:
+            case FARMLAND:
+            case GRASS_BLOCK:
+            case PODZOL:
+            case GRASS_PATH:
+                return found == Material.DIRT || found == Material.MYCELIUM || found == Material.FARMLAND || found == Material.GRASS_BLOCK || found == Material.PODZOL || found == Material.GRASS_PATH;
+            case BAMBOO:
+            case BAMBOO_SAPLING:
+                return found == Material.BAMBOO || found == Material.BAMBOO_SAPLING;
+            case SPONGE:
+            case WET_SPONGE:
+                return found == Material.SPONGE || found == Material.WET_SPONGE;
+            case MELON_STEM:
+            case ATTACHED_MELON_STEM:
+                return found == Material.MELON_STEM || found == Material.ATTACHED_MELON_STEM;
+            case PUMPKIN_STEM:
+            case ATTACHED_PUMPKIN_STEM:
+                return found == Material.PUMPKIN_STEM || found == Material.ATTACHED_PUMPKIN_STEM;
+        }
+        return false;
+    }
 }
