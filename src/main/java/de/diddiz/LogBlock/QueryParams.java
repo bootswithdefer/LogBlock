@@ -975,7 +975,7 @@ public final class QueryParams implements Cloneable {
             }
         }
         if (bct == BlockChangeType.CHAT) {
-            if (!Config.isLogging(Logging.CHAT)) {
+            if (!(isLogging(Logging.CHAT) || isLogging(Logging.PLAYER_COMMANDS) || isLogging(Logging.CONSOLE_COMMANDS) || isLogging(Logging.COMMANDBLOCK_COMMANDS))) {
                 throw new IllegalArgumentException("Chat is not logged");
             }
             if (sum != SummarizationMode.NONE) {

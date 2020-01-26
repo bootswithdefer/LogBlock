@@ -47,7 +47,7 @@ class Updater {
         // }
         if (configVersion.compareTo(new ComparableVersion("1.2.7")) < 0) {
             logblock.getLogger().info("Updating tables to 1.2.7 ...");
-            if (isLogging(Logging.CHAT)) {
+            if (isLogging(Logging.CHAT) || isLogging(Logging.PLAYER_COMMANDS) || isLogging(Logging.CONSOLE_COMMANDS) || isLogging(Logging.COMMANDBLOCK_COMMANDS)) {
                 final Connection conn = logblock.getConnection();
                 try {
                     conn.setAutoCommit(true);
@@ -376,7 +376,7 @@ class Updater {
                 conn.setAutoCommit(true);
                 final Statement st = conn.createStatement();
                 checkCharset("lb-players", "name", st, false);
-                if (isLogging(Logging.CHAT)) {
+                if (isLogging(Logging.CHAT) || isLogging(Logging.PLAYER_COMMANDS) || isLogging(Logging.CONSOLE_COMMANDS) || isLogging(Logging.COMMANDBLOCK_COMMANDS)) {
                     checkCharset("lb-chat", "message", st, false);
                 }
                 for (final WorldConfig wcfg : getLoggedWorlds()) {
@@ -395,7 +395,7 @@ class Updater {
 
         if (configVersion.compareTo(new ComparableVersion("1.12.0")) < 0) {
             logblock.getLogger().info("Updating tables to 1.12.0 ...");
-            if (isLogging(Logging.CHAT)) {
+            if (isLogging(Logging.CHAT) || isLogging(Logging.PLAYER_COMMANDS) || isLogging(Logging.CONSOLE_COMMANDS) || isLogging(Logging.COMMANDBLOCK_COMMANDS)) {
                 final Connection conn = logblock.getConnection();
                 try {
                     conn.setAutoCommit(true);
@@ -739,7 +739,7 @@ class Updater {
             conn.setAutoCommit(true);
             final Statement st = conn.createStatement();
             checkCharset("lb-players", "name", st, true);
-            if (isLogging(Logging.CHAT)) {
+            if (isLogging(Logging.CHAT) || isLogging(Logging.PLAYER_COMMANDS) || isLogging(Logging.CONSOLE_COMMANDS) || isLogging(Logging.COMMANDBLOCK_COMMANDS)) {
                 checkCharset("lb-chat", "message", st, true);
             }
             createIndexIfDoesNotExist("lb-materials", "name", "UNIQUE KEY `name` (`name`(150))", st, true);
@@ -802,7 +802,7 @@ class Updater {
         if (!rs.next()) {
             state.execute("INSERT IGNORE INTO `lb-players` (UUID,playername) VALUES ('log_dummy_record','dummy_record')");
         }
-        if (isLogging(Logging.CHAT)) {
+        if (isLogging(Logging.CHAT) || isLogging(Logging.PLAYER_COMMANDS) || isLogging(Logging.CONSOLE_COMMANDS) || isLogging(Logging.COMMANDBLOCK_COMMANDS)) {
             try {
                 createTable(dbm, state, "lb-chat", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, message VARCHAR(256) NOT NULL, PRIMARY KEY (id), KEY playerid (playerid), FULLTEXT message (message)) DEFAULT CHARSET " + charset);
             } catch (SQLException e) {

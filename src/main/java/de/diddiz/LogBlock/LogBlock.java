@@ -175,7 +175,7 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.KILL)) {
             pm.registerEvents(new KillLogging(this), this);
         }
-        if (isLogging(Logging.CHAT)) {
+        if (isLogging(Logging.CHAT) || isLogging(Logging.PLAYER_COMMANDS) || isLogging(Logging.CONSOLE_COMMANDS) || isLogging(Logging.COMMANDBLOCK_COMMANDS)) {
             pm.registerEvents(new ChatLogging(this), this);
         }
         if (isLogging(Logging.ENDERMEN)) {
