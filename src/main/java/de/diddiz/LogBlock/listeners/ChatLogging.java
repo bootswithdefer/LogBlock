@@ -3,6 +3,9 @@ package de.diddiz.LogBlock.listeners;
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import org.bukkit.command.BlockCommandSender;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.minecart.CommandMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
@@ -18,7 +21,7 @@ public class ChatLogging extends LoggingListener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        if (isLogging(event.getPlayer().getWorld(), Logging.CHAT)) {
+        if (isLogging(event.getPlayer().getWorld(), Logging.PLAYER_COMMANDS)) {
             consumer.queueChat(Actor.actorFromEntity(event.getPlayer()), event.getMessage());
         }
     }
@@ -32,6 +35,24 @@ public class ChatLogging extends LoggingListener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onServerCommand(ServerCommandEvent event) {
-        consumer.queueChat(new Actor("Console"), "/" + event.getCommand());
+        CommandSender sender = event.getSender();
+        Actor actor;
+        if (sender instanceof BlockCommandSender) {
+            if (!isLogging(((BlockCommandSender) sender).getBlock().getWorld(), Logging.COMMANDBLOCK_COMMANDS)) {
+                return;
+            }
+            actor = new Actor("CommandBlock");
+        } else if (sender instanceof CommandMinecart) {
+            if (!isLogging(((CommandMinecart) sender).getWorld(), Logging.COMMANDBLOCK_COMMANDS)) {
+                return;
+            }
+            actor = new Actor("CommandMinecart");
+        } else {
+            if (!isLogging(Logging.CONSOLE_COMMANDS)) {
+                return;
+            }
+            actor = new Actor("Console");
+        }
+        consumer.queueChat(actor, "/" + event.getCommand());
     }
 }

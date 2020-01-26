@@ -46,7 +46,10 @@ public enum Logging {
     DAYLIGHTDETECTORINTERACT,
     LECTERNBOOKCHANGE(true),
     SCAFFOLDING(true),
-    SHULKER_BOX_CONTENT;
+    SHULKER_BOX_CONTENT,
+    PLAYER_COMMANDS,
+    COMMANDBLOCK_COMMANDS,
+    CONSOLE_COMMANDS;
 
     public static final int length = Logging.values().length;
     private final boolean defaultEnabled;
