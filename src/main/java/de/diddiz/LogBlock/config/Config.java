@@ -173,7 +173,7 @@ public class Config {
         logblock.saveConfig();
 
         ComparableVersion configVersion = new ComparableVersion(config.getString("version"));
-        boolean oldConfig = configVersion.compareTo(new ComparableVersion(logblock.getDescription().getVersion().replace(" (manually compiled)", ""))) < 0;
+        boolean oldConfig = configVersion.compareTo(new ComparableVersion(CURRENT_CONFIG_VERSION)) < 0;
 
         url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + getStringIncludingInts(config, "mysql.database");
         user = getStringIncludingInts(config, "mysql.user");
