@@ -168,6 +168,11 @@ public class BukkitUtils {
         singleBlockPlants.add(Material.LILY_OF_THE_VALLEY);
         singleBlockPlants.add(Material.CORNFLOWER);
         singleBlockPlants.add(Material.WITHER_ROSE);
+        singleBlockPlants.add(Material.CRIMSON_FUNGUS);
+        singleBlockPlants.add(Material.WARPED_FUNGUS);
+        singleBlockPlants.add(Material.CRIMSON_ROOTS);
+        singleBlockPlants.add(Material.WARPED_ROOTS);
+        singleBlockPlants.add(Material.NETHER_SPROUTS);
 
         doublePlants = EnumSet.noneOf(Material.class);
         doublePlants.add(Material.TALL_GRASS);
@@ -238,6 +243,8 @@ public class BukkitUtils {
         relativeTopBreakable.addAll(doublePlants);
         relativeTopBreakable.add(Material.BAMBOO);
         relativeTopBreakable.add(Material.BAMBOO_SAPLING);
+        relativeTopBreakable.add(Material.TWISTING_VINES);
+        relativeTopBreakable.add(Material.TWISTING_VINES_PLANT);
         for (Material m : Material.values()) {
             if (m.name().startsWith("POTTED_")) {
                 relativeTopBreakable.add(m);
@@ -998,6 +1005,12 @@ public class BukkitUtils {
             case PUMPKIN_STEM:
             case ATTACHED_PUMPKIN_STEM:
                 return found == Material.PUMPKIN_STEM || found == Material.ATTACHED_PUMPKIN_STEM;
+            case TWISTING_VINES:
+            case TWISTING_VINES_PLANT:
+                return found == Material.TWISTING_VINES || found == Material.TWISTING_VINES_PLANT;
+            case WEEPING_VINES:
+            case WEEPING_VINES_PLANT:
+                return found == Material.WEEPING_VINES || found == Material.WEEPING_VINES_PLANT;
         }
         return false;
     }

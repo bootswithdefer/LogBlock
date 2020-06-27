@@ -27,7 +27,20 @@ public class LoggingUtil {
 
     public static void smartLogBlockPlace(Consumer consumer, Actor actor, BlockState replaced, BlockState placed) {
         Location loc = replaced.getLocation();
-        if (!placed.getType().hasGravity() || !BukkitUtils.canDirectlyFallIn(replaced.getBlock().getRelative(BlockFace.DOWN).getType())) {
+        Material placedType = placed.getType();
+        if (!placedType.hasGravity() || !BukkitUtils.canDirectlyFallIn(replaced.getBlock().getRelative(BlockFace.DOWN).getType())) {
+            if (placedType == Material.TWISTING_VINES) {
+                Block below = placed.getBlock().getRelative(BlockFace.DOWN);
+                if (below.getType() == Material.TWISTING_VINES) {
+                    consumer.queueBlockReplace(actor, below.getState(), Material.TWISTING_VINES_PLANT.createBlockData());
+                }
+            }
+            if (placedType == Material.WEEPING_VINES) {
+                Block above = placed.getBlock().getRelative(BlockFace.UP);
+                if (above.getType() == Material.WEEPING_VINES) {
+                    consumer.queueBlockReplace(actor, above.getState(), Material.WEEPING_VINES_PLANT.createBlockData());
+                }
+            }
             if (BukkitUtils.isEmpty(replaced.getType())) {
                 consumer.queueBlockPlace(actor, placed);
             } else {
@@ -118,6 +131,19 @@ public class LoggingUtil {
         if (wcfg == null) {
             return;
         }
+        Material replacedType = origin.getType();
+        if (replacedType == Material.TWISTING_VINES || replacedType == Material.TWISTING_VINES_PLANT) {
+            Block below = origin.getRelative(BlockFace.DOWN);
+            if (below.getType() == Material.TWISTING_VINES_PLANT) {
+                consumer.queueBlockReplace(actor, below.getState(), Material.TWISTING_VINES.createBlockData());
+            }
+        }
+        if (replacedType == Material.WEEPING_VINES || replacedType == Material.WEEPING_VINES_PLANT) {
+            Block above = origin.getRelative(BlockFace.UP);
+            if (above.getType() == Material.WEEPING_VINES_PLANT) {
+                consumer.queueBlockReplace(actor, above.getState(), Material.WEEPING_VINES.createBlockData());
+            }
+        }
 
         Block checkBlock = origin.getRelative(BlockFace.UP);
         Material typeAbove = checkBlock.getType();
@@ -148,6 +174,14 @@ public class LoggingUtil {
                 }
             } else {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
+                // check next blocks above
+                checkBlock = checkBlock.getRelative(BlockFace.UP);
+                typeAbove = checkBlock.getType();
+                while (BukkitUtils.getRelativeTopBreakabls().contains(typeAbove)) {
+                    consumer.queueBlockBreak(actor, checkBlock.getState());
+                    checkBlock = checkBlock.getRelative(BlockFace.UP);
+                    typeAbove = checkBlock.getType();
+                }
             }
         } else if (typeAbove == Material.LANTERN) {
             Lantern lantern = (Lantern) checkBlock.getBlockData();
@@ -173,6 +207,16 @@ public class LoggingUtil {
             if (bell.getAttachment() == Attachment.CEILING) {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
+        } else if (typeBelow == Material.WEEPING_VINES || typeBelow == Material.WEEPING_VINES_PLANT) {
+            consumer.queueBlockBreak(actor, checkBlock.getState());
+            // check next blocks above
+            checkBlock = checkBlock.getRelative(BlockFace.DOWN);
+            typeBelow = checkBlock.getType();
+            while (typeBelow == Material.WEEPING_VINES || typeBelow == Material.WEEPING_VINES_PLANT) {
+                consumer.queueBlockBreak(actor, checkBlock.getState());
+                checkBlock = checkBlock.getRelative(BlockFace.DOWN);
+                typeBelow = checkBlock.getType();
+            }
         }
 
         List<Location> relativeBreakables = BukkitUtils.getBlocksNearby(origin, BukkitUtils.getRelativeBreakables());
@@ -197,7 +241,7 @@ public class LoggingUtil {
         }
 
         // Special door check
-        if (origin.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(origin.getType())) {
+        if (replacedType == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(replacedType)) {
             Block doorBlock = origin;
 
             // Up or down?
@@ -210,7 +254,7 @@ public class LoggingUtil {
             if (doorBlock.getType() == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(doorBlock.getType())) {
                 consumer.queueBlockBreak(actor, doorBlock.getState());
             }
-        } else if (BukkitUtils.isDoublePlant(origin.getType())) { // Special double plant check
+        } else if (BukkitUtils.isDoublePlant(replacedType)) { // Special double plant check
             Block plantBlock = origin;
 
             // Up or down?
