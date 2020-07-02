@@ -60,12 +60,16 @@ public class InteractLogging extends LoggingListener {
                 case JUNGLE_FENCE_GATE:
                 case ACACIA_FENCE_GATE:
                 case DARK_OAK_FENCE_GATE:
+                case WARPED_FENCE_GATE:
+                case CRIMSON_FENCE_GATE:
                 case OAK_TRAPDOOR:
                 case SPRUCE_TRAPDOOR:
                 case BIRCH_TRAPDOOR:
                 case JUNGLE_TRAPDOOR:
                 case ACACIA_TRAPDOOR:
                 case DARK_OAK_TRAPDOOR:
+                case WARPED_TRAPDOOR:
+                case CRIMSON_TRAPDOOR:
                     if (wcfg.isLogging(Logging.DOORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                         Openable newBlockData = (Openable) blockData.clone();
                         newBlockData.setOpen(!newBlockData.isOpen());
@@ -121,6 +125,8 @@ public class InteractLogging extends LoggingListener {
                 case JUNGLE_PRESSURE_PLATE:
                 case ACACIA_PRESSURE_PLATE:
                 case DARK_OAK_PRESSURE_PLATE:
+                case WARPED_PRESSURE_PLATE:
+                case CRIMSON_PRESSURE_PLATE:
                 case STONE_PRESSURE_PLATE:
                 case HEAVY_WEIGHTED_PRESSURE_PLATE:
                 case LIGHT_WEIGHTED_PRESSURE_PLATE:
@@ -187,6 +193,8 @@ public class InteractLogging extends LoggingListener {
                 case JUNGLE_DOOR:
                 case ACACIA_DOOR:
                 case DARK_OAK_DOOR:
+                case WARPED_DOOR:
+                case CRIMSON_DOOR:
                     if (wcfg.isLogging(Logging.DOORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                         Door newBlockData = (Door) blockData.clone();
                         newBlockData.setOpen(!newBlockData.isOpen());
@@ -200,6 +208,8 @@ public class InteractLogging extends LoggingListener {
                 case JUNGLE_BUTTON:
                 case ACACIA_BUTTON:
                 case DARK_OAK_BUTTON:
+                case WARPED_BUTTON:
+                case CRIMSON_BUTTON:
                 case LEVER:
                     if (wcfg.isLogging(Logging.SWITCHINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                         Switch newBlockData = (Switch) blockData.clone();
@@ -215,12 +225,16 @@ public class InteractLogging extends LoggingListener {
                 case JUNGLE_SIGN:
                 case ACACIA_SIGN:
                 case DARK_OAK_SIGN:
+                case WARPED_SIGN:
+                case CRIMSON_SIGN:
                 case OAK_WALL_SIGN:
                 case SPRUCE_WALL_SIGN:
                 case BIRCH_WALL_SIGN:
                 case JUNGLE_WALL_SIGN:
                 case ACACIA_WALL_SIGN:
                 case DARK_OAK_WALL_SIGN:
+                case WARPED_WALL_SIGN:
+                case CRIMSON_WALL_SIGN:
                     if (wcfg.isLogging(Logging.SIGNTEXT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                         ItemStack stack = event.getItem();
                         if (stack != null && BukkitUtils.isDye(stack.getType())) {
