@@ -3,6 +3,7 @@ package de.diddiz.LogBlock;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.CuboidRegion;
+import de.diddiz.util.SqlUtil;
 import de.diddiz.util.Utils;
 import de.diddiz.worldedit.WorldEditHelper;
 import org.bukkit.Location;
@@ -425,9 +426,9 @@ public final class QueryParams implements Cloneable {
             if (match != null && match.length() > 0) {
                 final boolean unlike = match.startsWith("-");
                 if (match.length() > 3 && !unlike || match.length() > 4) {
-                    where.append("MATCH (message) AGAINST ('").append(match).append("' IN BOOLEAN MODE) AND ");
+                    where.append("MATCH (message) AGAINST ('").append(SqlUtil.escapeString(match)).append("' IN BOOLEAN MODE) AND ");
                 } else {
-                    where.append("message ").append(unlike ? "NOT " : "").append("LIKE '%").append(unlike ? match.substring(1) : match).append("%' AND ");
+                    where.append("message ").append(unlike ? "NOT " : "").append("LIKE '%").append(SqlUtil.escapeString(unlike ? match.substring(1) : match, true)).append("%' AND ");
                 }
             }
         } else if (blockChangeType == BlockChangeType.KILLS) {
@@ -435,19 +436,19 @@ public final class QueryParams implements Cloneable {
                 if (!excludePlayersMode) {
                     where.append('(');
                     for (final String killerName : players) {
-                        where.append("killers.playername = '").append(killerName).append("' OR ");
+                        where.append("killers.playername = '").append(SqlUtil.escapeString(killerName)).append("' OR ");
                     }
                     for (final String victimName : players) {
-                        where.append("victims.playername = '").append(victimName).append("' OR ");
+                        where.append("victims.playername = '").append(SqlUtil.escapeString(victimName)).append("' OR ");
                     }
                     where.delete(where.length() - 4, where.length());
                     where.append(") AND ");
                 } else {
                     for (final String killerName : players) {
-                        where.append("killers.playername != '").append(killerName).append("' AND ");
+                        where.append("killers.playername != '").append(SqlUtil.escapeString(killerName)).append("' AND ");
                     }
                     for (final String victimName : players) {
-                        where.append("victims.playername != '").append(victimName).append("' AND ");
+                        where.append("victims.playername != '").append(SqlUtil.escapeString(victimName)).append("' AND ");
                     }
                 }
             }
@@ -456,13 +457,13 @@ public final class QueryParams implements Cloneable {
                 if (!excludeKillersMode) {
                     where.append('(');
                     for (final String killerName : killers) {
-                        where.append("killers.playername = '").append(killerName).append("' OR ");
+                        where.append("killers.playername = '").append(SqlUtil.escapeString(killerName)).append("' OR ");
                     }
                     where.delete(where.length() - 4, where.length());
                     where.append(") AND ");
                 } else {
                     for (final String killerName : killers) {
-                        where.append("killers.playername != '").append(killerName).append("' AND ");
+                        where.append("killers.playername != '").append(SqlUtil.escapeString(killerName)).append("' AND ");
                     }
                 }
             }
@@ -613,13 +614,13 @@ public final class QueryParams implements Cloneable {
             if (!excludePlayersMode) {
                 where.append('(');
                 for (final String playerName : players) {
-                    where.append("playername = '").append(playerName).append("' OR ");
+                    where.append("playername = '").append(SqlUtil.escapeString(playerName)).append("' OR ");
                 }
                 where.delete(where.length() - 4, where.length());
                 where.append(") AND ");
             } else {
                 for (final String playerName : players) {
-                    where.append("playername != '").append(playerName).append("' AND ");
+                    where.append("playername != '").append(SqlUtil.escapeString(playerName)).append("' AND ");
                 }
             }
         }
@@ -921,7 +922,7 @@ public final class QueryParams implements Cloneable {
                 if (values.length == 0) {
                     throw new IllegalArgumentException("No arguments for '" + param + "'");
                 }
-                match = mysqlTextEscape(join(values, " "));
+                match = join(values, " ");
             } else if (param.equals("loc") || param.equals("location")) {
                 final String[] vectors = values.length == 1 ? values[0].split(":") : values;
                 if (vectors.length != 3) {
