@@ -72,10 +72,8 @@ public final class QueryParams implements Cloneable {
     public CuboidRegion sel = null;
     public SummarizationMode sum = SummarizationMode.NONE;
     public List<Material> types = new ArrayList<>();
-    public List<Tag<?>> typeTags = new ArrayList<>();
-    public List<Integer> typeIds = new ArrayList<>();
+    public List<Tag<Material>> typeTags = new ArrayList<>();
     public List<EntityType> entityTypes = new ArrayList<>();
-    public List<Integer> entityTypeIds = new ArrayList<>();
     public World world = null;
     public String match = null;
     public boolean needCount = false, needId = false, needDate = false, needType = false, needData = false, needPlayerId = false, needPlayer = false, needCoords = false, needChestAccess = false, needMessage = false, needKiller = false, needVictim = false, needWeapon = false;
@@ -484,6 +482,7 @@ public final class QueryParams implements Cloneable {
                 }
             }
         } else if (blockChangeType == BlockChangeType.ENTITIES || blockChangeType == BlockChangeType.ENTITIES_CREATED || blockChangeType == BlockChangeType.ENTITIES_KILLED) {
+            Set<Integer> entityTypeIds = getEntityTypeIds();
             if (!entityTypeIds.isEmpty()) {
                 if (excludeBlocksEntitiesMode) {
                     where.append("NOT ");
@@ -502,6 +501,7 @@ public final class QueryParams implements Cloneable {
                 where.append("action = " + EntityChange.EntityChangeType.KILL.ordinal() + " AND ");
             }
         } else {
+            Set<Integer> typeIds = getTypeIds();
             switch (blockChangeType) {
                 case ALL:
                     if (!typeIds.isEmpty()) {
@@ -756,7 +756,6 @@ public final class QueryParams implements Cloneable {
                         throw new IllegalArgumentException("No material matching: '" + weaponName + "'");
                     }
                     types.add(mat);
-                    typeIds.add(MaterialConverter.getOrAddMaterialId(mat));
                 }
                 needWeapon = true;
             } else if (param.equals("block") || param.equals("type")) {
@@ -776,9 +775,6 @@ public final class QueryParams implements Cloneable {
                             if (tag == null || tag.getValues().isEmpty()) {
                                 throw new IllegalArgumentException("No block tag matching: '" + blockName + "'");
                             }
-                        }
-                        for (Material mat : tag.getValues()) {
-                            typeIds.add(MaterialConverter.getOrAddMaterialId(mat));
                         }
                         typeTags.add(tag);
                     } else if (blockName.contains("*")) {
@@ -807,7 +803,6 @@ public final class QueryParams implements Cloneable {
                         }
                         for (Material mat : matched) {
                             types.add(mat);
-                            typeIds.add(MaterialConverter.getOrAddMaterialId(mat));
                         }
                     } else {
                         final Material mat = Material.matchMaterial(blockName);
@@ -815,7 +810,6 @@ public final class QueryParams implements Cloneable {
                             throw new IllegalArgumentException("No material matching: '" + blockName + "'");
                         }
                         types.add(mat);
-                        typeIds.add(MaterialConverter.getOrAddMaterialId(mat));
                     }
                 }
             } else if (param.equals("area")) {
@@ -890,7 +884,6 @@ public final class QueryParams implements Cloneable {
                             throw new IllegalArgumentException("No entity type matching: '" + entityTypeName + "'");
                         }
                         entityTypes.add(entityType);
-                        entityTypeIds.add(EntityTypeConverter.getOrAddEntityTypeId(entityType));
                     }
                 }
             } else if (param.equals("all")) {
@@ -1008,10 +1001,8 @@ public final class QueryParams implements Cloneable {
             params.players = new ArrayList<>(players);
             params.killers = new ArrayList<>(killers);
             params.victims = new ArrayList<>(victims);
-            params.typeIds = new ArrayList<>(typeIds);
             params.types = new ArrayList<>(types);
             params.typeTags = new ArrayList<>(typeTags);
-            params.entityTypeIds = new ArrayList<>(entityTypeIds);
             params.entityTypes = new ArrayList<>(entityTypes);
             params.loc = loc == null ? null : loc.clone();
             params.sel = sel == null ? null : sel.clone();
@@ -1019,6 +1010,33 @@ public final class QueryParams implements Cloneable {
         } catch (final CloneNotSupportedException ex) {
             throw new Error("QueryParams should be cloneable", ex);
         }
+    }
+
+    private Set<Integer> getTypeIds() {
+        HashSet<Integer> typeIds = new HashSet<>();
+        for (Material type : types) {
+            if (type != null) {
+                typeIds.add(MaterialConverter.getOrAddMaterialId(type));
+            }
+        }
+        for (Tag<Material> tag : typeTags) {
+            if (tag != null) {
+                for (Material type : tag.getValues()) {
+                    typeIds.add(MaterialConverter.getOrAddMaterialId(type));
+                }
+            }
+        }
+        return typeIds;
+    }
+
+    private Set<Integer> getEntityTypeIds() {
+        HashSet<Integer> typeIds = new HashSet<>();
+        for (EntityType type : entityTypes) {
+            if (type != null) {
+                typeIds.add(EntityTypeConverter.getOrAddEntityTypeId(type));
+            }
+        }
+        return typeIds;
     }
 
     private static String[] getValues(List<String> args, int offset, int minParams) {
@@ -1055,10 +1073,8 @@ public final class QueryParams implements Cloneable {
         killers.addAll(p.killers);
         victims.addAll(p.victims);
         excludePlayersMode = p.excludePlayersMode;
-        typeIds.addAll(p.typeIds);
         types.addAll(p.types);
         typeTags.addAll(p.typeTags);
-        entityTypeIds.addAll(p.entityTypeIds);
         entityTypes.addAll(p.entityTypes);
         loc = p.loc == null ? null : p.loc.clone();
         radius = p.radius;
