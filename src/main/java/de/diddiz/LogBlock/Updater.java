@@ -454,8 +454,8 @@ class Updater {
                                 }
 
                                 try {
-                                    String replacedBlockData = materialUpdater.getBlockData(replaced, data).getAsString();
-                                    String setBlockData = materialUpdater.getBlockData(type, data).getAsString();
+                                    BlockData replacedBlockData = materialUpdater.getBlockData(replaced, data);
+                                    BlockData setBlockData = materialUpdater.getBlockData(type, data);
 
                                     int newReplacedId = MaterialConverter.getOrAddMaterialId(replacedBlockData);
                                     int newReplacedData = MaterialConverter.getOrAddBlockStateId(replacedBlockData);
@@ -536,7 +536,7 @@ class Updater {
                                 insertChestData.setInt(1, id);
                                 insertChestData.setBytes(2, Utils.saveItemStack(stack));
                                 insertChestData.setInt(3, amount >= 0 ? 0 : 1);
-                                insertChestData.setInt(4, MaterialConverter.getOrAddMaterialId(weaponMaterial.getKey()));
+                                insertChestData.setInt(4, MaterialConverter.getOrAddMaterialId(weaponMaterial));
                                 insertChestData.addBatch();
 
                                 deleteChest.setInt(1, id);
@@ -592,7 +592,7 @@ class Updater {
                                     if (weaponMaterial == null) {
                                         weaponMaterial = Material.AIR;
                                     }
-                                    int newWeapon = MaterialConverter.getOrAddMaterialId(weaponMaterial.getKey());
+                                    int newWeapon = MaterialConverter.getOrAddMaterialId(weaponMaterial);
                                     if (newWeapon != weapon) {
                                         anyUpdate = true;
                                         updateWeaponStatement.setInt(1, newWeapon);
@@ -860,19 +860,19 @@ class Updater {
 
         if (comparablePreviousMinecraftVersion.compareTo("1.14") < 0 && comparableCurrentMinecraftVersion.compareTo("1.14") >= 0) {
             logblock.getLogger().info("[Updater] Upgrading Materials to 1.14");
-            renameMaterial("minecraft:sign", "minecraft:oak_sign");
-            renameMaterial("minecraft:wall_sign", "minecraft:oak_wall_sign");
-            renameMaterial("minecraft:stone_slab", "minecraft:smooth_stone_slab");
-            renameMaterial("minecraft:rose_red", "minecraft:red_dye");
-            renameMaterial("minecraft:dandelion_yellow", "minecraft:yellow_dye");
-            renameMaterial("minecraft:cactus_green", "minecraft:green_dye");
+            renameMaterial("minecraft:sign", Material.OAK_SIGN);
+            renameMaterial("minecraft:wall_sign", Material.OAK_WALL_SIGN);
+            renameMaterial("minecraft:stone_slab", Material.SMOOTH_STONE_SLAB);
+            renameMaterial("minecraft:rose_red", Material.RED_DYE);
+            renameMaterial("minecraft:dandelion_yellow", Material.YELLOW_DYE);
+            renameMaterial("minecraft:cactus_green", Material.GREEN_DYE);
         }
 
         config.set("previousMinecraftVersion", currentMinecraftVersion);
         logblock.saveConfig();
     }
 
-    private void renameMaterial(String oldName, String newName) {
+    private void renameMaterial(String oldName, Material newName) {
         final Connection conn = logblock.getConnection();
         try {
             conn.setAutoCommit(false);

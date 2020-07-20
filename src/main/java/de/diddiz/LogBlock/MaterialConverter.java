@@ -11,7 +11,6 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.block.data.BlockData;
 
 public class MaterialConverter {
@@ -31,16 +30,15 @@ public class MaterialConverter {
         }
     }
 
-    public static int getOrAddMaterialId(NamespacedKey nameSpaceKey) {
-        return getOrAddMaterialId(nameSpaceKey.toString());
+    public static int getOrAddMaterialId(BlockData blockData) {
+        return getOrAddMaterialId(blockData == null ? Material.AIR : blockData.getMaterial());
     }
 
-    public static int getOrAddMaterialId(String blockDataString) {
-        String materialString = blockDataString;
-        int dataPart = blockDataString.indexOf("[");
-        if (dataPart >= 0) {
-            materialString = blockDataString.substring(0, dataPart);
+    public static int getOrAddMaterialId(Material material) {
+        if (material == null) {
+            material = Material.AIR;
         }
+        String materialString = material.getKey().toString();
         Integer key = materialToID.get(materialString);
         int tries = 0;
         while (key == null && tries < 10) {
@@ -78,7 +76,11 @@ public class MaterialConverter {
         return key.intValue();
     }
 
-    public static int getOrAddBlockStateId(String blockDataString) {
+    public static int getOrAddBlockStateId(BlockData blockData) {
+        if (blockData == null) {
+            blockData = Material.AIR.createBlockData();
+        }
+        String blockDataString = blockData.getAsString();
         int dataPart = blockDataString.indexOf("[");
         if (dataPart < 0) {
             return -1;

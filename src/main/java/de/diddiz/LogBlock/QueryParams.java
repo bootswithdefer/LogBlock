@@ -756,7 +756,7 @@ public final class QueryParams implements Cloneable {
                         throw new IllegalArgumentException("No material matching: '" + weaponName + "'");
                     }
                     types.add(mat);
-                    typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
+                    typeIds.add(MaterialConverter.getOrAddMaterialId(mat));
                 }
                 needWeapon = true;
             } else if (param.equals("block") || param.equals("type")) {
@@ -778,7 +778,7 @@ public final class QueryParams implements Cloneable {
                             }
                         }
                         for (Material mat : tag.getValues()) {
-                            typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
+                            typeIds.add(MaterialConverter.getOrAddMaterialId(mat));
                         }
                         typeTags.add(tag);
                     } else if (blockName.contains("*")) {
@@ -807,7 +807,7 @@ public final class QueryParams implements Cloneable {
                         }
                         for (Material mat : matched) {
                             types.add(mat);
-                            typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
+                            typeIds.add(MaterialConverter.getOrAddMaterialId(mat));
                         }
                     } else {
                         final Material mat = Material.matchMaterial(blockName);
@@ -815,7 +815,7 @@ public final class QueryParams implements Cloneable {
                             throw new IllegalArgumentException("No material matching: '" + blockName + "'");
                         }
                         types.add(mat);
-                        typeIds.add(MaterialConverter.getOrAddMaterialId(mat.getKey()));
+                        typeIds.add(MaterialConverter.getOrAddMaterialId(mat));
                     }
                 }
             } else if (param.equals("area")) {

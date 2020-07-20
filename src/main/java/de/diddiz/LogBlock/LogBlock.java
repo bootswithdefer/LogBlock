@@ -91,7 +91,7 @@ public class LogBlock extends JavaPlugin {
             Updater updater = new Updater(this);
             updater.checkTables();
             MaterialConverter.initializeMaterials(getConnection());
-            MaterialConverter.getOrAddMaterialId(Material.AIR.getKey()); // AIR must be the first entry
+            MaterialConverter.getOrAddMaterialId(Material.AIR); // AIR must be the first entry
             EntityTypeConverter.initializeEntityTypes(getConnection());
             if (updater.update()) {
                 load(this);

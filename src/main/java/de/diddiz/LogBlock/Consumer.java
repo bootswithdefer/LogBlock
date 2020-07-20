@@ -230,7 +230,7 @@ public class Consumer extends Thread {
      *            true if the item was removed
      */
     public void queueChestAccess(Actor actor, Location loc, BlockData type, ItemStack itemStack, boolean remove) {
-        queueBlock(actor, loc, type, type, null, null, new ChestAccess(itemStack, remove, MaterialConverter.getOrAddMaterialId(itemStack.getType().getKey())));
+        queueBlock(actor, loc, type, type, null, null, new ChestAccess(itemStack, remove, MaterialConverter.getOrAddMaterialId(itemStack.getType())));
     }
 
     /**
@@ -327,7 +327,7 @@ public class Consumer extends Thread {
         if (victim == null || !isLogged(location.getWorld())) {
             return;
         }
-        addQueueLast(new KillRow(location, killer == null ? null : killer, victim, weapon == null ? 0 : MaterialConverter.getOrAddMaterialId(weapon.getType().getKey().toString())));
+        addQueueLast(new KillRow(location, killer == null ? null : killer, victim, weapon == null ? 0 : MaterialConverter.getOrAddMaterialId(weapon.getType())));
     }
 
     /**
@@ -718,12 +718,10 @@ public class Consumer extends Thread {
             return;
         }
 
-        String replacedString = typeBefore.getAsString();
-        int replacedMaterialId = MaterialConverter.getOrAddMaterialId(replacedString);
-        int replacedStateId = MaterialConverter.getOrAddBlockStateId(replacedString);
-        String typeString = typeAfter.getAsString();
-        int typeMaterialId = MaterialConverter.getOrAddMaterialId(typeString);
-        int typeStateId = MaterialConverter.getOrAddBlockStateId(typeString);
+        int replacedMaterialId = MaterialConverter.getOrAddMaterialId(typeBefore);
+        int replacedStateId = MaterialConverter.getOrAddBlockStateId(typeBefore);
+        int typeMaterialId = MaterialConverter.getOrAddMaterialId(typeAfter);
+        int typeStateId = MaterialConverter.getOrAddBlockStateId(typeAfter);
 
         addQueueLast(new BlockRow(loc, actor, replacedMaterialId, replacedStateId, Utils.serializeYamlConfiguration(stateBefore), typeMaterialId, typeStateId, Utils.serializeYamlConfiguration(stateAfter), ca));
     }
