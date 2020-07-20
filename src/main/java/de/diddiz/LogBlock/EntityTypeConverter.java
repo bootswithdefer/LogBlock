@@ -16,7 +16,7 @@ public class EntityTypeConverter {
     private static HashMap<EntityType, Integer> entityTypeToId = new HashMap<>();
     private static int nextEntityTypeId;
 
-    public static int getOrAddEntityTypeId(EntityType entityType) {
+    public synchronized static int getOrAddEntityTypeId(EntityType entityType) {
         Integer key = entityTypeToId.get(entityType);
         int tries = 0;
         while (key == null && tries < 10) {
@@ -54,7 +54,7 @@ public class EntityTypeConverter {
         return key.intValue();
     }
 
-    public static EntityType getEntityType(int entityTypeId) {
+    public synchronized static EntityType getEntityType(int entityTypeId) {
         return entityTypeId >= 0 && entityTypeId < idToEntityType.length ? idToEntityType[entityTypeId] : null;
     }
 
@@ -73,7 +73,7 @@ public class EntityTypeConverter {
         }
     }
 
-    public static void initializeEntityTypes(Connection connection) throws SQLException {
+    protected synchronized static void initializeEntityTypes(Connection connection) throws SQLException {
         Statement smt = connection.createStatement();
         ResultSet rs = smt.executeQuery("SELECT id, name FROM `lb-entitytypes`");
         while (rs.next()) {
@@ -93,7 +93,7 @@ public class EntityTypeConverter {
         connection.close();
     }
 
-    private synchronized static void internalAddEntityType(int key, EntityType entityType) {
+    private static void internalAddEntityType(int key, EntityType entityType) {
         entityTypeToId.put(entityType, key);
         int length = idToEntityType.length;
         while (length <= key) {

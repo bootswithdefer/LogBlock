@@ -30,11 +30,11 @@ public class MaterialConverter {
         }
     }
 
-    public static int getOrAddMaterialId(BlockData blockData) {
+    public synchronized static int getOrAddMaterialId(BlockData blockData) {
         return getOrAddMaterialId(blockData == null ? Material.AIR : blockData.getMaterial());
     }
 
-    public static int getOrAddMaterialId(Material material) {
+    public synchronized static int getOrAddMaterialId(Material material) {
         if (material == null) {
             material = Material.AIR;
         }
@@ -76,7 +76,7 @@ public class MaterialConverter {
         return key.intValue();
     }
 
-    public static int getOrAddBlockStateId(BlockData blockData) {
+    public synchronized static int getOrAddBlockStateId(BlockData blockData) {
         if (blockData == null) {
             blockData = Material.AIR.createBlockData();
         }
@@ -123,7 +123,7 @@ public class MaterialConverter {
         return key.intValue();
     }
 
-    public static BlockData getBlockData(int materialId, int blockStateId) {
+    public synchronized static BlockData getBlockData(int materialId, int blockStateId) {
         String material = materialId >= 0 && materialId < idToMaterial.length ? idToMaterial[materialId] : null;
         if (material == null) {
             return null;
@@ -143,7 +143,7 @@ public class MaterialConverter {
         }
     }
 
-    public static Material getMaterial(int materialId) {
+    public synchronized static Material getMaterial(int materialId) {
         return materialId >= 0 && materialId < idToMaterial.length ? materialKeyToMaterial.get(idToMaterial[materialId]) : null;
     }
 
@@ -162,7 +162,7 @@ public class MaterialConverter {
         }
     }
 
-    public static void initializeMaterials(Connection connection) throws SQLException {
+    protected synchronized static void initializeMaterials(Connection connection) throws SQLException {
         Statement smt = connection.createStatement();
         ResultSet rs = smt.executeQuery("SELECT id, name FROM `lb-materials`");
         while (rs.next()) {
@@ -182,7 +182,7 @@ public class MaterialConverter {
         connection.close();
     }
 
-    private synchronized static void internalAddMaterial(int key, String materialString) {
+    private static void internalAddMaterial(int key, String materialString) {
         materialToID.put(materialString, key);
         int length = idToMaterial.length;
         while (length <= key) {
@@ -197,7 +197,7 @@ public class MaterialConverter {
         }
     }
 
-    private synchronized static void internalAddBlockState(int key, String materialString) {
+    private static void internalAddBlockState(int key, String materialString) {
         blockStateToID.put(materialString, key);
         int length = idToBlockState.length;
         while (length <= key) {
