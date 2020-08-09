@@ -30,6 +30,18 @@ public class MaterialConverter {
         }
     }
 
+    public synchronized static Integer getExistingMaterialId(BlockData blockData) {
+        return blockData == null ? null : getExistingMaterialId(blockData.getMaterial());
+    }
+
+    public synchronized static Integer getExistingMaterialId(Material material) {
+        if (material == null) {
+            return null;
+        }
+        String materialString = material.getKey().toString();
+        return materialToID.get(materialString);
+    }
+
     public synchronized static int getOrAddMaterialId(BlockData blockData) {
         return getOrAddMaterialId(blockData == null ? Material.AIR : blockData.getMaterial());
     }
@@ -76,9 +88,22 @@ public class MaterialConverter {
         return key.intValue();
     }
 
+    public synchronized static Integer getExistingBlockStateId(BlockData blockData) {
+        if (blockData == null) {
+            return -1;
+        }
+        String blockDataString = blockData.getAsString();
+        int dataPart = blockDataString.indexOf("[");
+        if (dataPart < 0) {
+            return -1;
+        }
+        String materialString = blockDataString.substring(dataPart);
+        return blockStateToID.get(materialString);
+    }
+
     public synchronized static int getOrAddBlockStateId(BlockData blockData) {
         if (blockData == null) {
-            blockData = Material.AIR.createBlockData();
+            return -1;
         }
         String blockDataString = blockData.getAsString();
         int dataPart = blockDataString.indexOf("[");

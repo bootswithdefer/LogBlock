@@ -16,6 +16,10 @@ public class EntityTypeConverter {
     private static HashMap<EntityType, Integer> entityTypeToId = new HashMap<>();
     private static int nextEntityTypeId;
 
+    public synchronized static int getExistingEntityTypeId(EntityType entityType) {
+        return entityType == null ? null : entityTypeToId.get(entityType);
+    }
+
     public synchronized static int getOrAddEntityTypeId(EntityType entityType) {
         Integer key = entityTypeToId.get(entityType);
         int tries = 0;

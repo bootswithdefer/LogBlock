@@ -1017,15 +1017,25 @@ public final class QueryParams implements Cloneable {
         HashSet<Integer> typeIds = new HashSet<>();
         for (Material type : types) {
             if (type != null) {
-                typeIds.add(MaterialConverter.getOrAddMaterialId(type));
+                Integer id = MaterialConverter.getExistingMaterialId(type);
+                if (id != null) {
+                    typeIds.add(id);
+                }
             }
         }
         for (Tag<Material> tag : typeTags) {
             if (tag != null) {
                 for (Material type : tag.getValues()) {
-                    typeIds.add(MaterialConverter.getOrAddMaterialId(type));
+                    Integer id = MaterialConverter.getExistingMaterialId(type);
+                    if (id != null) {
+                        typeIds.add(id);
+                    }
                 }
             }
+        }
+        // add invalid id, so the type list is not ignored
+        if ((!types.isEmpty() || !typeTags.isEmpty()) && typeIds.isEmpty()) {
+            typeIds.add(-1);
         }
         return typeIds;
     }
@@ -1034,8 +1044,12 @@ public final class QueryParams implements Cloneable {
         HashSet<Integer> typeIds = new HashSet<>();
         for (EntityType type : entityTypes) {
             if (type != null) {
-                typeIds.add(EntityTypeConverter.getOrAddEntityTypeId(type));
+                typeIds.add(EntityTypeConverter.getExistingEntityTypeId(type));
             }
+        }
+        // add invalid id, so the type list is not ignored
+        if (!entityTypes.isEmpty() && typeIds.isEmpty()) {
+            typeIds.add(-1);
         }
         return typeIds;
     }
