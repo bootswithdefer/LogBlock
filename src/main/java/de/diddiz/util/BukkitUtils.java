@@ -17,6 +17,7 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.HoverEvent.Action;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -759,7 +760,7 @@ public class BukkitUtils {
             }
         }
         if (metaStarted) {
-            msg.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new BaseComponent[] { hover }));
+            msg.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new Text(new BaseComponent[] { hover })));
         }
 
         return msg;

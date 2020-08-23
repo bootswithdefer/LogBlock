@@ -9,9 +9,9 @@ import de.diddiz.LogBlock.config.Config;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
@@ -41,7 +41,7 @@ public class MessagingUtil {
 
     public static TextComponent prettyDate(long date) {
         TextComponent tc = brackets(BracketType.STANDARD, createTextComponentWithColor(Config.formatterShort.format(date), TypeColor.DATE.getColor()));
-        tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(Config.formatter.format(date)).create()));
+        tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(Config.formatter.format(date))));
         return tc;
     }
 
@@ -73,7 +73,7 @@ public class MessagingUtil {
             int bracket2 = bdString.indexOf("]", bracket);
             if (bracket2 >= 0) {
                 String state = bdString.substring(bracket + 1, bracket2).replace(',', '\n');
-                tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(state).create()));
+                tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(state)));
             }
         }
         return tc;
@@ -96,7 +96,7 @@ public class MessagingUtil {
         tc.addExtra(createTextComponentWithColor(Integer.toString(z), TypeColor.COORDINATE.getColor()));
         if (entryId > 0) {
             tc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lb tp " + entryId));
-            tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Teleport here").create()));
+            tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("Teleport here")));
         }
         return tc;
     }
