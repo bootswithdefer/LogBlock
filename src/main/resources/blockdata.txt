@@ -1113,8 +1113,8 @@
 137:14,minecraft:command_block[conditional=true,facing=down]
 137:15,minecraft:command_block[conditional=true,facing=up]
 138:0,minecraft:beacon
-139:0,minecraft:cobblestone_wall[east=false,north=false,south=false,up=false,waterlogged=false,west=false]
-139:1,minecraft:mossy_cobblestone_wall[east=false,north=false,south=false,up=false,waterlogged=false,west=false]
+139:0,minecraft:cobblestone_wall[east=none,north=none,south=none,up=false,waterlogged=false,west=none]
+139:1,minecraft:mossy_cobblestone_wall[east=none,north=none,south=none,up=false,waterlogged=false,west=none]
 140:0,minecraft:flower_pot
 141:0,minecraft:carrots[age=0]
 141:1,minecraft:carrots[age=1]

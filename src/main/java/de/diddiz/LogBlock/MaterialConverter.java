@@ -154,7 +154,7 @@ public class MaterialConverter {
             return null;
         }
         if (blockStateId >= 0 && blockStateId < idToBlockState.length && idToBlockState[blockStateId] != null) {
-            material = material + idToBlockState[blockStateId];
+            material = material + updateBlockState(material, idToBlockState[blockStateId]);
         }
         try {
             return Bukkit.createBlockData(material);
@@ -235,5 +235,22 @@ public class MaterialConverter {
         if (nextBlockStateId <= key) {
             nextBlockStateId = key + 1;
         }
+    }
+
+    private static String updateBlockState(String material, String blockState) {
+        // since 1.16
+        if (material.endsWith("_wall")) {
+            if (blockState.contains("east=false") || blockState.contains("east=true")) {
+                blockState = blockState.replace("east=false", "east=none");
+                blockState = blockState.replace("west=false", "west=none");
+                blockState = blockState.replace("north=false", "north=none");
+                blockState = blockState.replace("south=false", "south=none");
+                blockState = blockState.replace("east=true", "east=low");
+                blockState = blockState.replace("west=true", "west=low");
+                blockState = blockState.replace("north=true", "north=low");
+                blockState = blockState.replace("south=true", "south=low");
+            }
+        }
+        return blockState;
     }
 }
