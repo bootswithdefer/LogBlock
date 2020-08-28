@@ -1,6 +1,8 @@
 package de.diddiz.util;
 
 import static de.diddiz.util.MessagingUtil.prettyMaterial;
+
+import de.diddiz.LogBlock.LogBlock;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.Set;
 import java.util.UUID;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -525,7 +528,11 @@ public class BukkitUtils {
     public static ItemStack[] compareInventories(ItemStack[] items1, ItemStack[] items2) {
         final ArrayList<ItemStack> diff = new ArrayList<>();
         for (ItemStack current : items2) {
-            diff.add(new ItemStack(current));
+            try {
+                diff.add(new ItemStack(current));
+            } catch (NullPointerException e) {
+                LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not clone ItemStack, probably Spigot bug SPIGOT-6025", e); // SPIGOT-6025
+            }
         }
         for (ItemStack previous : items1) {
             boolean found = false;
@@ -542,9 +549,13 @@ public class BukkitUtils {
                 }
             }
             if (!found) {
-                ItemStack subtracted = new ItemStack(previous);
-                subtracted.setAmount(-subtracted.getAmount());
-                diff.add(subtracted);
+                try {
+                    ItemStack subtracted = new ItemStack(previous);
+                    subtracted.setAmount(-subtracted.getAmount());
+                    diff.add(subtracted);
+                } catch (NullPointerException e) {
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not clone ItemStack, probably Spigot bug SPIGOT-6025", e); // SPIGOT-6025
+                }
             }
         }
         return diff.toArray(new ItemStack[diff.size()]);
