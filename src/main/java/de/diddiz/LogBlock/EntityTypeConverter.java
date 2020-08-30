@@ -16,7 +16,7 @@ public class EntityTypeConverter {
     private static HashMap<EntityType, Integer> entityTypeToId = new HashMap<>();
     private static int nextEntityTypeId;
 
-    public synchronized static int getExistingEntityTypeId(EntityType entityType) {
+    public synchronized static Integer getExistingEntityTypeId(EntityType entityType) {
         return entityType == null ? null : entityTypeToId.get(entityType);
     }
 

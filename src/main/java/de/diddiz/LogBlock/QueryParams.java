@@ -1043,8 +1043,9 @@ public final class QueryParams implements Cloneable {
     private Set<Integer> getEntityTypeIds() {
         HashSet<Integer> typeIds = new HashSet<>();
         for (EntityType type : entityTypes) {
-            if (type != null) {
-                typeIds.add(EntityTypeConverter.getExistingEntityTypeId(type));
+            Integer id = EntityTypeConverter.getExistingEntityTypeId(type);
+            if (id != null) {
+                typeIds.add(id);
             }
         }
         // add invalid id, so the type list is not ignored
