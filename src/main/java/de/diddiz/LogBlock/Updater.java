@@ -729,6 +729,24 @@ class Updater {
             config.set("version", "1.13.1");
         }
 
+        if (configVersion.compareTo(new ComparableVersion("1.16.0")) < 0) {
+            for (final WorldConfig wcfg : getLoggedWorlds()) {
+                final Connection conn = logblock.getConnection();
+                try {
+                    conn.setAutoCommit(true);
+                    final Statement st = conn.createStatement();
+                    st.execute("ALTER TABLE `" + wcfg.table + "-entities` KEY entityid (entityid)");
+                    logblock.getLogger().info("Added index for table " + wcfg.table + "-entities");
+                    st.close();
+                    conn.close();
+                } catch (final SQLException ex) {
+                    logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+                    return false;
+                }
+            }
+            config.set("version", "1.16.0");
+        }
+
         if (configVersion.compareTo(new ComparableVersion(Config.CURRENT_CONFIG_VERSION)) < 0) {
             config.set("version", Config.CURRENT_CONFIG_VERSION);
         }
@@ -821,7 +839,7 @@ class Updater {
                 createTable(dbm, state, wcfg.table + "-kills", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, killer INT UNSIGNED, victim INT UNSIGNED NOT NULL, weapon SMALLINT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id))");
             }
             createTable(dbm, state, wcfg.table + "-entityids", "(entityid INT UNSIGNED NOT NULL AUTO_INCREMENT, entityuuid VARCHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL, PRIMARY KEY (entityid), UNIQUE KEY (entityuuid))");
-            createTable(dbm, state, wcfg.table + "-entities", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, entityid INT UNSIGNED NOT NULL, entitytypeid INT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, action TINYINT UNSIGNED NOT NULL, data MEDIUMBLOB NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
+            createTable(dbm, state, wcfg.table + "-entities", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, entityid INT UNSIGNED NOT NULL, entitytypeid INT UNSIGNED NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, action TINYINT UNSIGNED NOT NULL, data MEDIUMBLOB NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid), KEY entityid (entityid))");
         }
         state.close();
         conn.close();
