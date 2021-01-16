@@ -176,7 +176,18 @@ public class CommandsHandler implements CommandExecutor {
                             } else if (args[1].equalsIgnoreCase("disable") || args[1].equalsIgnoreCase("off")) {
                                 toolData.enabled = false;
                                 if (tool.removeOnDisable && logblock.hasPermission(player, "logblock.spawnTools")) {
-                                    player.getInventory().removeItem(new ItemStack(tool.item, 1));
+                                    if (!player.getInventory().removeItem(new ItemStack(tool.item, 1)).isEmpty()) {
+                                        // remove the tool from the offhand if it cannot be found in the main hand
+                                        ItemStack offhandItem = player.getInventory().getItemInOffHand();
+                                        if (offhandItem != null && offhandItem.isSimilar(new ItemStack(tool.item, 1))) {
+                                            if (offhandItem.getAmount() <= 1) {
+                                                player.getInventory().setItemInOffHand(null);
+                                            } else {
+                                                offhandItem.setAmount(offhandItem.getAmount() - 1);
+                                                player.getInventory().setItemInOffHand(offhandItem);
+                                            }
+                                        }
+                                    }
                                 }
                                 player.sendMessage(ChatColor.GREEN + "Tool disabled.");
                             } else if (args[1].equalsIgnoreCase("mode")) {
