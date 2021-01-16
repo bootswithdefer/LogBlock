@@ -735,13 +735,12 @@ class Updater {
                 try {
                     conn.setAutoCommit(true);
                     final Statement st = conn.createStatement();
-                    st.execute("ALTER TABLE `" + wcfg.table + "-entities` KEY entityid (entityid)");
+                    st.execute("ALTER TABLE `" + wcfg.table + "-entities` ADD KEY entityid (entityid)");
                     logblock.getLogger().info("Added index for table " + wcfg.table + "-entities");
                     st.close();
                     conn.close();
                 } catch (final SQLException ex) {
                     logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
-                    return false;
                 }
             }
             config.set("version", "1.16.0");
