@@ -136,7 +136,7 @@ public class AdvancedEntityLogging extends LoggingListener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntitySpawn(CreatureSpawnEvent event) {
         if (!event.isCancelled()) {
-            if (event.getSpawnReason() == SpawnReason.CUSTOM) {
+            if (event.getSpawnReason() == SpawnReason.CUSTOM || event.getSpawnReason() == SpawnReason.BEEHIVE) {
                 return;
             }
             LivingEntity entity = event.getEntity();
