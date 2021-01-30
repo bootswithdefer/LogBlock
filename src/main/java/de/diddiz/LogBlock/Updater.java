@@ -730,23 +730,15 @@ class Updater {
         }
 
         if (configVersion.compareTo(new ComparableVersion("1.16.0")) < 0) {
-            for (final WorldConfig wcfg : getLoggedWorlds()) {
-                final Connection conn = logblock.getConnection();
-                try {
-                    conn.setAutoCommit(true);
-                    final Statement st = conn.createStatement();
-                    st.execute("ALTER TABLE `" + wcfg.table + "-entities` ADD KEY entityid (entityid)");
-                    logblock.getLogger().info("Added index for table " + wcfg.table + "-entities");
-                    st.close();
-                } catch (final SQLException ex) {
-                    logblock.getLogger().log(Level.SEVERE, "[Updater] Warning: Could not upgrade the database: " + ex.getMessage());
-                } finally {
-                    try {
-                        conn.close();
-                    } catch (SQLException e) {
-                        // ignored
-                    }
+            try (Connection conn = logblock.getConnection()) {
+                conn.setAutoCommit(true);
+                final Statement st = conn.createStatement();
+                for (final WorldConfig wcfg : getLoggedWorlds()) {
+                    createIndexIfDoesNotExist(wcfg.table + "-entities", "entityid", "KEY `entityid` (entityid)", st, false);
                 }
+                st.close();
+            } catch (final SQLException ex) {
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Warning: Could not add index", ex);
             }
             config.set("version", "1.16.0");
         }
