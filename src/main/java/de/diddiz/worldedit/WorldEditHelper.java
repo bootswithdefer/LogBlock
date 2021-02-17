@@ -117,7 +117,12 @@ public class WorldEditHelper {
                     com.sk89q.worldedit.entity.Entity weEntity = weLocation.getExtent().createEntity(weLocation, state);
                     if (weEntity != null) {
                         CompoundTag newNbt = weEntity.getState().getNbtData();
-                        newUUID = new UUID(newNbt.getLong("UUIDMost"), newNbt.getLong("UUIDLeast"));
+                        int[] uuidInts = newNbt.getIntArray("UUID");
+                        if (uuidInts != null && uuidInts.length >= 4) {
+                            newUUID = new UUID(((long) uuidInts[0] << 32) | (uuidInts[1] & 0xFFFFFFFFL), ((long) uuidInts[2] << 32) | (uuidInts[3] & 0xFFFFFFFFL));
+                        } else {
+                            newUUID = new UUID(newNbt.getLong("UUIDMost"), newNbt.getLong("UUIDLeast")); // pre 1.16
+                        }
                     }
                 }
                 return newUUID == null ? null : Bukkit.getEntity(newUUID);
