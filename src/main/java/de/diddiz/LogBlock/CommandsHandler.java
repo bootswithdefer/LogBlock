@@ -304,7 +304,6 @@ public class CommandsHandler implements CommandExecutor {
                                 final QueryParams params = new QueryParams(logblock);
                                 params.setPlayer(player.getName());
                                 params.world = player.getWorld();
-                                player.sendMessage("Total block changes: " + logblock.getCount(params));
                                 params.sum = SummarizationMode.TYPES;
                                 new CommandLookup(sender, params, true);
                             } else {
@@ -529,13 +528,21 @@ public class CommandsHandler implements CommandExecutor {
                     if (!params.noCache) {
                         getSession(sender).lookupCache = blockChangeArray;
                     }
-                    if (blockchanges.size() > linesPerPage) {
-                        sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == linesLimit ? " Use 'limit -1' to see all changes." : ""));
-                    }
-                    if (params.sum != SummarizationMode.NONE) {
+                    if (params.sum == SummarizationMode.NONE) {
+                        if (blockchanges.size() > linesPerPage) {
+                            sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " changes found." + (blockchanges.size() == linesLimit ? " Use 'limit -1' to see all changes." : ""));
+                        }
+                    } else {
+                        int totalChanges = 0;
+                        for (LookupCacheElement element : blockchanges) {
+                            totalChanges += element.getNumChanges();
+                        }
+                        sender.sendMessage(ChatColor.DARK_AQUA.toString() + totalChanges + " changes found.");
                         if (params.bct == BlockChangeType.KILLS && params.sum == SummarizationMode.PLAYERS) {
+                            sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " distinct players found.");
                             sender.sendMessage(ChatColor.GOLD + "Kills - Killed - Player");
                         } else {
+                            sender.sendMessage(ChatColor.DARK_AQUA.toString() + blockchanges.size() + " distinct " + (params.sum == SummarizationMode.TYPES ? (params.bct == BlockChangeType.ENTITIES ? "entities" : "blocks") : "players") + " found.");
                             sender.sendMessage(ChatColor.GOLD + "Created - Destroyed - " + (params.sum == SummarizationMode.TYPES ? (params.bct == BlockChangeType.ENTITIES ? "Entity" : "Block") : "Player"));
                         }
                     }

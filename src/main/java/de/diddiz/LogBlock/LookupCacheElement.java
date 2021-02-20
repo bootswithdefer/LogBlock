@@ -11,4 +11,8 @@ public interface LookupCacheElement {
     }
 
     public BaseComponent[] getLogMessage(int entry);
+
+    public default int getNumChanges() {
+        return 1;
+    }
 }

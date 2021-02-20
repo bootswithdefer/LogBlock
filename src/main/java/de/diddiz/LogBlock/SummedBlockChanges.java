@@ -34,4 +34,9 @@ public class SummedBlockChanges implements LookupCacheElement {
     public BaseComponent[] getLogMessage(int entry) {
         return MessagingUtil.formatSummarizedChanges(created, destroyed, actor != null ? new TextComponent(actor.getName()) : prettyMaterial(Objects.toString(MaterialConverter.getMaterial(type))), 10, 10, spaceFactor);
     }
+
+    @Override
+    public int getNumChanges() {
+        return created + destroyed;
+    }
 }
