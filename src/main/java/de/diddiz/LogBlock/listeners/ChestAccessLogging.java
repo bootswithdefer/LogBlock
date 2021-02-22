@@ -18,7 +18,7 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,9 +28,13 @@ import static de.diddiz.util.BukkitUtils.*;
 
 public class ChestAccessLogging extends LoggingListener {
     private class PlayerActiveInventoryModifications {
-        private HashMap<ItemStack, Integer> modifications;
+        private final HumanEntity actor;
+        private final Location location;
+        private final HashMap<ItemStack, Integer> modifications;
 
-        public PlayerActiveInventoryModifications() {
+        public PlayerActiveInventoryModifications(HumanEntity actor, Location location) {
+            this.actor = actor;
+            this.location = location;
             this.modifications = new HashMap<>();
         }
 
@@ -38,6 +42,16 @@ public class ChestAccessLogging extends LoggingListener {
             if (amount == 0) {
                 return;
             }
+            // if we have other viewers, we have to flush their changes
+            ArrayList<PlayerActiveInventoryModifications> allViewers = containersByLocation.get(location);
+            if (allViewers.size() > 1) {
+                for (PlayerActiveInventoryModifications other : allViewers) {
+                    if (other != this) {
+                        other.flush();
+                    }
+                }
+            }
+
             consumer.getLogblock().getLogger().info("Modify container: " + stack + " change: " + amount);
             stack = new ItemStack(stack);
             stack.setAmount(1);
@@ -50,12 +64,30 @@ public class ChestAccessLogging extends LoggingListener {
             }
         }
 
-        public HashMap<ItemStack, Integer> getModifications() {
-            return modifications;
+        public void flush() {
+            if (!modifications.isEmpty()) {
+                for (Entry<ItemStack, Integer> e : modifications.entrySet()) {
+                    ItemStack stack = e.getKey();
+                    int amount = e.getValue();
+                    stack.setAmount(Math.abs(amount));
+                    consumer.getLogblock().getLogger().info("Store container: " + stack + " take: " + (amount < 0));
+                    consumer.queueChestAccess(Actor.actorFromEntity(actor), location, location.getWorld().getBlockAt(location).getBlockData(), stack, amount < 0);
+                }
+                modifications.clear();
+            }
+        }
+
+        public HumanEntity getActor() {
+            return actor;
+        }
+
+        public Location getLocation() {
+            return location;
         }
     }
 
-    private final Map<HumanEntity, PlayerActiveInventoryModifications> containers = new HashMap<>();
+    private final Map<HumanEntity, PlayerActiveInventoryModifications> containersByOwner = new HashMap<>();
+    private final Map<Location, ArrayList<PlayerActiveInventoryModifications>> containersByLocation = new HashMap<>();
 
     public ChestAccessLogging(LogBlock lb) {
         super(lb);
@@ -69,18 +101,15 @@ public class ChestAccessLogging extends LoggingListener {
         }
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof BlockState || holder instanceof DoubleChest) {
-            final PlayerActiveInventoryModifications modifications = containers.remove(player);
+            final PlayerActiveInventoryModifications modifications = containersByOwner.remove(player);
             if (modifications != null) {
-                final Location loc = getInventoryHolderLocation(holder);
-                if (loc != null) {
-                    for (Entry<ItemStack, Integer> e : modifications.getModifications().entrySet()) {
-                        ItemStack stack = e.getKey();
-                        int amount = e.getValue();
-                        stack.setAmount(Math.abs(amount));
-                        consumer.getLogblock().getLogger().info("Store container: " + stack + " take: " + (amount < 0));
-                        consumer.queueChestAccess(Actor.actorFromEntity(player), loc, loc.getWorld().getBlockAt(loc).getBlockData(), stack, amount < 0);
-                    }
+                final Location loc = modifications.getLocation();
+                ArrayList<PlayerActiveInventoryModifications> atLocation = containersByLocation.get(loc);
+                atLocation.remove(modifications);
+                if (atLocation.isEmpty()) {
+                    containersByLocation.remove(loc);
                 }
+                modifications.flush();
             }
         }
     }
@@ -95,7 +124,15 @@ public class ChestAccessLogging extends LoggingListener {
             InventoryHolder holder = event.getInventory().getHolder();
             if (holder instanceof BlockState || holder instanceof DoubleChest) {
                 if (getInventoryHolderType(holder) != Material.CRAFTING_TABLE) {
-                    containers.put(player, new PlayerActiveInventoryModifications());
+                    PlayerActiveInventoryModifications modifications = new PlayerActiveInventoryModifications(event.getPlayer(), getInventoryHolderLocation(holder));
+                    containersByOwner.put(modifications.getActor(), modifications);
+                    containersByLocation.compute(modifications.getLocation(), (k, v) -> {
+                        if (v == null) {
+                            v = new ArrayList<>();
+                        }
+                        v.add(modifications);
+                        return v;
+                    });
                 }
             }
         }
@@ -109,7 +146,7 @@ public class ChestAccessLogging extends LoggingListener {
         }
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof BlockState || holder instanceof DoubleChest) {
-            final PlayerActiveInventoryModifications modifications = containers.get(player);
+            final PlayerActiveInventoryModifications modifications = containersByOwner.get(player);
             if (modifications != null) {
                 switch (event.getAction()) {
                     case PICKUP_ONE:
@@ -119,11 +156,13 @@ public class ChestAccessLogging extends LoggingListener {
                         }
                         break;
                     case PICKUP_HALF:
+                        // server behaviour: round up
                         if (event.getRawSlot() < event.getView().getTopInventory().getSize()) {
                             modifications.addModification(event.getCurrentItem(), -(event.getCurrentItem().getAmount() + 1) / 2);
                         }
                         break;
                     case PICKUP_SOME: // oversized stack - can not take all when clicking
+                        // server behaviour: leave a full stack in the slot, take everything else
                         if (event.getRawSlot() < event.getView().getTopInventory().getSize()) {
                             int taken = event.getCurrentItem().getAmount() - event.getCurrentItem().getMaxStackSize();
                             modifications.addModification(event.getCursor(), -taken);
@@ -141,6 +180,7 @@ public class ChestAccessLogging extends LoggingListener {
                         }
                         break;
                     case PLACE_SOME: // not enough free place in target slot
+                        // server behaviour: place as much as possible
                         if (event.getRawSlot() < event.getView().getTopInventory().getSize()) {
                             int placeable = event.getCurrentItem().getMaxStackSize() - event.getCurrentItem().getAmount();
                             modifications.addModification(event.getCursor(), placeable);
@@ -162,7 +202,7 @@ public class ChestAccessLogging extends LoggingListener {
                         modifications.addModification(event.getCurrentItem(), event.getCurrentItem().getAmount() * (removed ? -1 : 1));
                         break;
                     case COLLECT_TO_CURSOR: // double click
-                        // first collect all with an amount != maxstacksize, then others, starting from slot 0 (container)
+                        // server behaviour: first collect all with an amount != maxstacksize, then others, starting from slot 0 (container)
                         ItemStack cursor = event.getCursor();
                         if (cursor == null) {
                             return;
@@ -172,11 +212,10 @@ public class ChestAccessLogging extends LoggingListener {
                         boolean takeFromFullStacks = false;
                         Inventory top = event.getView().getTopInventory();
                         Inventory bottom = event.getView().getBottomInventory();
-                        while (true) {
+                        while (toPickUp > 0) {
                             for (ItemStack stack : top.getStorageContents()) {
                                 if (cursor.isSimilar(stack)) {
                                     if (takeFromFullStacks == (stack.getAmount() == stack.getMaxStackSize())) {
-                                        consumer.getLogblock().getLogger().info("Collect, from " + stack + ": " + takeFromFullStacks + ";" + stack.getAmount() + ";" + stack.getMaxStackSize());
                                         int take = Math.min(toPickUp, stack.getAmount());
                                         toPickUp -= take;
                                         takenFromContainer += take;
@@ -186,10 +225,12 @@ public class ChestAccessLogging extends LoggingListener {
                                     }
                                 }
                             }
+                            if (toPickUp <= 0) {
+                                break;
+                            }
                             for (ItemStack stack : bottom.getStorageContents()) {
                                 if (cursor.isSimilar(stack)) {
                                     if (takeFromFullStacks == (stack.getAmount() == stack.getMaxStackSize())) {
-                                        consumer.getLogblock().getLogger().info("Collect 2, from " + stack + ": " + takeFromFullStacks + ";" + stack.getAmount() + ";" + stack.getMaxStackSize());
                                         int take = Math.min(toPickUp, stack.getAmount());
                                         toPickUp -= take;
                                         if (toPickUp <= 0) {
@@ -209,7 +250,7 @@ public class ChestAccessLogging extends LoggingListener {
                         }
                         break;
                     case HOTBAR_SWAP: // number key or offhand key
-                    case HOTBAR_MOVE_AND_READD:
+                    case HOTBAR_MOVE_AND_READD: // something was in the other slot
                         if (event.getRawSlot() < event.getView().getTopInventory().getSize()) {
                             ItemStack otherSlot = (event.getClick() == ClickType.SWAP_OFFHAND) ? event.getWhoClicked().getInventory().getItemInOffHand() : event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
                             if (event.getCurrentItem() != null && event.getCurrentItem().getType() != Material.AIR) {
@@ -237,14 +278,14 @@ public class ChestAccessLogging extends LoggingListener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onInventoryClick(InventoryDragEvent event) {
+    public void onInventoryDrag(InventoryDragEvent event) {
         final HumanEntity player = event.getWhoClicked();
         if (!isLogging(player.getWorld(), Logging.CHESTACCESS)) {
             return;
         }
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof BlockState || holder instanceof DoubleChest) {
-            final PlayerActiveInventoryModifications modifications = containers.get(player);
+            final PlayerActiveInventoryModifications modifications = containersByOwner.get(player);
             if (modifications != null) {
                 Inventory container = event.getView().getTopInventory();
                 int containerSize = container.getSize();
