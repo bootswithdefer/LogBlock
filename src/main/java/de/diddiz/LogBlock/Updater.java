@@ -842,11 +842,15 @@ class Updater {
     }
 
     private void createTable(DatabaseMetaData dbm, Statement state, String table, String query) throws SQLException {
-        if (!dbm.getTables(null, null, table, null).next()) {
-            logblock.getLogger().log(Level.INFO, "Creating table " + table + ".");
-            state.execute("CREATE TABLE `" + table + "` " + query);
-            if (!dbm.getTables(null, null, table, null).next()) {
-                throw new SQLException("Table " + table + " not found and failed to create");
+        try (ResultSet tableResult = dbm.getTables(Config.mysqlDatabase, null, table, null)) {
+            if (!tableResult.next()) {
+                logblock.getLogger().log(Level.INFO, "Creating table " + table + ".");
+                state.execute("CREATE TABLE `" + table + "` " + query);
+                try (ResultSet tableResultNew = dbm.getTables(Config.mysqlDatabase, null, table, null)) {
+                    if (!tableResultNew.next()) {
+                        throw new SQLException("Table " + table + " not found and failed to create");
+                    }
+                }
             }
         }
     }
