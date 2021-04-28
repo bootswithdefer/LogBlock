@@ -27,6 +27,7 @@ import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
+import de.diddiz.util.MessagingUtil;
 import de.diddiz.util.Utils;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -44,6 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -68,53 +70,75 @@ public class CommandsHandler implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         try {
             if (args.length == 0) {
-                sender.sendMessage(ChatColor.LIGHT_PURPLE + "LogBlock v" + logblock.getDescription().getVersion() + " by DiddiZ");
-                sender.sendMessage(ChatColor.LIGHT_PURPLE + "Type /lb help for help");
+                sender.sendMessage(ChatColor.YELLOW + "------------------[ " + ChatColor.WHITE + "LogBlock" + ChatColor.YELLOW + " ]-------------------");
+                sender.sendMessage(ChatColor.GOLD + "LogBlock " + ChatColor.WHITE + "v" + logblock.getDescription().getVersion() + ChatColor.GOLD + " by DiddiZ");
+                TextComponent message = MessagingUtil.createTextComponentWithColor("Type ", net.md_5.bungee.api.ChatColor.GOLD);
+                TextComponent clickable = MessagingUtil.createTextComponentWithColor("/lb help", net.md_5.bungee.api.ChatColor.WHITE);
+                clickable.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lb help"));
+                message.addExtra(clickable);
+                message.addExtra(" for help");
+                sender.spigot().sendMessage(message);
             } else {
                 final String command = args[0].toLowerCase();
                 if (command.equals("help")) {
-                    sender.sendMessage(ChatColor.DARK_AQUA + "LogBlock Help:");
-                    sender.sendMessage(ChatColor.GOLD + "For the commands list type '/lb commands'");
-                    sender.sendMessage(ChatColor.GOLD + "For the parameters list type '/lb params'");
-                    sender.sendMessage(ChatColor.GOLD + "For the list of permissions you got type '/lb permissions'");
+                    sender.sendMessage(ChatColor.YELLOW + "----------------[ " + ChatColor.WHITE + "LogBlock Help" + ChatColor.YELLOW + " ]----------------");
+
+                    TextComponent message = MessagingUtil.createTextComponentWithColor("For the commands list type ", net.md_5.bungee.api.ChatColor.GOLD);
+                    TextComponent clickable = MessagingUtil.createTextComponentWithColor("/lb commands", net.md_5.bungee.api.ChatColor.WHITE);
+                    clickable.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lb commands"));
+                    message.addExtra(clickable);
+                    sender.spigot().sendMessage(message);
+
+                    message = MessagingUtil.createTextComponentWithColor("For the parameters list type ", net.md_5.bungee.api.ChatColor.GOLD);
+                    clickable = MessagingUtil.createTextComponentWithColor("/lb params", net.md_5.bungee.api.ChatColor.WHITE);
+                    clickable.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lb params"));
+                    message.addExtra(clickable);
+                    sender.spigot().sendMessage(message);
+
+                    message = MessagingUtil.createTextComponentWithColor("For the list of permissions you got type ", net.md_5.bungee.api.ChatColor.GOLD);
+                    clickable = MessagingUtil.createTextComponentWithColor("/lb permissions", net.md_5.bungee.api.ChatColor.WHITE);
+                    clickable.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/lb permissions"));
+                    message.addExtra(clickable);
+                    sender.spigot().sendMessage(message);
                 } else if (command.equals("commands")) {
-                    sender.sendMessage(ChatColor.DARK_AQUA + "LogBlock Commands:");
-                    sender.sendMessage(ChatColor.GOLD + "/lb tool -- Gives you the lb tool");
-                    sender.sendMessage(ChatColor.GOLD + "/lb tool [on|off] -- Enables/Disables tool");
-                    sender.sendMessage(ChatColor.GOLD + "/lb tool [params] -- Sets the tool lookup query");
-                    sender.sendMessage(ChatColor.GOLD + "/lb tool default -- Sets the tool lookup query to default");
-                    sender.sendMessage(ChatColor.GOLD + "/lb toolblock -- Analog to tool");
-                    sender.sendMessage(ChatColor.GOLD + "/lb hide -- Hides you from log");
-                    sender.sendMessage(ChatColor.GOLD + "/lb rollback [params] -- Rollback");
-                    sender.sendMessage(ChatColor.GOLD + "/lb redo [params] -- Redo");
-                    sender.sendMessage(ChatColor.GOLD + "/lb tp [params] -- Teleports you to the location of griefing");
-                    sender.sendMessage(ChatColor.GOLD + "/lb writelogfile [params] -- Writes a log file");
-                    sender.sendMessage(ChatColor.GOLD + "/lb lookup [params] -- Lookup");
-                    sender.sendMessage(ChatColor.GOLD + "/lb prev|next -- Browse lookup result pages");
-                    sender.sendMessage(ChatColor.GOLD + "/lb page -- Shows a specific lookup result page");
-                    sender.sendMessage(ChatColor.GOLD + "/lb me -- Displays your stats");
-                    sender.sendMessage(ChatColor.GOLD + "Look at github.com/LogBlock/LogBlock/wiki/Commands for the full commands reference");
+                    sender.sendMessage(ChatColor.YELLOW + "--------------[ " + ChatColor.WHITE + "LogBlock Commands" + ChatColor.YELLOW + " ]--------------");
+                    sender.sendMessage(ChatColor.GOLD + "/lb tool " + ChatColor.WHITE + "-- Gives you the lb tool");
+                    sender.sendMessage(ChatColor.GOLD + "/lb tool [on|off] " + ChatColor.WHITE + "-- Enables/Disables tool");
+                    sender.sendMessage(ChatColor.GOLD + "/lb tool [params] " + ChatColor.WHITE + "-- Sets the tool lookup query");
+                    sender.sendMessage(ChatColor.GOLD + "/lb tool default " + ChatColor.WHITE + "-- Sets the tool lookup query to default");
+                    sender.sendMessage(ChatColor.GOLD + "/lb toolblock " + ChatColor.WHITE + "-- Analog to tool");
+                    sender.sendMessage(ChatColor.GOLD + "/lb hide " + ChatColor.WHITE + "-- Hides you from log");
+                    sender.sendMessage(ChatColor.GOLD + "/lb rollback [params] " + ChatColor.WHITE + "-- Rollback");
+                    sender.sendMessage(ChatColor.GOLD + "/lb redo [params] " + ChatColor.WHITE + "-- Redo");
+                    sender.sendMessage(ChatColor.GOLD + "/lb tp [params] " + ChatColor.WHITE + "-- Teleports you to the location of griefing");
+                    sender.sendMessage(ChatColor.GOLD + "/lb writelogfile [params] " + ChatColor.WHITE + "-- Writes a log file");
+                    sender.sendMessage(ChatColor.GOLD + "/lb lookup [params] " + ChatColor.WHITE + "-- Lookup");
+                    sender.sendMessage(ChatColor.GOLD + "/lb prev|next " + ChatColor.WHITE + "-- Browse lookup result pages");
+                    sender.sendMessage(ChatColor.GOLD + "/lb page " + ChatColor.WHITE + "-- Shows a specific lookup result page");
+                    sender.sendMessage(ChatColor.GOLD + "/lb me " + ChatColor.WHITE + "-- Displays your stats");
+                    sender.sendMessage("");
+                    sender.sendMessage(ChatColor.GOLD + "Look at " + ChatColor.WHITE + "github.com/LogBlock/LogBlock/wiki/Commands" + ChatColor.GOLD + " for the full commands reference");
                 } else if (command.equals("params")) {
-                    sender.sendMessage(ChatColor.DARK_AQUA + "LogBlock Query Parameters:");
+                    sender.sendMessage(ChatColor.YELLOW + "----------[ " + ChatColor.WHITE + "LogBlock Query Parameters" + ChatColor.YELLOW + " ]----------");
                     sender.sendMessage(ChatColor.GOLD + "Use doublequotes to escape a keyword: world \"world\"");
-                    sender.sendMessage(ChatColor.GOLD + "player [name1] <name2> <name3> -- List of players");
-                    sender.sendMessage(ChatColor.GOLD + "block [type1] <type2> <type3> -- List of block types");
-                    sender.sendMessage(ChatColor.GOLD + "created, destroyed -- Show only created/destroyed blocks");
-                    sender.sendMessage(ChatColor.GOLD + "chestaccess -- Show only chest accesses");
-                    sender.sendMessage(ChatColor.GOLD + "entities [type1] <type2> <type3> -- List of entity types; can not be combined with blocks");
-                    sender.sendMessage(ChatColor.GOLD + "area <radius> -- Area around you");
-                    sender.sendMessage(ChatColor.GOLD + "selection, sel -- Inside current WorldEdit selection");
-                    sender.sendMessage(ChatColor.GOLD + "world [worldname] -- Changes the world");
-                    sender.sendMessage(ChatColor.GOLD + "time [number] [minutes|hours|days] -- Limits time");
-                    sender.sendMessage(ChatColor.GOLD + "since <dd.MM.yyyy> <HH:mm:ss> -- Limits time to a fixed point");
-                    sender.sendMessage(ChatColor.GOLD + "before <dd.MM.yyyy> <HH:mm:ss> -- Affects only blocks before a fixed time");
-                    sender.sendMessage(ChatColor.GOLD + "force -- Forces replacing not matching blocks");
-                    sender.sendMessage(ChatColor.GOLD + "limit <row count> -- Limits the result to count of rows");
-                    sender.sendMessage(ChatColor.GOLD + "sum [none|blocks|players] -- Sums the result");
-                    sender.sendMessage(ChatColor.GOLD + "asc, desc -- Changes the order of the displayed log");
-                    sender.sendMessage(ChatColor.GOLD + "coords -- Shows coordinates for each block");
-                    sender.sendMessage(ChatColor.GOLD + "nocache -- Don't set the lookup cache");
-                    sender.sendMessage(ChatColor.GOLD + "silent -- Displays lesser messages");
+                    sender.sendMessage(ChatColor.GOLD + "player [name1] <name2> <name3> " + ChatColor.WHITE + "-- List of players");
+                    sender.sendMessage(ChatColor.GOLD + "block [type1] <type2> <type3> " + ChatColor.WHITE + "-- List of block types");
+                    sender.sendMessage(ChatColor.GOLD + "created, destroyed " + ChatColor.WHITE + "-- Show only created/destroyed blocks");
+                    sender.sendMessage(ChatColor.GOLD + "chestaccess " + ChatColor.WHITE + "-- Show only chest accesses");
+                    sender.sendMessage(ChatColor.GOLD + "entities [type1] <type2> <type3> " + ChatColor.WHITE + "-- List of entity types; can not be combined with blocks");
+                    sender.sendMessage(ChatColor.GOLD + "area <radius> " + ChatColor.WHITE + "-- Area around you");
+                    sender.sendMessage(ChatColor.GOLD + "selection, sel " + ChatColor.WHITE + "-- Inside current WorldEdit selection");
+                    sender.sendMessage(ChatColor.GOLD + "world [worldname] " + ChatColor.WHITE + "-- Changes the world");
+                    sender.sendMessage(ChatColor.GOLD + "time [number] [minutes|hours|days] " + ChatColor.WHITE + "-- Limits time");
+                    sender.sendMessage(ChatColor.GOLD + "since <dd.MM.yyyy> <HH:mm:ss> " + ChatColor.WHITE + "-- Limits time to a fixed point");
+                    sender.sendMessage(ChatColor.GOLD + "before <dd.MM.yyyy> <HH:mm:ss> " + ChatColor.WHITE + "-- Affects only blocks before a fixed time");
+                    sender.sendMessage(ChatColor.GOLD + "force " + ChatColor.WHITE + "-- Forces replacing not matching blocks");
+                    sender.sendMessage(ChatColor.GOLD + "limit <row count> " + ChatColor.WHITE + "-- Limits the result to count of rows");
+                    sender.sendMessage(ChatColor.GOLD + "sum [none|blocks|players] " + ChatColor.WHITE + "-- Sums the result");
+                    sender.sendMessage(ChatColor.GOLD + "asc, desc " + ChatColor.WHITE + "-- Changes the order of the displayed log");
+                    sender.sendMessage(ChatColor.GOLD + "coords " + ChatColor.WHITE + "-- Shows coordinates for each block");
+                    sender.sendMessage(ChatColor.GOLD + "nocache " + ChatColor.WHITE + "-- Don't set the lookup cache");
+                    sender.sendMessage(ChatColor.GOLD + "silent " + ChatColor.WHITE + "-- Displays lesser messages");
                 } else if (command.equals("permissions")) {
                     sender.sendMessage(ChatColor.DARK_AQUA + "You've got the following permissions:");
                     for (final String permission : new String[] { "me", "lookup", "tp", "rollback", "clearlog", "hide", "ignoreRestrictions", "spawnTools" }) {
