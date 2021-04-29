@@ -36,6 +36,8 @@ public class KillLogging extends LoggingListener {
                     return;
                 }
                 consumer.queueKill(killer, victim);
+            } else if (deathEvent.getEntity().getKiller() != null) {
+                consumer.queueKill(deathEvent.getEntity().getKiller(), victim);
             } else if (logEnvironmentalKills) {
                 if (logKillsLevel == LogKillsLevel.PLAYERS && !(victim instanceof Player)) {
                     return;

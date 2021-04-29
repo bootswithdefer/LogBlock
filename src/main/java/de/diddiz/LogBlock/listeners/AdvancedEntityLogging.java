@@ -170,6 +170,9 @@ public class AdvancedEntityLogging extends LoggingListener {
                     actor = Actor.actorFromEntity(damager);
                 }
             }
+            if (actor == null && entity.getKiller() != null) {
+                actor = Actor.actorFromEntity(entity.getKiller());
+            }
             if (actor == null) {
                 actor = new Actor(lastDamage == null ? "UNKNOWN" : lastDamage.getCause().toString());
             }
