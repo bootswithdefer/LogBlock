@@ -52,7 +52,7 @@ public class ChestAccessLogging extends LoggingListener {
                 }
             }
 
-            consumer.getLogblock().getLogger().info("Modify container: " + stack + " change: " + amount);
+            // consumer.getLogblock().getLogger().info("Modify container: " + stack + " change: " + amount);
             stack = new ItemStack(stack);
             stack.setAmount(1);
             Integer existing = modifications.get(stack);
@@ -70,7 +70,7 @@ public class ChestAccessLogging extends LoggingListener {
                     ItemStack stack = e.getKey();
                     int amount = e.getValue();
                     stack.setAmount(Math.abs(amount));
-                    consumer.getLogblock().getLogger().info("Store container: " + stack + " take: " + (amount < 0));
+                    // consumer.getLogblock().getLogger().info("Store container: " + stack + " take: " + (amount < 0));
                     consumer.queueChestAccess(Actor.actorFromEntity(actor), location, location.getWorld().getBlockAt(location).getBlockData(), stack, amount < 0);
                 }
                 modifications.clear();
