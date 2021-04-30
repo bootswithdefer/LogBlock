@@ -65,7 +65,7 @@ public class ExplosionLogging extends LoggingListener {
                     final Entity target = ((Creeper) source).getTarget();
                     actor = target instanceof Player ? Actor.actorFromEntity(target) : new Actor("Creeper");
                 } else {
-                    new Actor("Creeper");
+                    actor = new Actor("Creeper");
                 }
             } else if (source instanceof Fireball) {
                 Fireball fireball = (Fireball) source;
