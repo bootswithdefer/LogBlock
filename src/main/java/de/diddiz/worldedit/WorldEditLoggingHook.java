@@ -1,24 +1,27 @@
 package de.diddiz.worldedit;
 
 import com.sk89q.worldedit.EditSession;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
-import com.sk89q.worldedit.blocks.BaseBlock;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
+import com.sk89q.worldedit.WorldEditException;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.event.extent.EditSessionEvent;
 import com.sk89q.worldedit.extension.platform.Actor;
-import com.sk89q.worldedit.extent.logging.AbstractLoggingExtent;
+import com.sk89q.worldedit.extent.AbstractDelegateExtent;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.util.eventbus.Subscribe;
+import com.sk89q.worldedit.world.block.BlockStateHolder;
+
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
-import org.bukkit.Bukkit;
+import de.diddiz.util.BukkitUtils;
+
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
 
 import java.util.logging.Level;
 
@@ -40,20 +43,6 @@ public class WorldEditLoggingHook {
         return new de.diddiz.LogBlock.Actor(weActor.getName());
     }
 
-    private World adapt(com.sk89q.worldedit.world.World weWorld) {
-        if (weWorld == null) {
-            throw new NullPointerException("[Logblock-Worldedit] The provided world was null.");
-        }
-        if (weWorld instanceof BukkitWorld) {
-            return ((BukkitWorld) weWorld).getWorld();
-        }
-        World world = Bukkit.getServer().getWorld(weWorld.getName());
-        if (world == null) {
-            throw new IllegalArgumentException("Can't find a Bukkit world for " + weWorld);
-        }
-        return world;
-    }
-
     public void hook() {
         WorldEdit.getInstance().getEventBus().register(new Object() {
             @Subscribe
@@ -66,9 +55,8 @@ public class WorldEditLoggingHook {
 
                 // Check to ensure the world should be logged
                 final World world;
-                final com.sk89q.worldedit.world.World k = event.getWorld();
                 try {
-                    world = adapt(k);
+                    world = BukkitAdapter.adapt(event.getWorld());
                 } catch (RuntimeException ex) {
                     plugin.getLogger().warning("Failed to register logging for WorldEdit!");
                     plugin.getLogger().log(Level.WARNING, ex.getMessage(), ex);
@@ -80,38 +68,35 @@ public class WorldEditLoggingHook {
                     return;
                 }
 
-                event.setExtent(new AbstractLoggingExtent(event.getExtent()) {
+                event.setExtent(new AbstractDelegateExtent(event.getExtent()) {
                     @Override
-                    protected void onBlockChange(Vector pt, BaseBlock block) {
+                    public final <B extends BlockStateHolder<B>> boolean setBlock(BlockVector3 position, B block) throws WorldEditException {
+                        onBlockChange(position, block);
+                        return super.setBlock(position, block);
+                    }
+
+                    protected <B extends BlockStateHolder<B>> void onBlockChange(BlockVector3 pt, B block) {
 
                         if (event.getStage() != EditSession.Stage.BEFORE_CHANGE) {
                             return;
                         }
 
-                        Location location = new Location(world, pt.getBlockX(), pt.getBlockY(), pt.getBlockZ());
-                        Block origin = location.getBlock();
-                        int typeBefore = origin.getTypeId();
-                        byte dataBefore = origin.getData();
-                        // If we're dealing with a sign, store the block state to read the text off
-                        BlockState stateBefore = null;
-                        if (typeBefore == Material.SIGN_POST.getId() || typeBefore == Material.SIGN.getId()) {
-                            stateBefore = origin.getState();
-                        }
+                        Location location = BukkitAdapter.adapt(world, pt);
+                        Block blockBefore = location.getBlock();
+                        BlockData blockDataBefore = blockBefore.getBlockData();
+                        Material typeBefore = blockDataBefore.getMaterial();
 
-                        // Check to see if we've broken a sign
-                        if (Config.isLogging(location.getWorld().getName(), Logging.SIGNTEXT) && (typeBefore == Material.SIGN_POST.getId() || typeBefore == Material.SIGN.getId())) {
-                            plugin.getConsumer().queueSignBreak(lbActor, (Sign) stateBefore);
-                            if (block.getType() != Material.AIR.getId()) {
-                                plugin.getConsumer().queueBlockPlace(lbActor, location, block.getType(), (byte) block.getData());
+                        BlockData blockDataNew = BukkitAdapter.adapt(block);
+
+                        if (!blockDataBefore.equals(blockDataNew)) {
+                            // Check to see if we've broken a sign
+                            if (BlockStateCodecs.hasCodec(typeBefore)) {
+                                plugin.getConsumer().queueBlockBreak(lbActor, blockBefore.getState());
+                            } else if (!BukkitUtils.isEmpty(typeBefore)) {
+                                plugin.getConsumer().queueBlockBreak(lbActor, location, blockDataBefore);
                             }
-                        } else {
-                            if (dataBefore != 0) {
-                                plugin.getConsumer().queueBlockBreak(lbActor, location, typeBefore, dataBefore);
-                                if (block.getType() != Material.AIR.getId()) {
-                                    plugin.getConsumer().queueBlockPlace(lbActor, location, block.getType(), (byte) block.getData());
-                                }
-                            } else {
-                                plugin.getConsumer().queueBlock(lbActor, location, typeBefore, block.getType(), (byte) block.getData());
+                            if (!BukkitUtils.isEmpty(blockDataNew.getMaterial())) {
+                                plugin.getConsumer().queueBlockPlace(lbActor, location, blockDataNew);
                             }
                         }
                     }

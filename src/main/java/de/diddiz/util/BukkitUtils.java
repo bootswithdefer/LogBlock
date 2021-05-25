@@ -1,146 +1,368 @@
 package de.diddiz.util;
 
-import org.bukkit.*;
+import static de.diddiz.util.MessagingUtil.prettyMaterial;
+
+import de.diddiz.LogBlock.LogBlock;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.Set;
+import java.util.UUID;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.HoverEvent.Action;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
+import org.bukkit.DyeColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.Bisected.Half;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Slab;
+import org.bukkit.block.data.type.Slab.Type;
+import org.bukkit.block.data.type.Stairs;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TNTPrimed;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-
-import java.io.File;
-import java.util.*;
-
-import static de.diddiz.util.MaterialName.materialName;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 
 public class BukkitUtils {
     private static final Set<Set<Integer>> blockEquivalents;
     private static final Set<Material> relativeBreakable;
     private static final Set<Material> relativeTopBreakable;
-    private static final Set<Material> relativeTopFallables;
     private static final Set<Material> fallingEntityKillers;
 
     private static final Set<Material> cropBlocks;
     private static final Set<Material> containerBlocks;
+    private static final Set<Material> shulkerBoxBlocks;
 
-    private static final Map<EntityType, Integer> projectileItems;
+    private static final Set<Material> singleBlockPlants;
+    private static final Set<Material> doublePlants;
+
+    private static final Set<Material> nonFluidProofBlocks;
+
+    private static final Set<Material> bedBlocks;
+
+    private static final Map<EntityType, Material> projectileItems;
+    private static final EnumSet<Material> signs;
+    private static final EnumSet<Material> wallSigns;
+    private static final EnumSet<Material> allSigns;
+    private static final EnumSet<Material> buttons;
+    private static final EnumSet<Material> pressurePlates;
+    private static final EnumSet<Material> woodenDoors;
+    private static final EnumSet<Material> slabs;
+    private static final EnumSet<Material> concreteBlocks;
+    private static final EnumMap<Material, DyeColor> dyes;
 
     static {
-        blockEquivalents = new HashSet<Set<Integer>>(7);
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(2, 3, 60)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(8, 9, 79)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(10, 11)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(61, 62)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(73, 74)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(75, 76)));
-        blockEquivalents.add(new HashSet<Integer>(Arrays.asList(93, 94)));
+        pressurePlates = EnumSet.noneOf(Material.class);
+        pressurePlates.add(Material.OAK_PRESSURE_PLATE);
+        pressurePlates.add(Material.SPRUCE_PRESSURE_PLATE);
+        pressurePlates.add(Material.BIRCH_PRESSURE_PLATE);
+        pressurePlates.add(Material.JUNGLE_PRESSURE_PLATE);
+        pressurePlates.add(Material.ACACIA_PRESSURE_PLATE);
+        pressurePlates.add(Material.DARK_OAK_PRESSURE_PLATE);
+        pressurePlates.add(Material.WARPED_PRESSURE_PLATE);
+        pressurePlates.add(Material.CRIMSON_PRESSURE_PLATE);
+        pressurePlates.add(Material.STONE_PRESSURE_PLATE);
+        pressurePlates.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
+        pressurePlates.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
+
+        woodenDoors = EnumSet.noneOf(Material.class);
+        woodenDoors.add(Material.OAK_DOOR);
+        woodenDoors.add(Material.SPRUCE_DOOR);
+        woodenDoors.add(Material.BIRCH_DOOR);
+        woodenDoors.add(Material.JUNGLE_DOOR);
+        woodenDoors.add(Material.ACACIA_DOOR);
+        woodenDoors.add(Material.DARK_OAK_DOOR);
+        woodenDoors.add(Material.WARPED_DOOR);
+        woodenDoors.add(Material.CRIMSON_DOOR);
+
+        EnumSet<Material> saplings = EnumSet.noneOf(Material.class);
+        saplings.add(Material.OAK_SAPLING);
+        saplings.add(Material.SPRUCE_SAPLING);
+        saplings.add(Material.BIRCH_SAPLING);
+        saplings.add(Material.JUNGLE_SAPLING);
+        saplings.add(Material.ACACIA_SAPLING);
+        saplings.add(Material.DARK_OAK_SAPLING);
+        saplings.add(Material.WARPED_FUNGUS);
+        saplings.add(Material.CRIMSON_FUNGUS);
+
+        EnumSet<Material> carpets = EnumSet.noneOf(Material.class);
+        carpets.add(Material.BLACK_CARPET);
+        carpets.add(Material.BLUE_CARPET);
+        carpets.add(Material.LIGHT_GRAY_CARPET);
+        carpets.add(Material.BROWN_CARPET);
+        carpets.add(Material.CYAN_CARPET);
+        carpets.add(Material.GRAY_CARPET);
+        carpets.add(Material.GREEN_CARPET);
+        carpets.add(Material.LIGHT_BLUE_CARPET);
+        carpets.add(Material.MAGENTA_CARPET);
+        carpets.add(Material.LIME_CARPET);
+        carpets.add(Material.ORANGE_CARPET);
+        carpets.add(Material.PINK_CARPET);
+        carpets.add(Material.PURPLE_CARPET);
+        carpets.add(Material.RED_CARPET);
+        carpets.add(Material.WHITE_CARPET);
+        carpets.add(Material.YELLOW_CARPET);
+
+        slabs = EnumSet.noneOf(Material.class);
+        slabs.add(Material.OAK_SLAB);
+        slabs.add(Material.SPRUCE_SLAB);
+        slabs.add(Material.BIRCH_SLAB);
+        slabs.add(Material.JUNGLE_SLAB);
+        slabs.add(Material.ACACIA_SLAB);
+        slabs.add(Material.DARK_OAK_SLAB);
+        slabs.add(Material.WARPED_SLAB);
+        slabs.add(Material.CRIMSON_SLAB);
+        slabs.add(Material.STONE_SLAB);
+        slabs.add(Material.STONE_BRICK_SLAB);
+        slabs.add(Material.COBBLESTONE_SLAB);
+        slabs.add(Material.PETRIFIED_OAK_SLAB);
+        slabs.add(Material.SANDSTONE_SLAB);
+        slabs.add(Material.RED_SANDSTONE_SLAB);
+        slabs.add(Material.NETHER_BRICK_SLAB);
+        slabs.add(Material.PURPUR_SLAB);
+        slabs.add(Material.QUARTZ_SLAB);
+        slabs.add(Material.BRICK_SLAB);
+        slabs.add(Material.PRISMARINE_SLAB);
+        slabs.add(Material.DARK_PRISMARINE_SLAB);
+        slabs.add(Material.PRISMARINE_BRICK_SLAB);
+        slabs.add(Material.BLACKSTONE_SLAB);
+        slabs.add(Material.POLISHED_BLACKSTONE_SLAB);
+
+        buttons = EnumSet.noneOf(Material.class);
+        buttons.add(Material.STONE_BUTTON);
+        buttons.add(Material.OAK_BUTTON);
+        buttons.add(Material.SPRUCE_BUTTON);
+        buttons.add(Material.BIRCH_BUTTON);
+        buttons.add(Material.JUNGLE_BUTTON);
+        buttons.add(Material.ACACIA_BUTTON);
+        buttons.add(Material.DARK_OAK_BUTTON);
+        buttons.add(Material.WARPED_BUTTON);
+        buttons.add(Material.CRIMSON_BUTTON);
+
+        signs = EnumSet.noneOf(Material.class);
+        signs.add(Material.OAK_SIGN);
+        signs.add(Material.SPRUCE_SIGN);
+        signs.add(Material.BIRCH_SIGN);
+        signs.add(Material.JUNGLE_SIGN);
+        signs.add(Material.DARK_OAK_SIGN);
+        signs.add(Material.ACACIA_SIGN);
+        signs.add(Material.WARPED_SIGN);
+        signs.add(Material.CRIMSON_SIGN);
+
+        wallSigns = EnumSet.noneOf(Material.class);
+        wallSigns.add(Material.OAK_WALL_SIGN);
+        wallSigns.add(Material.SPRUCE_WALL_SIGN);
+        wallSigns.add(Material.BIRCH_WALL_SIGN);
+        wallSigns.add(Material.JUNGLE_WALL_SIGN);
+        wallSigns.add(Material.DARK_OAK_WALL_SIGN);
+        wallSigns.add(Material.ACACIA_WALL_SIGN);
+        wallSigns.add(Material.WARPED_WALL_SIGN);
+        wallSigns.add(Material.CRIMSON_WALL_SIGN);
+
+        allSigns = EnumSet.noneOf(Material.class);
+        allSigns.addAll(signs);
+        allSigns.addAll(wallSigns);
+
+        singleBlockPlants = EnumSet.noneOf(Material.class);
+        singleBlockPlants.add(Material.GRASS);
+        singleBlockPlants.add(Material.FERN);
+        singleBlockPlants.add(Material.DEAD_BUSH);
+        singleBlockPlants.add(Material.DANDELION);
+        singleBlockPlants.add(Material.POPPY);
+        singleBlockPlants.add(Material.BLUE_ORCHID);
+        singleBlockPlants.add(Material.ALLIUM);
+        singleBlockPlants.add(Material.AZURE_BLUET);
+        singleBlockPlants.add(Material.ORANGE_TULIP);
+        singleBlockPlants.add(Material.WHITE_TULIP);
+        singleBlockPlants.add(Material.PINK_TULIP);
+        singleBlockPlants.add(Material.RED_TULIP);
+        singleBlockPlants.add(Material.OXEYE_DAISY);
+        singleBlockPlants.add(Material.BROWN_MUSHROOM);
+        singleBlockPlants.add(Material.RED_MUSHROOM);
+        singleBlockPlants.add(Material.SWEET_BERRY_BUSH);
+        singleBlockPlants.add(Material.LILY_OF_THE_VALLEY);
+        singleBlockPlants.add(Material.CORNFLOWER);
+        singleBlockPlants.add(Material.WITHER_ROSE);
+        singleBlockPlants.add(Material.CRIMSON_FUNGUS);
+        singleBlockPlants.add(Material.WARPED_FUNGUS);
+        singleBlockPlants.add(Material.CRIMSON_ROOTS);
+        singleBlockPlants.add(Material.WARPED_ROOTS);
+        singleBlockPlants.add(Material.NETHER_SPROUTS);
+
+        doublePlants = EnumSet.noneOf(Material.class);
+        doublePlants.add(Material.TALL_GRASS);
+        doublePlants.add(Material.LARGE_FERN);
+        doublePlants.add(Material.TALL_SEAGRASS);
+        doublePlants.add(Material.ROSE_BUSH);
+        doublePlants.add(Material.LILAC);
+        doublePlants.add(Material.SUNFLOWER);
+        doublePlants.add(Material.PEONY);
+
+        blockEquivalents = new HashSet<>(7);
+        blockEquivalents.add(new HashSet<>(Arrays.asList(2, 3, 60)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(8, 9, 79)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(10, 11)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(61, 62)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(73, 74)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(75, 76)));
+        blockEquivalents.add(new HashSet<>(Arrays.asList(93, 94)));
 
         // Blocks that break when they are attached to a block
-        relativeBreakable = new HashSet<Material>(11);
-        relativeBreakable.add(Material.WALL_SIGN);
+        relativeBreakable = EnumSet.noneOf(Material.class);
+        relativeBreakable.addAll(wallSigns);
         relativeBreakable.add(Material.LADDER);
-        relativeBreakable.add(Material.STONE_BUTTON);
-        relativeBreakable.add(Material.WOOD_BUTTON);
-        relativeBreakable.add(Material.REDSTONE_TORCH_ON);
-        relativeBreakable.add(Material.REDSTONE_TORCH_OFF);
+        relativeBreakable.addAll(buttons);
+        relativeBreakable.add(Material.REDSTONE_WALL_TORCH);
         relativeBreakable.add(Material.LEVER);
-        relativeBreakable.add(Material.TORCH);
-        relativeBreakable.add(Material.TRAP_DOOR);
+        relativeBreakable.add(Material.WALL_TORCH);
         relativeBreakable.add(Material.TRIPWIRE_HOOK);
         relativeBreakable.add(Material.COCOA);
+        relativeBreakable.add(Material.BELL);
 
         // Blocks that break when they are on top of a block
-        relativeTopBreakable = new HashSet<Material>(33);
-        relativeTopBreakable.add(Material.SAPLING);
-        relativeTopBreakable.add(Material.LONG_GRASS);
-        relativeTopBreakable.add(Material.DEAD_BUSH);
-        relativeTopBreakable.add(Material.YELLOW_FLOWER);
-        relativeTopBreakable.add(Material.RED_ROSE);
-        relativeTopBreakable.add(Material.BROWN_MUSHROOM);
-        relativeTopBreakable.add(Material.RED_MUSHROOM);
-        relativeTopBreakable.add(Material.CROPS);
+        relativeTopBreakable = EnumSet.noneOf(Material.class);
+        relativeTopBreakable.addAll(saplings);
+        relativeTopBreakable.addAll(singleBlockPlants);
+        relativeTopBreakable.add(Material.WHEAT);
         relativeTopBreakable.add(Material.POTATO);
         relativeTopBreakable.add(Material.CARROT);
-        relativeTopBreakable.add(Material.WATER_LILY);
+        relativeTopBreakable.add(Material.LILY_PAD);
         relativeTopBreakable.add(Material.CACTUS);
-        relativeTopBreakable.add(Material.SUGAR_CANE_BLOCK);
+        relativeTopBreakable.add(Material.SUGAR_CANE);
         relativeTopBreakable.add(Material.FLOWER_POT);
         relativeTopBreakable.add(Material.POWERED_RAIL);
         relativeTopBreakable.add(Material.DETECTOR_RAIL);
         relativeTopBreakable.add(Material.ACTIVATOR_RAIL);
-        relativeTopBreakable.add(Material.RAILS);
+        relativeTopBreakable.add(Material.RAIL);
         relativeTopBreakable.add(Material.REDSTONE_WIRE);
-        relativeTopBreakable.add(Material.SIGN_POST);
-        relativeTopBreakable.add(Material.STONE_PLATE);
-        relativeTopBreakable.add(Material.WOOD_PLATE);
-        relativeTopBreakable.add(Material.IRON_PLATE);
-        relativeTopBreakable.add(Material.GOLD_PLATE);
+        relativeTopBreakable.addAll(signs);
+        relativeTopBreakable.addAll(pressurePlates);
         relativeTopBreakable.add(Material.SNOW);
-        relativeTopBreakable.add(Material.DIODE_BLOCK_ON);
-        relativeTopBreakable.add(Material.DIODE_BLOCK_OFF);
-        relativeTopBreakable.add(Material.REDSTONE_COMPARATOR_ON);
-        relativeTopBreakable.add(Material.REDSTONE_COMPARATOR_OFF);
-        relativeTopBreakable.add(Material.WOODEN_DOOR);
-        relativeTopBreakable.add(Material.IRON_DOOR_BLOCK);
-        relativeTopBreakable.add(Material.CARPET);
-        relativeTopBreakable.add(Material.DOUBLE_PLANT);
-
-        // Blocks that fall
-        relativeTopFallables = new HashSet<Material>(4);
-        relativeTopFallables.add(Material.SAND);
-        relativeTopFallables.add(Material.GRAVEL);
-        relativeTopFallables.add(Material.DRAGON_EGG);
-        relativeTopFallables.add(Material.ANVIL);
+        relativeTopBreakable.add(Material.REPEATER);
+        relativeTopBreakable.add(Material.COMPARATOR);
+        relativeTopBreakable.add(Material.TORCH);
+        relativeTopBreakable.add(Material.SOUL_TORCH);
+        relativeTopBreakable.add(Material.REDSTONE_TORCH);
+        relativeTopBreakable.addAll(woodenDoors);
+        relativeTopBreakable.add(Material.IRON_DOOR);
+        relativeTopBreakable.addAll(carpets);
+        relativeTopBreakable.addAll(doublePlants);
+        relativeTopBreakable.add(Material.BAMBOO);
+        relativeTopBreakable.add(Material.BAMBOO_SAPLING);
+        relativeTopBreakable.add(Material.TWISTING_VINES);
+        relativeTopBreakable.add(Material.TWISTING_VINES_PLANT);
+        for (Material m : Material.values()) {
+            if (m.name().startsWith("POTTED_")) {
+                relativeTopBreakable.add(m);
+            }
+        }
 
         // Blocks that break falling entities
-        fallingEntityKillers = new HashSet<Material>(32);
-        fallingEntityKillers.add(Material.SIGN_POST);
-        fallingEntityKillers.add(Material.WALL_SIGN);
-        fallingEntityKillers.add(Material.STONE_PLATE);
-        fallingEntityKillers.add(Material.WOOD_PLATE);
-        fallingEntityKillers.add(Material.IRON_PLATE);
-        fallingEntityKillers.add(Material.GOLD_PLATE);
-        fallingEntityKillers.add(Material.SAPLING);
-        fallingEntityKillers.add(Material.YELLOW_FLOWER);
-        fallingEntityKillers.add(Material.RED_ROSE);
-        fallingEntityKillers.add(Material.CROPS);
+        fallingEntityKillers = EnumSet.noneOf(Material.class);
+        fallingEntityKillers.addAll(signs);
+        fallingEntityKillers.addAll(wallSigns);
+        fallingEntityKillers.addAll(pressurePlates);
+        fallingEntityKillers.addAll(saplings);
+        fallingEntityKillers.addAll(singleBlockPlants);
+        fallingEntityKillers.remove(Material.GRASS);
+        fallingEntityKillers.remove(Material.NETHER_SPROUTS);
+        fallingEntityKillers.addAll(doublePlants);
+        fallingEntityKillers.add(Material.WHEAT);
         fallingEntityKillers.add(Material.CARROT);
         fallingEntityKillers.add(Material.POTATO);
-        fallingEntityKillers.add(Material.RED_MUSHROOM);
-        fallingEntityKillers.add(Material.BROWN_MUSHROOM);
-        fallingEntityKillers.add(Material.STEP);
-        fallingEntityKillers.add(Material.WOOD_STEP);
+        fallingEntityKillers.add(Material.BEETROOT);
+        fallingEntityKillers.add(Material.NETHER_WART);
+        fallingEntityKillers.add(Material.COCOA);
+        fallingEntityKillers.addAll(slabs);
         fallingEntityKillers.add(Material.TORCH);
+        fallingEntityKillers.add(Material.WALL_TORCH);
+        fallingEntityKillers.add(Material.SOUL_TORCH);
+        fallingEntityKillers.add(Material.SOUL_WALL_TORCH);
         fallingEntityKillers.add(Material.FLOWER_POT);
         fallingEntityKillers.add(Material.POWERED_RAIL);
         fallingEntityKillers.add(Material.DETECTOR_RAIL);
         fallingEntityKillers.add(Material.ACTIVATOR_RAIL);
-        fallingEntityKillers.add(Material.RAILS);
+        fallingEntityKillers.add(Material.RAIL);
         fallingEntityKillers.add(Material.LEVER);
         fallingEntityKillers.add(Material.REDSTONE_WIRE);
-        fallingEntityKillers.add(Material.REDSTONE_TORCH_ON);
-        fallingEntityKillers.add(Material.REDSTONE_TORCH_OFF);
-        fallingEntityKillers.add(Material.DIODE_BLOCK_ON);
-        fallingEntityKillers.add(Material.DIODE_BLOCK_OFF);
-        fallingEntityKillers.add(Material.REDSTONE_COMPARATOR_ON);
-        fallingEntityKillers.add(Material.REDSTONE_COMPARATOR_OFF);
+        fallingEntityKillers.add(Material.REDSTONE_TORCH);
+        fallingEntityKillers.add(Material.REDSTONE_WALL_TORCH);
+        fallingEntityKillers.add(Material.REPEATER);
+        fallingEntityKillers.add(Material.COMPARATOR);
         fallingEntityKillers.add(Material.DAYLIGHT_DETECTOR);
-        fallingEntityKillers.add(Material.CARPET);
+        fallingEntityKillers.addAll(carpets);
+        fallingEntityKillers.add(Material.PLAYER_HEAD);
+        fallingEntityKillers.add(Material.PLAYER_WALL_HEAD);
+        fallingEntityKillers.add(Material.CREEPER_HEAD);
+        fallingEntityKillers.add(Material.CREEPER_WALL_HEAD);
+        fallingEntityKillers.add(Material.DRAGON_HEAD);
+        fallingEntityKillers.add(Material.DRAGON_WALL_HEAD);
+        fallingEntityKillers.add(Material.ZOMBIE_HEAD);
+        fallingEntityKillers.add(Material.ZOMBIE_WALL_HEAD);
+        fallingEntityKillers.add(Material.SKELETON_SKULL);
+        fallingEntityKillers.add(Material.SKELETON_WALL_SKULL);
+        fallingEntityKillers.add(Material.WITHER_SKELETON_SKULL);
+        fallingEntityKillers.add(Material.WITHER_SKELETON_WALL_SKULL);
 
         // Crop Blocks
-        cropBlocks = new HashSet<Material>(5);
-        cropBlocks.add(Material.CROPS);
+        cropBlocks = EnumSet.noneOf(Material.class);
+        cropBlocks.add(Material.WHEAT);
         cropBlocks.add(Material.MELON_STEM);
         cropBlocks.add(Material.PUMPKIN_STEM);
         cropBlocks.add(Material.CARROT);
         cropBlocks.add(Material.POTATO);
+        cropBlocks.add(Material.BEETROOT);
+
+        // Shulker Boxes
+        shulkerBoxBlocks = EnumSet.noneOf(Material.class);
+        shulkerBoxBlocks.add(Material.SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.BLACK_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.BLUE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.LIGHT_GRAY_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.BROWN_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.CYAN_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.GRAY_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.GREEN_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.LIGHT_BLUE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.MAGENTA_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.LIME_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.ORANGE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.PINK_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.PURPLE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.RED_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.WHITE_SHULKER_BOX);
+        shulkerBoxBlocks.add(Material.YELLOW_SHULKER_BOX);
 
         // Container Blocks
-        containerBlocks = new HashSet<Material>(6);
+        containerBlocks = EnumSet.noneOf(Material.class);
         containerBlocks.add(Material.CHEST);
         containerBlocks.add(Material.TRAPPED_CHEST);
         containerBlocks.add(Material.DISPENSER);
@@ -148,43 +370,114 @@ public class BukkitUtils {
         containerBlocks.add(Material.HOPPER);
         containerBlocks.add(Material.BREWING_STAND);
         containerBlocks.add(Material.FURNACE);
-        containerBlocks.add(Material.BURNING_FURNACE);
-        containerBlocks.add(Material.BEACON);
-        containerBlocks.add(Material.BLACK_SHULKER_BOX);
-        containerBlocks.add(Material.BLUE_SHULKER_BOX);
-        containerBlocks.add(Material.SILVER_SHULKER_BOX);
-        containerBlocks.add(Material.BROWN_SHULKER_BOX);
-        containerBlocks.add(Material.CYAN_SHULKER_BOX);
-        containerBlocks.add(Material.GRAY_SHULKER_BOX);
-        containerBlocks.add(Material.GREEN_SHULKER_BOX);
-        containerBlocks.add(Material.LIGHT_BLUE_SHULKER_BOX);
-        containerBlocks.add(Material.MAGENTA_SHULKER_BOX);
-        containerBlocks.add(Material.LIME_SHULKER_BOX);
-        containerBlocks.add(Material.ORANGE_SHULKER_BOX);
-        containerBlocks.add(Material.PINK_SHULKER_BOX);
-        containerBlocks.add(Material.PURPLE_SHULKER_BOX);
-        containerBlocks.add(Material.RED_SHULKER_BOX);
-        containerBlocks.add(Material.WHITE_SHULKER_BOX);
-        containerBlocks.add(Material.YELLOW_SHULKER_BOX);
+        containerBlocks.addAll(shulkerBoxBlocks);
+        containerBlocks.add(Material.BARREL);
+        containerBlocks.add(Material.BLAST_FURNACE);
+        containerBlocks.add(Material.SMOKER);
         // Doesn't actually have a block inventory
         // containerBlocks.add(Material.ENDER_CHEST);
 
         // It doesn't seem like you could injure people with some of these, but they exist, so....
-        projectileItems = new EnumMap<EntityType, Integer>(EntityType.class);
-        projectileItems.put(EntityType.ARROW, 262);
-        projectileItems.put(EntityType.EGG, 344);
-        projectileItems.put(EntityType.ENDER_PEARL, 368);
-        projectileItems.put(EntityType.SMALL_FIREBALL, 385);    // Fire charge
-        projectileItems.put(EntityType.FIREBALL, 385);        // Fire charge
-        projectileItems.put(EntityType.FISHING_HOOK, 346);
-        projectileItems.put(EntityType.SNOWBALL, 332);
-        projectileItems.put(EntityType.SPLASH_POTION, 373);
-        projectileItems.put(EntityType.THROWN_EXP_BOTTLE, 384);
-        projectileItems.put(EntityType.WITHER_SKULL, 397);
+        projectileItems = new EnumMap<>(EntityType.class);
+        projectileItems.put(EntityType.ARROW, Material.ARROW);
+        projectileItems.put(EntityType.EGG, Material.EGG);
+        projectileItems.put(EntityType.ENDER_PEARL, Material.ENDER_PEARL);
+        projectileItems.put(EntityType.SMALL_FIREBALL, Material.FIRE_CHARGE); // Fire charge
+        projectileItems.put(EntityType.FIREBALL, Material.FIRE_CHARGE); // Fire charge
+        projectileItems.put(EntityType.FISHING_HOOK, Material.FISHING_ROD);
+        projectileItems.put(EntityType.SNOWBALL, Material.SNOWBALL);
+        projectileItems.put(EntityType.SPLASH_POTION, Material.SPLASH_POTION);
+        projectileItems.put(EntityType.THROWN_EXP_BOTTLE, Material.EXPERIENCE_BOTTLE);
+        projectileItems.put(EntityType.WITHER_SKULL, Material.WITHER_SKELETON_SKULL);
+        projectileItems.put(EntityType.FIREWORK, Material.FIREWORK_ROCKET);
 
+        nonFluidProofBlocks = EnumSet.noneOf(Material.class);
+        nonFluidProofBlocks.addAll(singleBlockPlants);
+        nonFluidProofBlocks.addAll(doublePlants);
+        nonFluidProofBlocks.add(Material.REDSTONE_WALL_TORCH);
+        nonFluidProofBlocks.add(Material.LEVER);
+        nonFluidProofBlocks.add(Material.WALL_TORCH);
+        nonFluidProofBlocks.add(Material.SOUL_WALL_TORCH);
+        nonFluidProofBlocks.add(Material.TRIPWIRE_HOOK);
+        nonFluidProofBlocks.add(Material.COCOA);
+        nonFluidProofBlocks.addAll(pressurePlates);
+        nonFluidProofBlocks.addAll(saplings);
+        nonFluidProofBlocks.add(Material.WHEAT);
+        nonFluidProofBlocks.add(Material.CARROT);
+        nonFluidProofBlocks.add(Material.POTATO);
+        nonFluidProofBlocks.add(Material.BEETROOT);
+        nonFluidProofBlocks.add(Material.NETHER_WART);
+        nonFluidProofBlocks.add(Material.TORCH);
+        nonFluidProofBlocks.add(Material.SOUL_TORCH);
+        nonFluidProofBlocks.add(Material.FLOWER_POT);
+        nonFluidProofBlocks.add(Material.POWERED_RAIL);
+        nonFluidProofBlocks.add(Material.DETECTOR_RAIL);
+        nonFluidProofBlocks.add(Material.ACTIVATOR_RAIL);
+        nonFluidProofBlocks.add(Material.RAIL);
+        nonFluidProofBlocks.add(Material.LEVER);
+        nonFluidProofBlocks.add(Material.REDSTONE_WIRE);
+        nonFluidProofBlocks.add(Material.REDSTONE_TORCH);
+        nonFluidProofBlocks.add(Material.REPEATER);
+        nonFluidProofBlocks.add(Material.COMPARATOR);
+        nonFluidProofBlocks.add(Material.DAYLIGHT_DETECTOR);
+        nonFluidProofBlocks.addAll(carpets);
+
+        bedBlocks = EnumSet.noneOf(Material.class);
+        bedBlocks.add(Material.BLACK_BED);
+        bedBlocks.add(Material.BLUE_BED);
+        bedBlocks.add(Material.LIGHT_GRAY_BED);
+        bedBlocks.add(Material.BROWN_BED);
+        bedBlocks.add(Material.CYAN_BED);
+        bedBlocks.add(Material.GRAY_BED);
+        bedBlocks.add(Material.GREEN_BED);
+        bedBlocks.add(Material.LIGHT_BLUE_BED);
+        bedBlocks.add(Material.MAGENTA_BED);
+        bedBlocks.add(Material.LIME_BED);
+        bedBlocks.add(Material.ORANGE_BED);
+        bedBlocks.add(Material.PINK_BED);
+        bedBlocks.add(Material.PURPLE_BED);
+        bedBlocks.add(Material.RED_BED);
+        bedBlocks.add(Material.WHITE_BED);
+        bedBlocks.add(Material.YELLOW_BED);
+
+        concreteBlocks = EnumSet.noneOf(Material.class);
+        concreteBlocks.add(Material.BLACK_CONCRETE);
+        concreteBlocks.add(Material.BLUE_CONCRETE);
+        concreteBlocks.add(Material.LIGHT_GRAY_CONCRETE);
+        concreteBlocks.add(Material.BROWN_CONCRETE);
+        concreteBlocks.add(Material.CYAN_CONCRETE);
+        concreteBlocks.add(Material.GRAY_CONCRETE);
+        concreteBlocks.add(Material.GREEN_CONCRETE);
+        concreteBlocks.add(Material.LIGHT_BLUE_CONCRETE);
+        concreteBlocks.add(Material.MAGENTA_CONCRETE);
+        concreteBlocks.add(Material.LIME_CONCRETE);
+        concreteBlocks.add(Material.ORANGE_CONCRETE);
+        concreteBlocks.add(Material.PINK_CONCRETE);
+        concreteBlocks.add(Material.PURPLE_CONCRETE);
+        concreteBlocks.add(Material.RED_CONCRETE);
+        concreteBlocks.add(Material.WHITE_CONCRETE);
+        concreteBlocks.add(Material.YELLOW_CONCRETE);
+
+        dyes = new EnumMap<>(Material.class);
+        dyes.put(Material.BLACK_DYE, DyeColor.BLACK);
+        dyes.put(Material.BLUE_DYE, DyeColor.BLUE);
+        dyes.put(Material.LIGHT_GRAY_DYE, DyeColor.LIGHT_GRAY);
+        dyes.put(Material.BROWN_DYE, DyeColor.BROWN);
+        dyes.put(Material.CYAN_DYE, DyeColor.CYAN);
+        dyes.put(Material.GRAY_DYE, DyeColor.GRAY);
+        dyes.put(Material.GREEN_DYE, DyeColor.GREEN);
+        dyes.put(Material.LIGHT_BLUE_DYE, DyeColor.LIGHT_BLUE);
+        dyes.put(Material.MAGENTA_DYE, DyeColor.MAGENTA);
+        dyes.put(Material.LIME_DYE, DyeColor.LIME);
+        dyes.put(Material.ORANGE_DYE, DyeColor.ORANGE);
+        dyes.put(Material.PINK_DYE, DyeColor.PINK);
+        dyes.put(Material.PURPLE_DYE, DyeColor.PURPLE);
+        dyes.put(Material.RED_DYE, DyeColor.RED);
+        dyes.put(Material.WHITE_DYE, DyeColor.WHITE);
+        dyes.put(Material.YELLOW_DYE, DyeColor.YELLOW);
     }
 
-    private static final BlockFace[] relativeBlockFaces = new BlockFace[]{
+    private static final BlockFace[] relativeBlockFaces = new BlockFace[] {
             BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.UP, BlockFace.DOWN
     };
 
@@ -196,7 +489,7 @@ public class BukkitUtils {
      * @return List of block locations around the block that are of the type specified by the integer list parameter
      */
     public static List<Location> getBlocksNearby(org.bukkit.block.Block block, Set<Material> type) {
-        ArrayList<Location> blocks = new ArrayList<Location>();
+        ArrayList<Location> blocks = new ArrayList<>();
         for (BlockFace blockFace : relativeBlockFaces) {
             if (type.contains(block.getRelative(blockFace).getType())) {
                 blocks.add(block.getRelative(blockFace).getLocation());
@@ -205,26 +498,20 @@ public class BukkitUtils {
         return blocks;
     }
 
-    public static boolean isTop(Material mat, byte data) {
-
-        switch (mat) {
-            case DOUBLE_PLANT:
-                return data > 5;
-            case IRON_DOOR_BLOCK:
-            case WOODEN_DOOR:
-                return data == 8 || data == 9;
-            default:
-                return false;
+    public static boolean isTop(BlockData data) {
+        if (data instanceof Bisected && !(data instanceof Stairs)) {
+            return ((Bisected) data).getHalf() == Half.TOP;
         }
+        return false;
     }
 
-    public static int getInventoryHolderType(InventoryHolder holder) {
+    public static Material getInventoryHolderType(InventoryHolder holder) {
         if (holder instanceof DoubleChest) {
             return getInventoryHolderType(((DoubleChest) holder).getLeftSide());
         } else if (holder instanceof BlockState) {
-            return ((BlockState) holder).getTypeId();
+            return ((BlockState) holder).getType();
         } else {
-            return -1;
+            return null;
         }
     }
 
@@ -239,63 +526,58 @@ public class BukkitUtils {
     }
 
     public static ItemStack[] compareInventories(ItemStack[] items1, ItemStack[] items2) {
-        final ItemStackComparator comperator = new ItemStackComparator();
-        final ArrayList<ItemStack> diff = new ArrayList<ItemStack>();
-        final int l1 = items1.length, l2 = items2.length;
-        int c1 = 0, c2 = 0;
-        while (c1 < l1 || c2 < l2) {
-            if (c1 >= l1) {
-                diff.add(items2[c2]);
-                c2++;
-                continue;
+        final ArrayList<ItemStack> diff = new ArrayList<>();
+        for (ItemStack current : items2) {
+            try {
+                diff.add(new ItemStack(current));
+            } catch (NullPointerException e) {
+                LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not clone ItemStack, probably Spigot bug SPIGOT-6025", e); // SPIGOT-6025
             }
-            if (c2 >= l2) {
-                items1[c1].setAmount(items1[c1].getAmount() * -1);
-                diff.add(items1[c1]);
-                c1++;
-                continue;
-            }
-            final int comp = comperator.compare(items1[c1], items2[c2]);
-            if (comp < 0) {
-                items1[c1].setAmount(items1[c1].getAmount() * -1);
-                diff.add(items1[c1]);
-                c1++;
-            } else if (comp > 0) {
-                diff.add(items2[c2]);
-                c2++;
-            } else {
-                final int amount = items2[c2].getAmount() - items1[c1].getAmount();
-                if (amount != 0) {
-                    items1[c1].setAmount(amount);
-                    diff.add(items1[c1]);
+        }
+        for (ItemStack previous : items1) {
+            boolean found = false;
+            for (ItemStack current : diff) {
+                if (current.isSimilar(previous)) {
+                    int newAmount = current.getAmount() - previous.getAmount();
+                    if (newAmount == 0) {
+                        diff.remove(current);
+                    } else {
+                        current.setAmount(newAmount);
+                    }
+                    found = true;
+                    break;
                 }
-                c1++;
-                c2++;
+            }
+            if (!found) {
+                try {
+                    ItemStack subtracted = new ItemStack(previous);
+                    subtracted.setAmount(-subtracted.getAmount());
+                    diff.add(subtracted);
+                } catch (NullPointerException e) {
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not clone ItemStack, probably Spigot bug SPIGOT-6025", e); // SPIGOT-6025
+                }
             }
         }
         return diff.toArray(new ItemStack[diff.size()]);
     }
 
     public static ItemStack[] compressInventory(ItemStack[] items) {
-        final ArrayList<ItemStack> compressed = new ArrayList<ItemStack>();
+        final ArrayList<ItemStack> compressed = new ArrayList<>();
         for (final ItemStack item : items) {
             if (item != null) {
-                final int type = item.getTypeId();
-                final short data = rawData(item);
                 boolean found = false;
                 for (final ItemStack item2 : compressed) {
-                    if (type == item2.getTypeId() && data == rawData(item2)) {
+                    if (item2.isSimilar(item)) {
                         item2.setAmount(item2.getAmount() + item.getAmount());
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    compressed.add(new ItemStack(type, item.getAmount(), data));
+                    compressed.add(item.clone());
                 }
             }
         }
-        Collections.sort(compressed, new ItemStackComparator());
         return compressed.toArray(new ItemStack[compressed.size()]);
     }
 
@@ -327,12 +609,12 @@ public class BukkitUtils {
         return relativeTopBreakable;
     }
 
-    public static Set<Material> getRelativeTopFallables() {
-        return relativeTopFallables;
-    }
-
     public static Set<Material> getFallingEntityKillers() {
         return fallingEntityKillers;
+    }
+
+    public static Set<Material> getNonFluidProofBlocks() {
+        return nonFluidProofBlocks;
     }
 
     public static Set<Material> getCropBlocks() {
@@ -341,6 +623,14 @@ public class BukkitUtils {
 
     public static Set<Material> getContainerBlocks() {
         return containerBlocks;
+    }
+
+    public static Set<Material> getShulkerBoxBlocks() {
+        return shulkerBoxBlocks;
+    }
+
+    public static boolean isConcreteBlock(Material m) {
+        return concreteBlocks.contains(m);
     }
 
     public static String entityName(Entity entity) {
@@ -353,52 +643,44 @@ public class BukkitUtils {
         return entity.getClass().getSimpleName().substring(5);
     }
 
-    public static void giveTool(Player player, int type) {
+    public static void giveTool(Player player, Material type) {
         final Inventory inv = player.getInventory();
         if (inv.contains(type)) {
-            player.sendMessage(ChatColor.RED + "You have already a " + materialName(type));
+            player.sendMessage(ChatColor.RED + "You have already a " + type.name());
         } else {
             final int free = inv.firstEmpty();
             if (free >= 0) {
-                if (player.getItemInHand() != null && player.getItemInHand().getTypeId() != 0) {
-                    inv.setItem(free, player.getItemInHand());
+                if (player.getInventory().getItemInMainHand() != null && player.getInventory().getItemInMainHand().getType() != Material.AIR) {
+                    inv.setItem(free, player.getInventory().getItemInMainHand());
                 }
-                player.setItemInHand(new ItemStack(type, 1));
-                player.sendMessage(ChatColor.GREEN + "Here's your " + materialName(type));
+                player.getInventory().setItemInMainHand(new ItemStack(type));
+                player.sendMessage(ChatColor.GREEN + "Here's your " + type.name());
             } else {
                 player.sendMessage(ChatColor.RED + "You have no empty slot in your inventory");
             }
         }
     }
 
-    public static short rawData(ItemStack item) {
-        return item.getType() != null ? item.getData() != null ? item.getDurability() : 0 : 0;
-    }
-
     public static int saveSpawnHeight(Location loc) {
         final World world = loc.getWorld();
-        final Chunk chunk = world.getChunkAt(loc);
-        if (!world.isChunkLoaded(chunk)) {
-            world.loadChunk(chunk);
-        }
+        world.getChunkAt(loc);
         final int x = loc.getBlockX(), z = loc.getBlockZ();
         int y = loc.getBlockY();
-        boolean lower = world.getBlockTypeIdAt(x, y, z) == 0, upper = world.getBlockTypeIdAt(x, y + 1, z) == 0;
+        boolean lower = world.getBlockAt(x, y, z).isEmpty(), upper = world.getBlockAt(x, y + 1, z).isEmpty();
         while ((!lower || !upper) && y != 127) {
             lower = upper;
-            upper = world.getBlockTypeIdAt(x, ++y, z) == 0;
+            upper = world.getBlockAt(x, ++y, z).isEmpty();
         }
-        while (world.getBlockTypeIdAt(x, y - 1, z) == 0 && y != 0) {
+        while (world.getBlockAt(x, y - 1, z).isEmpty() && y != 0) {
             y--;
         }
         return y;
     }
 
-    public static int modifyContainer(BlockState b, ItemStack item) {
+    public static int modifyContainer(BlockState b, ItemStack item, boolean remove) {
         if (b instanceof InventoryHolder) {
             final Inventory inv = ((InventoryHolder) b).getInventory();
-            if (item.getAmount() < 0) {
-                item.setAmount(-item.getAmount());
+            if (remove) {
                 final ItemStack tmp = inv.removeItem(item).get(0);
                 return tmp != null ? tmp.getAmount() : 0;
             } else if (item.getAmount() > 0) {
@@ -409,43 +691,358 @@ public class BukkitUtils {
         return 0;
     }
 
-    public static boolean canFall(World world, int x, int y, int z) {
-        Material mat = world.getBlockAt(x, y, z).getType();
-
-        // Air
-        if (mat == Material.AIR) {
+    public static boolean canFallIn(World world, int x, int y, int z) {
+        Block block = world.getBlockAt(x, y, z);
+        Material mat = block.getType();
+        if (canDirectlyFallIn(mat)) {
             return true;
-        } else if (mat == Material.WATER || mat == Material.STATIONARY_WATER || mat == Material.LAVA || mat == Material.STATIONARY_LAVA) { // Fluids
-            return true;
-        } else if (getFallingEntityKillers().contains(mat) || mat == Material.FIRE || mat == Material.VINE || mat == Material.LONG_GRASS || mat == Material.DEAD_BUSH) { // Misc.
+        } else if (getFallingEntityKillers().contains(mat) || singleBlockPlants.contains(mat) || mat == Material.VINE) {
+            if (slabs.contains(mat)) {
+                if (((Slab) block.getBlockData()).getType() != Type.BOTTOM) {
+                    return false;
+                }
+            }
             return true;
         }
         return false;
     }
 
-    public static class ItemStackComparator implements Comparator<ItemStack> {
-        @Override
-        public int compare(ItemStack a, ItemStack b) {
-            final int aType = a.getTypeId(), bType = b.getTypeId();
-            if (aType < bType) {
-                return -1;
+    public static boolean canDirectlyFallIn(Material m) {
+        return isEmpty(m) || m == Material.WATER || m == Material.LAVA || m == Material.FIRE;
+    }
+
+    public static Material itemIDfromProjectileEntity(Entity e) {
+        return projectileItems.get(e.getType());
+    }
+
+    public static boolean isDoublePlant(Material m) {
+        return doublePlants.contains(m);
+    }
+
+    public static boolean isWoodenDoor(Material m) {
+        return woodenDoors.contains(m);
+    }
+
+    public static boolean isButton(Material m) {
+        return buttons.contains(m);
+    }
+
+    public static boolean isEmpty(Material m) {
+        return m == Material.AIR || m == Material.CAVE_AIR || m == Material.VOID_AIR;
+    }
+
+    public static TextComponent toString(ItemStack stack) {
+        if (stack == null || stack.getAmount() == 0 || isEmpty(stack.getType())) {
+            return prettyMaterial("nothing");
+        }
+        TextComponent msg = MessagingUtil.createTextComponentWithColor(stack.getAmount() + "x ", TypeColor.DEFAULT.getColor());
+        msg.addExtra(prettyMaterial(stack.getType()));
+
+        ItemMeta meta = stack.getItemMeta();
+        TextComponent hover = MessagingUtil.createTextComponentWithColor("", TypeColor.STATE.getColor());
+        boolean metaStarted = false;
+        if (meta.hasEnchants()) {
+            Map<Enchantment, Integer> enchants = meta.getEnchants();
+            if (!enchants.isEmpty()) {
+                for (Entry<Enchantment, Integer> e : enchants.entrySet()) {
+                    if (!metaStarted) {
+                        metaStarted = true;
+                    } else {
+                        hover.addExtra("\n");
+                    }
+                    hover.addExtra(formatMinecraftKey(e.getKey().getKey().getKey()) + ((e.getKey().getMaxLevel() != 1 || e.getValue() != 1) ? " " + maybeToRoman(e.getValue()) : ""));
+                }
             }
-            if (aType > bType) {
-                return 1;
+        }
+        if (meta instanceof EnchantmentStorageMeta) {
+            EnchantmentStorageMeta emeta = (EnchantmentStorageMeta) meta;
+            if (emeta.hasStoredEnchants()) {
+                Map<Enchantment, Integer> enchants = emeta.getStoredEnchants();
+                if (!enchants.isEmpty()) {
+                    for (Entry<Enchantment, Integer> e : enchants.entrySet()) {
+                        if (!metaStarted) {
+                            metaStarted = true;
+                        } else {
+                            hover.addExtra("\n");
+                        }
+                        hover.addExtra(formatMinecraftKey(e.getKey().getKey().getKey()) + ((e.getKey().getMaxLevel() != 1 || e.getValue() != 1) ? " " + maybeToRoman(e.getValue()) : ""));
+                    }
+                }
             }
-            final short aData = rawData(a), bData = rawData(b);
-            if (aData < bData) {
-                return -1;
+        }
+        if (metaStarted) {
+            msg.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new Text(new BaseComponent[] { hover })));
+        }
+
+        return msg;
+    }
+
+    private static final String[] romanNumbers = new String[] { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "XI", "X" };
+
+    private static String maybeToRoman(int value) {
+        if (value > 0 && value <= 10) {
+            return romanNumbers[value - 1];
+        }
+        return Integer.toString(value);
+    }
+
+    public static String formatMinecraftKey(String s) {
+        char[] cap = s.toCharArray();
+        boolean lastSpace = true;
+        for (int i = 0; i < cap.length; i++) {
+            char c = cap[i];
+            if (c == '_') {
+                c = ' ';
+                lastSpace = true;
+            } else if (c >= '0' && c <= '9' || c == '(' || c == ')') {
+                lastSpace = true;
+            } else {
+                if (lastSpace) {
+                    c = Character.toUpperCase(c);
+                } else {
+                    c = Character.toLowerCase(c);
+                }
+                lastSpace = false;
             }
-            if (aData > bData) {
-                return 1;
+            cap[i] = c;
+        }
+        return new String(cap);
+    }
+
+    public static boolean isBed(Material type) {
+        return bedBlocks.contains(type);
+    }
+
+    public static boolean isDye(Material type) {
+        return dyes.containsKey(type);
+    }
+
+    public static DyeColor dyeToDyeColor(Material type) {
+        return dyes.get(type);
+    }
+
+    public static Block getConnectedChest(Block chestBlock) {
+        // is this a chest?
+        BlockData blockData = chestBlock.getBlockData();
+        if (!(blockData instanceof org.bukkit.block.data.type.Chest)) {
+            return null;
+        }
+        // so check if is should have a neighbour
+        org.bukkit.block.data.type.Chest chestData = (org.bukkit.block.data.type.Chest) blockData;
+        org.bukkit.block.data.type.Chest.Type chestType = chestData.getType();
+        if (chestType != org.bukkit.block.data.type.Chest.Type.SINGLE) {
+            // check if the neighbour exists
+            BlockFace chestFace = chestData.getFacing();
+            BlockFace faceToSecondChest;
+            if (chestFace == BlockFace.WEST) {
+                faceToSecondChest = BlockFace.NORTH;
+            } else if (chestFace == BlockFace.NORTH) {
+                faceToSecondChest = BlockFace.EAST;
+            } else if (chestFace == BlockFace.EAST) {
+                faceToSecondChest = BlockFace.SOUTH;
+            } else if (chestFace == BlockFace.SOUTH) {
+                faceToSecondChest = BlockFace.WEST;
+            } else {
+                return null;
             }
-            return 0;
+            org.bukkit.block.data.type.Chest.Type wantedChestType = org.bukkit.block.data.type.Chest.Type.RIGHT;
+            if (chestType == org.bukkit.block.data.type.Chest.Type.RIGHT) {
+                faceToSecondChest = faceToSecondChest.getOppositeFace();
+                wantedChestType = org.bukkit.block.data.type.Chest.Type.LEFT;
+            }
+            Block face = chestBlock.getRelative(faceToSecondChest);
+            if (face.getType() == chestBlock.getType()) {
+                // check is the neighbour connects to this chest
+                org.bukkit.block.data.type.Chest otherChestData = (org.bukkit.block.data.type.Chest) face.getBlockData();
+                if (otherChestData.getType() != wantedChestType || otherChestData.getFacing() != chestFace) {
+                    return null;
+                }
+                return face;
+            }
+        }
+        return null;
+    }
+
+    public static Entity loadEntityAround(Chunk chunk, UUID uuid) {
+        Entity e = Bukkit.getEntity(uuid);
+        if (e != null) {
+            return e;
+        }
+        if (!chunk.isLoaded()) {
+            chunk.getWorld().getChunkAt(chunk.getX(), chunk.getZ());
+            e = Bukkit.getEntity(uuid);
+            if (e != null) {
+                return e;
+            }
+        }
+        int chunkx = chunk.getX();
+        int chunkz = chunk.getZ();
+        for (int i = 0; i < 8; i++) {
+            int x = i < 3 ? chunkx - 1 : (i < 5 ? chunkx : chunkx + 1);
+            int z = i == 0 || i == 3 || i == 5 ? chunkz - 1 : (i == 1 || i == 6 ? chunkz : chunkz + 1);
+            if (!chunk.getWorld().isChunkLoaded(x, z)) {
+                chunk.getWorld().getChunkAt(x, z);
+                e = Bukkit.getEntity(uuid);
+                if (e != null) {
+                    return e;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static final HashMap<String, EntityType> types = new HashMap<>();
+    static {
+        for (EntityType t : EntityType.values()) {
+            types.put(t.name().toLowerCase(), t);
+            @SuppressWarnings("deprecation")
+            String typeName = t.getName();
+            if (typeName != null) {
+                types.put(typeName.toLowerCase(), t);
+            }
+            Class<? extends Entity> ec = t.getEntityClass();
+            if (ec != null) {
+                types.put(ec.getSimpleName().toLowerCase(), t);
+            }
         }
     }
 
-    public static int itemIDfromProjectileEntity(Entity e) {
-        Integer i = projectileItems.get(e.getType());
-        return (i == null) ? 0 : i;
+    public static EntityType matchEntityType(String typeName) {
+        return types.get(typeName.toLowerCase());
+    }
+
+    public static ItemStack getItemInSlot(ArmorStand stand, EquipmentSlot slot) {
+        if (slot == EquipmentSlot.HAND) {
+            return stand.getEquipment().getItemInMainHand();
+        } else if (slot == EquipmentSlot.OFF_HAND) {
+            return stand.getEquipment().getItemInOffHand();
+        } else if (slot == EquipmentSlot.FEET) {
+            return stand.getEquipment().getBoots();
+        } else if (slot == EquipmentSlot.LEGS) {
+            return stand.getEquipment().getLeggings();
+        } else if (slot == EquipmentSlot.CHEST) {
+            return stand.getEquipment().getChestplate();
+        } else if (slot == EquipmentSlot.HEAD) {
+            return stand.getEquipment().getHelmet();
+        }
+        return null;
+    }
+
+    public static void setItemInSlot(ArmorStand stand, EquipmentSlot slot, ItemStack stack) {
+        if (slot == EquipmentSlot.HAND) {
+            stand.getEquipment().setItemInMainHand(stack);
+        } else if (slot == EquipmentSlot.OFF_HAND) {
+            stand.getEquipment().setItemInOffHand(stack);
+        } else if (slot == EquipmentSlot.FEET) {
+            stand.getEquipment().setBoots(stack);
+        } else if (slot == EquipmentSlot.LEGS) {
+            stand.getEquipment().setLeggings(stack);
+        } else if (slot == EquipmentSlot.CHEST) {
+            stand.getEquipment().setChestplate(stack);
+        } else if (slot == EquipmentSlot.HEAD) {
+            stand.getEquipment().setHelmet(stack);
+        }
+    }
+
+    public static ItemStack[] deepCopy(ItemStack[] of) {
+        ItemStack[] result = new ItemStack[of.length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = of[i] == null ? null : new ItemStack(of[i]);
+        }
+        return result;
+    }
+
+    private static int getFirstPartialItemStack(ItemStack item, ItemStack[] contents, int start) {
+        for (int i = start; i < contents.length; i++) {
+            ItemStack content = contents[i];
+            if (content != null && content.isSimilar(item) && content.getAmount() < content.getMaxStackSize()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static int getFirstFreeItemStack(ItemStack[] contents, int start) {
+        for (int i = start; i < contents.length; i++) {
+            ItemStack content = contents[i];
+            if (content == null || content.getAmount() == 0 || content.getType() == Material.AIR) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static boolean hasInventoryStorageSpaceFor(Inventory inv, ItemStack... items) {
+        ItemStack[] contents = deepCopy(inv.getStorageContents());
+        for (ItemStack item : items) {
+            if (item != null && item.getType() != Material.AIR) {
+                int remaining = item.getAmount();
+                // fill partial stacks
+                int firstPartial = -1;
+                while (remaining > 0) {
+                    firstPartial = getFirstPartialItemStack(item, contents, firstPartial + 1);
+                    if (firstPartial < 0) {
+                        break;
+                    }
+                    ItemStack content = contents[firstPartial];
+                    int add = Math.min(content.getMaxStackSize() - content.getAmount(), remaining);
+                    content.setAmount(content.getAmount() + add);
+                    remaining -= add;
+                }
+                // create new stacks
+                int firstFree = -1;
+                while (remaining > 0) {
+                    firstFree = getFirstFreeItemStack(contents, firstFree + 1);
+                    if (firstFree < 0) {
+                        return false; // no free place found
+                    }
+                    ItemStack content = new ItemStack(item);
+                    contents[firstFree] = content;
+                    // max stack size might return -1, in this case assume 1
+                    int add = Math.min(Math.max(content.getMaxStackSize(), 1), remaining);
+                    content.setAmount(add);
+                    remaining -= add;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static boolean isSimilarForRollback(Material expected, Material found) {
+        if (expected == found) {
+            return true;
+        }
+        switch (expected) {
+            case DIRT:
+            case MYCELIUM:
+            case FARMLAND:
+            case GRASS_BLOCK:
+            case PODZOL:
+            case GRASS_PATH:
+                return found == Material.DIRT || found == Material.MYCELIUM || found == Material.FARMLAND || found == Material.GRASS_BLOCK || found == Material.PODZOL || found == Material.GRASS_PATH;
+            case BAMBOO:
+            case BAMBOO_SAPLING:
+                return found == Material.BAMBOO || found == Material.BAMBOO_SAPLING;
+            case SPONGE:
+            case WET_SPONGE:
+                return found == Material.SPONGE || found == Material.WET_SPONGE;
+            case MELON_STEM:
+            case ATTACHED_MELON_STEM:
+                return found == Material.MELON_STEM || found == Material.ATTACHED_MELON_STEM;
+            case PUMPKIN_STEM:
+            case ATTACHED_PUMPKIN_STEM:
+                return found == Material.PUMPKIN_STEM || found == Material.ATTACHED_PUMPKIN_STEM;
+            case TWISTING_VINES:
+            case TWISTING_VINES_PLANT:
+                return found == Material.TWISTING_VINES || found == Material.TWISTING_VINES_PLANT;
+            case WEEPING_VINES:
+            case WEEPING_VINES_PLANT:
+                return found == Material.WEEPING_VINES || found == Material.WEEPING_VINES_PLANT;
+        }
+        return false;
+    }
+
+    public static Material[] getAllSignsArray() {
+        return allSigns.toArray(new Material[allSigns.size()]);
     }
 }

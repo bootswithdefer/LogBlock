@@ -1,11 +1,16 @@
 package de.diddiz.LogBlock;
 
-import org.bukkit.Location;
+import static de.diddiz.util.LoggingUtil.checkText;
+import static de.diddiz.util.MessagingUtil.brackets;
+import static de.diddiz.util.MessagingUtil.prettyDate;
 
+import de.diddiz.util.MessagingUtil;
+import de.diddiz.util.MessagingUtil.BracketType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static de.diddiz.util.LoggingUtil.checkText;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Location;
 
 public class ChatMessage implements LookupCacheElement {
     final long id, date;
@@ -34,7 +39,21 @@ public class ChatMessage implements LookupCacheElement {
     }
 
     @Override
-    public String getMessage() {
-        return (player != null ? "<" + player.getName() + "> " : "") + (message != null ? message : "");
+    public BaseComponent[] getLogMessage(int entry) {
+        TextComponent msg = new TextComponent();
+        if (date > 0) {
+            msg.addExtra(prettyDate(date));
+            msg.addExtra(" ");
+        }
+        if (playerName != null) {
+            msg.addExtra(brackets(BracketType.ANGLE, MessagingUtil.createTextComponentWithColor(playerName, net.md_5.bungee.api.ChatColor.WHITE)));
+            msg.addExtra(" ");
+        }
+        if (message != null) {
+            for (BaseComponent messageComponent : TextComponent.fromLegacyText(message)) {
+                msg.addExtra(messageComponent);
+            }
+        }
+        return new BaseComponent[] { msg };
     }
 }

@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.type.TurtleEgg;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,24 +37,31 @@ public class CreatureInteractLogging extends LoggingListener {
         if (wcfg != null) {
             final Block clicked = event.getBlock();
             final Material type = clicked.getType();
-            final int typeId = type.getId();
-            final byte blockData = clicked.getData();
             final Location loc = clicked.getLocation();
 
-            switch (type) {
-                case SOIL:
-                    if (wcfg.isLogging(Logging.CREATURECROPTRAMPLE)) {
-                        // 3 = Dirt ID
-                        consumer.queueBlock(Actor.actorFromEntity(entityType), loc, typeId, 3, blockData);
-                        // Log the crop on top as being broken
-                        Block trampledCrop = clicked.getRelative(BlockFace.UP);
-                        if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
-                            consumer.queueBlockBreak(new Actor("CreatureTrample"), trampledCrop.getState());
-                        }
+            if (type == Material.FARMLAND) {
+                if (wcfg.isLogging(Logging.CREATURECROPTRAMPLE)) {
+                    // 3 = Dirt ID
+                    consumer.queueBlock(Actor.actorFromEntity(entityType), loc, type.createBlockData(), Material.DIRT.createBlockData());
+                    // Log the crop on top as being broken
+                    Block trampledCrop = clicked.getRelative(BlockFace.UP);
+                    if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
+                        consumer.queueBlockBreak(new Actor("CreatureTrample"), trampledCrop.getState());
                     }
-                    break;
+                }
+            } else if (type == Material.TURTLE_EGG) {
+                if (wcfg.isLogging(Logging.CREATURECROPTRAMPLE)) {
+                    TurtleEgg turtleEggData = (TurtleEgg) clicked.getBlockData();
+                    int eggs = turtleEggData.getEggs();
+                    if (eggs > 1) {
+                        TurtleEgg turtleEggData2 = (TurtleEgg) turtleEggData.clone();
+                        turtleEggData2.setEggs(eggs - 1);
+                        consumer.queueBlock(new Actor("CreatureTrample"), loc, turtleEggData, turtleEggData2);
+                    } else {
+                        consumer.queueBlock(new Actor("CreatureTrample"), loc, turtleEggData, Material.AIR.createBlockData());
+                    }
+                }
             }
         }
     }
 }
-

@@ -10,14 +10,14 @@ import static de.diddiz.LogBlock.config.Config.toolsByType;
 import static org.bukkit.Bukkit.getServer;
 
 public class Session {
-    private static final Map<String, Session> sessions = new HashMap<String, Session>();
+    private static final Map<String, Session> sessions = new HashMap<>();
     public QueryParams lastQuery = null;
     public LookupCacheElement[] lookupCache = null;
     public int page = 1;
     public Map<Tool, ToolData> toolData;
 
     private Session(Player player) {
-        toolData = new HashMap<Tool, ToolData>();
+        toolData = new HashMap<>();
         final LogBlock logblock = LogBlock.getInstance();
         if (player != null) {
             for (final Tool tool : toolsByType.values()) {

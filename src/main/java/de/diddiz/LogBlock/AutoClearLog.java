@@ -19,6 +19,7 @@ public class AutoClearLog implements Runnable {
         for (final String paramStr : autoClearLog) {
             try {
                 final QueryParams params = new QueryParams(logblock, getConsoleSender(), Arrays.asList(paramStr.split(" ")));
+                params.noForcedLimit = true;
                 handler.new CommandClearLog(getServer().getConsoleSender(), params, false);
             } catch (final Exception ex) {
                 getLogger().log(Level.SEVERE, "Failed to schedule auto ClearLog: ", ex);

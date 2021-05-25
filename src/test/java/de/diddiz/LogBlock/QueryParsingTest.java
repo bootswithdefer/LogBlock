@@ -1,6 +1,5 @@
 package de.diddiz.LogBlock;
 
-
 import de.diddiz.util.Utils;
 import org.junit.Assert;
 import org.junit.Test;

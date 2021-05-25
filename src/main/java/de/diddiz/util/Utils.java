@@ -1,13 +1,27 @@
 package de.diddiz.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipException;
+
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
+
+import de.diddiz.LogBlock.LogBlock;
 
 public class Utils {
     public static String newline = System.getProperty("line.separator");
@@ -167,7 +181,7 @@ public class Utils {
      * @return A new list with the quoted arguments parsed to single values
      */
     public static List<String> parseQuotes(List<String> args) {
-        List<String> newArguments = new ArrayList<String>();
+        List<String> newArguments = new ArrayList<>();
         String subjectString = join(args.toArray(new String[args.size()]), " ");
 
         Pattern regex = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'");
@@ -183,7 +197,7 @@ public class Utils {
         private final String ext;
 
         public ExtensionFilenameFilter(String ext) {
-            this.ext = ext;
+            this.ext = "." + ext;
         }
 
         @Override
@@ -192,8 +206,82 @@ public class Utils {
         }
     }
 
+    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
+
+    public static String mysqlEscapeBytes(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2 + 2];
+        hexChars[0] = '0';
+        hexChars[1] = 'x';
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2 + 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 3] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+    public static String mysqlPrepareBytesForInsertAllowNull(byte[] bytes) {
+        if (bytes == null) {
+            return "null";
+        }
+        return "'" + mysqlEscapeBytes(bytes) + "'";
+    }
+
     public static String mysqlTextEscape(String untrusted) {
         return untrusted.replace("\\", "\\\\").replace("'", "\\'");
     }
 
+    public static ItemStack loadItemStack(byte[] data) {
+        if (data == null || data.length == 0) {
+            return null;
+        }
+        YamlConfiguration conf = deserializeYamlConfiguration(data);
+        return conf == null ? null : conf.getItemStack("stack");
+    }
+
+    public static byte[] saveItemStack(ItemStack stack) {
+        if (stack == null || BukkitUtils.isEmpty(stack.getType())) {
+            return null;
+        }
+        YamlConfiguration conf = new YamlConfiguration();
+        conf.set("stack", stack);
+        return serializeYamlConfiguration(conf);
+    }
+
+    public static YamlConfiguration deserializeYamlConfiguration(byte[] data) {
+        if (data == null || data.length == 0) {
+            return null;
+        }
+        YamlConfiguration conf = new YamlConfiguration();
+        try {
+            InputStreamReader reader = new InputStreamReader(new GZIPInputStream(new ByteArrayInputStream(data)), "UTF-8");
+            conf.load(reader);
+            reader.close();
+            return conf;
+        } catch (ZipException | InvalidConfigurationException e) {
+            LogBlock.getInstance().getLogger().warning("Could not deserialize YamlConfiguration: " + e.getMessage());
+            return conf;
+        } catch (IOException e) {
+            throw new RuntimeException("IOException should be impossible for ByteArrayInputStream", e);
+        }
+    }
+
+    public static byte[] serializeYamlConfiguration(YamlConfiguration conf) {
+        if (conf == null || conf.getKeys(false).isEmpty()) {
+            return null;
+        }
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(baos), "UTF-8");
+            writer.write(conf.saveToString());
+            writer.close();
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("IOException should be impossible for ByteArrayOutputStream", e);
+        }
+    }
+
+    public static String serializeForSQL(YamlConfiguration conf) {
+        return mysqlPrepareBytesForInsertAllowNull(serializeYamlConfiguration(conf));
+    }
 }
