@@ -67,13 +67,25 @@ public class ExplosionLogging extends LoggingListener {
                 } else {
                     actor = new Actor("Creeper");
                 }
+            } else if (source instanceof Wither) {
+                if (!wcfg.isLogging(Logging.WITHER)) {
+                    return;
+                }
+                actor = Actor.actorFromEntity(source);
+            } else if (source instanceof WitherSkull) {
+                if (!wcfg.isLogging(Logging.WITHER_SKULL)) {
+                    return;
+                }
+                actor = Actor.actorFromEntity(source);
             } else if (source instanceof Fireball) {
                 Fireball fireball = (Fireball) source;
                 ProjectileSource shooter = fireball.getShooter();
                 if (shooter == null) {
-                    return;
-                }
-                if (shooter instanceof Ghast) {
+                    if (!wcfg.isLogging(Logging.MISCEXPLOSION)) {
+                        return;
+                    }
+                    actor = Actor.actorFromEntity(source);
+                } else if (shooter instanceof Ghast) {
                     if (!wcfg.isLogging(Logging.GHASTFIREBALLEXPLOSION)) {
                         return;
                     }
@@ -89,17 +101,6 @@ public class ExplosionLogging extends LoggingListener {
                     return;
                 }
                 actor = Actor.actorFromEntity(source);
-            } else if (source instanceof Wither) {
-                if (!wcfg.isLogging(Logging.WITHER)) {
-                    return;
-                }
-                actor = Actor.actorFromEntity(source);
-            } else if (source instanceof WitherSkull) {
-                if (!wcfg.isLogging(Logging.WITHER_SKULL)) {
-                    return;
-                }
-                actor = Actor.actorFromEntity(source);
-
             } else if (source instanceof EnderCrystal) {
                 if (!wcfg.isLogging(Logging.ENDERCRYSTALEXPLOSION)) {
                     return;
