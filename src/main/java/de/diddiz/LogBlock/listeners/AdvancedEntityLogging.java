@@ -6,7 +6,9 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Bee;
+import org.bukkit.entity.EnderCrystal;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Hanging;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.ItemFrame;
@@ -23,6 +25,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.hanging.HangingPlaceEvent;
@@ -52,6 +55,7 @@ public class AdvancedEntityLogging extends LoggingListener {
     // serialize them before the death event
     private UUID lastEntityDamagedForDeathUUID;
     private byte[] lastEntityDamagedForDeathSerialized;
+    private Entity lastEntityDamagedForDeathDamager;
 
     public AdvancedEntityLogging(LogBlock lb) {
         super(lb);
@@ -69,6 +73,7 @@ public class AdvancedEntityLogging extends LoggingListener {
         lastSpawnerEgg = false;
         lastEntityDamagedForDeathUUID = null;
         lastEntityDamagedForDeathSerialized = null;
+        lastEntityDamagedForDeathDamager = null;
     }
 
     private void setLastSpawner(Player player, Class<? extends Entity> spawning, boolean spawnEgg) {
@@ -139,6 +144,10 @@ public class AdvancedEntityLogging extends LoggingListener {
             if (event.getSpawnReason() == SpawnReason.CUSTOM || event.getSpawnReason() == SpawnReason.BEEHIVE) {
                 return;
             }
+            if (event.getEntityType() == EntityType.ARMOR_STAND) {
+                resetOnTick();
+                return; // logged in the method below
+            }
             LivingEntity entity = event.getEntity();
             if (Config.isLogging(entity.getWorld(), EntityLogging.SPAWN, entity)) {
                 Actor actor = null;
@@ -156,6 +165,23 @@ public class AdvancedEntityLogging extends LoggingListener {
             }
         }
         resetOnTick();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onEntityPlace(EntityPlaceEvent event) {
+        if (!event.isCancelled()) {
+            Entity entity = event.getEntity();
+            if (Config.isLogging(entity.getWorld(), EntityLogging.SPAWN, entity)) {
+                Actor actor = null;
+                if (event.getPlayer() != null) {
+                    actor = Actor.actorFromEntity(event.getPlayer());
+                }
+                if (actor == null) {
+                    actor = new Actor("UNKNOWN");
+                }
+                queueEntitySpawnOrKill(entity, actor, EntityChange.EntityChangeType.CREATE);
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -227,6 +253,18 @@ public class AdvancedEntityLogging extends LoggingListener {
         if (Config.isLogging(entity.getWorld(), EntityLogging.DESTROY, entity)) {
             lastEntityDamagedForDeathUUID = entity.getUniqueId();
             lastEntityDamagedForDeathSerialized = WorldEditHelper.serializeEntity(entity);
+        }
+        if (entity instanceof EnderCrystal) {
+            if (Config.isLogging(entity.getWorld(), EntityLogging.DESTROY, entity)) {
+                if (event instanceof EntityDamageByEntityEvent) {
+                    Entity damager = LoggingUtil.getRealDamager(((EntityDamageByEntityEvent) event).getDamager());
+                    if (lastEntityDamagedForDeathDamager == null || !(damager instanceof EnderCrystal)) {
+                        lastEntityDamagedForDeathDamager = damager;
+                    }
+                }
+                Actor actor = lastEntityDamagedForDeathDamager != null ? Actor.actorFromEntity(lastEntityDamagedForDeathDamager) : new Actor(event.getCause().toString());
+                queueEntitySpawnOrKill(entity, actor, EntityChange.EntityChangeType.KILL);
+            }
         }
     }
 
