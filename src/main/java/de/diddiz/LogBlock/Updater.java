@@ -885,6 +885,11 @@ class Updater {
             renameMaterial("minecraft:cactus_green", Material.GREEN_DYE);
         }
 
+        if (comparablePreviousMinecraftVersion.compareTo("1.17") < 0 && comparableCurrentMinecraftVersion.compareTo("1.17") >= 0) {
+            logblock.getLogger().info("[Updater] Upgrading Materials to 1.17");
+            renameMaterial("minecraft:grass_path", Material.DIRT_PATH);
+        }
+
         config.set("previousMinecraftVersion", currentMinecraftVersion);
         logblock.saveConfig();
     }

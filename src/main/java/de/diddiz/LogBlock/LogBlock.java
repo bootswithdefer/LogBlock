@@ -192,7 +192,7 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.NATURALSTRUCTUREGROW) || isLogging(Logging.BONEMEALSTRUCTUREGROW)) {
             pm.registerEvents(new StructureGrowLogging(this), this);
         }
-        if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD)) {
+        if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD) || isLogging(Logging.BAMBOOGROWTH) || isLogging(Logging.DRIPSTONEGROWTH)) {
             pm.registerEvents(new BlockSpreadLogging(this), this);
         }
         if (isLogging(Logging.DRAGONEGGTELEPORT)) {
@@ -200,6 +200,9 @@ public class LogBlock extends JavaPlugin {
         }
         if (isLogging(Logging.LECTERNBOOKCHANGE)) {
             pm.registerEvents(new LecternLogging(this), this);
+        }
+        if (isLogging(Logging.OXIDIZATION)) {
+            pm.registerEvents(new OxidizationLogging(this), this);
         }
         if (Config.isLoggingAnyEntities()) {
             if (!WorldEditHelper.hasFullWorldEdit()) {

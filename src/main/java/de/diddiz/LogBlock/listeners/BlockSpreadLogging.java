@@ -5,6 +5,10 @@ import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.type.PointedDripstone;
+import org.bukkit.block.data.type.PointedDripstone.Thickness;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockSpreadEvent;
@@ -22,8 +26,8 @@ public class BlockSpreadLogging extends LoggingListener {
 
         String name;
 
-        World world = event.getBlock().getWorld();
-        Material type = event.getSource().getType();
+        World world = event.getNewState().getWorld();
+        Material type = event.getNewState().getType();
 
         switch (type) {
             case GRASS:
@@ -39,6 +43,12 @@ public class BlockSpreadLogging extends LoggingListener {
                 name = "MyceliumSpread";
                 break;
             case VINE:
+            case CAVE_VINES:
+            case CAVE_VINES_PLANT:
+            case WEEPING_VINES:
+            case WEEPING_VINES_PLANT:
+            case TWISTING_VINES:
+            case TWISTING_VINES_PLANT:
                 if (!isLogging(world, Logging.VINEGROWTH)) {
                     return;
                 }
@@ -52,7 +62,7 @@ public class BlockSpreadLogging extends LoggingListener {
                 name = "MushroomSpread";
                 break;
             case BAMBOO:
-            case BAMBOO_SAPLING: {
+            case BAMBOO_SAPLING:
                 if (!isLogging(world, Logging.BAMBOOGROWTH)) {
                     return;
                 }
@@ -62,7 +72,36 @@ public class BlockSpreadLogging extends LoggingListener {
                     consumer.queueBlockReplace(new Actor(name), event.getSource().getState(), Material.BAMBOO.createBlockData());
                 }
                 break;
-            }
+            case POINTED_DRIPSTONE:
+                if (!isLogging(world, Logging.DRIPSTONEGROWTH)) {
+                    return;
+                }
+                name = "DripstoneGrowth";
+                PointedDripstone pointed = (PointedDripstone) event.getNewState().getBlockData();
+                if (pointed.getThickness() != Thickness.TIP_MERGE) {
+                    BlockFace direction = pointed.getVerticalDirection();
+                    Block previousPart = event.getBlock().getRelative(direction.getOppositeFace());
+                    if (previousPart.getType() == Material.POINTED_DRIPSTONE) {
+                        PointedDripstone newBelow = (PointedDripstone) previousPart.getBlockData();
+                        newBelow.setThickness(Thickness.FRUSTUM);
+                        consumer.queueBlockReplace(new Actor(name), previousPart.getState(), newBelow);
+
+                        previousPart = previousPart.getRelative(direction.getOppositeFace());
+                        if (previousPart.getType() == Material.POINTED_DRIPSTONE) {
+                            Block evenMorePrevious = previousPart.getRelative(direction.getOppositeFace());
+                            newBelow = (PointedDripstone) previousPart.getBlockData();
+                            newBelow.setThickness(evenMorePrevious.getType() == Material.POINTED_DRIPSTONE ? Thickness.MIDDLE : Thickness.BASE);
+                            consumer.queueBlockReplace(new Actor(name), previousPart.getState(), newBelow);
+                        }
+                    }
+                } else {
+                    // special case because the old state is already changed (for one half)
+                    PointedDripstone oldState = (PointedDripstone) event.getNewState().getBlockData();
+                    oldState.setThickness(Thickness.TIP);
+                    consumer.queueBlockReplace(new Actor(name), oldState, event.getNewState());
+                    return;
+                }
+                break;
             default:
                 return;
         }

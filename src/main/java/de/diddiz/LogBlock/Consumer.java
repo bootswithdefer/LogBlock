@@ -35,6 +35,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.data.type.Sign;
 import org.bukkit.block.data.type.WallSign;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -52,6 +53,7 @@ import de.diddiz.LogBlock.blockstate.BlockStateCodecSign;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
+import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.Utils;
 
 public class Consumer extends Thread {
@@ -692,6 +694,9 @@ public class Consumer extends Thread {
     private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, YamlConfiguration stateBefore, YamlConfiguration stateAfter, ChestAccess ca) {
         if (typeBefore == null || typeBefore.getMaterial() == Material.CAVE_AIR || typeBefore.getMaterial() == Material.VOID_AIR) {
             typeBefore = Bukkit.createBlockData(Material.AIR);
+        }
+        if (typeAfter == null && ((typeBefore instanceof Waterlogged && ((Waterlogged) typeBefore).isWaterlogged()) || BukkitUtils.isAlwaysWaterlogged(typeBefore.getMaterial()))) {
+            typeAfter = Bukkit.createBlockData(Material.WATER);
         }
         if (typeAfter == null || typeAfter.getMaterial() == Material.CAVE_AIR || typeAfter.getMaterial() == Material.VOID_AIR) {
             typeAfter = Bukkit.createBlockData(Material.AIR);

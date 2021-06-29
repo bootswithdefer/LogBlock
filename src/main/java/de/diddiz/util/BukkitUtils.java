@@ -78,6 +78,7 @@ public class BukkitUtils {
     private static final EnumSet<Material> slabs;
     private static final EnumSet<Material> concreteBlocks;
     private static final EnumMap<Material, DyeColor> dyes;
+    private static final EnumSet<Material> alwaysWaterlogged;
 
     static {
         pressurePlates = EnumSet.noneOf(Material.class);
@@ -155,6 +156,10 @@ public class BukkitUtils {
         slabs.add(Material.PRISMARINE_BRICK_SLAB);
         slabs.add(Material.BLACKSTONE_SLAB);
         slabs.add(Material.POLISHED_BLACKSTONE_SLAB);
+        slabs.add(Material.DEEPSLATE_BRICK_SLAB);
+        slabs.add(Material.DEEPSLATE_TILE_SLAB);
+        slabs.add(Material.COBBLED_DEEPSLATE_SLAB);
+        slabs.add(Material.POLISHED_DEEPSLATE_SLAB);
 
         buttons = EnumSet.noneOf(Material.class);
         buttons.add(Material.STONE_BUTTON);
@@ -216,6 +221,8 @@ public class BukkitUtils {
         singleBlockPlants.add(Material.CRIMSON_ROOTS);
         singleBlockPlants.add(Material.WARPED_ROOTS);
         singleBlockPlants.add(Material.NETHER_SPROUTS);
+        singleBlockPlants.add(Material.AZALEA);
+        singleBlockPlants.add(Material.FLOWERING_AZALEA);
 
         doublePlants = EnumSet.noneOf(Material.class);
         doublePlants.add(Material.TALL_GRASS);
@@ -225,6 +232,7 @@ public class BukkitUtils {
         doublePlants.add(Material.LILAC);
         doublePlants.add(Material.SUNFLOWER);
         doublePlants.add(Material.PEONY);
+        doublePlants.add(Material.SMALL_DRIPLEAF);
 
         blockEquivalents = new HashSet<>(7);
         blockEquivalents.add(new HashSet<>(Arrays.asList(2, 3, 60)));
@@ -246,6 +254,10 @@ public class BukkitUtils {
         relativeBreakable.add(Material.TRIPWIRE_HOOK);
         relativeBreakable.add(Material.COCOA);
         relativeBreakable.add(Material.BELL);
+        relativeBreakable.add(Material.AMETHYST_CLUSTER);
+        relativeBreakable.add(Material.SMALL_AMETHYST_BUD);
+        relativeBreakable.add(Material.MEDIUM_AMETHYST_BUD);
+        relativeBreakable.add(Material.LARGE_AMETHYST_BUD);
 
         // Blocks that break when they are on top of a block
         relativeTopBreakable = EnumSet.noneOf(Material.class);
@@ -279,8 +291,13 @@ public class BukkitUtils {
         relativeTopBreakable.add(Material.BAMBOO_SAPLING);
         relativeTopBreakable.add(Material.TWISTING_VINES);
         relativeTopBreakable.add(Material.TWISTING_VINES_PLANT);
+        relativeTopBreakable.add(Material.BIG_DRIPLEAF);
+        relativeTopBreakable.add(Material.BIG_DRIPLEAF_STEM);
         for (Material m : Material.values()) {
             if (m.name().startsWith("POTTED_")) {
+                relativeTopBreakable.add(m);
+            }
+            if (m.name().endsWith("CANDLE_CAKE")) {
                 relativeTopBreakable.add(m);
             }
         }
@@ -331,6 +348,11 @@ public class BukkitUtils {
         fallingEntityKillers.add(Material.SKELETON_WALL_SKULL);
         fallingEntityKillers.add(Material.WITHER_SKELETON_SKULL);
         fallingEntityKillers.add(Material.WITHER_SKELETON_WALL_SKULL);
+        for (Material m : Material.values()) {
+            if (m.name().contains("CANDLE")) {
+                fallingEntityKillers.add(m);
+            }
+        }
 
         // Crop Blocks
         cropBlocks = EnumSet.noneOf(Material.class);
@@ -410,10 +432,10 @@ public class BukkitUtils {
         nonFluidProofBlocks.add(Material.TORCH);
         nonFluidProofBlocks.add(Material.SOUL_TORCH);
         nonFluidProofBlocks.add(Material.FLOWER_POT);
-        nonFluidProofBlocks.add(Material.POWERED_RAIL);
-        nonFluidProofBlocks.add(Material.DETECTOR_RAIL);
-        nonFluidProofBlocks.add(Material.ACTIVATOR_RAIL);
-        nonFluidProofBlocks.add(Material.RAIL);
+        // nonFluidProofBlocks.add(Material.POWERED_RAIL);
+        // nonFluidProofBlocks.add(Material.DETECTOR_RAIL);
+        // nonFluidProofBlocks.add(Material.ACTIVATOR_RAIL);
+        // nonFluidProofBlocks.add(Material.RAIL);
         nonFluidProofBlocks.add(Material.LEVER);
         nonFluidProofBlocks.add(Material.REDSTONE_WIRE);
         nonFluidProofBlocks.add(Material.REDSTONE_TORCH);
@@ -421,6 +443,12 @@ public class BukkitUtils {
         nonFluidProofBlocks.add(Material.COMPARATOR);
         nonFluidProofBlocks.add(Material.DAYLIGHT_DETECTOR);
         nonFluidProofBlocks.addAll(carpets);
+
+        alwaysWaterlogged = EnumSet.noneOf(Material.class);
+        alwaysWaterlogged.add(Material.SEAGRASS);
+        alwaysWaterlogged.add(Material.TALL_SEAGRASS);
+        alwaysWaterlogged.add(Material.KELP);
+        alwaysWaterlogged.add(Material.KELP_PLANT);
 
         bedBlocks = EnumSet.noneOf(Material.class);
         bedBlocks.add(Material.BLACK_BED);
@@ -1018,8 +1046,8 @@ public class BukkitUtils {
             case FARMLAND:
             case GRASS_BLOCK:
             case PODZOL:
-            case GRASS_PATH:
-                return found == Material.DIRT || found == Material.MYCELIUM || found == Material.FARMLAND || found == Material.GRASS_BLOCK || found == Material.PODZOL || found == Material.GRASS_PATH;
+            case DIRT_PATH:
+                return found == Material.DIRT || found == Material.MYCELIUM || found == Material.FARMLAND || found == Material.GRASS_BLOCK || found == Material.PODZOL || found == Material.DIRT_PATH;
             case BAMBOO:
             case BAMBOO_SAPLING:
                 return found == Material.BAMBOO || found == Material.BAMBOO_SAPLING;
@@ -1038,11 +1066,41 @@ public class BukkitUtils {
             case WEEPING_VINES:
             case WEEPING_VINES_PLANT:
                 return found == Material.WEEPING_VINES || found == Material.WEEPING_VINES_PLANT;
+            case CAVE_VINES:
+            case CAVE_VINES_PLANT:
+                return found == Material.CAVE_VINES || found == Material.CAVE_VINES_PLANT;
+            case BIG_DRIPLEAF:
+            case BIG_DRIPLEAF_STEM:
+                return found == Material.BIG_DRIPLEAF || found == Material.BIG_DRIPLEAF_STEM;
+            case COPPER_BLOCK:
+            case EXPOSED_COPPER:
+            case WEATHERED_COPPER:
+            case OXIDIZED_COPPER:
+                return found == Material.COPPER_BLOCK || found == Material.EXPOSED_COPPER || found == Material.WEATHERED_COPPER || found == Material.OXIDIZED_COPPER;
+            case CUT_COPPER:
+            case EXPOSED_CUT_COPPER:
+            case WEATHERED_CUT_COPPER:
+            case OXIDIZED_CUT_COPPER:
+                return found == Material.CUT_COPPER || found == Material.EXPOSED_CUT_COPPER || found == Material.WEATHERED_CUT_COPPER || found == Material.OXIDIZED_CUT_COPPER;
+            case CUT_COPPER_STAIRS:
+            case EXPOSED_CUT_COPPER_STAIRS:
+            case WEATHERED_CUT_COPPER_STAIRS:
+            case OXIDIZED_CUT_COPPER_STAIRS:
+                return found == Material.CUT_COPPER_STAIRS || found == Material.EXPOSED_CUT_COPPER_STAIRS || found == Material.WEATHERED_CUT_COPPER_STAIRS || found == Material.OXIDIZED_CUT_COPPER_STAIRS;
+            case CUT_COPPER_SLAB:
+            case EXPOSED_CUT_COPPER_SLAB:
+            case WEATHERED_CUT_COPPER_SLAB:
+            case OXIDIZED_CUT_COPPER_SLAB:
+                return found == Material.CUT_COPPER_SLAB || found == Material.EXPOSED_CUT_COPPER_SLAB || found == Material.WEATHERED_CUT_COPPER_SLAB || found == Material.OXIDIZED_CUT_COPPER_SLAB;
         }
         return false;
     }
 
     public static Material[] getAllSignsArray() {
         return allSigns.toArray(new Material[allSigns.size()]);
+    }
+
+    public static boolean isAlwaysWaterlogged(Material m) {
+        return alwaysWaterlogged.contains(m);
     }
 }

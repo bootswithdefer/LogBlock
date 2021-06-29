@@ -144,6 +144,12 @@ public class LoggingUtil {
                 consumer.queueBlockReplace(actor, above.getState(), Material.WEEPING_VINES.createBlockData());
             }
         }
+        if (replacedType == Material.CAVE_VINES || replacedType == Material.CAVE_VINES_PLANT) {
+            Block above = origin.getRelative(BlockFace.UP);
+            if (above.getType() == Material.CAVE_VINES_PLANT) {
+                consumer.queueBlockReplace(actor, above.getState(), Material.CAVE_VINES.createBlockData());
+            }
+        }
 
         Block checkBlock = origin.getRelative(BlockFace.UP);
         Material typeAbove = checkBlock.getType();
@@ -207,12 +213,22 @@ public class LoggingUtil {
             if (bell.getAttachment() == Attachment.CEILING) {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
-        } else if (typeBelow == Material.WEEPING_VINES || typeBelow == Material.WEEPING_VINES_PLANT) {
+        } else if (typeBelow == Material.WEEPING_VINES || typeBelow == Material.WEEPING_VINES_PLANT || typeBelow == Material.CAVE_VINES || typeBelow == Material.CAVE_VINES_PLANT) {
             consumer.queueBlockBreak(actor, checkBlock.getState());
-            // check next blocks above
+            // check next blocks below
             checkBlock = checkBlock.getRelative(BlockFace.DOWN);
             typeBelow = checkBlock.getType();
-            while (typeBelow == Material.WEEPING_VINES || typeBelow == Material.WEEPING_VINES_PLANT) {
+            while (typeBelow == Material.WEEPING_VINES || typeBelow == Material.WEEPING_VINES_PLANT || typeBelow == Material.CAVE_VINES || typeBelow == Material.CAVE_VINES_PLANT) {
+                consumer.queueBlockBreak(actor, checkBlock.getState());
+                checkBlock = checkBlock.getRelative(BlockFace.DOWN);
+                typeBelow = checkBlock.getType();
+            }
+        } else if ((replacedType == Material.BIG_DRIPLEAF || replacedType == Material.BIG_DRIPLEAF_STEM) && (typeBelow == Material.BIG_DRIPLEAF || typeBelow == Material.BIG_DRIPLEAF_STEM)) {
+            consumer.queueBlockBreak(actor, checkBlock.getState());
+            // check next blocks below
+            checkBlock = checkBlock.getRelative(BlockFace.DOWN);
+            typeBelow = checkBlock.getType();
+            while (typeBelow == Material.BIG_DRIPLEAF || typeBelow == Material.BIG_DRIPLEAF_STEM) {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
                 checkBlock = checkBlock.getRelative(BlockFace.DOWN);
                 typeBelow = checkBlock.getType();

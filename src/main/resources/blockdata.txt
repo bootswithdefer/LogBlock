@@ -1813,7 +1813,7 @@
 207:13,minecraft:air
 207:14,minecraft:air
 207:15,minecraft:air
-208:0,minecraft:grass_path
+208:0,minecraft:dirt_path
 209:0,minecraft:end_gateway
 210:0,minecraft:repeating_command_block[conditional=false,facing=down]
 210:1,minecraft:repeating_command_block[conditional=false,facing=up]
