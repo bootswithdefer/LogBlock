@@ -189,8 +189,11 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.WITHER)) {
             pm.registerEvents(new WitherLogging(this), this);
         }
-        if (isLogging(Logging.NATURALSTRUCTUREGROW) || isLogging(Logging.BONEMEALSTRUCTUREGROW)) {
+        if (isLogging(Logging.NATURALSTRUCTUREGROW)) {
             pm.registerEvents(new StructureGrowLogging(this), this);
+        }
+        if (isLogging(Logging.BONEMEALSTRUCTUREGROW)) {
+            pm.registerEvents(new BlockFertilizeLogging(this), this);
         }
         if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD) || isLogging(Logging.BAMBOOGROWTH) || isLogging(Logging.DRIPSTONEGROWTH)) {
             pm.registerEvents(new BlockSpreadLogging(this), this);
