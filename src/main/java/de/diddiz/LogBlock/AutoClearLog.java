@@ -17,6 +17,9 @@ public class AutoClearLog implements Runnable {
     public void run() {
         final CommandsHandler handler = logblock.getCommandsHandler();
         for (final String paramStr : autoClearLog) {
+            if (!logblock.isCompletelyEnabled()) {
+                return; // do not try when plugin is disabled
+            }
             try {
                 final QueryParams params = new QueryParams(logblock, getConsoleSender(), Arrays.asList(paramStr.split(" ")));
                 params.noForcedLimit = true;
