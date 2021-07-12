@@ -235,17 +235,33 @@ public class InteractLogging extends LoggingListener {
                 case DARK_OAK_WALL_SIGN:
                 case WARPED_WALL_SIGN:
                 case CRIMSON_WALL_SIGN:
-                    if (wcfg.isLogging(Logging.SIGNTEXT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                        ItemStack stack = event.getItem();
-                        if (stack != null && BukkitUtils.isDye(stack.getType())) {
+                    if (wcfg.isLogging(Logging.SIGNTEXT) && event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getItem() != null) {
+                        Material itemType = event.getItem().getType();
+                        if (BukkitUtils.isDye(itemType) || itemType == Material.GLOW_INK_SAC || itemType == Material.INK_SAC) {
                             final BlockState before = event.getClickedBlock().getState();
                             if (before instanceof Sign) {
-                                DyeColor newColor = BukkitUtils.dyeToDyeColor(stack.getType());
-                                Sign signBefore = (Sign) before;
-                                if (newColor != null && signBefore.getColor() != newColor) {
-                                    final Sign signAfter = (Sign) event.getClickedBlock().getState();
-                                    signAfter.setColor(newColor);
-                                    consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                if (itemType == Material.GLOW_INK_SAC) {
+                                    Sign signBefore = (Sign) before;
+                                    if (!signBefore.isGlowingText()) {
+                                        final Sign signAfter = (Sign) event.getClickedBlock().getState();
+                                        signAfter.setGlowingText(true);
+                                        consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                    }
+                                } else if (itemType == Material.INK_SAC) {
+                                    Sign signBefore = (Sign) before;
+                                    if (signBefore.isGlowingText()) {
+                                        final Sign signAfter = (Sign) event.getClickedBlock().getState();
+                                        signAfter.setGlowingText(false);
+                                        consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                    }
+                                } else {
+                                    DyeColor newColor = BukkitUtils.dyeToDyeColor(itemType);
+                                    Sign signBefore = (Sign) before;
+                                    if (newColor != null && signBefore.getColor() != newColor) {
+                                        final Sign signAfter = (Sign) event.getClickedBlock().getState();
+                                        signAfter.setColor(newColor);
+                                        consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                    }
                                 }
                             }
                         }
