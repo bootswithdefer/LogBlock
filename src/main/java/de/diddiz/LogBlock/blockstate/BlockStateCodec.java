@@ -11,5 +11,5 @@ public interface BlockStateCodec {
 
     void deserialize(BlockState state, YamlConfiguration conf);
 
-    String toString(YamlConfiguration conf);
+    String toString(YamlConfiguration conf, YamlConfiguration oldState);
 }

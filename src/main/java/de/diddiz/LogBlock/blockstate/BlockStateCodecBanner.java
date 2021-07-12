@@ -64,7 +64,7 @@ public class BlockStateCodecBanner implements BlockStateCodec {
     }
 
     @Override
-    public String toString(YamlConfiguration conf) {
+    public String toString(YamlConfiguration conf, YamlConfiguration oldState) {
         return null;
     }
 }

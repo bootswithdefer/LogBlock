@@ -43,7 +43,7 @@ public class BlockStateCodecSkull implements BlockStateCodec {
     }
 
     @Override
-    public String toString(YamlConfiguration conf) {
+    public String toString(YamlConfiguration conf, YamlConfiguration oldState) {
         UUID ownerId = conf == null ? null : UUID.fromString(conf.getString("owner"));
         if (ownerId != null) {
             OfflinePlayer owner = Bukkit.getOfflinePlayer(ownerId);

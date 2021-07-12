@@ -48,7 +48,7 @@ public class BlockStateCodecSpawner implements BlockStateCodec {
     }
 
     @Override
-    public String toString(YamlConfiguration conf) {
+    public String toString(YamlConfiguration conf, YamlConfiguration oldState) {
         if (conf != null) {
             EntityType entity = EntityType.valueOf(conf.getString("spawnedType"));
             if (entity != null) {

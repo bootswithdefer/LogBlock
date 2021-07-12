@@ -43,7 +43,7 @@ public class BlockStateCodecLectern implements BlockStateCodec {
     }
 
     @Override
-    public String toString(YamlConfiguration conf) {
+    public String toString(YamlConfiguration conf, YamlConfiguration oldState) {
         if (conf != null) {
             StringBuilder sb = new StringBuilder();
             sb.append("[").append("book").append("]");

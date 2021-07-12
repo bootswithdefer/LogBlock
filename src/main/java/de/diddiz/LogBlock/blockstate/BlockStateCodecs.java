@@ -51,10 +51,10 @@ public class BlockStateCodecs {
         }
     }
 
-    public static String toString(Material material, YamlConfiguration state) {
+    public static String toString(Material material, YamlConfiguration state, YamlConfiguration oldState) {
         BlockStateCodec codec = codecs.get(material);
         if (codec != null) {
-            return codec.toString(state);
+            return codec.toString(state, oldState);
         }
         return null;
     }

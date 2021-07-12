@@ -82,11 +82,15 @@ public class BlockChange implements LookupCacheElement {
     }
 
     private String getTypeDetails(BlockData type, byte[] typeState) {
+        return getTypeDetails(type, typeState, null, null);
+    }
+
+    private String getTypeDetails(BlockData type, byte[] typeState, BlockData oldType, byte[] oldTypeState) {
         String typeDetails = null;
 
         if (BlockStateCodecs.hasCodec(type.getMaterial())) {
             try {
-                typeDetails = BlockStateCodecs.toString(type.getMaterial(), Utils.deserializeYamlConfiguration(typeState));
+                typeDetails = BlockStateCodecs.toString(type.getMaterial(), Utils.deserializeYamlConfiguration(typeState), type.equals(oldType) ? Utils.deserializeYamlConfiguration(oldTypeState) : null);
             } catch (Exception e) {
                 LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not parse BlockState for " + type.getMaterial(), e);
             }
@@ -123,7 +127,7 @@ public class BlockChange implements LookupCacheElement {
         }
 
         // Process type details once for later use.
-        String typeDetails = getTypeDetails(type, typeState);
+        String typeDetails = getTypeDetails(type, typeState, replaced, replacedState);
         String replacedDetails = getTypeDetails(replaced, replacedState);
 
         if (type.getMaterial().equals(replaced.getMaterial())) {
@@ -205,7 +209,7 @@ public class BlockChange implements LookupCacheElement {
             } else if (type instanceof Sign || type instanceof WallSign) {
                 msg.addExtra(createTextComponentWithColor("edited a ", CREATE.getColor()));
                 msg.addExtra(prettyMaterial(type));
-                msg.addExtra(createTextComponentWithColor(" to ", CREATE.getColor()));
+                msg.addExtra(createTextComponentWithColor(" to", CREATE.getColor()));
                 msg.addExtra(prettyState(typeDetails));
             } else {
                 msg.addExtra(createTextComponentWithColor("replaced ", CREATE.getColor()));
