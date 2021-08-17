@@ -52,15 +52,15 @@ public class LoggingUtil {
         int initialy = loc.getBlockY();
         int y = initialy;
         int z = loc.getBlockZ();
-        while (y > 0 && BukkitUtils.canFallIn(loc.getWorld(), x, (y - 1), z)) {
+        while (y > loc.getWorld().getMinHeight() && BukkitUtils.canFallIn(loc.getWorld(), x, (y - 1), z)) {
             y--;
         }
         if (initialy != y && !BukkitUtils.isEmpty(replaced.getType())) {
             // this is not the final location but the block got removed (vines etc)
             consumer.queueBlockBreak(actor, replaced);
         }
-        // If y is 0 then the block fell out of the world :(
-        if (y != 0) {
+        // If y is minHeight then the block fell out of the world :(
+        if (y > loc.getWorld().getMinHeight()) {
             // Run this check to avoid false positives
             Location finalLoc = new Location(loc.getWorld(), x, y, z);
             if (y == initialy || !BukkitUtils.getFallingEntityKillers().contains(finalLoc.getBlock().getType())) {
@@ -94,11 +94,11 @@ public class LoggingUtil {
             int x = loc.getBlockX();
             int y = loc.getBlockY();
             int z = loc.getBlockZ();
-            while (y > 0 && BukkitUtils.canFallIn(loc.getWorld(), x, (y - 1), z)) {
+            while (y > loc.getWorld().getMinHeight() && BukkitUtils.canFallIn(loc.getWorld(), x, (y - 1), z)) {
                 y--;
             }
-            // If y is 0 then the sand block fell out of the world :(
-            if (y != 0) {
+            // If y is minHeight then the sand block fell out of the world :(
+            if (y > loc.getWorld().getMinHeight()) {
                 Location finalLoc = new Location(loc.getWorld(), x, y, z);
                 // Run this check to avoid false positives
                 if (!BukkitUtils.getFallingEntityKillers().contains(finalLoc.getBlock().getType())) {

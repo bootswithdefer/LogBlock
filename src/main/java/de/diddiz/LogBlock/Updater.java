@@ -730,6 +730,7 @@ class Updater {
         }
 
         if (configVersion.compareTo(new ComparableVersion("1.16.0")) < 0) {
+            logblock.getLogger().info("Updating tables to 1.16.0 ...");
             try (Connection conn = logblock.getConnection()) {
                 conn.setAutoCommit(true);
                 final Statement st = conn.createStatement();
@@ -741,6 +742,20 @@ class Updater {
                 logblock.getLogger().log(Level.SEVERE, "[Updater] Warning: Could not add index", ex);
             }
             config.set("version", "1.16.0");
+        }
+        if (configVersion.compareTo(new ComparableVersion("1.17.0")) < 0) {
+            logblock.getLogger().info("Updating tables to 1.17.0 ...");
+            try (Connection conn = logblock.getConnection()) {
+                conn.setAutoCommit(true);
+                final Statement st = conn.createStatement();
+                for (final WorldConfig wcfg : getLoggedWorlds()) {
+                    st.executeUpdate("ALTER TABLE `" + wcfg.table + "-blocks` CHANGE `y` `y` SMALLINT(5) NOT NULL");
+                }
+                st.close();
+            } catch (final SQLException ex) {
+                logblock.getLogger().log(Level.SEVERE, "[Updater] Warning: Could not alter table", ex);
+            }
+            config.set("version", "1.17.0");
         }
 
         if (configVersion.compareTo(new ComparableVersion(Config.CURRENT_CONFIG_VERSION)) < 0) {
@@ -827,7 +842,7 @@ class Updater {
         createTable(state, "lb-entitytypes", "(id INT UNSIGNED NOT NULL, name VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARSET " + charset);
 
         for (final WorldConfig wcfg : getLoggedWorlds()) {
-            createTable(state, wcfg.table + "-blocks", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, replaced SMALLINT UNSIGNED NOT NULL, replacedData SMALLINT NOT NULL, type SMALLINT UNSIGNED NOT NULL, typeData SMALLINT NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT UNSIGNED NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
+            createTable(state, wcfg.table + "-blocks", "(id INT UNSIGNED NOT NULL AUTO_INCREMENT, date DATETIME NOT NULL, playerid INT UNSIGNED NOT NULL, replaced SMALLINT UNSIGNED NOT NULL, replacedData SMALLINT NOT NULL, type SMALLINT UNSIGNED NOT NULL, typeData SMALLINT NOT NULL, x MEDIUMINT NOT NULL, y SMALLINT NOT NULL, z MEDIUMINT NOT NULL, PRIMARY KEY (id), KEY coords (x, z, y), KEY date (date), KEY playerid (playerid))");
             createTable(state, wcfg.table + "-chestdata", "(id INT UNSIGNED NOT NULL, item MEDIUMBLOB, itemremove TINYINT, itemtype SMALLINT NOT NULL DEFAULT '0', PRIMARY KEY (id))");
             createTable(state, wcfg.table + "-state", "(id INT UNSIGNED NOT NULL, replacedState MEDIUMBLOB NULL, typeState MEDIUMBLOB NULL, PRIMARY KEY (id))");
             if (wcfg.isLogging(Logging.KILL)) {

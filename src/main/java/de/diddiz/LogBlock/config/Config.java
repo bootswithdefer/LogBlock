@@ -60,7 +60,7 @@ public class Config {
     // Not loaded from config - checked at runtime
     public static boolean mb4 = false;
 
-    public static final String CURRENT_CONFIG_VERSION = "1.16.0";
+    public static final String CURRENT_CONFIG_VERSION = "1.17.0";
 
     public static enum LogKillsLevel {
         PLAYERS,

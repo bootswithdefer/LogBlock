@@ -1135,11 +1135,11 @@ public class Consumer extends Thread {
 
     private int safeY(Location loc) {
         int safeY = loc.getBlockY();
-        if (safeY < 0) {
-            safeY = 0;
+        if (safeY < Short.MIN_VALUE) {
+            safeY = Short.MIN_VALUE;
         }
-        if (safeY > 65535) {
-            safeY = 65535;
+        if (safeY > Short.MAX_VALUE) {
+            safeY = Short.MAX_VALUE;
         }
         return safeY;
     }
