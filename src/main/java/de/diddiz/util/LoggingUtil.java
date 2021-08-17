@@ -14,6 +14,8 @@ import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.Bell;
 import org.bukkit.block.data.type.Bell.Attachment;
 import org.bukkit.block.data.type.Lantern;
+import org.bukkit.block.data.type.PointedDripstone;
+import org.bukkit.block.data.type.PointedDripstone.Thickness;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.TNTPrimed;
@@ -199,6 +201,24 @@ public class LoggingUtil {
             if (bell.getAttachment() == Attachment.FLOOR) {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
+        } else if (typeAbove == Material.POINTED_DRIPSTONE) {
+            Block dripStoneBlock = checkBlock;
+            while (true) {
+                if (dripStoneBlock.getType() != Material.POINTED_DRIPSTONE) {
+                    break;
+                }
+                PointedDripstone dripstone = (PointedDripstone) dripStoneBlock.getBlockData();
+                if (dripstone.getVerticalDirection() != BlockFace.UP) {
+                    if (dripstone.getThickness() == Thickness.TIP_MERGE) {
+                        PointedDripstone newDripstone = (PointedDripstone) dripstone.clone();
+                        newDripstone.setThickness(Thickness.TIP);
+                        consumer.queueBlockReplace(actor, dripStoneBlock.getState(), newDripstone);
+                    }
+                    break;
+                }
+                consumer.queueBlockBreak(actor, dripStoneBlock.getState());
+                dripStoneBlock = dripStoneBlock.getRelative(BlockFace.UP);
+            }
         }
 
         checkBlock = origin.getRelative(BlockFace.DOWN);
@@ -232,6 +252,24 @@ public class LoggingUtil {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
                 checkBlock = checkBlock.getRelative(BlockFace.DOWN);
                 typeBelow = checkBlock.getType();
+            }
+        } else if (typeBelow == Material.POINTED_DRIPSTONE) {
+            Block dripStoneBlock = checkBlock;
+            while (true) {
+                if (dripStoneBlock.getType() != Material.POINTED_DRIPSTONE) {
+                    break;
+                }
+                PointedDripstone dripstone = (PointedDripstone) dripStoneBlock.getBlockData();
+                if (dripstone.getVerticalDirection() != BlockFace.DOWN) {
+                    if (dripstone.getThickness() == Thickness.TIP_MERGE) {
+                        PointedDripstone newDripstone = (PointedDripstone) dripstone.clone();
+                        newDripstone.setThickness(Thickness.TIP);
+                        consumer.queueBlockReplace(actor, dripStoneBlock.getState(), newDripstone);
+                    }
+                    break;
+                }
+                consumer.queueBlockBreak(actor, dripStoneBlock.getState());
+                dripStoneBlock = dripStoneBlock.getRelative(BlockFace.DOWN);
             }
         }
 
