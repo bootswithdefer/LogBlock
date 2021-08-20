@@ -4,7 +4,6 @@ import static de.diddiz.util.MessagingUtil.prettyMaterial;
 
 import de.diddiz.LogBlock.LogBlock;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +19,9 @@ import java.util.UUID;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.HoverEvent.Action;
+import net.md_5.bungee.api.chat.ItemTag;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Item;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -764,51 +765,28 @@ public class BukkitUtils {
         TextComponent msg = MessagingUtil.createTextComponentWithColor(stack.getAmount() + "x ", TypeColor.DEFAULT.getColor());
         msg.addExtra(prettyMaterial(stack.getType()));
 
-        ItemStack copy = stack.clone();
-        copy.setAmount(1);
-
-        String itemJson = null;
         try {
-            itemJson = convertItemStackToJson(copy);
+            String itemTag = getItemTag(stack);
+            msg.setHoverEvent(new HoverEvent(Action.SHOW_ITEM, new Item(stack.getType().getKey().toString(), 1, itemTag != null ? ItemTag.ofNbt(itemTag) : null)));
         } catch (Exception e) {
             LogBlock.getInstance().getLogger().log(Level.SEVERE, "Failed to convert Itemstack to JSON", e);
-        }
-
-        if (itemJson != null) {
-            BaseComponent[] hoverEventComponents = new BaseComponent[]{
-                    new TextComponent(itemJson)
-            };
-
-            msg.setHoverEvent(new HoverEvent(Action.SHOW_ITEM, hoverEventComponents));
-        } else {
-            msg.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new Text(new BaseComponent[] { MessagingUtil.createTextComponentWithColor("Error", TypeColor.ERROR.getColor())} )));
+            msg.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new Text(new BaseComponent[] { MessagingUtil.createTextComponentWithColor("Error", TypeColor.ERROR.getColor()) })));
         }
 
         return msg;
     }
 
-    public static String convertItemStackToJson(ItemStack itemStack) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public static String getItemTag(ItemStack itemStack) throws ReflectiveOperationException {
         Class<?> craftItemStackClazz = ReflectionUtil.getCraftBukkitClass("inventory.CraftItemStack");
-        Method asNMSCopyMethod = ReflectionUtil.getMethod(craftItemStackClazz, "asNMSCopy", ItemStack.class);
+        Method asNMSCopyMethod = craftItemStackClazz.getMethod("asNMSCopy", ItemStack.class);
 
         Class<?> nmsItemStackClazz = ReflectionUtil.getMinecraftClass("world.item.ItemStack");
-        Class<?> nbtTagCompoundClazz = ReflectionUtil.getMinecraftClass("nbt.NBTTagCompound");
-        Method saveNmsItemStackMethod = ReflectionUtil.getMethod(nmsItemStackClazz, "save", nbtTagCompoundClazz);
+        Method getTagMethod = nmsItemStackClazz.getMethod("getTag");
 
-        Object nmsNbtTagCompoundObj = nbtTagCompoundClazz.getDeclaredConstructor().newInstance();
-        Object nmsItemStackObj = asNMSCopyMethod.invoke(null, itemStack);
-        Object itemAsJsonObject = saveNmsItemStackMethod.invoke(nmsItemStackObj, nmsNbtTagCompoundObj);
+        Object nmsItemStack = asNMSCopyMethod.invoke(null, itemStack);
+        Object itemTag = getTagMethod.invoke(nmsItemStack);
 
-        return itemAsJsonObject.toString();
-    }
-
-    private static final String[] romanNumbers = new String[] { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "XI", "X" };
-
-    private static String maybeToRoman(int value) {
-        if (value > 0 && value <= 10) {
-            return romanNumbers[value - 1];
-        }
-        return Integer.toString(value);
+        return itemTag != null ? itemTag.toString() : null;
     }
 
     public static String formatMinecraftKey(String s) {
