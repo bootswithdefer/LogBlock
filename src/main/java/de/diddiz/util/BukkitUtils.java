@@ -4,6 +4,8 @@ import static de.diddiz.util.MessagingUtil.prettyMaterial;
 
 import de.diddiz.LogBlock.LogBlock;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -12,7 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.Set;
 import java.util.UUID;
@@ -38,7 +39,6 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Slab;
 import org.bukkit.block.data.type.Slab.Type;
 import org.bukkit.block.data.type.Stairs;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -48,8 +48,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 
 public class BukkitUtils {
     private static final Set<Set<Integer>> blockEquivalents;
@@ -766,43 +764,42 @@ public class BukkitUtils {
         TextComponent msg = MessagingUtil.createTextComponentWithColor(stack.getAmount() + "x ", TypeColor.DEFAULT.getColor());
         msg.addExtra(prettyMaterial(stack.getType()));
 
-        ItemMeta meta = stack.getItemMeta();
-        TextComponent hover = MessagingUtil.createTextComponentWithColor("", TypeColor.STATE.getColor());
-        boolean metaStarted = false;
-        if (meta.hasEnchants()) {
-            Map<Enchantment, Integer> enchants = meta.getEnchants();
-            if (!enchants.isEmpty()) {
-                for (Entry<Enchantment, Integer> e : enchants.entrySet()) {
-                    if (!metaStarted) {
-                        metaStarted = true;
-                    } else {
-                        hover.addExtra("\n");
-                    }
-                    hover.addExtra(formatMinecraftKey(e.getKey().getKey().getKey()) + ((e.getKey().getMaxLevel() != 1 || e.getValue() != 1) ? " " + maybeToRoman(e.getValue()) : ""));
-                }
-            }
+        ItemStack copy = stack.clone();
+        copy.setAmount(1);
+
+        String itemJson = null;
+        try {
+            itemJson = convertItemStackToJson(copy);
+        } catch (Exception e) {
+            LogBlock.getInstance().getLogger().log(Level.SEVERE, "Failed to convert Itemstack to JSON", e);
         }
-        if (meta instanceof EnchantmentStorageMeta) {
-            EnchantmentStorageMeta emeta = (EnchantmentStorageMeta) meta;
-            if (emeta.hasStoredEnchants()) {
-                Map<Enchantment, Integer> enchants = emeta.getStoredEnchants();
-                if (!enchants.isEmpty()) {
-                    for (Entry<Enchantment, Integer> e : enchants.entrySet()) {
-                        if (!metaStarted) {
-                            metaStarted = true;
-                        } else {
-                            hover.addExtra("\n");
-                        }
-                        hover.addExtra(formatMinecraftKey(e.getKey().getKey().getKey()) + ((e.getKey().getMaxLevel() != 1 || e.getValue() != 1) ? " " + maybeToRoman(e.getValue()) : ""));
-                    }
-                }
-            }
-        }
-        if (metaStarted) {
-            msg.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new Text(new BaseComponent[] { hover })));
+
+        if (itemJson != null) {
+            BaseComponent[] hoverEventComponents = new BaseComponent[]{
+                    new TextComponent(itemJson)
+            };
+
+            msg.setHoverEvent(new HoverEvent(Action.SHOW_ITEM, hoverEventComponents));
+        } else {
+            msg.setHoverEvent(new HoverEvent(Action.SHOW_TEXT, new Text(new BaseComponent[] { MessagingUtil.createTextComponentWithColor("Error", TypeColor.ERROR.getColor())} )));
         }
 
         return msg;
+    }
+
+    public static String convertItemStackToJson(ItemStack itemStack) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        Class<?> craftItemStackClazz = ReflectionUtil.getCraftBukkitClass("inventory.CraftItemStack");
+        Method asNMSCopyMethod = ReflectionUtil.getMethod(craftItemStackClazz, "asNMSCopy", ItemStack.class);
+
+        Class<?> nmsItemStackClazz = ReflectionUtil.getMinecraftClass("world.item.ItemStack");
+        Class<?> nbtTagCompoundClazz = ReflectionUtil.getMinecraftClass("nbt.NBTTagCompound");
+        Method saveNmsItemStackMethod = ReflectionUtil.getMethod(nmsItemStackClazz, "save", nbtTagCompoundClazz);
+
+        Object nmsNbtTagCompoundObj = nbtTagCompoundClazz.getDeclaredConstructor().newInstance();
+        Object nmsItemStackObj = asNMSCopyMethod.invoke(null, itemStack);
+        Object itemAsJsonObject = saveNmsItemStackMethod.invoke(nmsItemStackObj, nmsNbtTagCompoundObj);
+
+        return itemAsJsonObject.toString();
     }
 
     private static final String[] romanNumbers = new String[] { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "XI", "X" };
