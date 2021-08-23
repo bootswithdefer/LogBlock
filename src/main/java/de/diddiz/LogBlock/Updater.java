@@ -745,6 +745,7 @@ class Updater {
         }
         if (configVersion.compareTo(new ComparableVersion("1.17.0")) < 0) {
             logblock.getLogger().info("Updating tables to 1.17.0 ...");
+            logblock.getLogger().warning("The updating process might take several minutes if you have a huge log table! Please do not shutdown your server until it is completed.");
             try (Connection conn = logblock.getConnection()) {
                 conn.setAutoCommit(true);
                 final Statement st = conn.createStatement();
@@ -755,6 +756,7 @@ class Updater {
             } catch (final SQLException ex) {
                 logblock.getLogger().log(Level.SEVERE, "[Updater] Warning: Could not alter table", ex);
             }
+            logblock.getLogger().info("Update to 1.17.0 completed.");
             config.set("version", "1.17.0");
         }
 
