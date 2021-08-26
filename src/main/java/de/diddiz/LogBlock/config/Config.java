@@ -29,7 +29,6 @@ public class Config {
     public static boolean mysqlUseSSL;
     public static boolean mysqlRequireSSL;
     public static int delayBetweenRuns, forceToProcessAtLeast, timePerRun;
-    public static boolean fireCustomEvents;
     public static boolean useBukkitScheduler;
     public static int queueWarningSize;
     public static boolean enableAutoClearLog;
@@ -92,7 +91,6 @@ public class Config {
         def.put("consumer.delayBetweenRuns", 2);
         def.put("consumer.forceToProcessAtLeast", 200);
         def.put("consumer.timePerRun", 1000);
-        def.put("consumer.fireCustomEvents", false);
         def.put("consumer.useBukkitScheduler", true);
         def.put("consumer.queueWarningSize", 1000);
         def.put("clearlog.dumpDeletedLog", false);
@@ -171,6 +169,9 @@ public class Config {
                 config.set(e.getKey(), e.getValue());
             }
         }
+        if (config.contains("consumer.fireCustomEvents")) {
+            config.set("consumer.fireCustomEvents", null);
+        }
         logblock.saveConfig();
 
         ComparableVersion configVersion = new ComparableVersion(config.getString("version"));
@@ -185,7 +186,6 @@ public class Config {
         delayBetweenRuns = config.getInt("consumer.delayBetweenRuns", 2);
         forceToProcessAtLeast = config.getInt("consumer.forceToProcessAtLeast", 0);
         timePerRun = config.getInt("consumer.timePerRun", 1000);
-        fireCustomEvents = config.getBoolean("consumer.fireCustomEvents", false);
         useBukkitScheduler = config.getBoolean("consumer.useBukkitScheduler", true);
         queueWarningSize = config.getInt("consumer.queueWarningSize", 1000);
         enableAutoClearLog = config.getBoolean("clearlog.enableAutoClearLog");

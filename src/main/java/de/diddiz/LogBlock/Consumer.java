@@ -701,7 +701,7 @@ public class Consumer extends Thread {
         if (typeAfter == null || typeAfter.getMaterial() == Material.CAVE_AIR || typeAfter.getMaterial() == Material.VOID_AIR) {
             typeAfter = Bukkit.createBlockData(Material.AIR);
         }
-        if (Config.fireCustomEvents) {
+        if (BlockChangePreLogEvent.getHandlerList().getRegisteredListeners().length > 0) {
             // Create and call the event
             BlockChangePreLogEvent event = new BlockChangePreLogEvent(actor, loc, typeBefore, typeAfter, stateBefore, stateAfter, ca);
             logblock.getServer().getPluginManager().callEvent(event);
