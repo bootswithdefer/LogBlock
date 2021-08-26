@@ -53,6 +53,7 @@ import de.diddiz.LogBlock.blockstate.BlockStateCodecSign;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
+import de.diddiz.LogBlock.events.EntityChangePreLogEvent;
 import de.diddiz.util.BukkitUtils;
 import de.diddiz.util.Utils;
 
@@ -731,10 +732,31 @@ public class Consumer extends Thread {
         addQueueLast(new BlockRow(loc, actor, replacedMaterialId, replacedStateId, Utils.serializeYamlConfiguration(stateBefore), typeMaterialId, typeStateId, Utils.serializeYamlConfiguration(stateAfter), ca));
     }
 
-    public void queueEntityModification(Actor actor, UUID entityId, EntityType entityType, Location loc, EntityChangeType changeType, YamlConfiguration data) {
-        if (actor == null || loc == null || changeType == null || entityId == null || entityType == null || hiddenPlayers.contains(actor.getName().toLowerCase()) || !isLogged(loc.getWorld())) {
+    public void queueEntityModification(Actor actor, Entity entity, EntityChangeType changeType, YamlConfiguration data) {
+        if (actor == null || changeType == null || entity == null || hiddenPlayers.contains(actor.getName().toLowerCase()) || !isLogged(entity.getWorld())) {
             return;
         }
+        UUID entityId = entity.getUniqueId();
+        EntityType entityType = entity.getType();
+        Location loc = entity.getLocation();
+
+        if (EntityChangePreLogEvent.getHandlerList().getRegisteredListeners().length > 0) {
+            // Create and call the event
+            EntityChangePreLogEvent event = new EntityChangePreLogEvent(actor, loc, entity, changeType, data);
+            logblock.getServer().getPluginManager().callEvent(event);
+            if (event.isCancelled()) {
+                return;
+            }
+
+            // Update variables
+            actor = event.getOwnerActor();
+            loc = event.getLocation();
+        }
+        // Do this last so LogBlock still has final say in what is being added
+        if (actor == null || loc == null || hiddenPlayers.contains(actor.getName().toLowerCase()) || !isLogged(loc.getWorld())) {
+            return;
+        }
+
         addQueueLast(new EntityRow(loc, actor, entityType, entityId, changeType, Utils.serializeYamlConfiguration(data)));
     }
 

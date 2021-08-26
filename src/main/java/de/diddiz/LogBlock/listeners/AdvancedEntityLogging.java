@@ -131,7 +131,7 @@ public class AdvancedEntityLogging extends LoggingListener {
                         inHand = inHand.clone();
                         inHand.setAmount(1);
                         data.set("item", inHand);
-                        consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), entity.getLocation(), EntityChange.EntityChangeType.ADDEQUIP, data);
+                        consumer.queueEntityModification(actor, entity, EntityChange.EntityChangeType.ADDEQUIP, data);
                     }
                 }
             }
@@ -246,7 +246,7 @@ public class AdvancedEntityLogging extends LoggingListener {
                     }
                     YamlConfiguration data = new YamlConfiguration();
                     data.set("item", oldItem);
-                    consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), entity.getLocation(), EntityChange.EntityChangeType.REMOVEEQUIP, data);
+                    consumer.queueEntityModification(actor, entity, EntityChange.EntityChangeType.REMOVEEQUIP, data);
                 }
             }
         }
@@ -274,7 +274,7 @@ public class AdvancedEntityLogging extends LoggingListener {
         if (damager instanceof Bee && !((Bee) damager).hasStung()) {
             if (Config.isLogging(damager.getWorld(), EntityLogging.MODIFY, damager)) {
                 Actor actor = Actor.actorFromEntity(event.getEntity());
-                consumer.queueEntityModification(actor, damager.getUniqueId(), damager.getType(), damager.getLocation(), EntityChange.EntityChangeType.GET_STUNG, null);
+                consumer.queueEntityModification(actor, damager, EntityChange.EntityChangeType.GET_STUNG, null);
             }
         }
     }
@@ -295,13 +295,13 @@ public class AdvancedEntityLogging extends LoggingListener {
                 YamlConfiguration data = new YamlConfiguration();
                 data.set("item", oldItem);
                 data.set("slot", event.getSlot().name());
-                consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), entity.getLocation(), EntityChange.EntityChangeType.REMOVEEQUIP, data);
+                consumer.queueEntityModification(actor, entity, EntityChange.EntityChangeType.REMOVEEQUIP, data);
             }
             if (!newEmpty) {
                 YamlConfiguration data = new YamlConfiguration();
                 data.set("item", newItem);
                 data.set("slot", event.getSlot().name());
-                consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), entity.getLocation(), EntityChange.EntityChangeType.ADDEQUIP, data);
+                consumer.queueEntityModification(actor, entity, EntityChange.EntityChangeType.ADDEQUIP, data);
             }
         }
     }
@@ -319,6 +319,6 @@ public class AdvancedEntityLogging extends LoggingListener {
         } else {
             data.set("worldedit", WorldEditHelper.serializeEntity(entity));
         }
-        consumer.queueEntityModification(actor, entity.getUniqueId(), entity.getType(), location, changeType, data);
+        consumer.queueEntityModification(actor, entity, changeType, data);
     }
 }
