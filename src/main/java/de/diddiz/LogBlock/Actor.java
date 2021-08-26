@@ -9,8 +9,6 @@ import org.bukkit.projectiles.ProjectileSource;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-
 import static de.diddiz.util.BukkitUtils.entityName;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -131,11 +129,9 @@ public class Actor {
      */
     @Deprecated
     public static Actor actorFromString(String actorName) {
-        Collection<? extends Player> players = Bukkit.getServer().getOnlinePlayers();
-        for (Player p : players) {
-            if (p.getName().equalsIgnoreCase(actorName)) {
-                return actorFromEntity(p);
-            }
+        Player p = Bukkit.getServer().getPlayerExact(actorName);
+        if (p != null) {
+            return actorFromEntity(p);
         }
         // No player found online with that name, assuming non-player entity/effect
         return new Actor(actorName);
