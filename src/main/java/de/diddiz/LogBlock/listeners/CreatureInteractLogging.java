@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.TurtleEgg;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -27,10 +26,8 @@ public class CreatureInteractLogging extends LoggingListener {
     public void onEntityInteract(EntityInteractEvent event) {
         final WorldConfig wcfg = getWorldConfig(event.getEntity().getWorld());
 
-        final EntityType entityType = event.getEntityType();
-
         // Mobs only
-        if (event.getEntity() instanceof Player || entityType == null) {
+        if (event.getEntity() instanceof Player) {
             return;
         }
 
@@ -42,7 +39,7 @@ public class CreatureInteractLogging extends LoggingListener {
             if (type == Material.FARMLAND) {
                 if (wcfg.isLogging(Logging.CREATURECROPTRAMPLE)) {
                     // 3 = Dirt ID
-                    consumer.queueBlock(Actor.actorFromEntity(entityType), loc, type.createBlockData(), Material.DIRT.createBlockData());
+                    consumer.queueBlock(new Actor("CreatureTrample"), loc, type.createBlockData(), Material.DIRT.createBlockData());
                     // Log the crop on top as being broken
                     Block trampledCrop = clicked.getRelative(BlockFace.UP);
                     if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {

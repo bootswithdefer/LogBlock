@@ -95,6 +95,7 @@ public class Actor {
         return new Actor(entityName(entity));
     }
 
+    @Deprecated
     public static Actor actorFromEntity(EntityType entity) {
         return new Actor(entity.name());
     }
