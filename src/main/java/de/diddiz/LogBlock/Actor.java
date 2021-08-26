@@ -33,29 +33,41 @@ public class Actor {
     final String name;
     final String UUID;
     final Location blockLocation;
+    final Entity entity;
 
     public Actor(String name, String UUID) {
         this.name = name;
         this.UUID = UUID == null ? "unknown" : (UUID.length() > 36 ? UUID.substring(0, 36) : UUID);
         this.blockLocation = null;
+        this.entity = null;
     }
 
     public Actor(String name, String UUID, Block block) {
         this.name = name;
         this.UUID = UUID == null ? "unknown" : (UUID.length() > 36 ? UUID.substring(0, 36) : UUID);
         this.blockLocation = block == null ? null : block.getLocation();
+        this.entity = null;
     }
 
     public Actor(String name, java.util.UUID UUID) {
         this.name = name;
         this.UUID = UUID.toString();
         this.blockLocation = null;
+        this.entity = null;
     }
 
     public Actor(String name, java.util.UUID UUID, Block block) {
         this.name = name;
         this.UUID = UUID.toString();
         this.blockLocation = block == null ? null : block.getLocation();
+        this.entity = null;
+    }
+
+    public Actor(String name, java.util.UUID UUID, Entity entity) {
+        this.name = name;
+        this.UUID = UUID.toString();
+        this.blockLocation = null;
+        this.entity = entity;
     }
 
     public Actor(String name) {
@@ -64,6 +76,13 @@ public class Actor {
 
     public Actor(String name, Block block) {
         this(name, generateUUID(name), block);
+    }
+
+    public Actor(String name, Entity entity) {
+        this.name = name;
+        this.UUID = generateUUID(name);
+        this.blockLocation = null;
+        this.entity = entity;
     }
 
     public Actor(ResultSet rs) throws SQLException {
@@ -82,9 +101,16 @@ public class Actor {
         return blockLocation;
     }
 
+    /**
+     * The acting entity object (if known)
+     */
+    public Entity getEntity() {
+        return entity;
+    }
+
     public static Actor actorFromEntity(Entity entity) {
         if (entity instanceof Player) {
-            return new Actor(entityName(entity), entity.getUniqueId());
+            return new Actor(entityName(entity), entity.getUniqueId(), entity);
         }
         if (entity instanceof Projectile) {
             ProjectileSource shooter = ((Projectile) entity).getShooter();
@@ -92,7 +118,7 @@ public class Actor {
                 return actorFromProjectileSource(shooter);
             }
         }
-        return new Actor(entityName(entity));
+        return new Actor(entityName(entity), entity);
     }
 
     @Deprecated
