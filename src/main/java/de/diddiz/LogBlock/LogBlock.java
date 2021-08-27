@@ -38,6 +38,7 @@ public class LogBlock extends JavaPlugin {
     private PlayerInfoLogging playerInfoLogging;
     private ScaffoldingLogging scaffoldingLogging;
     private Questioner questioner;
+    private boolean isConfigLoaded;
     private volatile boolean isCompletelyEnabled;
 
     public static LogBlock getInstance() {
@@ -57,20 +58,25 @@ public class LogBlock extends JavaPlugin {
     }
 
     @Override
-    public void onEnable() {
+    public void onLoad() {
         logblock = this;
-
         BukkitUtils.isDoublePlant(Material.AIR); // Force static code to run
-        final PluginManager pm = getPluginManager();
-
-        consumer = new Consumer(this);
         try {
             Config.load(this);
+            isConfigLoaded = true;
         } catch (final Exception ex) {
-            getLogger().log(Level.SEVERE, "Could not load LogBlock config! " + ex.getMessage());
+            getLogger().log(Level.SEVERE, "Could not load LogBlock config! " + ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        final PluginManager pm = getPluginManager();
+        if (!isConfigLoaded) {
             pm.disablePlugin(this);
             return;
         }
+        consumer = new Consumer(this);
         try {
             getLogger().info("Connecting to " + user + "@" + url + "...");
             try {
