@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock;
 
+import de.diddiz.LogBlock.addons.worldguard.WorldGuardLoggingFlagsAddon;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.listeners.*;
 import de.diddiz.LogBlock.questioner.Questioner;
@@ -38,6 +39,7 @@ public class LogBlock extends JavaPlugin {
     private PlayerInfoLogging playerInfoLogging;
     private ScaffoldingLogging scaffoldingLogging;
     private Questioner questioner;
+    private WorldGuardLoggingFlagsAddon worldGuardLoggingFlagsAddon;
     private boolean isConfigLoaded;
     private volatile boolean isCompletelyEnabled;
 
@@ -66,6 +68,14 @@ public class LogBlock extends JavaPlugin {
             isConfigLoaded = true;
         } catch (final Exception ex) {
             getLogger().log(Level.SEVERE, "Could not load LogBlock config! " + ex.getMessage(), ex);
+        }
+        if (Config.worldGuardLoggingFlags) {
+            if (getServer().getPluginManager().getPlugin("WorldGuard") == null) {
+                getLogger().log(Level.SEVERE, "Invalid config! addons.worldguardLoggingFlags is set to true, but WorldGuard is not loaded.");
+            } else {
+                worldGuardLoggingFlagsAddon = new WorldGuardLoggingFlagsAddon(this);
+                worldGuardLoggingFlagsAddon.onPluginLoad();
+            }
         }
     }
 
@@ -132,6 +142,9 @@ public class LogBlock extends JavaPlugin {
             }
         }
         questioner = new Questioner(this);
+        if (worldGuardLoggingFlagsAddon != null) {
+            worldGuardLoggingFlagsAddon.onPluginEnable();
+        }
         isCompletelyEnabled = true;
         getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
     }

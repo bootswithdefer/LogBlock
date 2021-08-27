@@ -55,6 +55,8 @@ public class Config {
     public static boolean safetyIdCheck;
     public static boolean debug;
     public static boolean logEnvironmentalKills;
+    // addons
+    public static boolean worldGuardLoggingFlags;
     // Not loaded from config - checked at runtime
     public static boolean mb4 = false;
 
@@ -162,6 +164,7 @@ public class Config {
         def.put("tools.toolblock.mode", "LOOKUP");
         def.put("tools.toolblock.permissionDefault", "OP");
         def.put("safety.id.check", true);
+        def.put("addons.worldguardLoggingFlags", false);
         def.put("debug", false);
         for (final Entry<String, Object> e : def.entrySet()) {
             if (!config.contains(e.getKey())) {
@@ -284,6 +287,7 @@ public class Config {
                 toolsByName.put(alias, tool);
             }
         }
+        worldGuardLoggingFlags = config.getBoolean("addons.worldguardLoggingFlags");
         final List<String> loggedWorlds = config.getStringList("loggedWorlds");
         worldConfigs = new HashMap<>();
         if (loggedWorlds.isEmpty()) {
