@@ -1,6 +1,6 @@
-package de.diddiz.util;
+package de.diddiz.LogBlock.util;
 
-import static de.diddiz.util.MessagingUtil.prettyMaterial;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyMaterial;
 
 import de.diddiz.LogBlock.LogBlock;
 import java.io.File;

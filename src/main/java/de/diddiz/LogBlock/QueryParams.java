@@ -1,11 +1,11 @@
 package de.diddiz.LogBlock;
 
 import de.diddiz.LogBlock.config.Config;
-import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.CuboidRegion;
-import de.diddiz.util.SqlUtil;
-import de.diddiz.util.Utils;
-import de.diddiz.worldedit.WorldEditHelper;
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.CuboidRegion;
+import de.diddiz.LogBlock.util.SqlUtil;
+import de.diddiz.LogBlock.util.Utils;
+import de.diddiz.LogBlock.worldedit.WorldEditHelper;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -20,8 +20,8 @@ import java.util.regex.Pattern;
 
 import static de.diddiz.LogBlock.Session.getSession;
 import static de.diddiz.LogBlock.config.Config.*;
-import static de.diddiz.util.BukkitUtils.friendlyWorldname;
-import static de.diddiz.util.Utils.*;
+import static de.diddiz.LogBlock.util.BukkitUtils.friendlyWorldname;
+import static de.diddiz.LogBlock.util.Utils.*;
 
 public final class QueryParams implements Cloneable {
     private static final HashMap<String, Integer> keywords = new HashMap<>();

@@ -4,8 +4,7 @@ import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
-import de.diddiz.util.BukkitUtils;
-
+import de.diddiz.LogBlock.util.BukkitUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -19,9 +18,9 @@ import org.bukkit.event.player.PlayerBucketFillEvent;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.util.LoggingUtil.smartLogBlockBreak;
-import static de.diddiz.util.LoggingUtil.smartLogBlockReplace;
-import static de.diddiz.util.LoggingUtil.smartLogFallables;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogBlockBreak;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogBlockReplace;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogFallables;
 
 public class BlockBreakLogging extends LoggingListener {
     public BlockBreakLogging(LogBlock lb) {

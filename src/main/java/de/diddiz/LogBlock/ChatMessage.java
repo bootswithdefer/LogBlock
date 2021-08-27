@@ -1,11 +1,11 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.util.LoggingUtil.checkText;
-import static de.diddiz.util.MessagingUtil.brackets;
-import static de.diddiz.util.MessagingUtil.prettyDate;
+import static de.diddiz.LogBlock.util.LoggingUtil.checkText;
+import static de.diddiz.LogBlock.util.MessagingUtil.brackets;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyDate;
 
-import de.diddiz.util.MessagingUtil;
-import de.diddiz.util.MessagingUtil.BracketType;
+import de.diddiz.LogBlock.util.MessagingUtil;
+import de.diddiz.LogBlock.util.MessagingUtil.BracketType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import net.md_5.bungee.api.chat.BaseComponent;

@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.util.BukkitUtils.*;
+import static de.diddiz.LogBlock.util.BukkitUtils.*;
 
 public class ChestAccessLogging extends LoggingListener {
     private class PlayerActiveInventoryModifications {

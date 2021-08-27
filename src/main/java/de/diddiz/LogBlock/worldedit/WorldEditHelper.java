@@ -1,4 +1,4 @@
-package de.diddiz.worldedit;
+package de.diddiz.LogBlock.worldedit;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,7 +34,7 @@ import com.sk89q.worldedit.entity.BaseEntity;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.Region;
 import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.util.CuboidRegion;
+import de.diddiz.LogBlock.util.CuboidRegion;
 
 public class WorldEditHelper {
     private static boolean checkedForWorldEdit;

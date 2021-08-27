@@ -5,9 +5,9 @@ import static de.diddiz.LogBlock.config.Config.hiddenBlocks;
 import static de.diddiz.LogBlock.config.Config.hiddenPlayers;
 import static de.diddiz.LogBlock.config.Config.isLogged;
 import static de.diddiz.LogBlock.config.Config.logPlayerInfo;
-import static de.diddiz.util.BukkitUtils.compressInventory;
-import static de.diddiz.util.BukkitUtils.itemIDfromProjectileEntity;
-import static de.diddiz.util.Utils.mysqlTextEscape;
+import static de.diddiz.LogBlock.util.BukkitUtils.compressInventory;
+import static de.diddiz.LogBlock.util.BukkitUtils.itemIDfromProjectileEntity;
+import static de.diddiz.LogBlock.util.Utils.mysqlTextEscape;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -54,8 +54,8 @@ import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
 import de.diddiz.LogBlock.events.EntityChangePreLogEvent;
-import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.Utils;
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.Utils;
 
 public class Consumer extends Thread {
     private static final int MAX_SHUTDOWN_TIME_MILLIS = 20000;

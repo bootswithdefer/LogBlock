@@ -2,8 +2,8 @@ package de.diddiz.LogBlock.listeners;
 
 import de.diddiz.LogBlock.*;
 import de.diddiz.LogBlock.events.ToolUseEvent;
-import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.CuboidRegion;
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.CuboidRegion;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;

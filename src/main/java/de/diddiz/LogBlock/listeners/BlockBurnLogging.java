@@ -17,9 +17,9 @@ import org.bukkit.event.block.BlockIgniteEvent.IgniteCause;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.util.LoggingUtil.smartLogBlockBreak;
-import static de.diddiz.util.LoggingUtil.smartLogBlockReplace;
-import static de.diddiz.util.LoggingUtil.smartLogFallables;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogBlockBreak;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogBlockReplace;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogFallables;
 
 public class BlockBurnLogging extends LoggingListener {
     public BlockBurnLogging(LogBlock lb) {

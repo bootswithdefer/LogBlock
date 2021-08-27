@@ -1,4 +1,4 @@
-package de.diddiz.util;
+package de.diddiz.LogBlock.util;
 
 import net.md_5.bungee.api.ChatColor;
 

@@ -1,7 +1,8 @@
 package de.diddiz.LogBlock;
 
-import de.diddiz.util.Utils.ExtensionFilenameFilter;
+import static de.diddiz.LogBlock.util.Utils.newline;
 
+import de.diddiz.LogBlock.util.Utils.ExtensionFilenameFilter;
 import java.io.*;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -10,8 +11,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
-
-import static de.diddiz.util.Utils.newline;
 
 public class DumpedLogImporter implements Runnable {
     private final LogBlock logblock;

@@ -7,9 +7,10 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.projectiles.BlockProjectileSource;
 import org.bukkit.projectiles.ProjectileSource;
 
+import static de.diddiz.LogBlock.util.BukkitUtils.entityName;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import static de.diddiz.util.BukkitUtils.entityName;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;

@@ -1,6 +1,6 @@
 package de.diddiz.LogBlock;
 
-import de.diddiz.util.MessagingUtil;
+import de.diddiz.LogBlock.util.MessagingUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import net.md_5.bungee.api.chat.BaseComponent;

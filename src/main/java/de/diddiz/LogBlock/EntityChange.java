@@ -1,15 +1,15 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.util.ActionColor.CREATE;
-import static de.diddiz.util.ActionColor.DESTROY;
-import static de.diddiz.util.ActionColor.INTERACT;
-import static de.diddiz.util.MessagingUtil.createTextComponentWithColor;
-import static de.diddiz.util.MessagingUtil.prettyDate;
-import static de.diddiz.util.MessagingUtil.prettyEntityType;
-import static de.diddiz.util.MessagingUtil.prettyLocation;
-import static de.diddiz.util.MessagingUtil.prettyMaterial;
+import static de.diddiz.LogBlock.util.ActionColor.CREATE;
+import static de.diddiz.LogBlock.util.ActionColor.DESTROY;
+import static de.diddiz.LogBlock.util.ActionColor.INTERACT;
+import static de.diddiz.LogBlock.util.MessagingUtil.createTextComponentWithColor;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyDate;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyEntityType;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyLocation;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyMaterial;
 
-import de.diddiz.util.Utils;
+import de.diddiz.LogBlock.util.Utils;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;

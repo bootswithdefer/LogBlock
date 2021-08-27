@@ -1,4 +1,4 @@
-package de.diddiz.util;
+package de.diddiz.LogBlock.util;
 
 // Taken from maven-artifact at
 // http://grepcode.com/file_/repo1.maven.org/maven2/org.apache.maven/maven-artifact/3.2.3/org/apache/maven/artifact/versioning/ComparableVersion.java/?v=source

@@ -1,11 +1,12 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.util.ActionColor.DESTROY;
-import static de.diddiz.util.MessagingUtil.prettyDate;
-import static de.diddiz.util.MessagingUtil.prettyLocation;
-import static de.diddiz.util.MessagingUtil.prettyMaterial;
-import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.MessagingUtil;
+import static de.diddiz.LogBlock.util.ActionColor.DESTROY;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyDate;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyLocation;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyMaterial;
+
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.MessagingUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import net.md_5.bungee.api.chat.BaseComponent;

@@ -1,8 +1,7 @@
 package de.diddiz.LogBlock.config;
 
 import de.diddiz.LogBlock.*;
-import de.diddiz.util.ComparableVersion;
-
+import de.diddiz.LogBlock.util.ComparableVersion;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
@@ -17,8 +16,8 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 
-import static de.diddiz.util.BukkitUtils.friendlyWorldname;
-import static de.diddiz.util.Utils.parseTimeSpec;
+import static de.diddiz.LogBlock.util.BukkitUtils.friendlyWorldname;
+import static de.diddiz.LogBlock.util.Utils.parseTimeSpec;
 import static org.bukkit.Bukkit.*;
 
 public class Config {

@@ -1,4 +1,4 @@
-package de.diddiz.util;
+package de.diddiz.LogBlock.util;
 
 public class SqlUtil {
     public static String escapeString(String s) {

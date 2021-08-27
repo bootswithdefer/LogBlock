@@ -20,7 +20,7 @@ import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.Config;
-import de.diddiz.util.LoggingUtil;
+import de.diddiz.LogBlock.util.LoggingUtil;
 
 public class DragonEggLogging extends LoggingListener {
 

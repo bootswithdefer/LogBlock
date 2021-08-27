@@ -1,4 +1,4 @@
-package de.diddiz.util;
+package de.diddiz.LogBlock.util;
 
 import com.zaxxer.hikari.HikariDataSource;
 import de.diddiz.LogBlock.config.Config;

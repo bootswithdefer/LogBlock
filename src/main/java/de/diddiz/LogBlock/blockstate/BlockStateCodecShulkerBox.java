@@ -4,7 +4,7 @@ import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
-import de.diddiz.util.BukkitUtils;
+import de.diddiz.LogBlock.util.BukkitUtils;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;

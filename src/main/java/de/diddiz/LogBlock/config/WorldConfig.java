@@ -2,8 +2,7 @@ package de.diddiz.LogBlock.config;
 
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
-import de.diddiz.util.BukkitUtils;
-
+import de.diddiz.LogBlock.util.BukkitUtils;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.ArmorStand;

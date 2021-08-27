@@ -28,10 +28,9 @@ import org.bukkit.inventory.ItemStack;
 
 import de.diddiz.LogBlock.QueryParams.Order;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
-import de.diddiz.util.BukkitUtils;
-import de.diddiz.util.Utils;
-import de.diddiz.worldedit.WorldEditHelper;
-
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.Utils;
+import de.diddiz.LogBlock.worldedit.WorldEditHelper;
 import java.io.File;
 import java.io.PrintWriter;
 import java.sql.ResultSet;
@@ -49,7 +48,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 
 import static de.diddiz.LogBlock.config.Config.dontRollback;
 import static de.diddiz.LogBlock.config.Config.replaceAnyway;
-import static de.diddiz.util.BukkitUtils.*;
+import static de.diddiz.LogBlock.util.BukkitUtils.*;
 
 public class WorldEditor implements Runnable {
     private final LogBlock logblock;

@@ -1,9 +1,9 @@
-package de.diddiz.util;
+package de.diddiz.LogBlock.util;
 
-import static de.diddiz.util.ActionColor.CREATE;
-import static de.diddiz.util.ActionColor.DESTROY;
-import static de.diddiz.util.TypeColor.DEFAULT;
-import static de.diddiz.util.Utils.spaces;
+import static de.diddiz.LogBlock.util.ActionColor.CREATE;
+import static de.diddiz.LogBlock.util.ActionColor.DESTROY;
+import static de.diddiz.LogBlock.util.TypeColor.DEFAULT;
+import static de.diddiz.LogBlock.util.Utils.spaces;
 
 import de.diddiz.LogBlock.config.Config;
 import net.md_5.bungee.api.ChatColor;

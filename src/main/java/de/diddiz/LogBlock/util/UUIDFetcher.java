@@ -1,4 +1,4 @@
-package de.diddiz.util;
+package de.diddiz.LogBlock.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

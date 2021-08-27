@@ -1,4 +1,4 @@
-package de.diddiz.util;
+package de.diddiz.LogBlock.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

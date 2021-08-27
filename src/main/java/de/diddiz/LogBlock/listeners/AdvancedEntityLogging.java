@@ -42,8 +42,8 @@ import de.diddiz.LogBlock.EntityChange.EntityChangeType;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.EntityLogging;
-import de.diddiz.util.LoggingUtil;
-import de.diddiz.worldedit.WorldEditHelper;
+import de.diddiz.LogBlock.util.LoggingUtil;
+import de.diddiz.LogBlock.worldedit.WorldEditHelper;
 import java.util.UUID;
 
 public class AdvancedEntityLogging extends LoggingListener {

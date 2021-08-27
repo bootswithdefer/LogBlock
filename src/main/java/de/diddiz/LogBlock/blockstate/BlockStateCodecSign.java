@@ -1,6 +1,6 @@
 package de.diddiz.LogBlock.blockstate;
 
-import de.diddiz.util.BukkitUtils;
+import de.diddiz.LogBlock.util.BukkitUtils;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import org.bukkit.inventory.ItemStack;
 
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
-import de.diddiz.util.Utils;
+import de.diddiz.LogBlock.util.Utils;
 
 public class WorldEditorEditFactory {
     private final WorldEditor editor;

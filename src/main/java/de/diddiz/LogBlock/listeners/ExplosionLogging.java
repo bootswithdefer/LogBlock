@@ -5,8 +5,7 @@ import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
-import de.diddiz.util.BukkitUtils;
-
+import de.diddiz.LogBlock.util.BukkitUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -24,7 +23,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import static de.diddiz.LogBlock.config.Config.logCreeperExplosionsAsPlayerWhoTriggeredThese;
-import static de.diddiz.util.BukkitUtils.getContainerBlocks;
+import static de.diddiz.LogBlock.util.BukkitUtils.getContainerBlocks;
 
 import java.util.UUID;
 

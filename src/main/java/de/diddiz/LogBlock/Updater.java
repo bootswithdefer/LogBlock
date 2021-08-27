@@ -3,9 +3,9 @@ package de.diddiz.LogBlock;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecSign;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
-import de.diddiz.util.UUIDFetcher;
-import de.diddiz.util.Utils;
-
+import de.diddiz.LogBlock.util.ComparableVersion;
+import de.diddiz.LogBlock.util.UUIDFetcher;
+import de.diddiz.LogBlock.util.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
@@ -25,8 +25,7 @@ import java.util.logging.Level;
 
 import static de.diddiz.LogBlock.config.Config.getLoggedWorlds;
 import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.util.BukkitUtils.friendlyWorldname;
-import de.diddiz.util.ComparableVersion;
+import static de.diddiz.LogBlock.util.BukkitUtils.friendlyWorldname;
 
 class Updater {
     private final LogBlock logblock;

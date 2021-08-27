@@ -18,7 +18,7 @@ import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 
 import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.util.LoggingUtil.smartLogFallables;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogFallables;
 
 public class ScaffoldingLogging extends LoggingListener {
     private final static long MAX_SCAFFOLDING_LOG_TIME_MS = 2000;

@@ -1,8 +1,9 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.util.MessagingUtil.prettyMaterial;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyMaterial;
+
 import de.diddiz.LogBlock.QueryParams.SummarizationMode;
-import de.diddiz.util.MessagingUtil;
+import de.diddiz.LogBlock.util.MessagingUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;

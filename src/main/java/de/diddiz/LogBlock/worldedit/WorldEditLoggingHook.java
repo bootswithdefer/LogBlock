@@ -1,4 +1,4 @@
-package de.diddiz.worldedit;
+package de.diddiz.LogBlock.worldedit;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -15,8 +15,7 @@ import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
-import de.diddiz.util.BukkitUtils;
-
+import de.diddiz.LogBlock.util.BukkitUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
