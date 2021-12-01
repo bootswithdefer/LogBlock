@@ -105,7 +105,7 @@ public class LogBlock extends JavaPlugin {
             if (rs.next()) {
                 Config.mb4 = true;
                 // Allegedly JDBC driver since 2010 hasn't needed this. I did.
-                st.executeQuery("SET NAMES utf8mb4;");
+                st.executeUpdate("SET NAMES utf8mb4;");
             }
             conn.close();
             Updater updater = new Updater(this);

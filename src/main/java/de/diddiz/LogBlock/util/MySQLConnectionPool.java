@@ -43,7 +43,7 @@ public class MySQLConnectionPool implements Closeable {
     public Connection getConnection() throws SQLException {
         Connection connection = ds.getConnection();
         if (Config.mb4) {
-            connection.createStatement().executeQuery("SET NAMES utf8mb4");
+            connection.createStatement().executeUpdate("SET NAMES utf8mb4");
         }
         return connection;
     }
