@@ -781,7 +781,8 @@ public class BukkitUtils {
         Method asNMSCopyMethod = craftItemStackClazz.getMethod("asNMSCopy", ItemStack.class);
 
         Class<?> nmsItemStackClazz = ReflectionUtil.getMinecraftClass("world.item.ItemStack");
-        Method getTagMethod = nmsItemStackClazz.getMethod("getTagClone");
+        Method getTagMethod = nmsItemStackClazz.getDeclaredMethod("getTagClone");
+        getTagMethod.setAccessible(true);
 
         Object nmsItemStack = asNMSCopyMethod.invoke(null, itemStack);
         Object itemTag = getTagMethod.invoke(nmsItemStack);
