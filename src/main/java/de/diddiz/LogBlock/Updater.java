@@ -637,8 +637,7 @@ class Updater {
 
         if (configVersion.compareTo(new ComparableVersion("1.13.1")) < 0) {
             logblock.getLogger().info("Updating tables to 1.13.1 ...");
-            try {
-                final Connection conn = logblock.getConnection();
+            try (Connection conn = logblock.getConnection()) {
                 conn.setAutoCommit(false);
                 final Statement st = conn.createStatement();
                 for (final WorldConfig wcfg : getLoggedWorlds()) {
@@ -719,7 +718,6 @@ class Updater {
                 }
 
                 st.close();
-                conn.close();
             } catch (final SQLException ex) {
                 logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
                 return false;
@@ -764,8 +762,7 @@ class Updater {
         }
 
         // this can always be checked
-        try {
-            final Connection conn = logblock.getConnection();
+        try (Connection conn = logblock.getConnection()) {
             conn.setAutoCommit(true);
             final Statement st = conn.createStatement();
             checkCharset("lb-players", "name", st, true);
@@ -775,6 +772,51 @@ class Updater {
             createIndexIfDoesNotExist("lb-materials", "name", "UNIQUE KEY `name` (`name`(150))", st, true);
             createIndexIfDoesNotExist("lb-blockstates", "name", "UNIQUE KEY `name` (`name`(150))", st, true);
 
+            st.close();
+        } catch (final SQLException ex) {
+            logblock.getLogger().log(Level.SEVERE, "[Updater] Error: ", ex);
+            return false;
+        }
+        try (Connection conn = logblock.getConnection()) {
+            conn.setAutoCommit(true);
+            final Statement st = conn.createStatement();
+            PreparedStatement stSelectColumnType = conn.prepareStatement("SELECT `TABLE_NAME`, `COLUMN_TYPE` FROM information_schema.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `COLUMN_NAME` = ?");
+            stSelectColumnType.setString(1, Config.mysqlDatabase);
+            stSelectColumnType.setString(2, "y");
+            HashMap<String, String> tablesAndYColumnType = new HashMap<>();
+            try (ResultSet rs = stSelectColumnType.executeQuery()) {
+                while (rs.next()) {
+                    String table = rs.getString("TABLE_NAME").toLowerCase();
+                    String type = rs.getString("COLUMN_TYPE").toLowerCase();
+                    tablesAndYColumnType.put(table, type);
+                }
+            }
+            for (final WorldConfig wcfg : getLoggedWorlds()) {
+                String type = tablesAndYColumnType.get((wcfg.table + "-blocks").toLowerCase());
+                if (type != null) {
+                    if (type.contains("tinyint") || type.contains("unsigned")) {
+                        logblock.getLogger().info("Fixing y column type for table " + wcfg.table + "-blocks ...");
+                        logblock.getLogger().warning("The updating process might take several minutes if you have a huge log table! Please do not shutdown your server until it is completed.");
+                        st.executeUpdate("ALTER TABLE `" + wcfg.table + "-blocks` CHANGE `y` `y` SMALLINT(5) NOT NULL");
+                    }
+                }
+                type = tablesAndYColumnType.get((wcfg.table + "-entities").toLowerCase());
+                if (type != null) {
+                    if (type.contains("tinyint") || type.contains("unsigned")) {
+                        logblock.getLogger().info("Fixing y column type for table " + wcfg.table + "-entities ...");
+                        logblock.getLogger().warning("The updating process might take several minutes if you have a huge log table! Please do not shutdown your server until it is completed.");
+                        st.executeUpdate("ALTER TABLE `" + wcfg.table + "-entities` CHANGE `y` `y` SMALLINT(5) NOT NULL");
+                    }
+                }
+                type = tablesAndYColumnType.get((wcfg.table + "-kills").toLowerCase());
+                if (type != null) {
+                    if (type.contains("tinyint") || type.contains("unsigned")) {
+                        logblock.getLogger().info("Fixing y column type for table " + wcfg.table + "-kills ...");
+                        logblock.getLogger().warning("The updating process might take several minutes if you have a huge log table! Please do not shutdown your server until it is completed.");
+                        st.executeUpdate("ALTER TABLE `" + wcfg.table + "-kills` CHANGE `y` `y` SMALLINT(5) NOT NULL");
+                    }
+                }
+            }
             st.close();
             conn.close();
         } catch (final SQLException ex) {
