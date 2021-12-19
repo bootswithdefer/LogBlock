@@ -22,9 +22,11 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Note;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.Powerable;
 import org.bukkit.block.data.Waterlogged;
+import org.bukkit.block.data.type.Candle;
 import org.bukkit.block.data.type.Comparator;
 import org.bukkit.block.data.type.DaylightDetector;
 import org.bukkit.block.data.type.Lectern;
@@ -130,7 +132,7 @@ public class BlockChange implements LookupCacheElement {
         String typeDetails = getTypeDetails(type, typeState, replaced, replacedState);
         String replacedDetails = getTypeDetails(replaced, replacedState);
 
-        if (type.getMaterial().equals(replaced.getMaterial())) {
+        if (type.getMaterial().equals(replaced.getMaterial()) || (type.getMaterial() == Material.CAKE && BukkitUtils.isCandleCake(replaced.getMaterial()))) {
             if (BukkitUtils.isEmpty(type.getMaterial())) {
                 msg.addExtra(createTextComponentWithColor("did an unspecified action", INTERACT.getColor()));
             } else if (ca != null) {
@@ -211,6 +213,17 @@ public class BlockChange implements LookupCacheElement {
                 msg.addExtra(prettyMaterial(type));
                 msg.addExtra(createTextComponentWithColor(" to", CREATE.getColor()));
                 msg.addExtra(prettyState(typeDetails));
+            } else if (type instanceof Candle && ((Candle) type).getCandles() != ((Candle) replaced).getCandles()) {
+                msg.addExtra(createTextComponentWithColor("added a candle to ", CREATE.getColor()));
+                msg.addExtra(prettyMaterial(type));
+            } else if ((type instanceof Candle || BukkitUtils.isCandleCake(type.getMaterial())) && ((Lightable) type).isLit() != ((Lightable) replaced).isLit()) {
+                if (((Lightable) type).isLit()) {
+                    msg.addExtra(createTextComponentWithColor("lit a ", CREATE.getColor()));
+                    msg.addExtra(prettyMaterial(type));
+                } else {
+                    msg.addExtra(createTextComponentWithColor("extinguished a ", CREATE.getColor()));
+                    msg.addExtra(prettyMaterial(type));
+                }
             } else {
                 msg.addExtra(createTextComponentWithColor("replaced ", CREATE.getColor()));
                 msg.addExtra(prettyMaterial(replaced));

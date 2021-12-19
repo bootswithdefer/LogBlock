@@ -5,7 +5,9 @@ import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.LogBlock.util.BukkitUtils;
+import java.util.UUID;
 import org.bukkit.DyeColor;
+import org.bukkit.GameEvent;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Note;
@@ -16,8 +18,10 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Cake;
+import org.bukkit.block.data.type.Candle;
 import org.bukkit.block.data.type.Comparator;
 import org.bukkit.block.data.type.Comparator.Mode;
 import org.bukkit.block.data.type.DaylightDetector;
@@ -27,10 +31,12 @@ import org.bukkit.block.data.type.Repeater;
 import org.bukkit.block.data.type.Switch;
 import org.bukkit.block.data.type.TurtleEgg;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event.Result;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.world.GenericGameEvent;
 import org.bukkit.inventory.ItemStack;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
@@ -39,6 +45,10 @@ public class InteractLogging extends LoggingListener {
     public InteractLogging(LogBlock lb) {
         super(lb);
     }
+
+    private UUID lastInteractionPlayer;
+    private BlockData lastInteractionBlockData;
+    private Location lastInteractionLocation;
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
@@ -52,6 +62,9 @@ public class InteractLogging extends LoggingListener {
             final Material type = blockData.getMaterial();
             final Player player = event.getPlayer();
             final Location loc = clicked.getLocation();
+            lastInteractionPlayer = player.getUniqueId();
+            lastInteractionBlockData = blockData;
+            lastInteractionLocation = loc;
 
             switch (type) {
                 case OAK_FENCE_GATE:
@@ -77,7 +90,10 @@ public class InteractLogging extends LoggingListener {
                     }
                     break;
                 case CAKE:
-                    if (wcfg.isLogging(Logging.CAKEEAT) && event.getAction() == Action.RIGHT_CLICK_BLOCK && player.getFoodLevel() < 20) {
+                    if (event.hasItem() && BukkitUtils.isCandle(event.getItem().getType()) && event.useItemInHand() != Result.DENY) {
+                        BlockData newBlockData = Material.valueOf(event.getItem().getType().name() + "_CAKE").createBlockData();
+                        consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                    } else if (wcfg.isLogging(Logging.CAKEEAT) && event.getAction() == Action.RIGHT_CLICK_BLOCK && player.getFoodLevel() < 20) {
                         Cake newBlockData = (Cake) blockData.clone();
                         if (newBlockData.getBites() < 6) {
                             newBlockData.setBites(newBlockData.getBites() + 1);
@@ -270,5 +286,47 @@ public class InteractLogging extends LoggingListener {
                 default:
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onGenericGameEvent(GenericGameEvent event) {
+        if (lastInteractionPlayer != null && event.getEntity() != null && event.getEntity().getUniqueId().equals(lastInteractionPlayer) && lastInteractionLocation != null && event.getLocation().equals(lastInteractionLocation)) {
+            if (lastInteractionBlockData instanceof Candle) {
+                Candle previousCandle = (Candle) lastInteractionBlockData;
+                if (previousCandle.isLit()) {
+                    BlockData newData = lastInteractionLocation.getBlock().getBlockData();
+                    if (newData instanceof Candle) {
+                        Candle newCandle = (Candle) newData;
+                        if (!newCandle.isLit() && !newCandle.isWaterlogged()) {
+                            // log candle extinguish
+                            consumer.queueBlockReplace(Actor.actorFromEntity(event.getEntity()), lastInteractionLocation, lastInteractionBlockData, newData);
+                        }
+                    }
+                }
+            } else if (lastInteractionBlockData instanceof Lightable && BukkitUtils.isCandleCake(lastInteractionBlockData.getMaterial())) {
+                Lightable previousLightable = (Lightable) lastInteractionBlockData;
+                BlockData newData = lastInteractionLocation.getBlock().getBlockData();
+                if (event.getEvent().equals(GameEvent.EAT)) {
+                    final WorldConfig wcfg = getWorldConfig(event.getLocation().getWorld());
+                    if (wcfg.isLogging(Logging.CAKEEAT)) {
+                        // nom nom (don't know why newData is incorrect here)
+                        newData = Material.CAKE.createBlockData();
+                        ((Cake) newData).setBites(1);
+                        consumer.queueBlockReplace(Actor.actorFromEntity(event.getEntity()), lastInteractionLocation, lastInteractionBlockData, newData);
+                    }
+                } else if (previousLightable.isLit()) {
+                    if (newData instanceof Lightable) {
+                        Lightable newLightable = (Lightable) newData;
+                        if (!newLightable.isLit()) {
+                            // log cake extinguish
+                            consumer.queueBlockReplace(Actor.actorFromEntity(event.getEntity()), lastInteractionLocation, lastInteractionBlockData, newData);
+                        }
+                    }
+                }
+            }
+        }
+        lastInteractionPlayer = null;
+        lastInteractionBlockData = null;
+        lastInteractionLocation = null;
     }
 }

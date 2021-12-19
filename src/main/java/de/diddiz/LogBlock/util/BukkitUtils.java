@@ -78,6 +78,8 @@ public class BukkitUtils {
     private static final EnumSet<Material> concreteBlocks;
     private static final EnumMap<Material, DyeColor> dyes;
     private static final EnumSet<Material> alwaysWaterlogged;
+    private static final EnumSet<Material> candles;
+    private static final EnumSet<Material> candleCakes;
 
     static {
         pressurePlates = EnumSet.noneOf(Material.class);
@@ -484,6 +486,44 @@ public class BukkitUtils {
         concreteBlocks.add(Material.RED_CONCRETE);
         concreteBlocks.add(Material.WHITE_CONCRETE);
         concreteBlocks.add(Material.YELLOW_CONCRETE);
+
+        candles = EnumSet.noneOf(Material.class);
+        candles.add(Material.CANDLE);
+        candles.add(Material.BLACK_CANDLE);
+        candles.add(Material.BLUE_CANDLE);
+        candles.add(Material.LIGHT_GRAY_CANDLE);
+        candles.add(Material.BROWN_CANDLE);
+        candles.add(Material.CYAN_CANDLE);
+        candles.add(Material.GRAY_CANDLE);
+        candles.add(Material.GREEN_CANDLE);
+        candles.add(Material.LIGHT_BLUE_CANDLE);
+        candles.add(Material.MAGENTA_CANDLE);
+        candles.add(Material.LIME_CANDLE);
+        candles.add(Material.ORANGE_CANDLE);
+        candles.add(Material.PINK_CANDLE);
+        candles.add(Material.PURPLE_CANDLE);
+        candles.add(Material.RED_CANDLE);
+        candles.add(Material.WHITE_CANDLE);
+        candles.add(Material.YELLOW_CANDLE);
+
+        candleCakes = EnumSet.noneOf(Material.class);
+        candleCakes.add(Material.CANDLE_CAKE);
+        candleCakes.add(Material.BLACK_CANDLE_CAKE);
+        candleCakes.add(Material.BLUE_CANDLE_CAKE);
+        candleCakes.add(Material.LIGHT_GRAY_CANDLE_CAKE);
+        candleCakes.add(Material.BROWN_CANDLE_CAKE);
+        candleCakes.add(Material.CYAN_CANDLE_CAKE);
+        candleCakes.add(Material.GRAY_CANDLE_CAKE);
+        candleCakes.add(Material.GREEN_CANDLE_CAKE);
+        candleCakes.add(Material.LIGHT_BLUE_CANDLE_CAKE);
+        candleCakes.add(Material.MAGENTA_CANDLE_CAKE);
+        candleCakes.add(Material.LIME_CANDLE_CAKE);
+        candleCakes.add(Material.ORANGE_CANDLE_CAKE);
+        candleCakes.add(Material.PINK_CANDLE_CAKE);
+        candleCakes.add(Material.PURPLE_CANDLE_CAKE);
+        candleCakes.add(Material.RED_CANDLE_CAKE);
+        candleCakes.add(Material.WHITE_CANDLE_CAKE);
+        candleCakes.add(Material.YELLOW_CANDLE_CAKE);
 
         dyes = new EnumMap<>(Material.class);
         dyes.put(Material.BLACK_DYE, DyeColor.BLACK);
@@ -1078,5 +1118,13 @@ public class BukkitUtils {
 
     public static boolean isAlwaysWaterlogged(Material m) {
         return alwaysWaterlogged.contains(m);
+    }
+
+    public static boolean isCandle(Material m) {
+        return candles.contains(m);
+    }
+
+    public static boolean isCandleCake(Material m) {
+        return candleCakes.contains(m);
     }
 }
