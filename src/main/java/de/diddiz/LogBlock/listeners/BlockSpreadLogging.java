@@ -102,6 +102,16 @@ public class BlockSpreadLogging extends LoggingListener {
                     return;
                 }
                 break;
+            case SCULK:
+            case SCULK_VEIN:
+            case SCULK_CATALYST:
+            case SCULK_SENSOR:
+            case SCULK_SHRIEKER:
+                if (!isLogging(world, Logging.SCULKSPREAD)) {
+                    return;
+                }
+                name = "SculkSpread";
+                break;
             default:
                 return;
         }

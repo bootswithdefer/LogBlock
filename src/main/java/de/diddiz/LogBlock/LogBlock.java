@@ -217,7 +217,7 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.BONEMEALSTRUCTUREGROW)) {
             pm.registerEvents(new BlockFertilizeLogging(this), this);
         }
-        if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD) || isLogging(Logging.BAMBOOGROWTH) || isLogging(Logging.DRIPSTONEGROWTH)) {
+        if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD) || isLogging(Logging.BAMBOOGROWTH) || isLogging(Logging.DRIPSTONEGROWTH) || isLogging(Logging.SCULKSPREAD)) {
             pm.registerEvents(new BlockSpreadLogging(this), this);
         }
         if (isLogging(Logging.DRAGONEGGTELEPORT)) {
