@@ -280,13 +280,16 @@ public class CommandsHandler implements CommandExecutor {
                     }
                 } else if (command.equals("page")) {
                     if (args.length == 2 && isInt(args[1])) {
+                        sender.sendMessage("");
                         showPage(sender, Integer.valueOf(args[1]));
                     } else {
                         sender.sendMessage(ChatColor.RED + "You have to specify a page");
                     }
                 } else if (command.equals("next") || command.equals("+")) {
+                    sender.sendMessage("");
                     showPage(sender, getSession(sender).page + 1);
                 } else if (command.equals("prev") || command.equals("-")) {
+                    sender.sendMessage("");
                     showPage(sender, getSession(sender).page - 1);
                 } else if (args[0].equalsIgnoreCase("savequeue")) {
                     if (logblock.hasPermission(sender, "logblock.rollback")) {
@@ -540,6 +543,7 @@ public class CommandsHandler implements CommandExecutor {
                 }
                 state = conn.createStatement();
                 rs = executeQuery(state, params.getQuery());
+                sender.sendMessage("");
                 sender.sendMessage(ChatColor.DARK_AQUA + params.getTitle() + ":");
                 final List<LookupCacheElement> blockchanges = new ArrayList<>();
                 final LookupCacheElementFactory factory = new LookupCacheElementFactory(params, sender instanceof Player ? 2 / 3f : 1);
