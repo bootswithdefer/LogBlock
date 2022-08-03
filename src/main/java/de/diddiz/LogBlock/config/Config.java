@@ -360,6 +360,11 @@ public class Config {
         }
         return false;
     }
+
+    public static boolean isLoggingNatualSpawns(World world) {
+        final WorldConfig wcfg = worldConfigs.get(world.getName());
+        return wcfg != null && wcfg.logNaturalEntitySpawns;
+    }
 }
 
 class LoggingEnabledMapping {

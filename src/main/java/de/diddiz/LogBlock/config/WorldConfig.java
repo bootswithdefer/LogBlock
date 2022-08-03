@@ -34,6 +34,7 @@ public class WorldConfig extends LoggingEnabledMapping {
     public final String updateEntityUUIDString;
 
     private final EnumMap<EntityLogging, EntityLoggingList> entityLogging = new EnumMap<>(EntityLogging.class);
+    public final boolean logNaturalEntitySpawns;
 
     public WorldConfig(String world, File file) throws IOException {
         this.world = world;
@@ -56,6 +57,10 @@ public class WorldConfig extends LoggingEnabledMapping {
             }
             entityLogging.put(el, new EntityLoggingList(config.getStringList("entity." + el.name().toLowerCase())));
         }
+        if (!config.isBoolean("entity.logNaturalSpawns")) {
+            config.set("entity.logNaturalSpawns", false);
+        }
+        logNaturalEntitySpawns = config.getBoolean("entity.logNaturalSpawns");
         config.save(file);
         table = config.getString("table");
         for (final Logging l : Logging.values()) {

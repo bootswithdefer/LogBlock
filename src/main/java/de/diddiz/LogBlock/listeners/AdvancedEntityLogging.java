@@ -159,6 +159,9 @@ public class AdvancedEntityLogging extends LoggingListener {
                     }
                 }
                 if (actor == null) {
+                    if (event.getSpawnReason() == SpawnReason.NATURAL && !Config.isLoggingNatualSpawns(entity.getWorld())) {
+                        return;
+                    }
                     actor = new Actor(event.getSpawnReason().toString());
                 }
                 queueEntitySpawnOrKill(entity, actor, EntityChange.EntityChangeType.CREATE);
