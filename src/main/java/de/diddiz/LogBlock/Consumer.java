@@ -67,7 +67,7 @@ public class Consumer extends Thread {
     private final LogBlock logblock;
     private final Map<Actor, Integer> playerIds = new HashMap<>();
     private final Map<Actor, Integer> uncommitedPlayerIds = new HashMap<>();
-    private final Map<World, Map<UUID, Integer>> uncommitedEntityIds = new HashMap<>();
+    private final Map<World, Map<UUID, Long>> uncommitedEntityIds = new HashMap<>();
 
     private long addEntryCounter;
     private long nextWarnCounter;
@@ -650,13 +650,13 @@ public class Consumer extends Thread {
         return uncommitedPlayerIds.containsKey(actor);
     }
 
-    private int getEntityUUID(Connection conn, World world, UUID uuid) throws SQLException {
-        Map<UUID, Integer> uncommitedEntityIdsHere = uncommitedEntityIds.get(world);
+    private long getEntityUUID(Connection conn, World world, UUID uuid) throws SQLException {
+        Map<UUID, Long> uncommitedEntityIdsHere = uncommitedEntityIds.get(world);
         if (uncommitedEntityIdsHere == null) {
             uncommitedEntityIdsHere = new HashMap<>();
             uncommitedEntityIds.put(world, uncommitedEntityIdsHere);
         }
-        Integer existing = uncommitedEntityIdsHere.get(uuid);
+        Long existing = uncommitedEntityIdsHere.get(uuid);
         if (existing != null) {
             return existing;
         }
@@ -670,7 +670,7 @@ public class Consumer extends Thread {
         int q1Result = state.executeUpdate(q1);
         ResultSet rs = state.executeQuery(q2);
         if (rs.next()) {
-            uncommitedEntityIdsHere.put(uuid, rs.getInt(1));
+            uncommitedEntityIdsHere.put(uuid, rs.getLong(1));
         }
         rs.close();
         // if there was not any row in the table the query above does not work, so we need to try this one
@@ -678,7 +678,7 @@ public class Consumer extends Thread {
             state.executeUpdate("INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) VALUES ('" + mysqlTextEscape(uuidString) + "')");
             rs = state.executeQuery(q2);
             if (rs.next()) {
-                uncommitedEntityIdsHere.put(uuid, rs.getInt(1));
+                uncommitedEntityIdsHere.put(uuid, rs.getLong(1));
             } else {
                 logblock.getLogger().warning("[Consumer] Failed to add entity uuid " + uuidString.toString());
                 logblock.getLogger().warning("[Consumer-Debug] World: " + world.getName());
@@ -881,22 +881,22 @@ public class Consumer extends Thread {
             smt.setInt(8, safeY(loc));
             smt.setInt(9, loc.getBlockZ());
             batchHelper.addUncommitedBlockActorId(loc, sourceActor);
-            batchHelper.addBatch(smt, new IntCallback() {
+            batchHelper.addBatch(smt, new LongCallback() {
                 @Override
-                public void call(int id) throws SQLException {
+                public void call(long id) throws SQLException {
                     PreparedStatement ps;
                     if (typeState != null || replacedState != null) {
                         ps = batchHelper.getOrPrepareStatement(conn, getWorldConfig(loc.getWorld()).insertBlockStateStatementString, Statement.NO_GENERATED_KEYS);
                         ps.setBytes(1, replacedState);
                         ps.setBytes(2, typeState);
-                        ps.setInt(3, id);
+                        ps.setLong(3, id);
                         batchHelper.addBatch(ps, null);
                     }
                     if (ca != null) {
                         ps = batchHelper.getOrPrepareStatement(conn, getWorldConfig(loc.getWorld()).insertBlockChestDataStatementString, Statement.NO_GENERATED_KEYS);
                         ps.setBytes(1, finalSerializedItemStack);
                         ps.setInt(2, ca.remove ? 1 : 0);
-                        ps.setInt(3, id);
+                        ps.setLong(3, id);
                         ps.setInt(4, ca.itemType);
                         batchHelper.addBatch(ps, null);
                     }
@@ -1108,7 +1108,7 @@ public class Consumer extends Thread {
             PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
             smt.setLong(1, date);
             smt.setInt(2, sourceActor);
-            smt.setInt(3, getEntityUUID(conn, loc.getWorld(), entityUUID));
+            smt.setLong(3, getEntityUUID(conn, loc.getWorld(), entityUUID));
             smt.setInt(4, EntityTypeConverter.getOrAddEntityTypeId(type));
             smt.setInt(5, loc.getBlockX());
             smt.setInt(6, safeY(loc));
@@ -1121,11 +1121,11 @@ public class Consumer extends Thread {
 
     private class EntityUUIDChange implements Row {
         private final World world;
-        private final int entityId;
+        private final long entityId;
         private final UUID entityUUID;
         final String updateEntityUUIDString;
 
-        public EntityUUIDChange(World world, int entityId, UUID entityUUID) {
+        public EntityUUIDChange(World world, long entityId, UUID entityUUID) {
             this.world = world;
             this.entityId = entityId;
             this.entityUUID = entityUUID;
@@ -1150,7 +1150,7 @@ public class Consumer extends Thread {
         public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
             PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, updateEntityUUIDString, Statement.NO_GENERATED_KEYS);
             smt.setString(1, entityUUID.toString());
-            smt.setInt(2, entityId);
+            smt.setLong(2, entityId);
             smt.executeUpdate();
         }
     }
@@ -1169,7 +1169,7 @@ public class Consumer extends Thread {
     private class BatchHelper {
         private HashMap<String, PreparedStatement> preparedStatements = new HashMap<>();
         private HashSet<PreparedStatement> preparedStatementsWithGeneratedKeys = new HashSet<>();
-        private LinkedHashMap<PreparedStatement, ArrayList<IntCallback>> generatedKeyHandler = new LinkedHashMap<>();
+        private LinkedHashMap<PreparedStatement, ArrayList<LongCallback>> generatedKeyHandler = new LinkedHashMap<>();
         private HashMap<Location, Integer> uncommitedBlockActors = new HashMap<>();
 
         public void reset() {
@@ -1189,21 +1189,21 @@ public class Consumer extends Thread {
 
         public void processStatements(Connection conn) throws SQLException {
             while (!generatedKeyHandler.isEmpty()) {
-                Entry<PreparedStatement, ArrayList<IntCallback>> entry = generatedKeyHandler.entrySet().iterator().next();
+                Entry<PreparedStatement, ArrayList<LongCallback>> entry = generatedKeyHandler.entrySet().iterator().next();
                 PreparedStatement smt = entry.getKey();
-                ArrayList<IntCallback> callbackList = entry.getValue();
+                ArrayList<LongCallback> callbackList = entry.getValue();
                 generatedKeyHandler.remove(smt);
                 smt.executeBatch();
                 if (preparedStatementsWithGeneratedKeys.contains(smt)) {
                     ResultSet keys = smt.getGeneratedKeys();
-                    int[] results = new int[callbackList.size()];
+                    long[] results = new long[callbackList.size()];
                     int pos = 0;
                     while (keys.next() && pos < results.length) {
-                        results[pos++] = keys.getInt(1);
+                        results[pos++] = keys.getLong(1);
                     }
                     keys.close();
                     for (int i = 0; i < results.length; i++) {
-                        IntCallback callback = callbackList.get(i);
+                        LongCallback callback = callbackList.get(i);
                         if (callback != null) {
                             callback.call(results[i]);
                         }
@@ -1225,9 +1225,9 @@ public class Consumer extends Thread {
             return smt;
         }
 
-        public void addBatch(PreparedStatement smt, IntCallback generatedKeysCallback) throws SQLException {
+        public void addBatch(PreparedStatement smt, LongCallback generatedKeysCallback) throws SQLException {
             smt.addBatch();
-            ArrayList<IntCallback> callbackList = generatedKeyHandler.get(smt);
+            ArrayList<LongCallback> callbackList = generatedKeyHandler.get(smt);
             if (callbackList == null) {
                 callbackList = new ArrayList<>();
                 generatedKeyHandler.put(smt, callbackList);
@@ -1236,7 +1236,7 @@ public class Consumer extends Thread {
         }
     }
 
-    protected interface IntCallback {
-        public void call(int value) throws SQLException;
+    protected interface LongCallback {
+        public void call(long value) throws SQLException;
     }
 }

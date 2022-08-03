@@ -60,7 +60,7 @@ public class EntityChange implements LookupCacheElement {
     }
 
     public EntityChange(ResultSet rs, QueryParams p) throws SQLException {
-        id = p.needId ? rs.getInt("id") : 0;
+        id = p.needId ? rs.getLong("id") : 0;
         date = p.needDate ? rs.getTimestamp("date").getTime() : 0;
         loc = p.needCoords ? new Location(p.world, rs.getInt("x"), rs.getInt("y"), rs.getInt("z")) : null;
         actor = p.needPlayer ? new Actor(rs) : null;

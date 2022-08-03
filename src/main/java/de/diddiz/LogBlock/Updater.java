@@ -439,7 +439,7 @@ class Updater {
                             ResultSet entries = st.executeQuery("SELECT id, date, playerid, replaced, type, data, x, y, z FROM `" + wcfg.table + "` ORDER BY id ASC LIMIT " + BLOCKS_CONVERT_BATCH_SIZE);
                             while (entries.next()) {
                                 hadRow = true;
-                                int id = entries.getInt("id");
+                                long id = entries.getLong("id");
                                 Timestamp date = entries.getTimestamp("date");
                                 int playerid = entries.getInt("playerid");
                                 int replaced = entries.getInt("replaced");
@@ -462,7 +462,7 @@ class Updater {
                                     int newSetId = MaterialConverter.getOrAddMaterialId(setBlockData);
                                     int newSetData = MaterialConverter.getOrAddBlockStateId(setBlockData);
 
-                                    insertStatement.setInt(1, id);
+                                    insertStatement.setLong(1, id);
                                     insertStatement.setTimestamp(2, date);
                                     insertStatement.setInt(3, playerid);
                                     insertStatement.setInt(4, newReplacedId);
@@ -476,7 +476,7 @@ class Updater {
                                 } catch (Exception e) {
                                     logblock.getLogger().info("Exception in entry " + id + " (" + replaced + ":" + data + "->" + type + ":" + data + "): " + e.getMessage());
                                 }
-                                deleteStatement.setInt(1, id);
+                                deleteStatement.setLong(1, id);
                                 deleteStatement.addBatch();
 
                                 done++;
@@ -522,7 +522,7 @@ class Updater {
                             boolean anyRow = false;
                             while (rs.next()) {
                                 anyRow = true;
-                                int id = rs.getInt("id");
+                                long id = rs.getLong("id");
                                 int itemtype = rs.getInt("itemtype");
                                 int itemdata = rs.getInt("itemdata");
                                 int amount = rs.getInt("itemamount");
@@ -532,13 +532,13 @@ class Updater {
                                 }
                                 @SuppressWarnings("deprecation")
                                 ItemStack stack = weaponMaterial.getMaxDurability() > 0 ? new ItemStack(weaponMaterial, Math.abs(amount), (short) itemdata) : new ItemStack(weaponMaterial, Math.abs(amount));
-                                insertChestData.setInt(1, id);
+                                insertChestData.setLong(1, id);
                                 insertChestData.setBytes(2, Utils.saveItemStack(stack));
                                 insertChestData.setInt(3, amount >= 0 ? 0 : 1);
                                 insertChestData.setInt(4, MaterialConverter.getOrAddMaterialId(weaponMaterial));
                                 insertChestData.addBatch();
 
-                                deleteChest.setInt(1, id);
+                                deleteChest.setLong(1, id);
                                 deleteChest.addBatch();
                                 done++;
                             }
@@ -585,7 +585,7 @@ class Updater {
                                 boolean anyRow = false;
                                 while (rs.next()) {
                                     anyRow = true;
-                                    int id = rs.getInt("id");
+                                    long id = rs.getLong("id");
                                     int weapon = rs.getInt("weapon");
                                     Material weaponMaterial = materialUpdater.getMaterial(weapon, 0);
                                     if (weaponMaterial == null) {
@@ -595,7 +595,7 @@ class Updater {
                                     if (newWeapon != weapon) {
                                         anyUpdate = true;
                                         updateWeaponStatement.setInt(1, newWeapon);
-                                        updateWeaponStatement.setInt(2, id);
+                                        updateWeaponStatement.setLong(2, id);
                                         updateWeaponStatement.addBatch();
                                     }
                                     done++;
@@ -666,7 +666,7 @@ class Updater {
                                 boolean anyRow = false;
                                 while (rs.next()) {
                                     anyRow = true;
-                                    int id = rs.getInt("id");
+                                    long id = rs.getLong("id");
                                     String signText = rs.getString("signtext");
                                     int replaced = rs.getInt("replaced");
                                     boolean nullBlock = rs.wasNull();
@@ -681,13 +681,13 @@ class Updater {
                                         boolean wasSign = replacedMaterial == Material.OAK_SIGN || replacedMaterial == Material.OAK_WALL_SIGN;
                                         boolean isSign = typeMaterial == Material.OAK_SIGN || typeMaterial == Material.OAK_WALL_SIGN;
 
-                                        insertSignState.setInt(1, id);
+                                        insertSignState.setLong(1, id);
                                         insertSignState.setBytes(2, wasSign ? bytes : null);
                                         insertSignState.setBytes(3, isSign ? bytes : null);
                                         insertSignState.addBatch();
                                     }
 
-                                    deleteSign.setInt(1, id);
+                                    deleteSign.setLong(1, id);
                                     deleteSign.addBatch();
                                     done++;
                                 }

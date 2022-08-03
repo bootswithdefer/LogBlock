@@ -965,14 +965,14 @@ public class CommandsHandler implements CommandExecutor {
                                 StringBuilder sb = new StringBuilder();
                                 if (params.bct == BlockChangeType.CHAT) {
                                     sb.append("INSERT INTO `lb-chat` (`id`, `date`, `playerid`, `message`) VALUES (");
-                                    sb.append(rs.getInt("id")).append(", FROM_UNIXTIME(");
+                                    sb.append(rs.getLong("id")).append(", FROM_UNIXTIME(");
                                     sb.append(rs.getTimestamp("date").getTime() / 1000).append("), ");
                                     sb.append(rs.getInt("playerid")).append(", '");
                                     sb.append(Utils.mysqlTextEscape(rs.getString("message")));
                                     sb.append("');\n");
                                 } else if (params.bct == BlockChangeType.KILLS) {
                                     sb.append("INSERT INTO `").append(tableBase).append("-kills` (`id`, `date`, `killer`, `victim`, `weapon`, `x`, `y`, `z`) VALUES (");
-                                    sb.append(rs.getInt("id")).append(", FROM_UNIXTIME(");
+                                    sb.append(rs.getLong("id")).append(", FROM_UNIXTIME(");
                                     sb.append(rs.getTimestamp("date").getTime() / 1000).append("), ");
                                     sb.append(rs.getInt("killerid")).append(", ");
                                     sb.append(rs.getInt("victimid")).append(", ");
@@ -985,7 +985,7 @@ public class CommandsHandler implements CommandExecutor {
 
                                 } else {
                                     sb.append("INSERT INTO `").append(tableBase).append("-blocks` (`id`, `date`, `playerid`, `replaced`, `replacedData`, `type`, `typeData`, `x`, `y`, `z`) VALUES (");
-                                    sb.append(rs.getInt("id")).append(", FROM_UNIXTIME(");
+                                    sb.append(rs.getLong("id")).append(", FROM_UNIXTIME(");
                                     sb.append(rs.getTimestamp("date").getTime() / 1000).append("), ");
                                     sb.append(rs.getInt("playerid")).append(", ");
                                     sb.append(rs.getInt("replaced")).append(", ");
@@ -1000,7 +1000,7 @@ public class CommandsHandler implements CommandExecutor {
                                     byte[] typeState = rs.getBytes("typeState");
                                     if (replacedState != null || typeState != null) {
                                         sb.append("INSERT INTO `").append(tableBase).append("-state` (`id`, `replacedState`, `typeState`) VALUES (");
-                                        sb.append(rs.getInt("id")).append(", ");
+                                        sb.append(rs.getLong("id")).append(", ");
                                         sb.append(Utils.mysqlPrepareBytesForInsertAllowNull(replacedState)).append(", ");
                                         sb.append(Utils.mysqlPrepareBytesForInsertAllowNull(typeState));
                                         sb.append(");\n");
@@ -1008,7 +1008,7 @@ public class CommandsHandler implements CommandExecutor {
                                     byte[] item = rs.getBytes("item");
                                     if (item != null) {
                                         sb.append("INSERT INTO `").append(tableBase).append("-chestdata` (`id`, `item`, `itemremove`, `itemtype`) VALUES (");
-                                        sb.append(rs.getInt("id")).append(", ");
+                                        sb.append(rs.getLong("id")).append(", ");
                                         sb.append(Utils.mysqlPrepareBytesForInsertAllowNull(item)).append(", ");
                                         sb.append(rs.getInt("itemremove")).append(", ");
                                         sb.append(rs.getInt("itemtype"));

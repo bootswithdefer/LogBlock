@@ -26,7 +26,7 @@ public class ChatMessage implements LookupCacheElement {
     }
 
     public ChatMessage(ResultSet rs, QueryParams p) throws SQLException {
-        id = p.needId ? rs.getInt("id") : 0;
+        id = p.needId ? rs.getLong("id") : 0;
         date = p.needDate ? rs.getTimestamp("date").getTime() : 0;
         player = p.needPlayer ? new Actor(rs) : null;
         playerName = p.needPlayer ? rs.getString("playername") : null;
