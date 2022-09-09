@@ -946,15 +946,19 @@ public class BukkitUtils {
     private static final HashMap<String, EntityType> types = new HashMap<>();
     static {
         for (EntityType t : EntityType.values()) {
-            types.put(t.name().toLowerCase(), t);
-            @SuppressWarnings("deprecation")
-            String typeName = t.getName();
-            if (typeName != null) {
-                types.put(typeName.toLowerCase(), t);
-            }
-            Class<? extends Entity> ec = t.getEntityClass();
-            if (ec != null) {
-                types.put(ec.getSimpleName().toLowerCase(), t);
+            if (t != EntityType.UNKNOWN) {
+                types.put(t.name().toLowerCase(), t);
+                @SuppressWarnings("deprecation")
+                String typeName = t.getName();
+                if (typeName != null) {
+                    types.put(typeName.toLowerCase(), t);
+                }
+                Class<? extends Entity> ec = t.getEntityClass();
+                if (ec != null) {
+                    types.put(ec.getSimpleName().toLowerCase(), t);
+                }
+                types.put(t.getKey().getKey(), t);
+                types.put(t.getKey().toString(), t);
             }
         }
     }
