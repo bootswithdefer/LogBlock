@@ -52,7 +52,6 @@ public class Config {
     public static List<String> ignoredChat;
     public static SimpleDateFormat formatter;
     public static SimpleDateFormat formatterShort;
-    public static boolean safetyIdCheck;
     public static boolean debug;
     public static boolean logEnvironmentalKills;
     // addons
@@ -252,7 +251,6 @@ public class Config {
         askClearLogs = config.getBoolean("questioner.askClearLogs", true);
         askClearLogAfterRollback = config.getBoolean("questioner.askClearLogAfterRollback", true);
         askRollbackAfterBan = config.getBoolean("questioner.askRollbackAfterBan", false);
-        safetyIdCheck = config.getBoolean("safety.id.check", true);
         debug = config.getBoolean("debug", false);
         banPermission = config.getString("questioner.banPermission");
         final List<Tool> tools = new ArrayList<>();
