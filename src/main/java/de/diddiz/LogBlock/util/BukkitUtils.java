@@ -736,7 +736,7 @@ public class BukkitUtils {
         }
     }
 
-    public static int saveSpawnHeight(Location loc) {
+    public static int safeSpawnHeight(Location loc) {
         final World world = loc.getWorld();
         world.getChunkAt(loc);
         final int x = loc.getBlockX(), z = loc.getBlockZ();

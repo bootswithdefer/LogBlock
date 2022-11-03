@@ -15,7 +15,7 @@ import static de.diddiz.LogBlock.config.Config.rollbackMaxTime;
 import static de.diddiz.LogBlock.config.Config.toolsByName;
 import static de.diddiz.LogBlock.config.Config.toolsByType;
 import static de.diddiz.LogBlock.util.BukkitUtils.giveTool;
-import static de.diddiz.LogBlock.util.BukkitUtils.saveSpawnHeight;
+import static de.diddiz.LogBlock.util.BukkitUtils.safeSpawnHeight;
 import static de.diddiz.LogBlock.util.TypeColor.DEFAULT;
 import static de.diddiz.LogBlock.util.TypeColor.ERROR;
 import static de.diddiz.LogBlock.util.TypeColor.HEADER;
@@ -48,6 +48,7 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -373,7 +374,7 @@ public class CommandsHandler implements CommandExecutor {
                                     if (pos >= 0 && pos < session.lookupCache.length) {
                                         final Location loc = session.lookupCache[pos].getLocation();
                                         if (loc != null) {
-                                            player.teleport(new Location(loc.getWorld(), loc.getX() + 0.5, saveSpawnHeight(loc), loc.getZ() + 0.5, player.getLocation().getYaw(), 90));
+                                            player.teleport(new Location(loc.getWorld(), loc.getX() + 0.5, player.getGameMode() != GameMode.SPECTATOR ? safeSpawnHeight(loc) : loc.getY(), loc.getZ() + 0.5, player.getLocation().getYaw(), 90));
                                             player.sendMessage(ChatColor.LIGHT_PURPLE + "Teleported to " + loc.getBlockX() + ":" + loc.getBlockY() + ":" + loc.getBlockZ());
                                         } else {
                                             sender.sendMessage(ChatColor.RED + "There is no location associated with that. Did you forget coords parameter?");
@@ -699,10 +700,12 @@ public class CommandsHandler implements CommandExecutor {
                     logblock.getServer().getScheduler().scheduleSyncDelayedTask(logblock, new Runnable() {
                         @Override
                         public void run() {
-                            final int y2 = saveSpawnHeight(loc);
-                            loc.setY(y2);
+                            if (player.getGameMode() != GameMode.SPECTATOR) {
+                                final int y2 = safeSpawnHeight(loc);
+                                loc.setY(y2);
+                                sender.sendMessage(ChatColor.GREEN + "You were teleported " + Math.abs(y2 - y) + " blocks " + (y2 - y > 0 ? "above" : "below"));
+                            }
                             player.teleport(loc);
-                            sender.sendMessage(ChatColor.GREEN + "You were teleported " + Math.abs(y2 - y) + " blocks " + (y2 - y > 0 ? "above" : "below"));
                         }
                     });
                 } else {
