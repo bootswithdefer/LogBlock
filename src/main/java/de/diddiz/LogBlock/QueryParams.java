@@ -857,6 +857,9 @@ public final class QueryParams implements Cloneable {
                 if (values[0].startsWith("p")) {
                     sum = SummarizationMode.PLAYERS;
                 } else if (values[0].startsWith("b") || values[0].startsWith("e")) {
+                    if (values[0].startsWith("e")) {
+                        bct = BlockChangeType.ENTITIES;
+                    }
                     sum = SummarizationMode.TYPES;
                 } else if (values[0].startsWith("n")) {
                     sum = SummarizationMode.NONE;
