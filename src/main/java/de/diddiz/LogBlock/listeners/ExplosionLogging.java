@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.type.RespawnAnchor;
 import org.bukkit.entity.*;
 import org.bukkit.entity.minecart.ExplosiveMinecart;
 import org.bukkit.event.EventHandler;
@@ -18,6 +19,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -31,6 +33,8 @@ public class ExplosionLogging extends LoggingListener {
 
     private UUID lastBedInteractionPlayer;
     private Location lastBedInteractionLocation;
+    private UUID lastRespawnAnchorInteractionPlayer;
+    private Location lastRespawnAnchorInteractionLocation;
 
     public ExplosionLogging(LogBlock lb) {
         super(lb);
@@ -124,20 +128,48 @@ public class ExplosionLogging extends LoggingListener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.hasBlock() && BukkitUtils.isBed(event.getClickedBlock().getType())) {
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.hasBlock()) {
             Block block = event.getClickedBlock();
-            if (!Config.isLogging(block.getWorld(), Logging.BEDEXPLOSION)) {
-                return;
-            }
-            lastBedInteractionPlayer = event.getPlayer().getUniqueId();
-            lastBedInteractionLocation = block.getLocation();
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    lastBedInteractionPlayer = null;
-                    lastBedInteractionLocation = null;
+            if (BukkitUtils.isBed(block.getType()) && !block.getWorld().isBedWorks()) {
+                if (!Config.isLogging(block.getWorld(), Logging.BEDEXPLOSION)) {
+                    return;
                 }
-            }.runTask(LogBlock.getInstance());
+                lastBedInteractionPlayer = event.getPlayer().getUniqueId();
+                lastBedInteractionLocation = block.getLocation();
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        lastBedInteractionPlayer = null;
+                        lastBedInteractionLocation = null;
+                    }
+                }.runTask(LogBlock.getInstance());
+            } else if (block.getType() == Material.RESPAWN_ANCHOR && block.getBlockData() instanceof RespawnAnchor data) {
+                if (!Config.isLogging(block.getWorld(), Logging.RESPAWNANCHOREXPLOSION)) {
+                    return;
+                }
+                ItemStack inHand = event.getItem();
+                int charges = data.getCharges();
+                if (charges < data.getMaximumCharges() && inHand != null && inHand.getType() == Material.GLOWSTONE) {
+                    // charge
+                    Actor actor = Actor.actorFromEntity(event.getPlayer());
+                    RespawnAnchor blockNew = (RespawnAnchor) data.clone();
+                    blockNew.setCharges(charges + 1);
+                    consumer.queueBlockReplace(actor, block.getState(), blockNew);
+                } else if (charges > 0 && !block.getWorld().isRespawnAnchorWorks()) {
+                    // explode
+                    Actor actor = Actor.actorFromEntity(event.getPlayer());
+                    consumer.queueBlockBreak(actor, block.getState());
+                    lastRespawnAnchorInteractionPlayer = event.getPlayer().getUniqueId();
+                    lastRespawnAnchorInteractionLocation = block.getLocation();
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            lastRespawnAnchorInteractionPlayer = null;
+                            lastRespawnAnchorInteractionLocation = null;
+                        }
+                    }.runTask(LogBlock.getInstance());
+                }
+            }
         }
     }
 
@@ -148,6 +180,13 @@ public class ExplosionLogging extends LoggingListener {
             Location block = event.getBlock().getLocation();
             if (lastBedInteractionLocation.getWorld() == block.getWorld() && block.distanceSquared(lastBedInteractionLocation) <= 1) {
                 bedCause = Bukkit.getPlayer(lastBedInteractionPlayer);
+            }
+        }
+        Player respawnAnchorCause = null;
+        if (lastRespawnAnchorInteractionPlayer != null && lastRespawnAnchorInteractionLocation != null) {
+            Location block = event.getBlock().getLocation();
+            if (lastRespawnAnchorInteractionLocation.equals(block)) {
+                respawnAnchorCause = Bukkit.getPlayer(lastRespawnAnchorInteractionPlayer);
             }
         }
 
@@ -162,6 +201,17 @@ public class ExplosionLogging extends LoggingListener {
                     }
                     if (Config.logBedExplosionsAsPlayerWhoTriggeredThese) {
                         actor = Actor.actorFromEntity(bedCause);
+                    } else {
+                        actor = new Actor("BedExplosion");
+                    }
+                } else if (respawnAnchorCause != null) {
+                    if (!wcfg.isLogging(Logging.RESPAWNANCHOREXPLOSION)) {
+                        return;
+                    }
+                    if (Config.logBedExplosionsAsPlayerWhoTriggeredThese) {
+                        actor = Actor.actorFromEntity(respawnAnchorCause);
+                    } else {
+                        actor = new Actor("RespawnAnchorExplosion");
                     }
                 } else if (!wcfg.isLogging(Logging.MISCEXPLOSION)) {
                     return;
