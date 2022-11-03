@@ -96,10 +96,11 @@ public class WorldConfig extends LoggingEnabledMapping {
     }
 
     private class EntityLoggingList {
-        private EntityLogging entityAction;
+        private final EntityLogging entityAction;
         private final EnumSet<EntityType> logged = EnumSet.noneOf(EntityType.class);
         private final boolean logAll;
         private final boolean logAnimals;
+        private final boolean logWateranimals;
         private final boolean logMonsters;
         private final boolean logLiving;
 
@@ -107,6 +108,7 @@ public class WorldConfig extends LoggingEnabledMapping {
             this.entityAction = entityAction;
             boolean all = false;
             boolean animals = false;
+            boolean wateranimals = false;
             boolean monsters = false;
             boolean living = false;
             for (String type : types) {
@@ -118,6 +120,8 @@ public class WorldConfig extends LoggingEnabledMapping {
                         all = true;
                     } else if (type.equalsIgnoreCase("animal") || type.equalsIgnoreCase("animals")) {
                         animals = true;
+                    } else if (type.equalsIgnoreCase("wateranimal") || type.equalsIgnoreCase("wateranimals")) {
+                        wateranimals = true;
                     } else if (type.equalsIgnoreCase("monster") || type.equalsIgnoreCase("monsters")) {
                         monsters = true;
                     } else if (type.equalsIgnoreCase("living")) {
@@ -129,6 +133,7 @@ public class WorldConfig extends LoggingEnabledMapping {
             }
             logAll = all;
             logAnimals = animals;
+            logWateranimals = wateranimals;
             logMonsters = monsters;
             logLiving = living;
         }
@@ -144,7 +149,10 @@ public class WorldConfig extends LoggingEnabledMapping {
             if (logLiving && LivingEntity.class.isAssignableFrom(entity.getClass()) && !(entity instanceof ArmorStand)) {
                 return true;
             }
-            if (logAnimals && (Animals.class.isAssignableFrom(entity.getClass()) || WaterMob.class.isAssignableFrom(entity.getClass()))) {
+            if (logAnimals && Animals.class.isAssignableFrom(entity.getClass())) {
+                return true;
+            }
+            if (logWateranimals && WaterMob.class.isAssignableFrom(entity.getClass())) {
                 return true;
             }
             if (logMonsters && (Monster.class.isAssignableFrom(entity.getClass()) || entity.getType() == EntityType.SLIME || entity.getType() == EntityType.WITHER || entity.getType() == EntityType.ENDER_DRAGON || entity.getType() == EntityType.SHULKER || entity.getType() == EntityType.GHAST)) {
