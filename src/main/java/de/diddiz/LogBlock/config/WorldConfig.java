@@ -35,6 +35,7 @@ public class WorldConfig extends LoggingEnabledMapping {
 
     private final EnumMap<EntityLogging, EntityLoggingList> entityLogging = new EnumMap<>(EntityLogging.class);
     public final boolean logNaturalEntitySpawns;
+    public final boolean logAllNamedEntityKills;
 
     public WorldConfig(String world, File file) throws IOException {
         this.world = world;
@@ -55,12 +56,18 @@ public class WorldConfig extends LoggingEnabledMapping {
             if (!(config.get("entity." + el.name().toLowerCase()) instanceof List)) {
                 config.set("entity." + el.name().toLowerCase(), el.getDefaultEnabled());
             }
-            entityLogging.put(el, new EntityLoggingList(config.getStringList("entity." + el.name().toLowerCase())));
+            entityLogging.put(el, new EntityLoggingList(el, config.getStringList("entity." + el.name().toLowerCase())));
         }
         if (!config.isBoolean("entity.logNaturalSpawns")) {
             config.set("entity.logNaturalSpawns", false);
         }
         logNaturalEntitySpawns = config.getBoolean("entity.logNaturalSpawns");
+
+        if (!config.isBoolean("entity.logAllNamedEntityKills")) {
+            config.set("entity.logAllNamedEntityKills", true);
+        }
+        logAllNamedEntityKills = config.getBoolean("entity.logAllNamedEntityKills");
+
         config.save(file);
         table = config.getString("table");
         for (final Logging l : Logging.values()) {
@@ -89,13 +96,15 @@ public class WorldConfig extends LoggingEnabledMapping {
     }
 
     private class EntityLoggingList {
+        private EntityLogging entityAction;
         private final EnumSet<EntityType> logged = EnumSet.noneOf(EntityType.class);
         private final boolean logAll;
         private final boolean logAnimals;
         private final boolean logMonsters;
         private final boolean logLiving;
 
-        public EntityLoggingList(List<String> types) {
+        public EntityLoggingList(EntityLogging entityAction, List<String> types) {
+            this.entityAction = entityAction;
             boolean all = false;
             boolean animals = false;
             boolean monsters = false;
@@ -141,11 +150,14 @@ public class WorldConfig extends LoggingEnabledMapping {
             if (logMonsters && (Monster.class.isAssignableFrom(entity.getClass()) || entity.getType() == EntityType.SLIME || entity.getType() == EntityType.WITHER || entity.getType() == EntityType.ENDER_DRAGON || entity.getType() == EntityType.SHULKER || entity.getType() == EntityType.GHAST)) {
                 return true;
             }
+            if (entityAction == EntityLogging.DESTROY && logAllNamedEntityKills && entity.getCustomName() != null) {
+                return true;
+            }
             return false;
         }
 
         public boolean isLoggingAnyEntities() {
-            return logAll || logAnimals || logLiving || logMonsters || !logged.isEmpty();
+            return logAll || logAnimals || logLiving || logMonsters || !logged.isEmpty() || (entityAction == EntityLogging.DESTROY && logAllNamedEntityKills);
         }
     }
 }
