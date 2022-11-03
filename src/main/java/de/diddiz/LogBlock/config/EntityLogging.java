@@ -7,8 +7,8 @@ import java.util.List;
 import org.bukkit.entity.EntityType;
 
 public enum EntityLogging {
-    SPAWN(new String[] { EntityType.ARMOR_STAND.name(), EntityType.ITEM_FRAME.name(), EntityType.IRON_GOLEM.name(), EntityType.SNOWMAN.name() }),
-    DESTROY(new String[] { EntityType.ARMOR_STAND.name(), EntityType.ITEM_FRAME.name(), EntityType.VILLAGER.name(), EntityType.IRON_GOLEM.name(), EntityType.SNOWMAN.name(), "ANIMAL" }),
+    SPAWN(new String[] { EntityType.ARMOR_STAND.name(), EntityType.ITEM_FRAME.name(), EntityType.SNOWMAN.name() }),
+    DESTROY(new String[] { EntityType.ARMOR_STAND.name(), EntityType.ITEM_FRAME.name(), EntityType.VILLAGER.name(), EntityType.SNOWMAN.name(), "ANIMAL" }),
     MODIFY(new String[] { "ALL" });
 
     public static final int length = EntityLogging.values().length;
