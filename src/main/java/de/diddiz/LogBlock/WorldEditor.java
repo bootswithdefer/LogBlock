@@ -185,8 +185,11 @@ public class WorldEditor implements Runnable {
                     final File file = new File("plugins/LogBlock/error/WorldEditor-" + new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis()) + ".log");
                     file.getParentFile().mkdirs();
                     final PrintWriter writer = new PrintWriter(file);
-                    for (final LookupCacheElement err : errorList) {
+                    for (final WorldEditorException err : errorList) {
                         writer.println(BaseComponent.toPlainText(err.getLogMessage()));
+                        err.printStackTrace(writer);
+                        writer.println();
+                        writer.println();
                     }
                     writer.close();
                 } catch (final Exception ex) {
