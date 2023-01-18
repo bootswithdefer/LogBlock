@@ -92,6 +92,7 @@ public class BukkitUtils {
         pressurePlates.add(Material.WARPED_PRESSURE_PLATE);
         pressurePlates.add(Material.CRIMSON_PRESSURE_PLATE);
         pressurePlates.add(Material.MANGROVE_PRESSURE_PLATE);
+        pressurePlates.add(Material.BAMBOO_PRESSURE_PLATE);
         pressurePlates.add(Material.STONE_PRESSURE_PLATE);
         pressurePlates.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
         pressurePlates.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
@@ -106,6 +107,7 @@ public class BukkitUtils {
         woodenDoors.add(Material.WARPED_DOOR);
         woodenDoors.add(Material.CRIMSON_DOOR);
         woodenDoors.add(Material.MANGROVE_DOOR);
+        woodenDoors.add(Material.BAMBOO_DOOR);
 
         EnumSet<Material> saplings = EnumSet.noneOf(Material.class);
         saplings.add(Material.OAK_SAPLING);
@@ -165,6 +167,7 @@ public class BukkitUtils {
         slabs.add(Material.COBBLED_DEEPSLATE_SLAB);
         slabs.add(Material.POLISHED_DEEPSLATE_SLAB);
         slabs.add(Material.MANGROVE_SLAB);
+        slabs.add(Material.BAMBOO_SLAB);
 
         buttons = EnumSet.noneOf(Material.class);
         buttons.add(Material.STONE_BUTTON);
@@ -177,6 +180,7 @@ public class BukkitUtils {
         buttons.add(Material.WARPED_BUTTON);
         buttons.add(Material.CRIMSON_BUTTON);
         buttons.add(Material.MANGROVE_BUTTON);
+        buttons.add(Material.BAMBOO_BUTTON);
         buttons.add(Material.POLISHED_BLACKSTONE_BUTTON);
 
         signs = EnumSet.noneOf(Material.class);
@@ -189,6 +193,7 @@ public class BukkitUtils {
         signs.add(Material.WARPED_SIGN);
         signs.add(Material.CRIMSON_SIGN);
         signs.add(Material.MANGROVE_SIGN);
+        signs.add(Material.BAMBOO_SIGN);
 
         wallSigns = EnumSet.noneOf(Material.class);
         wallSigns.add(Material.OAK_WALL_SIGN);
@@ -200,6 +205,7 @@ public class BukkitUtils {
         wallSigns.add(Material.WARPED_WALL_SIGN);
         wallSigns.add(Material.CRIMSON_WALL_SIGN);
         wallSigns.add(Material.MANGROVE_WALL_SIGN);
+        wallSigns.add(Material.BAMBOO_WALL_SIGN);
 
         allSigns = EnumSet.noneOf(Material.class);
         allSigns.addAll(signs);
@@ -405,6 +411,7 @@ public class BukkitUtils {
         containerBlocks.add(Material.BARREL);
         containerBlocks.add(Material.BLAST_FURNACE);
         containerBlocks.add(Material.SMOKER);
+        containerBlocks.add(Material.CHISELED_BOOKSHELF);
         // Doesn't actually have a block inventory
         // containerBlocks.add(Material.ENDER_CHEST);
 
