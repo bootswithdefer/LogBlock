@@ -7,6 +7,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -70,7 +71,10 @@ public class BukkitUtils {
     private static final Map<EntityType, Material> projectileItems;
     private static final EnumSet<Material> signs;
     private static final EnumSet<Material> wallSigns;
+    private static final EnumSet<Material> hangingSigns;
+    private static final EnumSet<Material> hangingWallSigns;
     private static final EnumSet<Material> allSigns;
+    private static final Set<Material> unmodifiableSigns;
     private static final EnumSet<Material> buttons;
     private static final EnumSet<Material> pressurePlates;
     private static final EnumSet<Material> woodenDoors;
@@ -80,8 +84,34 @@ public class BukkitUtils {
     private static final EnumSet<Material> alwaysWaterlogged;
     private static final EnumSet<Material> candles;
     private static final EnumSet<Material> candleCakes;
+    private static final EnumSet<Material> fenceGates;
+    private static final EnumSet<Material> woodenTrapdoors;
 
     static {
+        fenceGates = EnumSet.noneOf(Material.class);
+        fenceGates.add(Material.OAK_FENCE_GATE);
+        fenceGates.add(Material.SPRUCE_FENCE_GATE);
+        fenceGates.add(Material.BIRCH_FENCE_GATE);
+        fenceGates.add(Material.JUNGLE_FENCE_GATE);
+        fenceGates.add(Material.ACACIA_FENCE_GATE);
+        fenceGates.add(Material.DARK_OAK_FENCE_GATE);
+        fenceGates.add(Material.WARPED_FENCE_GATE);
+        fenceGates.add(Material.CRIMSON_FENCE_GATE);
+        fenceGates.add(Material.MANGROVE_FENCE_GATE);
+        fenceGates.add(Material.BAMBOO_FENCE_GATE);
+
+        woodenTrapdoors = EnumSet.noneOf(Material.class);
+        woodenTrapdoors.add(Material.OAK_TRAPDOOR);
+        woodenTrapdoors.add(Material.SPRUCE_TRAPDOOR);
+        woodenTrapdoors.add(Material.BIRCH_TRAPDOOR);
+        woodenTrapdoors.add(Material.JUNGLE_TRAPDOOR);
+        woodenTrapdoors.add(Material.ACACIA_TRAPDOOR);
+        woodenTrapdoors.add(Material.DARK_OAK_TRAPDOOR);
+        woodenTrapdoors.add(Material.WARPED_TRAPDOOR);
+        woodenTrapdoors.add(Material.CRIMSON_TRAPDOOR);
+        woodenTrapdoors.add(Material.MANGROVE_TRAPDOOR);
+        woodenTrapdoors.add(Material.BAMBOO_TRAPDOOR);
+
         pressurePlates = EnumSet.noneOf(Material.class);
         pressurePlates.add(Material.OAK_PRESSURE_PLATE);
         pressurePlates.add(Material.SPRUCE_PRESSURE_PLATE);
@@ -207,9 +237,36 @@ public class BukkitUtils {
         wallSigns.add(Material.MANGROVE_WALL_SIGN);
         wallSigns.add(Material.BAMBOO_WALL_SIGN);
 
+        hangingSigns = EnumSet.noneOf(Material.class);
+        hangingSigns.add(Material.OAK_HANGING_SIGN);
+        hangingSigns.add(Material.SPRUCE_HANGING_SIGN);
+        hangingSigns.add(Material.BIRCH_HANGING_SIGN);
+        hangingSigns.add(Material.JUNGLE_HANGING_SIGN);
+        hangingSigns.add(Material.DARK_OAK_HANGING_SIGN);
+        hangingSigns.add(Material.ACACIA_HANGING_SIGN);
+        hangingSigns.add(Material.WARPED_HANGING_SIGN);
+        hangingSigns.add(Material.CRIMSON_HANGING_SIGN);
+        hangingSigns.add(Material.MANGROVE_HANGING_SIGN);
+        hangingSigns.add(Material.BAMBOO_HANGING_SIGN);
+
+        hangingWallSigns = EnumSet.noneOf(Material.class);
+        hangingWallSigns.add(Material.OAK_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.SPRUCE_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.BIRCH_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.JUNGLE_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.DARK_OAK_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.ACACIA_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.WARPED_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.CRIMSON_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.MANGROVE_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.BAMBOO_WALL_HANGING_SIGN);
+
         allSigns = EnumSet.noneOf(Material.class);
         allSigns.addAll(signs);
         allSigns.addAll(wallSigns);
+        allSigns.addAll(hangingSigns);
+        allSigns.addAll(hangingWallSigns);
+        unmodifiableSigns = Collections.unmodifiableSet(allSigns);
 
         singleBlockPlants = EnumSet.noneOf(Material.class);
         singleBlockPlants.add(Material.GRASS);
@@ -1131,8 +1188,8 @@ public class BukkitUtils {
         return false;
     }
 
-    public static Material[] getAllSignsArray() {
-        return allSigns.toArray(new Material[allSigns.size()]);
+    public static Set<Material> getAllSignMaterials() {
+        return unmodifiableSigns;
     }
 
     public static boolean isAlwaysWaterlogged(Material m) {
@@ -1145,5 +1202,25 @@ public class BukkitUtils {
 
     public static boolean isCandleCake(Material m) {
         return candleCakes.contains(m);
+    }
+
+    public static boolean isHangingSign(Material m) {
+        return hangingSigns.contains(m);
+    }
+
+    public static boolean isFenceGate(Material m) {
+        return fenceGates.contains(m);
+    }
+
+    public static boolean isWoodenTrapdoor(Material m) {
+        return woodenTrapdoors.contains(m);
+    }
+
+    public static boolean isPressurePlate(Material m) {
+        return pressurePlates.contains(m);
+    }
+
+    public static boolean isSign(Material m) {
+        return allSigns.contains(m);
     }
 }

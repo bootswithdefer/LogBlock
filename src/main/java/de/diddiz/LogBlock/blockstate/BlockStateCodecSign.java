@@ -13,7 +13,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class BlockStateCodecSign implements BlockStateCodec {
     @Override
     public Material[] getApplicableMaterials() {
-        return BukkitUtils.getAllSignsArray();
+        return BukkitUtils.getAllSignMaterials().toArray(new Material[BukkitUtils.getAllSignMaterials().size()]);
     }
 
     @Override
@@ -54,7 +54,9 @@ public class BlockStateCodecSign implements BlockStateCodec {
      */
     public static YamlConfiguration serialize(String[] lines) {
         YamlConfiguration conf = new YamlConfiguration();
-        conf.set("lines", Arrays.asList(lines));
+        if (lines != null) {
+            conf.set("lines", Arrays.asList(lines));
+        }
         return conf;
     }
 

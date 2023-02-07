@@ -228,6 +228,8 @@ public class LoggingUtil {
             if (lantern.isHanging()) {
                 consumer.queueBlockBreak(actor, checkBlock.getState());
             }
+        } else if (BukkitUtils.isHangingSign(typeBelow)) {
+            consumer.queueBlockBreak(actor, checkBlock.getState());
         } else if (typeBelow == Material.BELL) {
             Bell bell = (Bell) checkBlock.getBlockData();
             if (bell.getAttachment() == Attachment.CEILING) {

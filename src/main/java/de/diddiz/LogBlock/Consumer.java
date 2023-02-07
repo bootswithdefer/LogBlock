@@ -36,8 +36,6 @@ import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
-import org.bukkit.block.data.type.Sign;
-import org.bukkit.block.data.type.WallSign;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -346,7 +344,7 @@ public class Consumer extends Thread {
      *            The four lines on the sign.
      */
     public void queueSignChange(Actor actor, Location loc, BlockData type, String[] lines) {
-        if ((!(type instanceof Sign) && !(type instanceof WallSign)) || lines == null || lines.length != 4) {
+        if (!BukkitUtils.getAllSignMaterials().contains(type.getMaterial())) {
             return;
         }
         queueBlock(actor, loc, type, type, null, BlockStateCodecSign.serialize(lines), null);
