@@ -344,7 +344,7 @@ public class Consumer extends Thread {
      *            The four lines on the sign.
      */
     public void queueSignChange(Actor actor, Location loc, BlockData type, String[] lines) {
-        if (!BukkitUtils.getAllSignMaterials().contains(type.getMaterial())) {
+        if (!BukkitUtils.isSign(type.getMaterial())) {
             return;
         }
         queueBlock(actor, loc, type, type, null, BlockStateCodecSign.serialize(lines), null);
