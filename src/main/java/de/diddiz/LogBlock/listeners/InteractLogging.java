@@ -122,108 +122,95 @@ public class InteractLogging extends LoggingListener {
                         }
                     }
                 }
-            } else {
-                switch (type) {
-                    case CAKE:
-                        if (event.hasItem() && BukkitUtils.isCandle(event.getItem().getType()) && event.useItemInHand() != Result.DENY) {
-                            BlockData newBlockData = Material.valueOf(event.getItem().getType().name() + "_CAKE").createBlockData();
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
-                        } else if (wcfg.isLogging(Logging.CAKEEAT) && event.getAction() == Action.RIGHT_CLICK_BLOCK && player.getFoodLevel() < 20) {
-                            Cake newBlockData = (Cake) blockData.clone();
-                            if (newBlockData.getBites() < 6) {
-                                newBlockData.setBites(newBlockData.getBites() + 1);
-                                consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+            } else if (type == Material.CAKE) {
+                if (event.hasItem() && BukkitUtils.isCandle(event.getItem().getType()) && event.useItemInHand() != Result.DENY) {
+                    BlockData newBlockData = Material.valueOf(event.getItem().getType().name() + "_CAKE").createBlockData();
+                    consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                } else if (wcfg.isLogging(Logging.CAKEEAT) && event.getAction() == Action.RIGHT_CLICK_BLOCK && player.getFoodLevel() < 20) {
+                    Cake newBlockData = (Cake) blockData.clone();
+                    if (newBlockData.getBites() < 6) {
+                        newBlockData.setBites(newBlockData.getBites() + 1);
+                        consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                    } else {
+                        consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, Material.AIR.createBlockData());
+                    }
+                }
+            } else if (type == Material.NOTE_BLOCK) {
+                if (wcfg.isLogging(Logging.NOTEBLOCKINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    NoteBlock newBlockData = (NoteBlock) blockData.clone();
+                    if (newBlockData.getNote().getOctave() == 2) {
+                        newBlockData.setNote(new Note(0, Tone.F, true));
+                    } else {
+                        newBlockData.setNote(newBlockData.getNote().sharped());
+                    }
+                    consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                }
+            } else if (type == Material.REPEATER) {
+                if (wcfg.isLogging(Logging.DIODEINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    Repeater newBlockData = (Repeater) blockData.clone();
+                    newBlockData.setDelay((newBlockData.getDelay() % 4) + 1);
+                    consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                }
+            } else if (type == Material.COMPARATOR) {
+                if (wcfg.isLogging(Logging.COMPARATORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    Comparator newBlockData = (Comparator) blockData.clone();
+                    newBlockData.setMode(newBlockData.getMode() == Mode.COMPARE ? Mode.SUBTRACT : Mode.COMPARE);
+                    consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                }
+            } else if (type == Material.DAYLIGHT_DETECTOR) {
+                if (wcfg.isLogging(Logging.DAYLIGHTDETECTORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    DaylightDetector newBlockData = (DaylightDetector) blockData.clone();
+                    newBlockData.setInverted(!newBlockData.isInverted());
+                    consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                }
+            } else if (type == Material.TRIPWIRE) {
+                if (wcfg.isLogging(Logging.TRIPWIREINTERACT) && event.getAction() == Action.PHYSICAL) {
+                    consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, blockData);
+                }
+            } else if (type == Material.FARMLAND) {
+                if (wcfg.isLogging(Logging.CROPTRAMPLE) && event.getAction() == Action.PHYSICAL) {
+                    // 3 = Dirt ID
+                    consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, Material.DIRT.createBlockData());
+                    // Log the crop on top as being broken
+                    Block trampledCrop = clicked.getRelative(BlockFace.UP);
+                    if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
+                        consumer.queueBlockBreak(Actor.actorFromEntity(player), trampledCrop.getState());
+                    }
+                }
+            } else if (type == Material.TURTLE_EGG) {
+                if (wcfg.isLogging(Logging.BLOCKBREAK) && event.getAction() == Action.PHYSICAL) {
+                    TurtleEgg turtleEggData = (TurtleEgg) blockData;
+                    int eggs = turtleEggData.getEggs();
+                    if (eggs > 1) {
+                        TurtleEgg turtleEggData2 = (TurtleEgg) turtleEggData.clone();
+                        turtleEggData2.setEggs(eggs - 1);
+                        consumer.queueBlock(Actor.actorFromEntity(player), loc, turtleEggData, turtleEggData2);
+                    } else {
+                        consumer.queueBlock(Actor.actorFromEntity(player), loc, turtleEggData, Material.AIR.createBlockData());
+                    }
+                }
+            } else if (type == Material.PUMPKIN) {
+                if ((wcfg.isLogging(Logging.BLOCKBREAK) || wcfg.isLogging(Logging.BLOCKPLACE)) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    ItemStack inHand = event.getItem();
+                    if (inHand != null && inHand.getType() == Material.SHEARS) {
+                        BlockFace clickedFace = event.getBlockFace();
+                        Directional newBlockData = (Directional) Material.CARVED_PUMPKIN.createBlockData();
+                        if (clickedFace == BlockFace.NORTH || clickedFace == BlockFace.SOUTH || clickedFace == BlockFace.EAST || clickedFace == BlockFace.WEST) {
+                            newBlockData.setFacing(clickedFace);
+                        } else {
+                            // use player distance to calculate the facing
+                            Location playerLoc = player.getLocation();
+                            playerLoc.subtract(0.5, 0, 0.5);
+                            double dx = playerLoc.getX() - loc.getX();
+                            double dz = playerLoc.getZ() - loc.getZ();
+                            if (Math.abs(dx) > Math.abs(dz)) {
+                                newBlockData.setFacing(dx > 0 ? BlockFace.EAST : BlockFace.WEST);
                             } else {
-                                consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, Material.AIR.createBlockData());
+                                newBlockData.setFacing(dz > 0 ? BlockFace.SOUTH : BlockFace.NORTH);
                             }
                         }
-                        break;
-                    case NOTE_BLOCK:
-                        if (wcfg.isLogging(Logging.NOTEBLOCKINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                            NoteBlock newBlockData = (NoteBlock) blockData.clone();
-                            if (newBlockData.getNote().getOctave() == 2) {
-                                newBlockData.setNote(new Note(0, Tone.F, true));
-                            } else {
-                                newBlockData.setNote(newBlockData.getNote().sharped());
-                            }
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
-                        }
-                        break;
-                    case REPEATER:
-                        if (wcfg.isLogging(Logging.DIODEINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                            Repeater newBlockData = (Repeater) blockData.clone();
-                            newBlockData.setDelay((newBlockData.getDelay() % 4) + 1);
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
-                        }
-                        break;
-                    case COMPARATOR:
-                        if (wcfg.isLogging(Logging.COMPARATORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                            Comparator newBlockData = (Comparator) blockData.clone();
-                            newBlockData.setMode(newBlockData.getMode() == Mode.COMPARE ? Mode.SUBTRACT : Mode.COMPARE);
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
-                        }
-                        break;
-                    case DAYLIGHT_DETECTOR:
-                        if (wcfg.isLogging(Logging.DAYLIGHTDETECTORINTERACT) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                            DaylightDetector newBlockData = (DaylightDetector) blockData.clone();
-                            newBlockData.setInverted(!newBlockData.isInverted());
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
-                        }
-                        break;
-                    case TRIPWIRE:
-                        if (wcfg.isLogging(Logging.TRIPWIREINTERACT) && event.getAction() == Action.PHYSICAL) {
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, blockData);
-                        }
-                        break;
-                    case FARMLAND:
-                        if (wcfg.isLogging(Logging.CROPTRAMPLE) && event.getAction() == Action.PHYSICAL) {
-                            // 3 = Dirt ID
-                            consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, Material.DIRT.createBlockData());
-                            // Log the crop on top as being broken
-                            Block trampledCrop = clicked.getRelative(BlockFace.UP);
-                            if (BukkitUtils.getCropBlocks().contains(trampledCrop.getType())) {
-                                consumer.queueBlockBreak(Actor.actorFromEntity(player), trampledCrop.getState());
-                            }
-                        }
-                        break;
-                    case TURTLE_EGG:
-                        if (wcfg.isLogging(Logging.BLOCKBREAK) && event.getAction() == Action.PHYSICAL) {
-                            TurtleEgg turtleEggData = (TurtleEgg) blockData;
-                            int eggs = turtleEggData.getEggs();
-                            if (eggs > 1) {
-                                TurtleEgg turtleEggData2 = (TurtleEgg) turtleEggData.clone();
-                                turtleEggData2.setEggs(eggs - 1);
-                                consumer.queueBlock(Actor.actorFromEntity(player), loc, turtleEggData, turtleEggData2);
-                            } else {
-                                consumer.queueBlock(Actor.actorFromEntity(player), loc, turtleEggData, Material.AIR.createBlockData());
-                            }
-                        }
-                        break;
-                    case PUMPKIN:
-                        if ((wcfg.isLogging(Logging.BLOCKBREAK) || wcfg.isLogging(Logging.BLOCKPLACE)) && event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                            ItemStack inHand = event.getItem();
-                            if (inHand != null && inHand.getType() == Material.SHEARS) {
-                                BlockFace clickedFace = event.getBlockFace();
-                                Directional newBlockData = (Directional) Material.CARVED_PUMPKIN.createBlockData();
-                                if (clickedFace == BlockFace.NORTH || clickedFace == BlockFace.SOUTH || clickedFace == BlockFace.EAST || clickedFace == BlockFace.WEST) {
-                                    newBlockData.setFacing(clickedFace);
-                                } else {
-                                    // use player distance to calculate the facing
-                                    Location playerLoc = player.getLocation();
-                                    playerLoc.subtract(0.5, 0, 0.5);
-                                    double dx = playerLoc.getX() - loc.getX();
-                                    double dz = playerLoc.getZ() - loc.getZ();
-                                    if (Math.abs(dx) > Math.abs(dz)) {
-                                        newBlockData.setFacing(dx > 0 ? BlockFace.EAST : BlockFace.WEST);
-                                    } else {
-                                        newBlockData.setFacing(dz > 0 ? BlockFace.SOUTH : BlockFace.NORTH);
-                                    }
-                                }
-                                consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
-                            }
-                        }
-                        break;
-                    default:
+                        consumer.queueBlock(Actor.actorFromEntity(player), loc, blockData, newBlockData);
+                    }
                 }
             }
         }

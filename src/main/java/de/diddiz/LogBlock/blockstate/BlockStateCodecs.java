@@ -1,6 +1,6 @@
 package de.diddiz.LogBlock.blockstate;
 
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.Material;
@@ -8,7 +8,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class BlockStateCodecs {
-    private static Map<Material, BlockStateCodec> codecs = new EnumMap<>(Material.class);
+    private static Map<Material, BlockStateCodec> codecs = new HashMap<>();
 
     public static void registerCodec(BlockStateCodec codec) {
         Material[] materials = codec.getApplicableMaterials();

@@ -8,8 +8,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,26 +67,26 @@ public class BukkitUtils {
     private static final Set<Material> bedBlocks;
 
     private static final Map<EntityType, Material> projectileItems;
-    private static final EnumSet<Material> signs;
-    private static final EnumSet<Material> wallSigns;
-    private static final EnumSet<Material> hangingSigns;
-    private static final EnumSet<Material> hangingWallSigns;
-    private static final EnumSet<Material> allSigns;
+    private static final HashSet<Material> signs;
+    private static final HashSet<Material> wallSigns;
+    private static final HashSet<Material> hangingSigns;
+    private static final HashSet<Material> hangingWallSigns;
+    private static final HashSet<Material> allSigns;
     private static final Set<Material> unmodifiableSigns;
-    private static final EnumSet<Material> buttons;
-    private static final EnumSet<Material> pressurePlates;
-    private static final EnumSet<Material> woodenDoors;
-    private static final EnumSet<Material> slabs;
-    private static final EnumSet<Material> concreteBlocks;
-    private static final EnumMap<Material, DyeColor> dyes;
-    private static final EnumSet<Material> alwaysWaterlogged;
-    private static final EnumSet<Material> candles;
-    private static final EnumSet<Material> candleCakes;
-    private static final EnumSet<Material> fenceGates;
-    private static final EnumSet<Material> woodenTrapdoors;
+    private static final HashSet<Material> buttons;
+    private static final HashSet<Material> pressurePlates;
+    private static final HashSet<Material> woodenDoors;
+    private static final HashSet<Material> slabs;
+    private static final HashSet<Material> concreteBlocks;
+    private static final HashMap<Material, DyeColor> dyes;
+    private static final HashSet<Material> alwaysWaterlogged;
+    private static final HashSet<Material> candles;
+    private static final HashSet<Material> candleCakes;
+    private static final HashSet<Material> fenceGates;
+    private static final HashSet<Material> woodenTrapdoors;
 
     static {
-        fenceGates = EnumSet.noneOf(Material.class);
+        fenceGates = new HashSet<>();
         fenceGates.add(Material.OAK_FENCE_GATE);
         fenceGates.add(Material.SPRUCE_FENCE_GATE);
         fenceGates.add(Material.BIRCH_FENCE_GATE);
@@ -100,7 +98,7 @@ public class BukkitUtils {
         fenceGates.add(Material.MANGROVE_FENCE_GATE);
         fenceGates.add(Material.BAMBOO_FENCE_GATE);
 
-        woodenTrapdoors = EnumSet.noneOf(Material.class);
+        woodenTrapdoors = new HashSet<>();
         woodenTrapdoors.add(Material.OAK_TRAPDOOR);
         woodenTrapdoors.add(Material.SPRUCE_TRAPDOOR);
         woodenTrapdoors.add(Material.BIRCH_TRAPDOOR);
@@ -112,7 +110,7 @@ public class BukkitUtils {
         woodenTrapdoors.add(Material.MANGROVE_TRAPDOOR);
         woodenTrapdoors.add(Material.BAMBOO_TRAPDOOR);
 
-        pressurePlates = EnumSet.noneOf(Material.class);
+        pressurePlates = new HashSet<>();
         pressurePlates.add(Material.OAK_PRESSURE_PLATE);
         pressurePlates.add(Material.SPRUCE_PRESSURE_PLATE);
         pressurePlates.add(Material.BIRCH_PRESSURE_PLATE);
@@ -127,7 +125,7 @@ public class BukkitUtils {
         pressurePlates.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
         pressurePlates.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
 
-        woodenDoors = EnumSet.noneOf(Material.class);
+        woodenDoors = new HashSet<>();
         woodenDoors.add(Material.OAK_DOOR);
         woodenDoors.add(Material.SPRUCE_DOOR);
         woodenDoors.add(Material.BIRCH_DOOR);
@@ -139,7 +137,7 @@ public class BukkitUtils {
         woodenDoors.add(Material.MANGROVE_DOOR);
         woodenDoors.add(Material.BAMBOO_DOOR);
 
-        EnumSet<Material> saplings = EnumSet.noneOf(Material.class);
+        HashSet<Material> saplings = new HashSet<>();
         saplings.add(Material.OAK_SAPLING);
         saplings.add(Material.SPRUCE_SAPLING);
         saplings.add(Material.BIRCH_SAPLING);
@@ -150,7 +148,7 @@ public class BukkitUtils {
         saplings.add(Material.CRIMSON_FUNGUS);
         saplings.add(Material.MANGROVE_PROPAGULE);
 
-        EnumSet<Material> carpets = EnumSet.noneOf(Material.class);
+        HashSet<Material> carpets = new HashSet<>();
         carpets.add(Material.BLACK_CARPET);
         carpets.add(Material.BLUE_CARPET);
         carpets.add(Material.LIGHT_GRAY_CARPET);
@@ -168,7 +166,7 @@ public class BukkitUtils {
         carpets.add(Material.WHITE_CARPET);
         carpets.add(Material.YELLOW_CARPET);
 
-        slabs = EnumSet.noneOf(Material.class);
+        slabs = new HashSet<>();
         slabs.add(Material.OAK_SLAB);
         slabs.add(Material.SPRUCE_SLAB);
         slabs.add(Material.BIRCH_SLAB);
@@ -199,7 +197,7 @@ public class BukkitUtils {
         slabs.add(Material.MANGROVE_SLAB);
         slabs.add(Material.BAMBOO_SLAB);
 
-        buttons = EnumSet.noneOf(Material.class);
+        buttons = new HashSet<>();
         buttons.add(Material.STONE_BUTTON);
         buttons.add(Material.OAK_BUTTON);
         buttons.add(Material.SPRUCE_BUTTON);
@@ -213,7 +211,7 @@ public class BukkitUtils {
         buttons.add(Material.BAMBOO_BUTTON);
         buttons.add(Material.POLISHED_BLACKSTONE_BUTTON);
 
-        signs = EnumSet.noneOf(Material.class);
+        signs = new HashSet<>();
         signs.add(Material.OAK_SIGN);
         signs.add(Material.SPRUCE_SIGN);
         signs.add(Material.BIRCH_SIGN);
@@ -225,7 +223,7 @@ public class BukkitUtils {
         signs.add(Material.MANGROVE_SIGN);
         signs.add(Material.BAMBOO_SIGN);
 
-        wallSigns = EnumSet.noneOf(Material.class);
+        wallSigns = new HashSet<>();
         wallSigns.add(Material.OAK_WALL_SIGN);
         wallSigns.add(Material.SPRUCE_WALL_SIGN);
         wallSigns.add(Material.BIRCH_WALL_SIGN);
@@ -237,7 +235,7 @@ public class BukkitUtils {
         wallSigns.add(Material.MANGROVE_WALL_SIGN);
         wallSigns.add(Material.BAMBOO_WALL_SIGN);
 
-        hangingSigns = EnumSet.noneOf(Material.class);
+        hangingSigns = new HashSet<>();
         hangingSigns.add(Material.OAK_HANGING_SIGN);
         hangingSigns.add(Material.SPRUCE_HANGING_SIGN);
         hangingSigns.add(Material.BIRCH_HANGING_SIGN);
@@ -249,7 +247,7 @@ public class BukkitUtils {
         hangingSigns.add(Material.MANGROVE_HANGING_SIGN);
         hangingSigns.add(Material.BAMBOO_HANGING_SIGN);
 
-        hangingWallSigns = EnumSet.noneOf(Material.class);
+        hangingWallSigns = new HashSet<>();
         hangingWallSigns.add(Material.OAK_WALL_HANGING_SIGN);
         hangingWallSigns.add(Material.SPRUCE_WALL_HANGING_SIGN);
         hangingWallSigns.add(Material.BIRCH_WALL_HANGING_SIGN);
@@ -261,14 +259,14 @@ public class BukkitUtils {
         hangingWallSigns.add(Material.MANGROVE_WALL_HANGING_SIGN);
         hangingWallSigns.add(Material.BAMBOO_WALL_HANGING_SIGN);
 
-        allSigns = EnumSet.noneOf(Material.class);
+        allSigns = new HashSet<>();
         allSigns.addAll(signs);
         allSigns.addAll(wallSigns);
         allSigns.addAll(hangingSigns);
         allSigns.addAll(hangingWallSigns);
         unmodifiableSigns = Collections.unmodifiableSet(allSigns);
 
-        singleBlockPlants = EnumSet.noneOf(Material.class);
+        singleBlockPlants = new HashSet<>();
         singleBlockPlants.add(Material.GRASS);
         singleBlockPlants.add(Material.FERN);
         singleBlockPlants.add(Material.DEAD_BUSH);
@@ -296,7 +294,7 @@ public class BukkitUtils {
         singleBlockPlants.add(Material.AZALEA);
         singleBlockPlants.add(Material.FLOWERING_AZALEA);
 
-        doublePlants = EnumSet.noneOf(Material.class);
+        doublePlants = new HashSet<>();
         doublePlants.add(Material.TALL_GRASS);
         doublePlants.add(Material.LARGE_FERN);
         doublePlants.add(Material.TALL_SEAGRASS);
@@ -316,7 +314,7 @@ public class BukkitUtils {
         blockEquivalents.add(new HashSet<>(Arrays.asList(93, 94)));
 
         // Blocks that break when they are attached to a block
-        relativeBreakable = EnumSet.noneOf(Material.class);
+        relativeBreakable = new HashSet<>();
         relativeBreakable.addAll(wallSigns);
         relativeBreakable.add(Material.LADDER);
         relativeBreakable.addAll(buttons);
@@ -332,7 +330,7 @@ public class BukkitUtils {
         relativeBreakable.add(Material.LARGE_AMETHYST_BUD);
 
         // Blocks that break when they are on top of a block
-        relativeTopBreakable = EnumSet.noneOf(Material.class);
+        relativeTopBreakable = new HashSet<>();
         relativeTopBreakable.addAll(saplings);
         relativeTopBreakable.addAll(singleBlockPlants);
         relativeTopBreakable.add(Material.WHEAT);
@@ -375,7 +373,7 @@ public class BukkitUtils {
         }
 
         // Blocks that break falling entities
-        fallingEntityKillers = EnumSet.noneOf(Material.class);
+        fallingEntityKillers = new HashSet<>();
         fallingEntityKillers.addAll(signs);
         fallingEntityKillers.addAll(wallSigns);
         fallingEntityKillers.addAll(pressurePlates);
@@ -427,7 +425,7 @@ public class BukkitUtils {
         }
 
         // Crop Blocks
-        cropBlocks = EnumSet.noneOf(Material.class);
+        cropBlocks = new HashSet<>();
         cropBlocks.add(Material.WHEAT);
         cropBlocks.add(Material.MELON_STEM);
         cropBlocks.add(Material.PUMPKIN_STEM);
@@ -436,7 +434,7 @@ public class BukkitUtils {
         cropBlocks.add(Material.BEETROOT);
 
         // Shulker Boxes
-        shulkerBoxBlocks = EnumSet.noneOf(Material.class);
+        shulkerBoxBlocks = new HashSet<>();
         shulkerBoxBlocks.add(Material.SHULKER_BOX);
         shulkerBoxBlocks.add(Material.BLACK_SHULKER_BOX);
         shulkerBoxBlocks.add(Material.BLUE_SHULKER_BOX);
@@ -456,7 +454,7 @@ public class BukkitUtils {
         shulkerBoxBlocks.add(Material.YELLOW_SHULKER_BOX);
 
         // Container Blocks
-        containerBlocks = EnumSet.noneOf(Material.class);
+        containerBlocks = new HashSet<>();
         containerBlocks.add(Material.CHEST);
         containerBlocks.add(Material.TRAPPED_CHEST);
         containerBlocks.add(Material.DISPENSER);
@@ -473,7 +471,7 @@ public class BukkitUtils {
         // containerBlocks.add(Material.ENDER_CHEST);
 
         // It doesn't seem like you could injure people with some of these, but they exist, so....
-        projectileItems = new EnumMap<>(EntityType.class);
+        projectileItems = new HashMap<>();
         projectileItems.put(EntityType.ARROW, Material.ARROW);
         projectileItems.put(EntityType.EGG, Material.EGG);
         projectileItems.put(EntityType.ENDER_PEARL, Material.ENDER_PEARL);
@@ -486,7 +484,7 @@ public class BukkitUtils {
         projectileItems.put(EntityType.WITHER_SKULL, Material.WITHER_SKELETON_SKULL);
         projectileItems.put(EntityType.FIREWORK, Material.FIREWORK_ROCKET);
 
-        nonFluidProofBlocks = EnumSet.noneOf(Material.class);
+        nonFluidProofBlocks = new HashSet<>();
         nonFluidProofBlocks.addAll(singleBlockPlants);
         nonFluidProofBlocks.addAll(doublePlants);
         nonFluidProofBlocks.add(Material.REDSTONE_WALL_TORCH);
@@ -517,13 +515,13 @@ public class BukkitUtils {
         nonFluidProofBlocks.add(Material.DAYLIGHT_DETECTOR);
         nonFluidProofBlocks.addAll(carpets);
 
-        alwaysWaterlogged = EnumSet.noneOf(Material.class);
+        alwaysWaterlogged = new HashSet<>();
         alwaysWaterlogged.add(Material.SEAGRASS);
         alwaysWaterlogged.add(Material.TALL_SEAGRASS);
         alwaysWaterlogged.add(Material.KELP);
         alwaysWaterlogged.add(Material.KELP_PLANT);
 
-        bedBlocks = EnumSet.noneOf(Material.class);
+        bedBlocks = new HashSet<>();
         bedBlocks.add(Material.BLACK_BED);
         bedBlocks.add(Material.BLUE_BED);
         bedBlocks.add(Material.LIGHT_GRAY_BED);
@@ -541,7 +539,7 @@ public class BukkitUtils {
         bedBlocks.add(Material.WHITE_BED);
         bedBlocks.add(Material.YELLOW_BED);
 
-        concreteBlocks = EnumSet.noneOf(Material.class);
+        concreteBlocks = new HashSet<>();
         concreteBlocks.add(Material.BLACK_CONCRETE);
         concreteBlocks.add(Material.BLUE_CONCRETE);
         concreteBlocks.add(Material.LIGHT_GRAY_CONCRETE);
@@ -559,7 +557,7 @@ public class BukkitUtils {
         concreteBlocks.add(Material.WHITE_CONCRETE);
         concreteBlocks.add(Material.YELLOW_CONCRETE);
 
-        candles = EnumSet.noneOf(Material.class);
+        candles = new HashSet<>();
         candles.add(Material.CANDLE);
         candles.add(Material.BLACK_CANDLE);
         candles.add(Material.BLUE_CANDLE);
@@ -578,7 +576,7 @@ public class BukkitUtils {
         candles.add(Material.WHITE_CANDLE);
         candles.add(Material.YELLOW_CANDLE);
 
-        candleCakes = EnumSet.noneOf(Material.class);
+        candleCakes = new HashSet<>();
         candleCakes.add(Material.CANDLE_CAKE);
         candleCakes.add(Material.BLACK_CANDLE_CAKE);
         candleCakes.add(Material.BLUE_CANDLE_CAKE);
@@ -597,7 +595,7 @@ public class BukkitUtils {
         candleCakes.add(Material.WHITE_CANDLE_CAKE);
         candleCakes.add(Material.YELLOW_CANDLE_CAKE);
 
-        dyes = new EnumMap<>(Material.class);
+        dyes = new HashMap<>();
         dyes.put(Material.BLACK_DYE, DyeColor.BLACK);
         dyes.put(Material.BLUE_DYE, DyeColor.BLUE);
         dyes.put(Material.LIGHT_GRAY_DYE, DyeColor.LIGHT_GRAY);
@@ -1132,58 +1130,44 @@ public class BukkitUtils {
         if (expected == found) {
             return true;
         }
-        switch (expected) {
-            case DIRT:
-            case MYCELIUM:
-            case FARMLAND:
-            case GRASS_BLOCK:
-            case PODZOL:
-            case DIRT_PATH:
-                return found == Material.DIRT || found == Material.MYCELIUM || found == Material.FARMLAND || found == Material.GRASS_BLOCK || found == Material.PODZOL || found == Material.DIRT_PATH;
-            case BAMBOO:
-            case BAMBOO_SAPLING:
-                return found == Material.BAMBOO || found == Material.BAMBOO_SAPLING;
-            case SPONGE:
-            case WET_SPONGE:
-                return found == Material.SPONGE || found == Material.WET_SPONGE;
-            case MELON_STEM:
-            case ATTACHED_MELON_STEM:
-                return found == Material.MELON_STEM || found == Material.ATTACHED_MELON_STEM;
-            case PUMPKIN_STEM:
-            case ATTACHED_PUMPKIN_STEM:
-                return found == Material.PUMPKIN_STEM || found == Material.ATTACHED_PUMPKIN_STEM;
-            case TWISTING_VINES:
-            case TWISTING_VINES_PLANT:
-                return found == Material.TWISTING_VINES || found == Material.TWISTING_VINES_PLANT;
-            case WEEPING_VINES:
-            case WEEPING_VINES_PLANT:
-                return found == Material.WEEPING_VINES || found == Material.WEEPING_VINES_PLANT;
-            case CAVE_VINES:
-            case CAVE_VINES_PLANT:
-                return found == Material.CAVE_VINES || found == Material.CAVE_VINES_PLANT;
-            case BIG_DRIPLEAF:
-            case BIG_DRIPLEAF_STEM:
-                return found == Material.BIG_DRIPLEAF || found == Material.BIG_DRIPLEAF_STEM;
-            case COPPER_BLOCK:
-            case EXPOSED_COPPER:
-            case WEATHERED_COPPER:
-            case OXIDIZED_COPPER:
-                return found == Material.COPPER_BLOCK || found == Material.EXPOSED_COPPER || found == Material.WEATHERED_COPPER || found == Material.OXIDIZED_COPPER;
-            case CUT_COPPER:
-            case EXPOSED_CUT_COPPER:
-            case WEATHERED_CUT_COPPER:
-            case OXIDIZED_CUT_COPPER:
-                return found == Material.CUT_COPPER || found == Material.EXPOSED_CUT_COPPER || found == Material.WEATHERED_CUT_COPPER || found == Material.OXIDIZED_CUT_COPPER;
-            case CUT_COPPER_STAIRS:
-            case EXPOSED_CUT_COPPER_STAIRS:
-            case WEATHERED_CUT_COPPER_STAIRS:
-            case OXIDIZED_CUT_COPPER_STAIRS:
-                return found == Material.CUT_COPPER_STAIRS || found == Material.EXPOSED_CUT_COPPER_STAIRS || found == Material.WEATHERED_CUT_COPPER_STAIRS || found == Material.OXIDIZED_CUT_COPPER_STAIRS;
-            case CUT_COPPER_SLAB:
-            case EXPOSED_CUT_COPPER_SLAB:
-            case WEATHERED_CUT_COPPER_SLAB:
-            case OXIDIZED_CUT_COPPER_SLAB:
-                return found == Material.CUT_COPPER_SLAB || found == Material.EXPOSED_CUT_COPPER_SLAB || found == Material.WEATHERED_CUT_COPPER_SLAB || found == Material.OXIDIZED_CUT_COPPER_SLAB;
+        if (expected == Material.DIRT || expected == Material.MYCELIUM || expected == Material.FARMLAND || expected == Material.GRASS_BLOCK || expected == Material.PODZOL || expected == Material.DIRT_PATH) {
+            return found == Material.DIRT || found == Material.MYCELIUM || found == Material.FARMLAND || found == Material.GRASS_BLOCK || found == Material.PODZOL || found == Material.DIRT_PATH;
+        }
+        if (expected == Material.BAMBOO || expected == Material.BAMBOO_SAPLING) {
+            return found == Material.BAMBOO || found == Material.BAMBOO_SAPLING;
+        }
+        if (expected == Material.SPONGE || expected == Material.WET_SPONGE) {
+            return found == Material.SPONGE || found == Material.WET_SPONGE;
+        }
+        if (expected == Material.MELON_STEM || expected == Material.ATTACHED_MELON_STEM) {
+            return found == Material.MELON_STEM || found == Material.ATTACHED_MELON_STEM;
+        }
+        if (expected == Material.PUMPKIN_STEM || expected == Material.ATTACHED_PUMPKIN_STEM) {
+            return found == Material.PUMPKIN_STEM || found == Material.ATTACHED_PUMPKIN_STEM;
+        }
+        if (expected == Material.TWISTING_VINES || expected == Material.TWISTING_VINES_PLANT) {
+            return found == Material.TWISTING_VINES || found == Material.TWISTING_VINES_PLANT;
+        }
+        if (expected == Material.WEEPING_VINES || expected == Material.WEEPING_VINES_PLANT) {
+            return found == Material.WEEPING_VINES || found == Material.WEEPING_VINES_PLANT;
+        }
+        if (expected == Material.CAVE_VINES || expected == Material.CAVE_VINES_PLANT) {
+            return found == Material.CAVE_VINES || found == Material.CAVE_VINES_PLANT;
+        }
+        if (expected == Material.BIG_DRIPLEAF || expected == Material.BIG_DRIPLEAF_STEM) {
+            return found == Material.BIG_DRIPLEAF || found == Material.BIG_DRIPLEAF_STEM;
+        }
+        if (expected == Material.COPPER_BLOCK || expected == Material.EXPOSED_COPPER || expected == Material.WEATHERED_COPPER || expected == Material.OXIDIZED_COPPER) {
+            return found == Material.COPPER_BLOCK || found == Material.EXPOSED_COPPER || found == Material.WEATHERED_COPPER || found == Material.OXIDIZED_COPPER;
+        }
+        if (expected == Material.CUT_COPPER || expected == Material.EXPOSED_CUT_COPPER || expected == Material.WEATHERED_CUT_COPPER || expected == Material.OXIDIZED_CUT_COPPER) {
+            return found == Material.CUT_COPPER || found == Material.EXPOSED_CUT_COPPER || found == Material.WEATHERED_CUT_COPPER || found == Material.OXIDIZED_CUT_COPPER;
+        }
+        if (expected == Material.CUT_COPPER_STAIRS || expected == Material.EXPOSED_CUT_COPPER_STAIRS || expected == Material.WEATHERED_CUT_COPPER_STAIRS || expected == Material.OXIDIZED_CUT_COPPER_STAIRS) {
+            return found == Material.CUT_COPPER_STAIRS || found == Material.EXPOSED_CUT_COPPER_STAIRS || found == Material.WEATHERED_CUT_COPPER_STAIRS || found == Material.OXIDIZED_CUT_COPPER_STAIRS;
+        }
+        if (expected == Material.CUT_COPPER_SLAB || expected == Material.EXPOSED_CUT_COPPER_SLAB || expected == Material.WEATHERED_CUT_COPPER_SLAB || expected == Material.OXIDIZED_CUT_COPPER_SLAB) {
+            return found == Material.CUT_COPPER_SLAB || found == Material.EXPOSED_CUT_COPPER_SLAB || found == Material.WEATHERED_CUT_COPPER_SLAB || found == Material.OXIDIZED_CUT_COPPER_SLAB;
         }
         return false;
     }

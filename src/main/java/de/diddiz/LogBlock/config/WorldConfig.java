@@ -16,8 +16,8 @@ import org.bukkit.entity.WaterMob;
 import java.io.File;
 import java.io.IOException;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -97,7 +97,7 @@ public class WorldConfig extends LoggingEnabledMapping {
 
     private class EntityLoggingList {
         private final EntityLogging entityAction;
-        private final EnumSet<EntityType> logged = EnumSet.noneOf(EntityType.class);
+        private final HashSet<EntityType> logged = new HashSet<>();
         private final boolean logAll;
         private final boolean logAnimals;
         private final boolean logWateranimals;
