@@ -97,6 +97,7 @@ public class BukkitUtils {
         fenceGates.add(Material.CRIMSON_FENCE_GATE);
         fenceGates.add(Material.MANGROVE_FENCE_GATE);
         fenceGates.add(Material.BAMBOO_FENCE_GATE);
+        fenceGates.add(Material.CHERRY_FENCE_GATE);
 
         woodenTrapdoors = new HashSet<>();
         woodenTrapdoors.add(Material.OAK_TRAPDOOR);
@@ -109,6 +110,7 @@ public class BukkitUtils {
         woodenTrapdoors.add(Material.CRIMSON_TRAPDOOR);
         woodenTrapdoors.add(Material.MANGROVE_TRAPDOOR);
         woodenTrapdoors.add(Material.BAMBOO_TRAPDOOR);
+        woodenTrapdoors.add(Material.CHERRY_TRAPDOOR);
 
         pressurePlates = new HashSet<>();
         pressurePlates.add(Material.OAK_PRESSURE_PLATE);
@@ -121,6 +123,7 @@ public class BukkitUtils {
         pressurePlates.add(Material.CRIMSON_PRESSURE_PLATE);
         pressurePlates.add(Material.MANGROVE_PRESSURE_PLATE);
         pressurePlates.add(Material.BAMBOO_PRESSURE_PLATE);
+        pressurePlates.add(Material.CHERRY_PRESSURE_PLATE);
         pressurePlates.add(Material.STONE_PRESSURE_PLATE);
         pressurePlates.add(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
         pressurePlates.add(Material.HEAVY_WEIGHTED_PRESSURE_PLATE);
@@ -136,6 +139,7 @@ public class BukkitUtils {
         woodenDoors.add(Material.CRIMSON_DOOR);
         woodenDoors.add(Material.MANGROVE_DOOR);
         woodenDoors.add(Material.BAMBOO_DOOR);
+        woodenDoors.add(Material.CHERRY_DOOR);
 
         HashSet<Material> saplings = new HashSet<>();
         saplings.add(Material.OAK_SAPLING);
@@ -144,6 +148,7 @@ public class BukkitUtils {
         saplings.add(Material.JUNGLE_SAPLING);
         saplings.add(Material.ACACIA_SAPLING);
         saplings.add(Material.DARK_OAK_SAPLING);
+        saplings.add(Material.CHERRY_SAPLING);
         saplings.add(Material.WARPED_FUNGUS);
         saplings.add(Material.CRIMSON_FUNGUS);
         saplings.add(Material.MANGROVE_PROPAGULE);
@@ -196,6 +201,7 @@ public class BukkitUtils {
         slabs.add(Material.POLISHED_DEEPSLATE_SLAB);
         slabs.add(Material.MANGROVE_SLAB);
         slabs.add(Material.BAMBOO_SLAB);
+        slabs.add(Material.CHERRY_SLAB);
 
         buttons = new HashSet<>();
         buttons.add(Material.STONE_BUTTON);
@@ -209,6 +215,7 @@ public class BukkitUtils {
         buttons.add(Material.CRIMSON_BUTTON);
         buttons.add(Material.MANGROVE_BUTTON);
         buttons.add(Material.BAMBOO_BUTTON);
+        buttons.add(Material.CHERRY_BUTTON);
         buttons.add(Material.POLISHED_BLACKSTONE_BUTTON);
 
         signs = new HashSet<>();
@@ -222,6 +229,7 @@ public class BukkitUtils {
         signs.add(Material.CRIMSON_SIGN);
         signs.add(Material.MANGROVE_SIGN);
         signs.add(Material.BAMBOO_SIGN);
+        signs.add(Material.CHERRY_SIGN);
 
         wallSigns = new HashSet<>();
         wallSigns.add(Material.OAK_WALL_SIGN);
@@ -234,6 +242,7 @@ public class BukkitUtils {
         wallSigns.add(Material.CRIMSON_WALL_SIGN);
         wallSigns.add(Material.MANGROVE_WALL_SIGN);
         wallSigns.add(Material.BAMBOO_WALL_SIGN);
+        wallSigns.add(Material.CHERRY_WALL_SIGN);
 
         hangingSigns = new HashSet<>();
         hangingSigns.add(Material.OAK_HANGING_SIGN);
@@ -246,6 +255,7 @@ public class BukkitUtils {
         hangingSigns.add(Material.CRIMSON_HANGING_SIGN);
         hangingSigns.add(Material.MANGROVE_HANGING_SIGN);
         hangingSigns.add(Material.BAMBOO_HANGING_SIGN);
+        hangingSigns.add(Material.CHERRY_HANGING_SIGN);
 
         hangingWallSigns = new HashSet<>();
         hangingWallSigns.add(Material.OAK_WALL_HANGING_SIGN);
@@ -258,6 +268,7 @@ public class BukkitUtils {
         hangingWallSigns.add(Material.CRIMSON_WALL_HANGING_SIGN);
         hangingWallSigns.add(Material.MANGROVE_WALL_HANGING_SIGN);
         hangingWallSigns.add(Material.BAMBOO_WALL_HANGING_SIGN);
+        hangingWallSigns.add(Material.CHERRY_WALL_HANGING_SIGN);
 
         allSigns = new HashSet<>();
         allSigns.addAll(signs);
@@ -293,6 +304,7 @@ public class BukkitUtils {
         singleBlockPlants.add(Material.NETHER_SPROUTS);
         singleBlockPlants.add(Material.AZALEA);
         singleBlockPlants.add(Material.FLOWERING_AZALEA);
+        singleBlockPlants.add(Material.PINK_PETALS);
 
         doublePlants = new HashSet<>();
         doublePlants.add(Material.TALL_GRASS);
@@ -432,6 +444,7 @@ public class BukkitUtils {
         cropBlocks.add(Material.CARROT);
         cropBlocks.add(Material.POTATO);
         cropBlocks.add(Material.BEETROOT);
+        cropBlocks.add(Material.TORCHFLOWER_CROP);
 
         // Shulker Boxes
         shulkerBoxBlocks = new HashSet<>();
