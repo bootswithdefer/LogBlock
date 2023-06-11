@@ -305,6 +305,8 @@ public class BukkitUtils {
         singleBlockPlants.add(Material.AZALEA);
         singleBlockPlants.add(Material.FLOWERING_AZALEA);
         singleBlockPlants.add(Material.PINK_PETALS);
+        singleBlockPlants.add(Material.TORCHFLOWER);
+        singleBlockPlants.add(Material.PITCHER_CROP);
 
         doublePlants = new HashSet<>();
         doublePlants.add(Material.TALL_GRASS);
@@ -315,6 +317,7 @@ public class BukkitUtils {
         doublePlants.add(Material.SUNFLOWER);
         doublePlants.add(Material.PEONY);
         doublePlants.add(Material.SMALL_DRIPLEAF);
+        doublePlants.add(Material.PITCHER_PLANT);
 
         blockEquivalents = new HashSet<>(7);
         blockEquivalents.add(new HashSet<>(Arrays.asList(2, 3, 60)));
