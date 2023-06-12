@@ -49,6 +49,15 @@ public class MessagingUtil {
         return createTextComponentWithColor(stateName, TypeColor.STATE.getColor());
     }
 
+    public static TextComponent prettyState(BaseComponent stateName) {
+        TextComponent tc = new TextComponent();
+        tc.setColor(TypeColor.STATE.getColor());
+        if (stateName != null) {
+            tc.addExtra(stateName);
+        }
+        return tc;
+    }
+
     public static TextComponent prettyState(int stateValue) {
         return prettyState(Integer.toString(stateValue));
     }

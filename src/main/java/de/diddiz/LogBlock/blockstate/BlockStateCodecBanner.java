@@ -1,7 +1,7 @@
 package de.diddiz.LogBlock.blockstate;
 
 import java.util.List;
-
+import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.block.Banner;
@@ -64,7 +64,7 @@ public class BlockStateCodecBanner implements BlockStateCodec {
     }
 
     @Override
-    public String toString(YamlConfiguration conf, YamlConfiguration oldState) {
+    public BaseComponent getChangesAsComponent(YamlConfiguration conf, YamlConfiguration oldState) {
         return null;
     }
 }

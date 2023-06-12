@@ -2,9 +2,13 @@ package de.diddiz.LogBlock.blockstate;
 
 import de.diddiz.LogBlock.util.BukkitUtils;
 import de.diddiz.LogBlock.util.Reflections;
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
@@ -123,20 +127,21 @@ public class BlockStateCodecSign implements BlockStateCodec {
     }
 
     @Override
-    public String toString(YamlConfiguration state, YamlConfiguration oldState) {
+    public BaseComponent getChangesAsComponent(YamlConfiguration state, YamlConfiguration oldState) {
         if (state != null) {
-            StringBuilder sb = new StringBuilder();
+            TextComponent tc = new TextComponent();
+            // StringBuilder sb = new StringBuilder();
             boolean isWaxed = state.getBoolean("waxed");
             boolean oldWaxed = oldState != null && oldState.getBoolean("waxed");
             if (isWaxed != oldWaxed) {
-                sb.append(isWaxed ? "(waxed)" : "(not waxed)");
+                tc.addExtra(isWaxed ? "(waxed)" : "(not waxed)");
             }
             for (Side side : Side.values()) {
                 ConfigurationSection sideSection = side == Side.FRONT ? state : state.getConfigurationSection(side.name().toLowerCase());
-                if (!sb.isEmpty()) {
-                    sb.append(" ");
+                if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
+                    tc.addExtra(" ");
                 }
-                sb.append(side.name()).append(":");
+                tc.addExtra(side.name() + ":");
 
                 List<String> lines = sideSection == null ? Collections.emptyList() : sideSection.getStringList("lines");
                 List<String> oldLines = Collections.emptyList();
@@ -168,30 +173,38 @@ public class BlockStateCodecSign implements BlockStateCodec {
 
                 if (!lines.equals(oldLines)) {
                     for (String line : lines) {
-                        if (sb.length() > 0) {
-                            sb.append(" ");
+                        if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
+                            tc.addExtra(" ");
                         }
-                        sb.append("[").append(line).append("]");
+                        tc.addExtra("[");
+                        if (line != null && !line.isEmpty()) {
+                            tc.addExtra(new TextComponent(TextComponent.fromLegacyText(line)));
+                        }
+                        tc.addExtra("]");
                     }
                 }
                 if (signColor != oldSignColor) {
-                    if (sb.length() > 0) {
-                        sb.append(" ");
+                    if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
+                        tc.addExtra(" ");
                     }
-                    sb.append("(color: " + signColor.name().toLowerCase() + ")");
+                    tc.addExtra("(color: ");
+                    TextComponent colorText = new TextComponent(signColor.name().toLowerCase());
+                    colorText.setColor(ChatColor.of(new Color(signColor.getColor().asARGB())));
+                    tc.addExtra(colorText);
+                    tc.addExtra(")");
                 }
                 if (glowing != oldGlowing) {
-                    if (sb.length() > 0) {
-                        sb.append(" ");
+                    if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
+                        tc.addExtra(" ");
                     }
                     if (glowing) {
-                        sb.append("(glowing)");
+                        tc.addExtra("(glowing)");
                     } else {
-                        sb.append("(not glowing)");
+                        tc.addExtra("(not glowing)");
                     }
                 }
             }
-            return sb.toString();
+            return tc;
         }
         return null;
     }

@@ -5,6 +5,8 @@ import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.LogBlock.util.BukkitUtils;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.ShulkerBox;
@@ -60,7 +62,7 @@ public class BlockStateCodecShulkerBox implements BlockStateCodec {
     }
 
     @Override
-    public String toString(YamlConfiguration conf, YamlConfiguration oldState) {
+    public BaseComponent getChangesAsComponent(YamlConfiguration conf, YamlConfiguration oldState) {
         if (conf != null) {
             StringBuilder sb = new StringBuilder();
             sb.append("[");
@@ -78,7 +80,7 @@ public class BlockStateCodecShulkerBox implements BlockStateCodec {
                 }
             }
             sb.append("]");
-            return anySlot ? sb.toString() : null;
+            return anySlot ? new TextComponent(sb.toString()) : null;
         }
         return null;
     }

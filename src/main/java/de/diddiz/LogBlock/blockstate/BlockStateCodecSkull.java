@@ -1,7 +1,10 @@
 package de.diddiz.LogBlock.blockstate;
 
 import java.util.UUID;
-
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -65,18 +68,22 @@ public class BlockStateCodecSkull implements BlockStateCodec {
     }
 
     @Override
-    public String toString(YamlConfiguration conf, YamlConfiguration oldState) {
+    public BaseComponent getChangesAsComponent(YamlConfiguration conf, YamlConfiguration oldState) {
         if (HAS_PROFILE_API && conf != null) {
             PlayerProfile profile = (PlayerProfile) conf.get("profile");
             if (profile != null) {
-                return "[" + (profile.getName() != null ? profile.getName() : (profile.getUniqueId() != null ? profile.getUniqueId().toString() : "~unknown~")) + "]";
+                TextComponent tc = new TextComponent("[" + (profile.getName() != null ? profile.getName() : (profile.getUniqueId() != null ? profile.getUniqueId().toString() : "~unknown~")) + "]");
+                if (profile.getName() != null) {
+                    tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("UUID: " + profile.getUniqueId().toString())));
+                }
+                return tc;
             }
         }
         String ownerIdString = conf == null ? null : conf.getString("owner");
         UUID ownerId = ownerIdString == null ? null : UUID.fromString(ownerIdString);
         if (ownerId != null) {
             OfflinePlayer owner = Bukkit.getOfflinePlayer(ownerId);
-            return "[" + (owner.getName() != null ? owner.getName() : owner.getUniqueId().toString()) + "]";
+            return new TextComponent("[" + (owner.getName() != null ? owner.getName() : owner.getUniqueId().toString()) + "]");
         }
         return null;
     }

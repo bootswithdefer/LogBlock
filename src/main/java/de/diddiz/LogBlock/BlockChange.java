@@ -83,25 +83,27 @@ public class BlockChange implements LookupCacheElement {
         ca = catemp;
     }
 
-    private String getTypeDetails(BlockData type, byte[] typeState) {
+    private BaseComponent getTypeDetails(BlockData type, byte[] typeState) {
         return getTypeDetails(type, typeState, null, null);
     }
 
-    private String getTypeDetails(BlockData type, byte[] typeState, BlockData oldType, byte[] oldTypeState) {
-        String typeDetails = null;
+    private BaseComponent getTypeDetails(BlockData type, byte[] typeState, BlockData oldType, byte[] oldTypeState) {
+        BaseComponent typeDetails = null;
 
         if (BlockStateCodecs.hasCodec(type.getMaterial())) {
             try {
-                typeDetails = BlockStateCodecs.toString(type.getMaterial(), Utils.deserializeYamlConfiguration(typeState), type.equals(oldType) ? Utils.deserializeYamlConfiguration(oldTypeState) : null);
+                typeDetails = BlockStateCodecs.getChangesAsComponent(type.getMaterial(), Utils.deserializeYamlConfiguration(typeState), type.equals(oldType) ? Utils.deserializeYamlConfiguration(oldTypeState) : null);
             } catch (Exception e) {
                 LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not parse BlockState for " + type.getMaterial(), e);
             }
         }
 
         if (typeDetails == null) {
-            return "";
+            return new TextComponent("");
         } else {
-            return " " + typeDetails;
+            TextComponent component = new TextComponent(" ");
+            component.addExtra(typeDetails);
+            return component;
         }
     }
 
@@ -129,8 +131,8 @@ public class BlockChange implements LookupCacheElement {
         }
 
         // Process type details once for later use.
-        String typeDetails = getTypeDetails(type, typeState, replaced, replacedState);
-        String replacedDetails = getTypeDetails(replaced, replacedState);
+        BaseComponent typeDetails = getTypeDetails(type, typeState, replaced, replacedState);
+        BaseComponent replacedDetails = getTypeDetails(replaced, replacedState);
 
         if (type.getMaterial().equals(replaced.getMaterial()) || (type.getMaterial() == Material.CAKE && BukkitUtils.isCandleCake(replaced.getMaterial()))) {
             if (BukkitUtils.isEmpty(type.getMaterial())) {
@@ -201,7 +203,7 @@ public class BlockChange implements LookupCacheElement {
                 msg.addExtra(createTextComponentWithColor("changed the book on a ", INTERACT.getColor()));
                 msg.addExtra(prettyMaterial(type));
                 msg.addExtra(" to");
-                msg.addExtra(prettyState(typeDetails.length() == 0 ? " empty" : typeDetails));
+                msg.addExtra(prettyState(typeDetails));
             } else if (type instanceof Powerable) {
                 msg.addExtra(createTextComponentWithColor("stepped on ", INTERACT.getColor()));
                 msg.addExtra(prettyMaterial(type));
