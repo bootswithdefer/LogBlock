@@ -106,19 +106,19 @@ public class InteractLogging extends LoggingListener {
                                 SignSide signSideBefore = signBefore.getSide(side);
                                 SignSide signSideAfter = signAfter.getSide(side);
                                 if (itemType == Material.GLOW_INK_SAC) {
-                                    if (!signSideBefore.isGlowingText()) {
+                                    if (!signSideBefore.isGlowingText() && hasText(signSideBefore)) {
                                         signSideAfter.setGlowingText(true);
                                         consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
                                     }
                                 } else if (itemType == Material.INK_SAC) {
-                                    if (signSideBefore.isGlowingText()) {
+                                    if (signSideBefore.isGlowingText() && hasText(signSideBefore)) {
                                         signSideAfter.setGlowingText(false);
                                         consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
                                     }
                                 } else if (itemType == Material.HONEYCOMB) {
                                     signAfter.setEditable(false);
                                     consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
-                                } else if (BukkitUtils.isDye(itemType)) {
+                                } else if (BukkitUtils.isDye(itemType) && hasText(signSideBefore)) {
                                     DyeColor newColor = BukkitUtils.dyeToDyeColor(itemType);
                                     if (newColor != null && signSideBefore.getColor() != newColor) {
                                         signSideAfter.setColor(newColor);
@@ -221,6 +221,15 @@ public class InteractLogging extends LoggingListener {
                 }
             }
         }
+    }
+
+    private boolean hasText(SignSide signSide) {
+        for (int i = 0; i < 4; i++) {
+            if (!signSide.getLine(i).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
