@@ -19,9 +19,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class BlockStateCodecSign implements BlockStateCodec {
-
-    public static final BlockStateCodecSign INSTANCE = new BlockStateCodecSign();
-
     @Override
     public Material[] getApplicableMaterials() {
         return BukkitUtils.getAllSignMaterials().toArray(new Material[BukkitUtils.getAllSignMaterials().size()]);
@@ -121,6 +118,16 @@ public class BlockStateCodecSign implements BlockStateCodec {
                     }
                     signSide.setColor(signColor);
                     signSide.setGlowingText(glowing);
+                }
+            } else {
+                sign.setEditable(true);
+                for (Side side : Side.values()) {
+                    SignSide signSide = sign.getSide(side);
+                    for (int i = 0; i < 4; i++) {
+                        signSide.setLine(i, "");
+                    }
+                    signSide.setColor(DyeColor.BLACK);
+                    signSide.setGlowingText(false);
                 }
             }
         }

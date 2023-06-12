@@ -638,6 +638,7 @@ class Updater {
 
         if (configVersion.compareTo(new ComparableVersion("1.13.1")) < 0) {
             logblock.getLogger().info("Updating tables to 1.13.1 ...");
+            BlockStateCodecSign signCodec = new BlockStateCodecSign();
             try (Connection conn = logblock.getConnection()) {
                 conn.setAutoCommit(false);
                 final Statement st = conn.createStatement();
@@ -675,7 +676,7 @@ class Updater {
 
                                     if (!nullBlock && signText != null) {
                                         String[] lines = signText.split("\0", 4);
-                                        byte[] bytes = Utils.serializeYamlConfiguration(BlockStateCodecSign.INSTANCE.serialize(null, Side.FRONT, lines));
+                                        byte[] bytes = Utils.serializeYamlConfiguration(signCodec.serialize(null, Side.FRONT, lines));
 
                                         Material replacedMaterial = MaterialConverter.getBlockData(replaced, -1).getMaterial();
                                         Material typeMaterial = MaterialConverter.getBlockData(type, -1).getMaterial();

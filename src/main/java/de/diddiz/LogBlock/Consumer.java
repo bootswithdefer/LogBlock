@@ -36,7 +36,6 @@ import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
-import org.bukkit.block.sign.Side;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -48,7 +47,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
 
 import de.diddiz.LogBlock.EntityChange.EntityChangeType;
-import de.diddiz.LogBlock.blockstate.BlockStateCodecSign;
 import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
@@ -330,27 +328,6 @@ public class Consumer extends Thread {
             return;
         }
         addQueueLast(new KillRow(location, killer == null ? null : killer, victim, weapon == null ? 0 : MaterialConverter.getOrAddMaterialId(weapon.getType())));
-    }
-
-    /**
-     * Logs an actor placing a sign along with its contents
-     *
-     * @param actor
-     *            Actor placing the sign
-     * @param loc
-     *            Location of the placed sign
-     * @param type
-     *            BlockData of the sign
-     * @param side
-     * @param lines
-     *            The four lines on the sign.
-     */
-    public void queueSignChange(Actor actor, Location loc, BlockState state, Side side, String[] lines) {
-        BlockData type = state.getBlockData();
-        if (!BukkitUtils.isSign(type.getMaterial())) {
-            return;
-        }
-        queueBlock(actor, loc, type, type, null, BlockStateCodecSign.INSTANCE.serialize(state, side, lines), null);
     }
 
     public void queueChat(Actor player, String message) {
