@@ -21,7 +21,7 @@ public class BlockStateCodecs {
     }
 
     static {
-        registerCodec(new BlockStateCodecSign());
+        registerCodec(BlockStateCodecSign.INSTANCE);
         registerCodec(new BlockStateCodecSkull());
         registerCodec(new BlockStateCodecBanner());
         registerCodec(new BlockStateCodecSpawner());

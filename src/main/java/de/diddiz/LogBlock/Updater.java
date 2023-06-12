@@ -9,6 +9,7 @@ import de.diddiz.LogBlock.util.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.sign.Side;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
@@ -674,7 +675,7 @@ class Updater {
 
                                     if (!nullBlock && signText != null) {
                                         String[] lines = signText.split("\0", 4);
-                                        byte[] bytes = Utils.serializeYamlConfiguration(BlockStateCodecSign.serialize(lines));
+                                        byte[] bytes = Utils.serializeYamlConfiguration(BlockStateCodecSign.INSTANCE.serialize(null, Side.FRONT, lines));
 
                                         Material replacedMaterial = MaterialConverter.getBlockData(replaced, -1).getMaterial();
                                         Material typeMaterial = MaterialConverter.getBlockData(type, -1).getMaterial();

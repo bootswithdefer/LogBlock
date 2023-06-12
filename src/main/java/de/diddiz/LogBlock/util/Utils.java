@@ -284,4 +284,15 @@ public class Utils {
     public static String serializeForSQL(YamlConfiguration conf) {
         return mysqlPrepareBytesForInsertAllowNull(serializeYamlConfiguration(conf));
     }
+
+    public static double warpDegrees(double degrees) {
+        double d = degrees % 360.0;
+        if (d >= 180.0) {
+            d -= 360.0;
+        }
+        if (d < -180.0) {
+            d += 360.0;
+        }
+        return d;
+    }
 }

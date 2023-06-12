@@ -5,6 +5,7 @@ import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
 import de.diddiz.LogBlock.config.WorldConfig;
 import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.Reflections;
 import java.util.UUID;
 import org.bukkit.DyeColor;
 import org.bukkit.GameEvent;
@@ -30,6 +31,8 @@ import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.block.data.type.Repeater;
 import org.bukkit.block.data.type.Switch;
 import org.bukkit.block.data.type.TurtleEgg;
+import org.bukkit.block.sign.Side;
+import org.bukkit.block.sign.SignSide;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Result;
 import org.bukkit.event.EventHandler;
@@ -93,30 +96,34 @@ public class InteractLogging extends LoggingListener {
             } else if (BukkitUtils.isSign(type)) {
                 if (wcfg.isLogging(Logging.SIGNTEXT) && event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getItem() != null) {
                     Material itemType = event.getItem().getType();
-                    if (BukkitUtils.isDye(itemType) || itemType == Material.GLOW_INK_SAC || itemType == Material.INK_SAC) {
+                    if (BukkitUtils.isDye(itemType) || itemType == Material.GLOW_INK_SAC || itemType == Material.INK_SAC || itemType == Material.HONEYCOMB) {
                         final BlockState before = event.getClickedBlock().getState();
-                        if (before instanceof Sign) {
-                            if (itemType == Material.GLOW_INK_SAC) {
-                                Sign signBefore = (Sign) before;
-                                if (!signBefore.isGlowingText()) {
-                                    final Sign signAfter = (Sign) event.getClickedBlock().getState();
-                                    signAfter.setGlowingText(true);
+                        if (before instanceof Sign signBefore) {
+                            boolean waxed = Reflections.isSignWaxed(signBefore);
+                            if (!waxed) {
+                                final Sign signAfter = (Sign) event.getClickedBlock().getState();
+                                Side side = BukkitUtils.getFacingSignSide(player, clicked);
+                                SignSide signSideBefore = signBefore.getSide(side);
+                                SignSide signSideAfter = signAfter.getSide(side);
+                                if (itemType == Material.GLOW_INK_SAC) {
+                                    if (!signSideBefore.isGlowingText()) {
+                                        signSideAfter.setGlowingText(true);
+                                        consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                    }
+                                } else if (itemType == Material.INK_SAC) {
+                                    if (signSideBefore.isGlowingText()) {
+                                        signSideAfter.setGlowingText(false);
+                                        consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                    }
+                                } else if (itemType == Material.HONEYCOMB) {
+                                    signAfter.setEditable(false);
                                     consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
-                                }
-                            } else if (itemType == Material.INK_SAC) {
-                                Sign signBefore = (Sign) before;
-                                if (signBefore.isGlowingText()) {
-                                    final Sign signAfter = (Sign) event.getClickedBlock().getState();
-                                    signAfter.setGlowingText(false);
-                                    consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
-                                }
-                            } else {
-                                DyeColor newColor = BukkitUtils.dyeToDyeColor(itemType);
-                                Sign signBefore = (Sign) before;
-                                if (newColor != null && signBefore.getColor() != newColor) {
-                                    final Sign signAfter = (Sign) event.getClickedBlock().getState();
-                                    signAfter.setColor(newColor);
-                                    consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                } else if (BukkitUtils.isDye(itemType)) {
+                                    DyeColor newColor = BukkitUtils.dyeToDyeColor(itemType);
+                                    if (newColor != null && signSideBefore.getColor() != newColor) {
+                                        signSideAfter.setColor(newColor);
+                                        consumer.queueBlockReplace(Actor.actorFromEntity(player), signBefore, signAfter);
+                                    }
                                 }
                             }
                         }

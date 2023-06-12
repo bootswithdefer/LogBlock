@@ -36,6 +36,7 @@ import org.bukkit.World;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
+import org.bukkit.block.sign.Side;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -340,14 +341,16 @@ public class Consumer extends Thread {
      *            Location of the placed sign
      * @param type
      *            BlockData of the sign
+     * @param side
      * @param lines
      *            The four lines on the sign.
      */
-    public void queueSignChange(Actor actor, Location loc, BlockData type, String[] lines) {
+    public void queueSignChange(Actor actor, Location loc, BlockState state, Side side, String[] lines) {
+        BlockData type = state.getBlockData();
         if (!BukkitUtils.isSign(type.getMaterial())) {
             return;
         }
-        queueBlock(actor, loc, type, type, null, BlockStateCodecSign.serialize(lines), null);
+        queueBlock(actor, loc, type, type, null, BlockStateCodecSign.INSTANCE.serialize(state, side, lines), null);
     }
 
     public void queueChat(Actor player, String message) {
