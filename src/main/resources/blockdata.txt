@@ -919,10 +919,10 @@
 115:15,minecraft:air
 116:0,minecraft:enchanting_table
 117:0,minecraft:brewing_stand[has_bottle_0=false,has_bottle_1=false,has_bottle_2=false]
-118:0,minecraft:cauldron[level=0]
-118:1,minecraft:cauldron[level=1]
-118:2,minecraft:cauldron[level=2]
-118:3,minecraft:cauldron[level=3]
+118:0,minecraft:cauldron
+118:1,minecraft:cauldron
+118:2,minecraft:cauldron
+118:3,minecraft:cauldron
 118:4,minecraft:air
 118:5,minecraft:air
 118:6,minecraft:air
