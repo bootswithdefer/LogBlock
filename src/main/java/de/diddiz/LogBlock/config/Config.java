@@ -81,6 +81,7 @@ public class Config {
             worldNames.add("world_the_end");
         }
         def.put("loggedWorlds", worldNames);
+        def.put("mysql.protocol", "mysql");
         def.put("mysql.host", "localhost");
         def.put("mysql.port", 3306);
         def.put("mysql.database", "minecraft");
@@ -179,7 +180,7 @@ public class Config {
         boolean oldConfig = configVersion.compareTo(new ComparableVersion(CURRENT_CONFIG_VERSION)) < 0;
 
         mysqlDatabase = getStringIncludingInts(config, "mysql.database");
-        url = "jdbc:mysql://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + mysqlDatabase;
+        url = "jdbc:" + config.getString("mysql.protocol") + "://" + config.getString("mysql.host") + ":" + config.getInt("mysql.port") + "/" + mysqlDatabase;
         user = getStringIncludingInts(config, "mysql.user");
         password = getStringIncludingInts(config, "mysql.password");
         mysqlUseSSL = config.getBoolean("mysql.useSSL", true);
