@@ -182,8 +182,8 @@ public class WorldEditor implements Runnable {
             logblock.getServer().getScheduler().cancelTask(taskID);
             if (errorList.size() > 0) {
                 try {
-                	final File errorDir = new File(logblock.getDataFolder(), "error");
-                	errorDir.mkdir();
+                    final File errorDir = new File(logblock.getDataFolder(), "error");
+                    errorDir.mkdirs();
                     final File file = new File(errorDir, "WorldEditor-" + new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis()) + ".log");
                     final PrintWriter writer = new PrintWriter(file);
                     for (final WorldEditorException err : errorList) {
