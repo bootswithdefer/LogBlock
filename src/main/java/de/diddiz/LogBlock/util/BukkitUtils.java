@@ -139,7 +139,7 @@ public class BukkitUtils {
         Set<Material> carpets = Tag.WOOL_CARPETS.getValues();
 
         // https://minecraft.fandom.com/wiki/Tag#blocks_flower_pots
-        Set<Material> flowserPots = Tag.FLOWER_POTS.getValues();
+        Set<Material> flowerPots = Tag.FLOWER_POTS.getValues();
 
         // https://minecraft.fandom.com/wiki/Tag#blocks_saplings
         Set<Material> saplings = Tag.SAPLINGS.getValues();
@@ -257,7 +257,7 @@ public class BukkitUtils {
         relativeTopBreakable.addAll(carpets);
         relativeTopBreakable.addAll(cropBlocks.getValues());
         relativeTopBreakable.addAll(doublePlants);
-        relativeTopBreakable.addAll(flowserPots);
+        relativeTopBreakable.addAll(flowerPots);
         relativeTopBreakable.addAll(pressurePlates.getValues());
         relativeTopBreakable.addAll(saplings);
         relativeTopBreakable.addAll(signs);
