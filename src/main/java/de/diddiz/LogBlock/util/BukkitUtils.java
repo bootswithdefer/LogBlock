@@ -151,65 +151,65 @@ public class BukkitUtils {
         Set<Material> tallFlowers = Tag.TALL_FLOWERS.getValues();
 
         Set<Material> bannerStanding = Set.of(Material.WHITE_BANNER,
-            Material.ORANGE_BANNER,
-            Material.MAGENTA_BANNER,
-            Material.LIGHT_BLUE_BANNER,
-            Material.YELLOW_BANNER,
-            Material.LIME_BANNER,
-            Material.PINK_BANNER,
-            Material.GRAY_BANNER,
-            Material.LIGHT_GRAY_BANNER,
-            Material.CYAN_BANNER,
-            Material.PURPLE_BANNER,
-            Material.BLUE_BANNER,
-            Material.BROWN_BANNER,
-            Material.GREEN_BANNER,
-            Material.RED_BANNER,
-            Material.BLACK_BANNER);
+                Material.ORANGE_BANNER,
+                Material.MAGENTA_BANNER,
+                Material.LIGHT_BLUE_BANNER,
+                Material.YELLOW_BANNER,
+                Material.LIME_BANNER,
+                Material.PINK_BANNER,
+                Material.GRAY_BANNER,
+                Material.LIGHT_GRAY_BANNER,
+                Material.CYAN_BANNER,
+                Material.PURPLE_BANNER,
+                Material.BLUE_BANNER,
+                Material.BROWN_BANNER,
+                Material.GREEN_BANNER,
+                Material.RED_BANNER,
+                Material.BLACK_BANNER);
 
         Set<Material> bannerWall = Set.of(Material.WHITE_WALL_BANNER,
-            Material.ORANGE_WALL_BANNER,
-            Material.MAGENTA_WALL_BANNER,
-            Material.LIGHT_BLUE_WALL_BANNER,
-            Material.YELLOW_WALL_BANNER,
-            Material.LIME_WALL_BANNER,
-            Material.PINK_WALL_BANNER,
-            Material.GRAY_WALL_BANNER,
-            Material.LIGHT_GRAY_WALL_BANNER,
-            Material.CYAN_WALL_BANNER,
-            Material.PURPLE_WALL_BANNER,
-            Material.BLUE_WALL_BANNER,
-            Material.BROWN_WALL_BANNER,
-            Material.GREEN_WALL_BANNER,
-            Material.RED_WALL_BANNER,
-            Material.BLACK_WALL_BANNER);
+                Material.ORANGE_WALL_BANNER,
+                Material.MAGENTA_WALL_BANNER,
+                Material.LIGHT_BLUE_WALL_BANNER,
+                Material.YELLOW_WALL_BANNER,
+                Material.LIME_WALL_BANNER,
+                Material.PINK_WALL_BANNER,
+                Material.GRAY_WALL_BANNER,
+                Material.LIGHT_GRAY_WALL_BANNER,
+                Material.CYAN_WALL_BANNER,
+                Material.PURPLE_WALL_BANNER,
+                Material.BLUE_WALL_BANNER,
+                Material.BROWN_WALL_BANNER,
+                Material.GREEN_WALL_BANNER,
+                Material.RED_WALL_BANNER,
+                Material.BLACK_WALL_BANNER);
 
         Set<Material> bannerAll = Tag.BANNERS.getValues();
 
         Set<Material> headAndSkulls = Set.of(Material.PLAYER_HEAD,
-            Material.PLAYER_WALL_HEAD,
-            Material.CREEPER_HEAD,
-            Material.CREEPER_WALL_HEAD,
-            Material.DRAGON_HEAD,
-            Material.DRAGON_WALL_HEAD,
-            Material.ZOMBIE_HEAD,
-            Material.ZOMBIE_WALL_HEAD,
-            Material.SKELETON_SKULL,
-            Material.SKELETON_WALL_SKULL,
-            Material.WITHER_SKELETON_SKULL,
-            Material.WITHER_SKELETON_WALL_SKULL,
-            Material.PIGLIN_HEAD,
-            Material.PIGLIN_WALL_HEAD);
+                Material.PLAYER_WALL_HEAD,
+                Material.CREEPER_HEAD,
+                Material.CREEPER_WALL_HEAD,
+                Material.DRAGON_HEAD,
+                Material.DRAGON_WALL_HEAD,
+                Material.ZOMBIE_HEAD,
+                Material.ZOMBIE_WALL_HEAD,
+                Material.SKELETON_SKULL,
+                Material.SKELETON_WALL_SKULL,
+                Material.WITHER_SKELETON_SKULL,
+                Material.WITHER_SKELETON_WALL_SKULL,
+                Material.PIGLIN_HEAD,
+                Material.PIGLIN_WALL_HEAD);
 
         Set<Material> standingTorch = Set.of(Material.TORCH,
-            Material.SOUL_TORCH,
-            Material.REDSTONE_TORCH);
+                Material.SOUL_TORCH,
+                Material.REDSTONE_TORCH);
 
         Set<Material> wallTorch = Set.of(Material.WALL_TORCH,
-            Material.SOUL_WALL_TORCH,
-            Material.REDSTONE_WALL_TORCH);
+                Material.SOUL_WALL_TORCH,
+                Material.REDSTONE_WALL_TORCH);
 
-        singleBlockPlants = new HashSet<Material>();
+        singleBlockPlants = new HashSet<>();
         singleBlockPlants.addAll(smallFlowers);
         singleBlockPlants.add(Material.GRASS);
         singleBlockPlants.add(Material.FERN);
@@ -227,7 +227,7 @@ public class BukkitUtils {
         singleBlockPlants.add(Material.PINK_PETALS);
         singleBlockPlants.add(Material.PITCHER_CROP);
 
-        doublePlants = new HashSet<Material>();
+        doublePlants = new HashSet<>();
         doublePlants.addAll(tallFlowers);
         doublePlants.add(Material.TALL_GRASS);
         doublePlants.add(Material.LARGE_FERN);
@@ -235,7 +235,7 @@ public class BukkitUtils {
         doublePlants.add(Material.SMALL_DRIPLEAF);
 
         // Blocks that break when they are attached to a block
-        relativeBreakable = new HashSet<Material>();
+        relativeBreakable = new HashSet<>();
         relativeBreakable.addAll(bannerWall);
         relativeBreakable.addAll(buttons.getValues());
         relativeBreakable.addAll(wallSigns);
@@ -251,7 +251,7 @@ public class BukkitUtils {
         relativeBreakable.add(Material.LARGE_AMETHYST_BUD);
 
         // Blocks that break when they are on top of a block
-        relativeTopBreakable = new HashSet<Material>();
+        relativeTopBreakable = new HashSet<>();
         relativeTopBreakable.addAll(bannerStanding);
         relativeTopBreakable.addAll(candleCakes.getValues());
         relativeTopBreakable.addAll(candles.getValues());
@@ -286,7 +286,7 @@ public class BukkitUtils {
         relativeTopBreakable.add(Material.BIG_DRIPLEAF_STEM);
 
         // Blocks that break falling entities
-        fallingEntityKillers = new HashSet<Material>();
+        fallingEntityKillers = new HashSet<>();
         fallingEntityKillers.addAll(bannerAll);
         fallingEntityKillers.addAll(candleCakes.getValues());
         fallingEntityKillers.addAll(candles.getValues());
@@ -318,7 +318,7 @@ public class BukkitUtils {
         fallingEntityKillers.remove(Material.NETHER_SPROUTS);
 
         // Container Blocks
-        containerBlocks = new HashSet<Material>();
+        containerBlocks = new HashSet<>();
         containerBlocks.addAll(shulkerBoxBlocks.getValues());
         containerBlocks.add(Material.CHEST);
         containerBlocks.add(Material.TRAPPED_CHEST);
@@ -348,7 +348,7 @@ public class BukkitUtils {
         projectileItems.put(EntityType.WITHER_SKULL, Material.WITHER_SKELETON_SKULL);
         projectileItems.put(EntityType.FIREWORK, Material.FIREWORK_ROCKET);
 
-        nonFluidProofBlocks = new HashSet<Material>();
+        nonFluidProofBlocks = new HashSet<>();
         nonFluidProofBlocks.addAll(carpets);
         nonFluidProofBlocks.addAll(cropBlocks.getValues());
         nonFluidProofBlocks.addAll(doublePlants);
@@ -374,26 +374,26 @@ public class BukkitUtils {
         nonFluidProofBlocks.add(Material.DAYLIGHT_DETECTOR);
 
         alwaysWaterlogged = Set.of(Material.SEAGRASS,
-            Material.TALL_SEAGRASS,
-            Material.KELP,
-            Material.KELP_PLANT);
+                Material.TALL_SEAGRASS,
+                Material.KELP,
+                Material.KELP_PLANT);
 
         concreteBlocks = Set.of(Material.BLACK_CONCRETE,
-            Material.BLUE_CONCRETE,
-            Material.LIGHT_GRAY_CONCRETE,
-            Material.BROWN_CONCRETE,
-            Material.CYAN_CONCRETE,
-            Material.GRAY_CONCRETE,
-            Material.GREEN_CONCRETE,
-            Material.LIGHT_BLUE_CONCRETE,
-            Material.MAGENTA_CONCRETE,
-            Material.LIME_CONCRETE,
-            Material.ORANGE_CONCRETE,
-            Material.PINK_CONCRETE,
-            Material.PURPLE_CONCRETE,
-            Material.RED_CONCRETE,
-            Material.WHITE_CONCRETE,
-            Material.YELLOW_CONCRETE);
+                Material.BLUE_CONCRETE,
+                Material.LIGHT_GRAY_CONCRETE,
+                Material.BROWN_CONCRETE,
+                Material.CYAN_CONCRETE,
+                Material.GRAY_CONCRETE,
+                Material.GREEN_CONCRETE,
+                Material.LIGHT_BLUE_CONCRETE,
+                Material.MAGENTA_CONCRETE,
+                Material.LIME_CONCRETE,
+                Material.ORANGE_CONCRETE,
+                Material.PINK_CONCRETE,
+                Material.PURPLE_CONCRETE,
+                Material.RED_CONCRETE,
+                Material.WHITE_CONCRETE,
+                Material.YELLOW_CONCRETE);
 
         dyes = new HashMap<>();
         dyes.put(Material.BLACK_DYE, DyeColor.BLACK);
@@ -415,7 +415,7 @@ public class BukkitUtils {
     }
 
     private static final BlockFace[] relativeBlockFaces = new BlockFace[] {
-        BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.UP, BlockFace.DOWN
+            BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.UP, BlockFace.DOWN
     };
 
     /**
