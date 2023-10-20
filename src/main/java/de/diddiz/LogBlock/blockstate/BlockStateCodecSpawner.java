@@ -1,5 +1,6 @@
 package de.diddiz.LogBlock.blockstate;
 
+import de.diddiz.LogBlock.LogBlock;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
@@ -25,7 +26,9 @@ public class BlockStateCodecSpawner implements BlockStateCodec {
             conf.set("minSpawnDelay", spawner.getMinSpawnDelay());
             conf.set("requiredPlayerRange", spawner.getRequiredPlayerRange());
             conf.set("spawnCount", spawner.getSpawnCount());
-            conf.set("spawnedType", spawner.getSpawnedType().name());
+            if (spawner.getSpawnedType() != null) {
+                conf.set("spawnedType", spawner.getSpawnedType().name());
+            }
             conf.set("spawnRange", spawner.getSpawnRange());
             return conf;
         }
@@ -43,7 +46,16 @@ public class BlockStateCodecSpawner implements BlockStateCodec {
                 spawner.setMinSpawnDelay(conf.getInt("minSpawnDelay"));
                 spawner.setRequiredPlayerRange(conf.getInt("requiredPlayerRange"));
                 spawner.setSpawnCount(conf.getInt("spawnCount"));
-                spawner.setSpawnedType(EntityType.valueOf(conf.getString("spawnedType")));
+                EntityType spawnedType = null;
+                String spawnedTypeString = conf.getString("spawnedType");
+                if (spawnedTypeString != null) {
+                    try {
+                        spawnedType = EntityType.valueOf(spawnedTypeString);
+                    } catch (IllegalArgumentException ignored) {
+                        LogBlock.getInstance().getLogger().warning("Could not find spawner spawned type: " + spawnedTypeString);
+                    }
+                }
+                spawner.setSpawnedType(spawnedType);
                 spawner.setSpawnRange(conf.getInt("spawnRange"));
             }
         }
