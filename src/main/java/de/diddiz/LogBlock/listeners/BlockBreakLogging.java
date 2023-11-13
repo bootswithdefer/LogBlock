@@ -14,6 +14,7 @@ import org.bukkit.block.data.Waterlogged;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
@@ -68,6 +69,19 @@ public class BlockBreakLogging extends LoggingListener {
                 }
             } else {
                 consumer.queueBlockBreak(Actor.actorFromEntity(event.getPlayer()), event.getBlockClicked().getState());
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockDropItem(BlockDropItemEvent event) {
+        if (isLogging(event.getBlock().getWorld(), Logging.BLOCKBREAK)) {
+            Material type = event.getBlock().getType();
+            if (type == Material.SUSPICIOUS_GRAVEL || type == Material.SUSPICIOUS_SAND) {
+                Material simplyBroken = type == Material.SUSPICIOUS_SAND ? Material.SAND : Material.GRAVEL;
+                if (event.getItems().size() != 1 || event.getItems().get(0).getItemStack().getType() != simplyBroken) {
+                    consumer.queueBlockReplace(Actor.actorFromEntity(event.getPlayer()), event.getBlockState(), simplyBroken.createBlockData());
+                }
             }
         }
     }
