@@ -143,11 +143,8 @@ public class BlockStateCodecSign implements BlockStateCodec {
                 tc.addExtra(isWaxed ? "(waxed)" : "(not waxed)");
             }
             for (Side side : Side.values()) {
+                boolean sideHeaderAdded = false;
                 ConfigurationSection sideSection = side == Side.FRONT ? state : state.getConfigurationSection(side.name().toLowerCase());
-                if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
-                    tc.addExtra(" ");
-                }
-                tc.addExtra(side.name() + ":");
 
                 List<String> lines = sideSection == null ? Collections.emptyList() : sideSection.getStringList("lines");
                 List<String> oldLines = Collections.emptyList();
@@ -178,6 +175,7 @@ public class BlockStateCodecSign implements BlockStateCodec {
                 }
 
                 if (!lines.equals(oldLines)) {
+                    sideHeaderAdded = addSideHeaderText(tc, side, sideHeaderAdded);
                     for (String line : lines) {
                         if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
                             tc.addExtra(" ");
@@ -190,6 +188,7 @@ public class BlockStateCodecSign implements BlockStateCodec {
                     }
                 }
                 if (signColor != oldSignColor) {
+                    sideHeaderAdded = addSideHeaderText(tc, side, sideHeaderAdded);
                     if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
                         tc.addExtra(" ");
                     }
@@ -200,6 +199,7 @@ public class BlockStateCodecSign implements BlockStateCodec {
                     tc.addExtra(")");
                 }
                 if (glowing != oldGlowing) {
+                    sideHeaderAdded = addSideHeaderText(tc, side, sideHeaderAdded);
                     if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
                         tc.addExtra(" ");
                     }
@@ -213,5 +213,15 @@ public class BlockStateCodecSign implements BlockStateCodec {
             return tc;
         }
         return null;
+    }
+
+    private static boolean addSideHeaderText(TextComponent tc, Side side, boolean wasAdded) {
+        if (!wasAdded) {
+            if (tc.getExtra() != null && !tc.getExtra().isEmpty()) {
+                tc.addExtra(" ");
+            }
+            tc.addExtra(side.name() + ":");
+        }
+        return true;
     }
 }
