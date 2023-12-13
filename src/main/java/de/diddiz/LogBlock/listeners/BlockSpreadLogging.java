@@ -29,7 +29,7 @@ public class BlockSpreadLogging extends LoggingListener {
         World world = event.getNewState().getWorld();
         Material type = event.getNewState().getType();
 
-        if (type == Material.GRASS) {
+        if (type == Material.SHORT_GRASS) {
             if (!isLogging(world, Logging.GRASSGROWTH)) {
                 return;
             }

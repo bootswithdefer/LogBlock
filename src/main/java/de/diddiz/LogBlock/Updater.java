@@ -950,6 +950,11 @@ class Updater {
             renameMaterial("minecraft:grass_path", Material.DIRT_PATH);
         }
 
+        if (comparablePreviousMinecraftVersion.compareTo("1.20.4") < 0 && comparableCurrentMinecraftVersion.compareTo("1.20.4") >= 0) {
+            logblock.getLogger().info("[Updater] Upgrading Materials to 1.20.4");
+            renameMaterial("minecraft:grass", Material.SHORT_GRASS);
+        }
+
         config.set("previousMinecraftVersion", currentMinecraftVersion);
         logblock.saveConfig();
     }

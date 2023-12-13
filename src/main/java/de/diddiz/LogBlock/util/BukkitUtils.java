@@ -211,7 +211,7 @@ public class BukkitUtils {
 
         singleBlockPlants = new HashSet<>();
         singleBlockPlants.addAll(smallFlowers);
-        singleBlockPlants.add(Material.GRASS);
+        singleBlockPlants.add(Material.SHORT_GRASS);
         singleBlockPlants.add(Material.FERN);
         singleBlockPlants.add(Material.DEAD_BUSH);
         singleBlockPlants.add(Material.BROWN_MUSHROOM);
@@ -314,7 +314,7 @@ public class BukkitUtils {
         fallingEntityKillers.add(Material.REPEATER);
         fallingEntityKillers.add(Material.COMPARATOR);
         fallingEntityKillers.add(Material.DAYLIGHT_DETECTOR);
-        fallingEntityKillers.remove(Material.GRASS);
+        fallingEntityKillers.remove(Material.SHORT_GRASS);
         fallingEntityKillers.remove(Material.NETHER_SPROUTS);
 
         // Container Blocks
