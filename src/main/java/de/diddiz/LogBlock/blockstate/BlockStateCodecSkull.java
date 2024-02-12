@@ -73,7 +73,7 @@ public class BlockStateCodecSkull implements BlockStateCodec {
             PlayerProfile profile = (PlayerProfile) conf.get("profile");
             if (profile != null) {
                 TextComponent tc = new TextComponent("[" + (profile.getName() != null ? profile.getName() : (profile.getUniqueId() != null ? profile.getUniqueId().toString() : "~unknown~")) + "]");
-                if (profile.getName() != null) {
+                if (profile.getName() != null && profile.getUniqueId() != null) {
                     tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text("UUID: " + profile.getUniqueId().toString())));
                 }
                 return tc;
