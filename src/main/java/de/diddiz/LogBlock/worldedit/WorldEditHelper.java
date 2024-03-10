@@ -139,7 +139,7 @@ public class WorldEditHelper {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     NBTOutputStream nbtos = new NBTOutputStream(baos);
                     CompoundTag nbt = state.getNbtData();
-                    LinkedHashMap<String, Tag> value = new LinkedHashMap<>(nbt.getValue());
+                    LinkedHashMap<String, Tag<?, ?>> value = new LinkedHashMap<>(nbt.getValue());
                     value.put("Health", new FloatTag(20.0f));
                     value.put("Motion", new ListTag(DoubleTag.class, Arrays.asList(new DoubleTag[] { new DoubleTag(0), new DoubleTag(0), new DoubleTag(0) })));
                     value.put("Fire", new ShortTag((short) -20));
