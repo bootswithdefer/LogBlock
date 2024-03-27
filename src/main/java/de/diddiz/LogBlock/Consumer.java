@@ -1,13 +1,44 @@
 package de.diddiz.LogBlock;
 
-import static de.diddiz.LogBlock.Actor.actorFromString;
-import de.diddiz.LogBlock.config.Config;
-import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
+import static de.diddiz.LogBlock.config.Config.getWorldConfig;
+import static de.diddiz.LogBlock.config.Config.hiddenBlocks;
+import static de.diddiz.LogBlock.config.Config.hiddenPlayers;
+import static de.diddiz.LogBlock.config.Config.isLogged;
+import static de.diddiz.LogBlock.config.Config.logPlayerInfo;
+import static de.diddiz.LogBlock.util.BukkitUtils.compressInventory;
+import static de.diddiz.LogBlock.util.BukkitUtils.itemIDfromProjectileEntity;
+import static de.diddiz.LogBlock.util.Utils.mysqlTextEscape;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Waterlogged;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.Inventory;
@@ -15,213 +46,247 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
+import de.diddiz.LogBlock.EntityChange.EntityChangeType;
+import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
+import de.diddiz.LogBlock.config.Config;
+import de.diddiz.LogBlock.events.BlockChangePreLogEvent;
+import de.diddiz.LogBlock.events.EntityChangePreLogEvent;
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.Utils;
 
-import static de.diddiz.LogBlock.config.Config.*;
-import static de.diddiz.util.Utils.mysqlTextEscape;
-import static de.diddiz.util.BukkitUtils.*;
-import static org.bukkit.Bukkit.getLogger;
+public class Consumer extends Thread {
+    private static final int MAX_SHUTDOWN_TIME_MILLIS = 20000;
+    private static final int WAIT_FOR_CONNECTION_TIME_MILLIS = 10000;
+    private static final int RETURN_IDLE_CONNECTION_TIME_MILLIS = 120000;
+    private static final int RETRIES_ON_UNKNOWN_CONNECTION_ERROR = 2;
 
-public class Consumer extends TimerTask {
-    private final Queue<Row> queue = new LinkedBlockingQueue<Row>();
-    private final Set<Actor> failedPlayers = new HashSet<Actor>();
+    private final Deque<Row> queue = new ArrayDeque<>();
     private final LogBlock logblock;
-    private final Map<Actor, Integer> playerIds = new HashMap<Actor, Integer>();
-    private final Lock lock = new ReentrantLock();
+    private final Map<Actor, Integer> playerIds = new HashMap<>();
+    private final Map<Actor, Integer> uncommitedPlayerIds = new HashMap<>();
+    private final Map<World, Map<UUID, Long>> uncommitedEntityIds = new HashMap<>();
+
+    private long addEntryCounter;
+    private long nextWarnCounter;
+
+    private boolean shutdown;
+    private long shutdownInitialized;
 
     Consumer(LogBlock logblock) {
         this.logblock = logblock;
-        try {
-            Class.forName("PlayerLeaveRow");
-        } catch (final ClassNotFoundException ex) {
-        }
+        PlayerLeaveRow.class.getName(); // preload this class
+        setName("Logblock-Consumer");
+    }
+
+    public LogBlock getLogblock() {
+        return logblock;
     }
 
     /**
      * Logs any block change. Don't try to combine broken and placed blocks. Queue two block changes or use the queueBLockReplace methods.
      *
-     * @param actor Actor responsible for making the change
-     * @param loc Location of the block change
-     * @param typeBefore Type of the block before the change
-     * @param typeAfter Type of the block after the change
-     * @param data Data of the block after the change
+     * @param actor
+     *            Actor responsible for making the change
+     * @param loc
+     *            Location of the block change
+     * @param typeBefore
+     *            BlockData of the block before the change
+     * @param typeAfter
+     *            BlockData of the block after the change
      */
-    public void queueBlock(Actor actor, Location loc, int typeBefore, int typeAfter, byte data) {
-        queueBlock(actor, loc, typeBefore, typeAfter, data, null, null);
+    public void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter) {
+        queueBlock(actor, loc, typeBefore, typeAfter, null, null, null);
     }
 
     /**
-     * Logs a block break. The type afterwards is assumed to be 0 (air).
+     * Logs a block break. The type afterwards is assumed to be air.
      *
-     * @param actor Actor responsible for breaking the block
-     * @param before Blockstate of the block before actually being destroyed.
+     * @param actor
+     *            Actor responsible for breaking the block
+     * @param before
+     *            BlockState of the block before actually being destroyed.
      */
     public void queueBlockBreak(Actor actor, BlockState before) {
-        queueBlockBreak(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), before.getRawData());
+        queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), null, BlockStateCodecs.serialize(before), null, null);
     }
 
     /**
-     * Logs a block break. The block type afterwards is assumed to be 0 (air).
+     * Logs a block break. The block type afterwards is assumed to be air.
      *
-     * @param actor Actor responsible for the block break
-     * @param loc Location of the broken block
-     * @param typeBefore Type of the block before the break
-     * @param dataBefore Data of the block before the break
+     * @param actor
+     *            Actor responsible for the block break
+     * @param loc
+     *            Location of the broken block
+     * @param typeBefore
+     *            BlockData of the block before the break
      */
-    public void queueBlockBreak(Actor actor, Location loc, int typeBefore, byte dataBefore) {
-        queueBlock(actor, loc, typeBefore, 0, dataBefore);
+    public void queueBlockBreak(Actor actor, Location loc, BlockData typeBefore) {
+        queueBlock(actor, loc, typeBefore, null);
     }
 
     /**
-     * Logs a block place. The block type before is assumed to be 0 (air).
+     * Logs a block place. The block type before is assumed to be air.
      *
-     * @param actor Actor responsible for placing the block
-     * @param after Blockstate of the block after actually being placed.
+     * @param actor
+     *            Actor responsible for placing the block
+     * @param after
+     *            BlockState of the block after actually being placed.
      */
     public void queueBlockPlace(Actor actor, BlockState after) {
-        queueBlockPlace(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), after.getBlock().getTypeId(), after.getBlock().getData());
+        queueBlock(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), null, after.getBlockData(), null, BlockStateCodecs.serialize(after), null);
     }
 
     /**
-     * Logs a block place. The block type before is assumed to be 0 (air).
+     * Logs a block place. The block type before is assumed to be air.
      *
-     * @param actor Actor responsible for placing the block
-     * @param loc Location of the placed block
-     * @param type Type of the placed block
-     * @param data Data of the placed block
+     * @param actor
+     *            Actor responsible for placing the block
+     * @param loc
+     *            Location of the placed block
+     * @param type
+     *            BlockData of the placed block
      */
-    public void queueBlockPlace(Actor actor, Location loc, int type, byte data) {
-        queueBlock(actor, loc, 0, type, data);
+    public void queueBlockPlace(Actor actor, Location loc, BlockData type) {
+        queueBlock(actor, loc, null, type);
     }
 
     /**
      * Logs a block being replaced from the before and after {@link org.bukkit.block.BlockState}s
      *
-     * @param actor Actor responsible for replacing the block
-     * @param before Blockstate of the block before actually being destroyed.
-     * @param after  Blockstate of the block after actually being placed.
+     * @param actor
+     *            Actor responsible for replacing the block
+     * @param before
+     *            BlockState of the block before actually being destroyed.
+     * @param after
+     *            BlockState of the block after actually being placed.
      */
     public void queueBlockReplace(Actor actor, BlockState before, BlockState after) {
-        queueBlockReplace(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), before.getRawData(), after.getTypeId(), after.getRawData());
+        queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), after.getBlockData(), BlockStateCodecs.serialize(before), BlockStateCodecs.serialize(after), null);
     }
 
     /**
      * Logs a block being replaced from the before {@link org.bukkit.block.BlockState} and the type and data after
      *
-     * @param actor  Actor responsible for replacing the block
-     * @param before Blockstate of the block before being replaced.
-     * @param typeAfter Type of the block after being replaced
-     * @param dataAfter Data of the block after being replaced
+     * @param actor
+     *            Actor responsible for replacing the block
+     * @param before
+     *            BlockState of the block before being replaced.
+     * @param typeAfter
+     *            BlockData of the block after being replaced
      */
-    public void queueBlockReplace(Actor actor, BlockState before, int typeAfter, byte dataAfter) {
-        queueBlockReplace(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getTypeId(), before.getRawData(), typeAfter, dataAfter);
+    public void queueBlockReplace(Actor actor, BlockState before, BlockData typeAfter) {
+        queueBlock(actor, new Location(before.getWorld(), before.getX(), before.getY(), before.getZ()), before.getBlockData(), typeAfter, BlockStateCodecs.serialize(before), null, null);
     }
 
     /**
      * Logs a block being replaced from the type and data before and the {@link org.bukkit.block.BlockState} after
      *
-     * @param actor Actor responsible for replacing the block
-     * @param typeBefore Type of the block before being replaced
-     * @param dataBefore Data of the block before being replaced
-     * @param after Blockstate of the block after actually being placed.
+     * @param actor
+     *            Actor responsible for replacing the block
+     * @param typeBefore
+     *            BlockData of the block before being replaced
+     * @param after
+     *            BlockState of the block after actually being placed.
      */
-    public void queueBlockReplace(Actor actor, int typeBefore, byte dataBefore, BlockState after) {
-        queueBlockReplace(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), typeBefore, dataBefore, after.getTypeId(), after.getRawData());
+    public void queueBlockReplace(Actor actor, BlockData typeBefore, BlockState after) {
+        queueBlock(actor, new Location(after.getWorld(), after.getX(), after.getY(), after.getZ()), typeBefore, after.getBlockData(), null, BlockStateCodecs.serialize(after), null);
     }
 
-    public void queueBlockReplace(Actor actor, Location loc, int typeBefore, byte dataBefore, int typeAfter, byte dataAfter) {
-        if (dataBefore == 0 && (typeBefore != typeAfter)) {
-            queueBlock(actor, loc, typeBefore, typeAfter, dataAfter);
-        } else {
-            queueBlockBreak(actor, loc, typeBefore, dataBefore);
-            queueBlockPlace(actor, loc, typeAfter, dataAfter);
-        }
+    public void queueBlockReplace(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter) {
+        queueBlock(actor, loc, typeBefore, typeAfter, null, null, null);
     }
 
     /**
      * Logs an actor interacting with a container block's inventory
      *
-     * @param actor The actor interacting with the container
-     * @param container The respective container. Must be an instance of an InventoryHolder.
-     * @param itemType Type of the item taken/stored
-     * @param itemAmount Amount of the item taken/stored
-     * @param itemData Data of the item taken/stored
+     * @param actor
+     *            The actor interacting with the container
+     * @param container
+     *            The respective container. Must be an instance of an InventoryHolder.
+     * @param itemStack
+     *            Item taken/stored, including amount
+     * @param remove
+     *            true if the item was removed
      */
-    public void queueChestAccess(Actor actor, BlockState container, short itemType, short itemAmount, short itemData) {
+    public void queueChestAccess(Actor actor, BlockState container, ItemStack itemStack, boolean remove) {
         if (!(container instanceof InventoryHolder)) {
             throw new IllegalArgumentException("Container must be instanceof InventoryHolder");
         }
-        queueChestAccess(actor, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getTypeId(), itemType, itemAmount, itemData);
+        queueChestAccess(actor, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getBlockData(), itemStack, remove);
     }
 
     /**
      * Logs an actor interacting with a container block's inventory
      *
-     * @param actor The actor interacting with the container
-     * @param loc The location of the container block
-     * @param type Type id of the container.
-     * @param itemType Type of the item taken/stored
-     * @param itemAmount Amount of the item taken/stored
-     * @param itemData Data of the item taken/stored
+     * @param actor
+     *            The actor interacting with the container
+     * @param loc
+     *            The location of the container block
+     * @param type
+     *            BlockData of the container.
+     * @param itemStack
+     *            Item taken/stored, including amount
+     * @param remove
+     *            true if the item was removed
      */
-    public void queueChestAccess(Actor actor, Location loc, int type, short itemType, short itemAmount, short itemData) {
-        queueBlock(actor, loc, type, type, (byte) 0, null, new ChestAccess(itemType, itemAmount, itemData));
+    public void queueChestAccess(Actor actor, Location loc, BlockData type, ItemStack itemStack, boolean remove) {
+        queueBlock(actor, loc, type, type, null, null, new ChestAccess(itemStack, remove, MaterialConverter.getOrAddMaterialId(itemStack.getType())));
     }
 
     /**
-     * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
+     * Logs a container block break. The block type before is assumed to be air. All content is assumed to be taken.
      *
-     * @param actor The actor breaking the container
-     * @param container Must be an instance of InventoryHolder
+     * @param actor
+     *            The actor breaking the container
+     * @param container
+     *            Must be an instance of InventoryHolder
      */
     public void queueContainerBreak(Actor actor, BlockState container) {
         if (!(container instanceof InventoryHolder)) {
             return;
         }
-        queueContainerBreak(actor, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getTypeId(), container.getRawData(), ((InventoryHolder) container).getInventory());
+        queueContainerBreak(actor, new Location(container.getWorld(), container.getX(), container.getY(), container.getZ()), container.getBlockData(), ((InventoryHolder) container).getInventory());
     }
 
     /**
-     * Logs a container block break. The block type before is assumed to be o (air). All content is assumed to be taken.
+     * Logs a container block break. The block type before is assumed to be air. All content is assumed to be taken.
      *
-     * @param actor The actor responsible for breaking the container
-     * @param loc The location of the inventory block
-     * @param type The type of the container block
-     * @param data The data of the container block
-     * @param inv The inventory of the container block
+     * @param actor
+     *            The actor responsible for breaking the container
+     * @param loc
+     *            The location of the inventory block
+     * @param type
+     *            BlockData of the container block
+     * @param inv
+     *            The inventory of the container block
      */
-    public void queueContainerBreak(Actor actor, Location loc, int type, byte data, Inventory inv) {
+    public void queueContainerBreak(Actor actor, Location loc, BlockData type, Inventory inv) {
         final ItemStack[] items = compressInventory(inv.getContents());
         for (final ItemStack item : items) {
-            queueChestAccess(actor, loc, type, (short) item.getTypeId(), (short) (item.getAmount() * -1), rawData(item));
+            queueChestAccess(actor, loc, type, item, true);
         }
-        queueBlockBreak(actor, loc, type, data);
+        queueBlockBreak(actor, loc, type);
     }
 
     /**
-     * @param killer Can't be null
-     * @param victim Can't be null
+     * @param killer
+     *            Can't be null
+     * @param victim
+     *            Can't be null
      */
     public void queueKill(Entity killer, Entity victim) {
         if (killer == null || victim == null) {
             return;
         }
-        int weapon = 0;
+        ItemStack weapon = null;
         Actor killerActor = Actor.actorFromEntity(killer);
         // If it's a projectile kill we want to manually assign the weapon, so check for player before converting a projectile to its source
-        if (killer instanceof Player && ((Player) killer).getItemInHand() != null) {
-            weapon = ((Player) killer).getItemInHand().getTypeId();
+        if (killer instanceof Player && ((Player) killer).getInventory().getItemInMainHand() != null) {
+            weapon = ((Player) killer).getInventory().getItemInMainHand();
         }
         if (killer instanceof Projectile) {
-            weapon = itemIDfromProjectileEntity(killer);
+            Material projectileMaterial = itemIDfromProjectileEntity(killer);
+            weapon = projectileMaterial == null ? null : new ItemStack(projectileMaterial);
             ProjectileSource ps = ((Projectile) killer).getShooter();
             if (ps == null) {
                 killerActor = Actor.actorFromEntity(killer);
@@ -236,458 +301,238 @@ public class Consumer extends TimerTask {
     /**
      * This form should only be used when the killer is not an entity e.g. for fall or suffocation damage
      *
-     * @param killer Can't be null
-     * @param victim Can't be null
+     * @param killer
+     *            Can't be null
+     * @param victim
+     *            Can't be null
      */
     public void queueKill(Actor killer, Entity victim) {
         if (killer == null || victim == null) {
             return;
         }
-        queueKill(victim.getLocation(), killer, Actor.actorFromEntity(victim), 0);
+        queueKill(victim.getLocation(), killer, Actor.actorFromEntity(victim), null);
     }
 
     /**
-     * @param world      World the victim was inside.
-     * @param killer Name of the killer. Can be null.
-     * @param victim Name of the victim. Can't be null.
-     * @param weapon     Item id of the weapon. 0 for no weapon.
-     * @deprecated Use {@link #queueKill(org.bukkit.Location, de.diddiz.LogBlock.Actor, de.diddiz.LogBlock.Actor, int)}
-     * instead
+     * @param location
+     *            Location of the victim.
+     * @param killer
+     *            Killer Actor. Can be null.
+     * @param victim
+     *            Victim Actor. Can't be null.
+     * @param weapon
+     *            Item of the weapon. null for no weapon.
      */
-    @Deprecated
-    public void queueKill(World world, Actor killer, Actor victim, int weapon) {
-        queueKill(new Location(world, 0, 0, 0), killer, victim, weapon);
-    }
-
-    /**
-     * @param location Location of the victim.
-     * @param killer   Killer Actor. Can be null.
-     * @param victim   Victim Actor. Can't be null.
-     * @param weapon   Item id of the weapon. 0 for no weapon.
-     */
-    public void queueKill(Location location, Actor killer, Actor victim, int weapon) {
+    public void queueKill(Location location, Actor killer, Actor victim, ItemStack weapon) {
         if (victim == null || !isLogged(location.getWorld())) {
             return;
         }
-        queue.add(new KillRow(location, killer == null ? null : killer, victim, weapon));
-    }
-
-    /**
-     * Logs an actor breaking a sign along with its contents
-     *
-     * @param actor Actor responsible for breaking the sign
-     * @param loc Location of the broken sign
-     * @param type  Type of the sign. Must be 63 or 68.
-     * @param data Data of the sign being broken
-     * @param lines The four lines on the sign.
-     */
-    public void queueSignBreak(Actor actor, Location loc, int type, byte data, String[] lines) {
-        if (type != 63 && type != 68 || lines == null || lines.length != 4) {
-            return;
-        }
-        queueBlock(actor, loc, type, 0, data, lines[0] + "\0" + lines[1] + "\0" + lines[2] + "\0" + lines[3], null);
-    }
-
-    /**
-     * Logs an actor breaking a sign along with its contents
-     *
-     * @param actor Actor responsible for breaking the sign
-     * @param sign The sign being broken
-     */
-    public void queueSignBreak(Actor actor, Sign sign) {
-        queueSignBreak(actor, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), sign.getLines());
-    }
-
-    /**
-     * Logs an actor placing a sign along with its contents
-     *
-     * @param actor Actor placing the sign
-     * @param loc Location of the placed sign
-     * @param type  Type of the sign. Must be 63 or 68.
-     * @param data Data of the placed sign block
-     * @param lines The four lines on the sign.
-     */
-    public void queueSignPlace(Actor actor, Location loc, int type, byte data, String[] lines) {
-        if (type != 63 && type != 68 || lines == null || lines.length != 4) {
-            return;
-        }
-        queueBlock(actor, loc, 0, type, data, lines[0] + "\0" + lines[1] + "\0" + lines[2] + "\0" + lines[3], null);
-    }
-
-    /**
-     * Logs an actor placing a sign along with its contents
-     *
-     * @param actor Actor placing the sign
-     * @param sign The palced sign object
-     */
-    public void queueSignPlace(Actor actor, Sign sign) {
-        queueSignPlace(actor, new Location(sign.getWorld(), sign.getX(), sign.getY(), sign.getZ()), sign.getTypeId(), sign.getRawData(), sign.getLines());
+        addQueueLast(new KillRow(location, killer == null ? null : killer, victim, weapon == null ? 0 : MaterialConverter.getOrAddMaterialId(weapon.getType())));
     }
 
     public void queueChat(Actor player, String message) {
-        for (String ignored : Config.ignoredChat) {
-            if (message.startsWith(ignored)) {
-                return;
+        if (!Config.ignoredChat.isEmpty()) {
+            String lowerCaseMessage = message.toLowerCase();
+            for (String ignored : Config.ignoredChat) {
+                if (lowerCaseMessage.startsWith(ignored)) {
+                    return;
+                }
             }
         }
         if (hiddenPlayers.contains(player.getName().toLowerCase())) {
             return;
         }
-        queue.add(new ChatRow(player, message));
+        while (message.length() > 256) {
+            addQueueLast(new ChatRow(player, message.substring(0, 256)));
+            message = message.substring(256);
+        }
+        addQueueLast(new ChatRow(player, message));
     }
 
     public void queueJoin(Player player) {
-        queue.add(new PlayerJoinRow(player));
+        addQueueLast(new PlayerJoinRow(player));
     }
 
-    public void queueLeave(Player player) {
-        queue.add(new PlayerLeaveRow(player));
+    public void queueLeave(Player player, long onlineTime) {
+        addQueueLast(new PlayerLeaveRow(player, onlineTime));
     }
 
-    // Deprecated methods re-added for API compatability
-
-    /**
-     * Logs any block change. Don't try to combine broken and placed blocks.
-     * Queue two block changes or use the queueBLockReplace methods.
-     *
-     * @deprecated Use
-     * {@link #queueBlock(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, int, byte)}
-     * which supports UUIDs
-     */
-    public void queueBlock(String playerName, Location loc, int typeBefore, int typeAfter, byte data) {
-        queueBlock(actorFromString(playerName), loc, typeBefore, typeAfter, data);
-    }
-
-    /**
-     * Logs a block break. The type afterwards is assumed to be 0 (air).
-     *
-     * @param before Blockstate of the block before actually being destroyed.
-     * @deprecated Use
-     * {@link #queueBlockBreak(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState)}
-     * which supports UUIDs
-     */
-    public void queueBlockBreak(String playerName, BlockState before) {
-        queueBlockBreak(actorFromString(playerName), before);
-        
-    }
-
-    /**
-     * Logs a block break. The block type afterwards is assumed to be 0 (air).
-     *
-     * @deprecated Use {@link #queueBlockBreak(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte)}
-     * which supports UUIDs
-     */
-    public void queueBlockBreak(String playerName, Location loc, int typeBefore, byte dataBefore) {
-        queueBlockBreak(actorFromString(playerName), loc, typeBefore, dataBefore);
-    }
-
-    /**
-     * Logs a block place. The block type before is assumed to be 0 (air).
-     *
-     * @param after Blockstate of the block after actually being placed.
-     * @depracated Use {@link #queueBlockPlace(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState)}
-     * which supports UUIDs
-     */
-    public void queueBlockPlace(String playerName, BlockState after) {
-        queueBlockPlace(actorFromString(playerName), after);
-    }
-
-    /**
-     * Logs a block place. The block type before is assumed to be 0 (air).
-     * @deprecated Use {@link #queueBlockPlace(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte)}
-     * which supports UUIDs
-     */
-    public void queueBlockPlace(String playerName, Location loc, int type, byte data) {
-        queueBlockPlace(actorFromString(playerName), loc, type, data);
-    }
-
-    /**
-     * @param before Blockstate of the block before actually being destroyed.
-     * @param after Blockstate of the block after actually being placed.
-     * @deprecated Use {@link #queueBlockReplace(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState, org.bukkit.block.BlockState)}
-     * which supports UUIDs
-     */
-    public void queueBlockReplace(String playerName, BlockState before, BlockState after) {
-        queueBlockReplace(actorFromString(playerName), before, after);
-    }
-
-    /**
-     * @param before Blockstate of the block before actually being destroyed.
-     * @deprecated Use {@link #queueBlockReplace(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState, int, byte)}
-     * which supports UUIDs
-     */
-    public void queueBlockReplace(String playerName, BlockState before, int typeAfter, byte dataAfter) {
-        queueBlockReplace(actorFromString(playerName), before, typeAfter, dataAfter);
-    }
-
-    /**
-     * @param after Blockstate of the block after actually being placed.
-     * @deprecated {@link #queueBlockReplace(de.diddiz.LogBlock.Actor, int, byte, org.bukkit.block.BlockState)}
-     * which supports UUIDs
-     */
-    public void queueBlockReplace(String playerName, int typeBefore, byte dataBefore, BlockState after) {
-        queueBlockReplace(actorFromString(playerName), typeBefore, dataBefore, after);
-    }
-
-    /**
-    * @deprecated use {@link #queueBlockReplace(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte, int, byte)}
-    * which supports UUIDs
-    */
-    public void queueBlockReplace(String playerName, Location loc, int typeBefore, byte dataBefore, int typeAfter, byte dataAfter) {
-        queueBlockReplace(actorFromString(playerName),loc,typeBefore,dataBefore,typeAfter,dataAfter);
-    }
-
-    /**
-     * @param container The respective container. Must be an instance of an
-     * InventoryHolder.
-     * @deprecated Use {@link #queueChestAccess(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState, short, short, short)}
-     * which supports UUIDs
-     */
-    public void queueChestAccess(String playerName, BlockState container, short itemType, short itemAmount, short itemData) {
-        queueChestAccess(actorFromString(playerName),container,itemType,itemAmount,itemData);
-    }
-
-    /**
-     * @param type Type id of the container.
-     * @deprecated Use {@link #queueChestAccess(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, short, short, short)}
-     * which supports UUIDs
-     */
-    public void queueChestAccess(String playerName, Location loc, int type, short itemType, short itemAmount, short itemData) {
-        queueChestAccess(actorFromString(playerName), loc, type, itemType, itemAmount, itemData);
-    }
-
-    /**
-     * Logs a container block break. The block type before is assumed to be o
-     * (air). All content is assumed to be taken.
-     *
-     * @param container Must be an instance of InventoryHolder
-     * @deprecated Use {@link #queueContainerBreak(de.diddiz.LogBlock.Actor, org.bukkit.block.BlockState)}
-     * which supports UUIDs
-     */
-    public void queueContainerBreak(String playerName, BlockState container) {
-        queueContainerBreak(actorFromString(playerName), container);
-    }
-
-    /**
-     * Logs a container block break. The block type before is assumed to be o
-     * (air). All content is assumed to be taken.
-     * @deprecated Use {@link #queueContainerBreak(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte, org.bukkit.inventory.Inventory)}
-     * which supports UUIDs
-     */
-    public void queueContainerBreak(String playerName, Location loc, int type, byte data, Inventory inv) {
-        queueContainerBreak(actorFromString(playerName),loc,type,data,inv);
-    }
-
-    /**
-     * This form should only be used when the killer is not an entity e.g. for
-     * fall or suffocation damage
-     *
-     * @param killer Can't be null
-     * @param victim Can't be null
-     * @deprecated Use {@link #queueKill(de.diddiz.LogBlock.Actor, org.bukkit.entity.Entity)}
-     * which supports UUIDs
-     */
-    public void queueKill(String killer, Entity victim) {
-        queueKill(actorFromString(killer),victim);
-    }
-
-    /**
-     * @param world World the victim was inside.
-     * @param killerName Name of the killer. Can be null.
-     * @param victimName Name of the victim. Can't be null.
-     * @param weapon Item id of the weapon. 0 for no weapon.
-     * @deprecated Use {@link #queueKill(org.bukkit.Location, de.diddiz.LogBlock.Actor, de.diddiz.LogBlock.Actor, int)} instead
-     */
-    @Deprecated
-    public void queueKill(World world, String killerName, String victimName, int weapon) {
-        queueKill(world,actorFromString(killerName),actorFromString(victimName),weapon);
-    }
-
-    /**
-     * @param location Location of the victim.
-     * @param killerName Name of the killer. Can be null.
-     * @param victimName Name of the victim. Can't be null.
-     * @param weapon Item id of the weapon. 0 for no weapon.
-     * @deprecated Use {@link #queueKill(org.bukkit.Location, de.diddiz.LogBlock.Actor, de.diddiz.LogBlock.Actor, int)}
-     * which supports UUIDs
-     */
-    public void queueKill(Location location, String killerName, String victimName, int weapon) {
-        queueKill(location,actorFromString(killerName),actorFromString(victimName),weapon);
-    }
-
-    /**
-     * @param type Type of the sign. Must be 63 or 68.
-     * @param lines The four lines on the sign.
-     * @deprecated Use {@link #queueSignBreak(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte, java.lang.String[])}
-     * which supports UUIDs
-     */
-    public void queueSignBreak(String playerName, Location loc, int type, byte data, String[] lines) {
-        queueSignBreak(actorFromString(playerName),loc,type,data,lines);
-    }
-
-    /**
-     * @deprecated Use {@link #queueSignBreak(de.diddiz.LogBlock.Actor, org.bukkit.block.Sign)}
-     * which supports UUIDs
-     */
-    public void queueSignBreak(String playerName, Sign sign) {
-        queueSignBreak(actorFromString(playerName),sign);
-    }
-
-    /**
-     * @param type Type of the sign. Must be 63 or 68.
-     * @param lines The four lines on the sign.
-     * @deprecated Use {@link #queueSignPlace(de.diddiz.LogBlock.Actor, org.bukkit.Location, int, byte, java.lang.String[])}
-     * which supports UUIDs
-     */
-    public void queueSignPlace(String playerName, Location loc, int type, byte data, String[] lines) {
-        queueSignPlace(actorFromString(playerName),loc,type,data,lines);
-    }
-
-    /**
-     * @deprecated Use {@link #queueSignPlace(de.diddiz.LogBlock.Actor, org.bukkit.block.Sign)}
-     * which supports UUIDs
-     */
-    public void queueSignPlace(String playerName, Sign sign) {
-        queueSignPlace(actorFromString(playerName),sign);
-    }
-/**
- * @deprecated Use {@link #queueChat(de.diddiz.LogBlock.Actor, java.lang.String)}
- * which supports UUIDs
- */
-    public void queueChat(String player, String message) {
-        queueChat(actorFromString(player),message);
+    public void shutdown() {
+        synchronized (queue) {
+            shutdown = true;
+            shutdownInitialized = System.currentTimeMillis();
+            queue.notifyAll();
+        }
+        while (isAlive()) {
+            try {
+                join();
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
     }
 
     @Override
-    public synchronized void run() {
-        if (queue.isEmpty() || !lock.tryLock()) {
-            return;
-        }
-        long startTime = System.currentTimeMillis();
-        int startSize = queue.size();
-
-        final Connection conn = logblock.getConnection();
-        Statement state = null;
-        if (Config.queueWarningSize > 0 && queue.size() >= Config.queueWarningSize) {
-            getLogger().info("[Consumer] Queue overloaded. Size: " + getQueueSize());
-        }
-
-        int count = 0;
-
-        try {
-            if (conn == null) {
-                return;
-            }
-            conn.setAutoCommit(false);
-            state = conn.createStatement();
-            final long start = System.currentTimeMillis();
-            process:
-            while (!queue.isEmpty() && (System.currentTimeMillis() - start < timePerRun || count < forceToProcessAtLeast)) {
-                final Row r = queue.poll();
-                if (r == null) {
-                    continue;
-                }
-                for (final Actor actor : r.getActors()) {
-                    if (!playerIds.containsKey(actor)) {
-                        if (!addPlayer(state, actor)) {
-                            if (!failedPlayers.contains(actor)) {
-                                failedPlayers.add(actor);
-                                getLogger().warning("[Consumer] Failed to add player " + actor.getName());
-                            }
-                            continue process;
+    public void run() {
+        ArrayList<Row> currentRows = new ArrayList<>();
+        Connection conn = null;
+        BatchHelper batchHelper = new BatchHelper();
+        int lastCommitsFailed = 0;
+        while (true) {
+            try {
+                if (conn == null) {
+                    batchHelper.reset();
+                    conn = logblock.getConnection();
+                    if (conn != null) {
+                        // initialize connection
+                        conn.setAutoCommit(false);
+                    } else {
+                        // we did not get a connection
+                        boolean wantsShutdown;
+                        synchronized (queue) {
+                            wantsShutdown = shutdown;
                         }
+                        if (wantsShutdown) {
+                            // lets give up
+                            break;
+                        }
+                        // wait for a connection
+                        logblock.getLogger().severe("[Consumer] Could not connect to the database!");
+                        try {
+                            Thread.sleep(WAIT_FOR_CONNECTION_TIME_MILLIS);
+                        } catch (InterruptedException e) {
+                            // ignore
+                        }
+                        continue;
                     }
                 }
-                if (r instanceof PreparedStatementRow) {
-                    PreparedStatementRow PSRow = (PreparedStatementRow) r;
-                    if (r instanceof MergeableRow) {
-                        int batchCount = count;
-                        // if we've reached our row target but not exceeded our time target, allow merging of up to 50% of our row limit more rows
-                        if (count > forceToProcessAtLeast) {
-                            batchCount = forceToProcessAtLeast / 2;
+                Row r;
+                boolean processBatch = false;
+                synchronized (queue) {
+                    if (shutdown) {
+                        // Give this thread some time to process the remaining entries
+                        if (queue.isEmpty() || System.currentTimeMillis() - shutdownInitialized > MAX_SHUTDOWN_TIME_MILLIS) {
+                            if (currentRows.isEmpty()) {
+                                break;
+                            } else {
+                                processBatch = true;
+                            }
                         }
-                        while (!queue.isEmpty()) {
-                            MergeableRow mRow = (MergeableRow) PSRow;
-                            Row s = queue.peek();
-                            if (s == null) {
-                                break;
-                            }
-                            if (!(s instanceof MergeableRow)) {
-                                break;
-                            }
-                            MergeableRow mRow2 = (MergeableRow) s;
-                            if (mRow.canMerge(mRow2)) {
-                                PSRow = mRow.merge((MergeableRow) queue.poll());
-                                count++;
-                                batchCount++;
-                                if (batchCount > forceToProcessAtLeast) {
-                                    break;
+                    }
+                    r = queue.pollFirst();
+                    if (r == null) {
+                        try {
+                            if (currentRows.isEmpty() && !shutdown) {
+                                // nothing to do for us
+                                // wait some time before closing the connection
+                                queue.wait(RETURN_IDLE_CONNECTION_TIME_MILLIS);
+                                // if there is still nothing to do, close the connection and go to sleep
+                                if (queue.isEmpty() && !shutdown) {
+                                    try {
+                                        conn.close();
+                                    } catch (Exception e) {
+                                        // ignored
+                                    }
+                                    conn = null;
+                                    queue.wait();
                                 }
                             } else {
-                                break;
+                                processBatch = true;
+                            }
+                        } catch (InterruptedException e) {
+                            // ignore
+                        }
+                    }
+                }
+                if (r != null) {
+                    boolean failOnActors = false;
+                    for (final Actor actor : r.getActors()) {
+                        if (playerIDAsIntIncludeUncommited(actor) == null) {
+                            if (!addPlayer(conn, actor)) {
+                                failOnActors = true; // skip this row
                             }
                         }
                     }
-                    PSRow.setConnection(conn);
-                    try {
-                        PSRow.executeStatements();
-                    } catch (final SQLException ex) {
-                        getLogger().log(Level.SEVERE, "[Consumer] SQL exception on insertion: ", ex);
-                        break;
+                    if (!failOnActors) {
+                        currentRows.add(r);
+                        r.process(conn, batchHelper);
                     }
-                } else {
-                    for (final String insert : r.getInserts()) {
-                        try {
-                            state.execute(insert);
-                        } catch (final SQLException ex) {
-                            getLogger().log(Level.SEVERE, "[Consumer] SQL exception on " + insert + ": ", ex);
-                            break process;
+                }
+                if (currentRows.size() >= Math.max((processBatch ? 1 : (Config.forceToProcessAtLeast * 10)), 1)) {
+                    batchHelper.processStatements(conn);
+                    conn.commit();
+                    currentRows.clear();
+                    playerIds.putAll(uncommitedPlayerIds);
+                    uncommitedPlayerIds.clear();
+                    uncommitedEntityIds.clear();
+                    lastCommitsFailed = 0;
+                }
+            } catch (Exception e) {
+                boolean retry = lastCommitsFailed < RETRIES_ON_UNKNOWN_CONNECTION_ERROR;
+                String state = "unknown";
+                if (e instanceof SQLException) {
+                    // Retry on network errors: SQLSTATE = 08S01 08001 08004 HY000 40001
+                    state = ((SQLException) e).getSQLState();
+                    retry = retry || (state != null && (state.equals("08S01") || state.equals("08001") || state.equals("08004") || state.equals("HY000") || state.equals("40001")));
+                }
+                lastCommitsFailed += 1;
+                if (retry) {
+                    logblock.getLogger().log(Level.WARNING, "[Consumer] Database connection lost, reconnecting! SQLState: " + state);
+                    // readd rows to the queue
+                    synchronized (queue) {
+                        while (!currentRows.isEmpty()) {
+                            queue.addFirst(currentRows.remove(currentRows.size() - 1));
                         }
                     }
+                } else {
+                    logblock.getLogger().log(Level.SEVERE, "[Consumer] Could not insert entries! SQLState: " + state, e);
                 }
-
-                count++;
-            }
-            conn.commit();
-        } catch (final SQLException ex) {
-            getLogger().log(Level.SEVERE, "[Consumer] SQL exception", ex);
-        } finally {
-            try {
-                if (state != null) {
-                    state.close();
-                }
+                currentRows.clear();
+                batchHelper.reset();
+                uncommitedPlayerIds.clear();
+                uncommitedEntityIds.clear();
                 if (conn != null) {
-                    conn.close();
+                    try {
+                        conn.close();
+                    } catch (SQLException e1) {
+                        // ignore
+                    }
                 }
-            } catch (final SQLException ex) {
-                getLogger().log(Level.SEVERE, "[Consumer] SQL exception on close", ex);
+                conn = null;
             }
-            lock.unlock();
+        }
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e1) {
+                // ignore
+            }
+        }
 
-            if (debug) {
-                long timeElapsed = System.currentTimeMillis() - startTime;
-                float rowPerTime = count / timeElapsed;
-                getLogger().log(Level.INFO, "[Consumer] Finished consumer cycle in " + timeElapsed + " milliseconds.");
-                getLogger().log(Level.INFO, "[Consumer] Total rows processed: " + count + ". row/time: " + String.format("%.4f", rowPerTime));
+        // readd to queue - this can be saved later
+        synchronized (queue) {
+            while (!currentRows.isEmpty()) {
+                queue.addFirst(currentRows.remove(currentRows.size() - 1));
             }
         }
     }
 
     public void writeToFile() throws FileNotFoundException {
         final long time = System.currentTimeMillis();
-        final Set<Actor> insertedPlayers = new HashSet<Actor>();
+        final Set<Actor> insertedPlayers = new HashSet<>();
         int counter = 0;
-        new File("plugins/LogBlock/import/").mkdirs();
-        PrintWriter writer = new PrintWriter(new File("plugins/LogBlock/import/queue-" + time + "-0.sql"));
-        while (!queue.isEmpty()) {
-            final Row r = queue.poll();
+        final File importDir = new File(logblock.getDataFolder(), "import");
+        importDir.mkdirs();
+        PrintWriter writer = new PrintWriter(new File(importDir, "queue-" + time + "-0.sql"));
+        while (!isQueueEmpty()) {
+            final Row r = pollQueueFirst();
             if (r == null) {
                 continue;
             }
             for (final Actor actor : r.getActors()) {
                 if (!playerIds.containsKey(actor) && !insertedPlayers.contains(actor)) {
                     // Odd query contruction is to work around innodb auto increment behaviour - bug #492
-                    writer.println("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(actor.getName()) + "','" + actor.getUUID() + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + actor.getUUID() + "') LIMIT 1;");
+                    writer.println("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(actor.getName()) + "','" + mysqlTextEscape(actor.getUUID()) + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(actor.getUUID()) + "') LIMIT 1;");
                     insertedPlayers.add(actor);
                 }
             }
@@ -697,14 +542,43 @@ public class Consumer extends TimerTask {
             counter++;
             if (counter % 1000 == 0) {
                 writer.close();
-                writer = new PrintWriter(new File("plugins/LogBlock/import/queue-" + time + "-" + counter / 1000 + ".sql"));
+                writer = new PrintWriter(new File(importDir, "queue-" + time + "-" + counter / 1000 + ".sql"));
             }
         }
         writer.close();
     }
 
     int getQueueSize() {
-        return queue.size();
+        synchronized (queue) {
+            return queue.size();
+        }
+    }
+
+    private boolean isQueueEmpty() {
+        synchronized (queue) {
+            return queue.isEmpty();
+        }
+    }
+
+    private void addQueueLast(Row row) {
+        synchronized (queue) {
+            boolean wasEmpty = queue.isEmpty();
+            queue.addLast(row);
+            addEntryCounter++;
+            if (Config.queueWarningSize > 0 && queue.size() >= Config.queueWarningSize && addEntryCounter >= nextWarnCounter) {
+                logblock.getLogger().warning("[Consumer] Queue overloaded. Size: " + queue.size());
+                nextWarnCounter = addEntryCounter + 1000;
+            }
+            if (wasEmpty) {
+                queue.notifyAll();
+            }
+        }
+    }
+
+    private Row pollQueueFirst() {
+        synchronized (queue) {
+            return queue.pollFirst();
+        }
     }
 
     static void hide(Player player) {
@@ -725,24 +599,91 @@ public class Consumer extends TimerTask {
         return true;
     }
 
-    private boolean addPlayer(Statement state, Actor actor) throws SQLException {
+    private boolean addPlayer(Connection conn, Actor actor) throws SQLException {
         // Odd query contruction is to work around innodb auto increment behaviour - bug #492
         String name = actor.getName();
         String uuid = actor.getUUID();
-        state.execute("INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(name) + "','" + uuid + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + uuid + "') LIMIT 1;");
-        final ResultSet rs = state.executeQuery("SELECT playerid FROM `lb-players` WHERE UUID = '" + uuid + "'");
+        Statement state = conn.createStatement();
+        String q1 = "INSERT IGNORE INTO `lb-players` (playername,UUID) SELECT '" + mysqlTextEscape(name) + "','" + mysqlTextEscape(uuid) + "' FROM `lb-players` WHERE NOT EXISTS (SELECT NULL FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(uuid) + "') LIMIT 1";
+        String q2 = "SELECT playerid FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(uuid) + "'";
+        int q1Result = state.executeUpdate(q1);
+        ResultSet rs = state.executeQuery(q2);
         if (rs.next()) {
-            playerIds.put(actor, rs.getInt(1));
+            uncommitedPlayerIds.put(actor, rs.getInt(1));
         }
         rs.close();
-        return playerIds.containsKey(actor);
+        if (!uncommitedPlayerIds.containsKey(actor)) {
+            state.executeUpdate("INSERT IGNORE INTO `lb-players` (playername,UUID) VALUES ('" + mysqlTextEscape(name) + "','" + mysqlTextEscape(uuid) + "')");
+            rs = state.executeQuery(q2);
+            if (rs.next()) {
+                uncommitedPlayerIds.put(actor, rs.getInt(1));
+            } else {
+                logblock.getLogger().warning("[Consumer] Failed to add player " + actor.getName());
+                logblock.getLogger().warning("[Consumer-Debug] Query 1: " + q1);
+                logblock.getLogger().warning("[Consumer-Debug] Query 1 - Result: " + q1Result);
+                logblock.getLogger().warning("[Consumer-Debug] Query 2: " + q2);
+            }
+            rs.close();
+        }
+        state.close();
+        return uncommitedPlayerIds.containsKey(actor);
     }
 
-    private void queueBlock(Actor actor, Location loc, int typeBefore, int typeAfter, byte data, String signtext, ChestAccess ca) {
+    private long getEntityUUID(Connection conn, World world, UUID uuid) throws SQLException {
+        Map<UUID, Long> uncommitedEntityIdsHere = uncommitedEntityIds.get(world);
+        if (uncommitedEntityIdsHere == null) {
+            uncommitedEntityIdsHere = new HashMap<>();
+            uncommitedEntityIds.put(world, uncommitedEntityIdsHere);
+        }
+        Long existing = uncommitedEntityIdsHere.get(uuid);
+        if (existing != null) {
+            return existing;
+        }
 
-        if (Config.fireCustomEvents) {
+        // Odd query contruction is to work around innodb auto increment behaviour - bug #492
+        final String table = getWorldConfig(world).table;
+        String uuidString = uuid.toString();
+        Statement state = conn.createStatement();
+        String q1 = "INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) SELECT '" + mysqlTextEscape(uuidString) + "' FROM `" + table + "-entityids` WHERE NOT EXISTS (SELECT NULL FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(uuidString) + "') LIMIT 1";
+        String q2 = "SELECT entityid FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(uuidString) + "'";
+        int q1Result = state.executeUpdate(q1);
+        ResultSet rs = state.executeQuery(q2);
+        if (rs.next()) {
+            uncommitedEntityIdsHere.put(uuid, rs.getLong(1));
+        }
+        rs.close();
+        // if there was not any row in the table the query above does not work, so we need to try this one
+        if (!uncommitedEntityIdsHere.containsKey(uuid)) {
+            state.executeUpdate("INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) VALUES ('" + mysqlTextEscape(uuidString) + "')");
+            rs = state.executeQuery(q2);
+            if (rs.next()) {
+                uncommitedEntityIdsHere.put(uuid, rs.getLong(1));
+            } else {
+                logblock.getLogger().warning("[Consumer] Failed to add entity uuid " + uuidString.toString());
+                logblock.getLogger().warning("[Consumer-Debug] World: " + world.getName());
+                logblock.getLogger().warning("[Consumer-Debug] Query 1: " + q1);
+                logblock.getLogger().warning("[Consumer-Debug] Query 1 - Result: " + q1Result);
+                logblock.getLogger().warning("[Consumer-Debug] Query 2: " + q2);
+            }
+            rs.close();
+        }
+        state.close();
+        return uncommitedEntityIdsHere.get(uuid);
+    }
+
+    private void queueBlock(Actor actor, Location loc, BlockData typeBefore, BlockData typeAfter, YamlConfiguration stateBefore, YamlConfiguration stateAfter, ChestAccess ca) {
+        if (typeBefore == null || typeBefore.getMaterial() == Material.CAVE_AIR || typeBefore.getMaterial() == Material.VOID_AIR) {
+            typeBefore = Bukkit.createBlockData(Material.AIR);
+        }
+        if (typeAfter == null && ((typeBefore instanceof Waterlogged && ((Waterlogged) typeBefore).isWaterlogged()) || BukkitUtils.isAlwaysWaterlogged(typeBefore.getMaterial()))) {
+            typeAfter = Bukkit.createBlockData(Material.WATER);
+        }
+        if (typeAfter == null || typeAfter.getMaterial() == Material.CAVE_AIR || typeAfter.getMaterial() == Material.VOID_AIR) {
+            typeAfter = Bukkit.createBlockData(Material.AIR);
+        }
+        if (BlockChangePreLogEvent.getHandlerList().getRegisteredListeners().length > 0) {
             // Create and call the event
-            BlockChangePreLogEvent event = new BlockChangePreLogEvent(actor, loc, typeBefore, typeAfter, data, signtext, ca);
+            BlockChangePreLogEvent event = new BlockChangePreLogEvent(actor, loc, typeBefore, typeAfter, stateBefore, stateAfter, ca);
             logblock.getServer().getPluginManager().callEvent(event);
             if (event.isCancelled()) {
                 return;
@@ -753,15 +694,61 @@ public class Consumer extends TimerTask {
             loc = event.getLocation();
             typeBefore = event.getTypeBefore();
             typeAfter = event.getTypeAfter();
-            data = event.getData();
-            signtext = event.getSignText();
+            stateBefore = event.getStateBefore();
+            stateAfter = event.getStateAfter();
             ca = event.getChestAccess();
         }
         // Do this last so LogBlock still has final say in what is being added
-        if (actor == null || loc == null || typeBefore < 0 || typeAfter < 0 || (Config.safetyIdCheck && (typeBefore > 255 || typeAfter > 255)) || hiddenPlayers.contains(actor.getName().toLowerCase()) || !isLogged(loc.getWorld()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore) && hiddenBlocks.contains(typeAfter)) {
+        if (actor == null || loc == null || typeBefore == null || typeAfter == null || hiddenPlayers.contains(actor.getName().toLowerCase()) || !isLogged(loc.getWorld()) || typeBefore != typeAfter && hiddenBlocks.contains(typeBefore.getMaterial()) && hiddenBlocks.contains(typeAfter.getMaterial())) {
             return;
         }
-        queue.add(new BlockRow(loc, actor, typeBefore, typeAfter, data, signtext, ca));
+
+        int replacedMaterialId = MaterialConverter.getOrAddMaterialId(typeBefore);
+        int replacedStateId = MaterialConverter.getOrAddBlockStateId(typeBefore);
+        int typeMaterialId = MaterialConverter.getOrAddMaterialId(typeAfter);
+        int typeStateId = MaterialConverter.getOrAddBlockStateId(typeAfter);
+
+        addQueueLast(new BlockRow(loc, actor, replacedMaterialId, replacedStateId, Utils.serializeYamlConfiguration(stateBefore), typeMaterialId, typeStateId, Utils.serializeYamlConfiguration(stateAfter), ca));
+    }
+
+    public void queueEntityModification(Actor actor, Entity entity, EntityChangeType changeType, YamlConfiguration data) {
+        if (actor == null || changeType == null || entity == null || hiddenPlayers.contains(actor.getName().toLowerCase()) || !isLogged(entity.getWorld())) {
+            return;
+        }
+        UUID entityId = entity.getUniqueId();
+        EntityType entityType = entity.getType();
+        Location loc = entity.getLocation();
+
+        if (EntityChangePreLogEvent.getHandlerList().getRegisteredListeners().length > 0) {
+            // Create and call the event
+            EntityChangePreLogEvent event = new EntityChangePreLogEvent(actor, loc, entity, changeType, data);
+            logblock.getServer().getPluginManager().callEvent(event);
+            if (event.isCancelled()) {
+                return;
+            }
+
+            // Update variables
+            actor = event.getOwnerActor();
+            loc = event.getLocation();
+        }
+        // Do this last so LogBlock still has final say in what is being added
+        if (actor == null || loc == null || hiddenPlayers.contains(actor.getName().toLowerCase()) || !isLogged(loc.getWorld())) {
+            return;
+        }
+
+        addQueueLast(new EntityRow(loc, actor, entityType, entityId, changeType, Utils.serializeYamlConfiguration(data)));
+    }
+
+    /**
+     * Change the UUID that is stored for an entity in the database. This is needed when an entity is respawned
+     * and now has a different UUID.
+     *
+     * @param world the world that contains the entity
+     * @param entityId the database id of the entity
+     * @param entityUUID the new UUID of the entity
+     */
+    public void queueEntityUUIDChange(World world, int entityId, UUID entityUUID) {
+        addQueueLast(new EntityUUIDChange(world, entityId, entityUUID));
     }
 
     private String playerID(Actor actor) {
@@ -772,256 +759,128 @@ public class Consumer extends TimerTask {
         if (id != null) {
             return id.toString();
         }
-        return "(SELECT playerid FROM `lb-players` WHERE UUID = '" + actor.getUUID() + "')";
+        return "(SELECT playerid FROM `lb-players` WHERE UUID = '" + mysqlTextEscape(actor.getUUID()) + "')";
     }
 
-    private Integer playerIDAsInt(Actor actor) {
+    private Integer playerIDAsIntIncludeUncommited(Actor actor) {
         if (actor == null) {
             return null;
         }
-        return playerIds.get(actor);
+        Integer id = playerIds.get(actor);
+        if (id != null) {
+            return id;
+        }
+        return uncommitedPlayerIds.get(actor);
     }
 
     private static interface Row {
         String[] getInserts();
 
-        /**
-         * @deprecated - Names are not guaranteed to be unique. Use {@link #getActors() }
-         */
-        String[] getPlayers();
+        void process(Connection conn, BatchHelper batchHelper) throws SQLException;
 
         Actor[] getActors();
     }
 
-    private interface PreparedStatementRow extends Row {
+    private class BlockRow extends BlockChange implements Row {
+        final String statementString;
+        final String selectActorIdStatementString;
 
-        abstract void setConnection(Connection connection);
+        public BlockRow(Location loc, Actor actor, int replaced, int replacedData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
+            super(System.currentTimeMillis() / 1000, loc, actor, replaced, replacedData, replacedState, type, typeData, typeState, ca);
 
-        abstract void executeStatements() throws SQLException;
-    }
-
-    private interface MergeableRow extends PreparedStatementRow {
-        abstract boolean isUnique();
-
-        abstract boolean canMerge(MergeableRow row);
-
-        abstract MergeableRow merge(MergeableRow second);
-    }
-
-    private class BlockRow extends BlockChange implements MergeableRow {
-        private Connection connection;
-
-        public BlockRow(Location loc, Actor actor, int replaced, int type, byte data, String signtext, ChestAccess ca) {
-            super(System.currentTimeMillis() / 1000, loc, actor, replaced, type, data, signtext, ca);
+            statementString = getWorldConfig(loc.getWorld()).insertBlockStatementString;
+            selectActorIdStatementString = getWorldConfig(loc.getWorld()).selectBlockActorIdStatementString;
         }
 
         @Override
         public String[] getInserts() {
             final String table = getWorldConfig(loc.getWorld()).table;
-            final String[] inserts = new String[ca != null || signtext != null ? 2 : 1];
-            inserts[0] = "INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + replaced + ", " + type + ", " + data + ", '" + loc.getBlockX() + "', " + safeY(loc) + ", '" + loc.getBlockZ() + "');";
-            if (signtext != null) {
-                inserts[1] = "INSERT INTO `" + table + "-sign` (id, signtext) values (LAST_INSERT_ID(), '" + mysqlTextEscape(signtext) + "');";
+            final String[] inserts = new String[ca != null || replacedState != null || typeState != null ? 2 : 1];
+
+            inserts[0] = "INSERT INTO `" + table + "-blocks` (date, playerid, replaced, replaceddata, type, typedata, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + replacedMaterial + ", " + replacedData + ", " + typeMaterial + ", " + typeData + ", '" + loc.getBlockX()
+                    + "', " + safeY(loc) + ", '" + loc.getBlockZ() + "');";
+            if (replacedState != null || typeState != null) {
+                inserts[1] = "INSERT INTO `" + table + "-state` (replacedState, typeState, id) VALUES(" + Utils.mysqlPrepareBytesForInsertAllowNull(replacedState) + ", " + Utils.mysqlPrepareBytesForInsertAllowNull(typeState) + ", LAST_INSERT_ID());";
             } else if (ca != null) {
-                inserts[1] = "INSERT INTO `" + table + "-chest` (id, itemtype, itemamount, itemdata) values (LAST_INSERT_ID(), " + ca.itemType + ", " + ca.itemAmount + ", " + ca.itemData + ");";
+                try {
+                    inserts[1] = "INSERT INTO `" + table + "-chestdata` (id, item, itemremove, itemtype) values (LAST_INSERT_ID(), '" + Utils.mysqlEscapeBytes(Utils.saveItemStack(ca.itemStack)) + "', " + (ca.remove ? 1 : 0) + ", " + ca.itemType + ");";
+                } catch (Exception e) {
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not serialize ItemStack " + e.getMessage(), e);
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Problematic row: " + toString());
+                    return new String[0];
+                }
             }
             return inserts;
         }
 
         @Override
-        public String[] getPlayers() {
-            return new String[]{actor.getName()};
-        }
-
-        @Override
         public Actor[] getActors() {
-            return new Actor[]{actor};
+            return new Actor[] { actor };
         }
 
         @Override
-        public void setConnection(Connection connection) {
-            this.connection = connection;
-        }
-
-        @Override
-        public void executeStatements() throws SQLException {
-            final String table = getWorldConfig(loc.getWorld()).table;
-
-            PreparedStatement ps1 = null;
-            PreparedStatement ps = null;
-            try {
-                ps1 = connection.prepareStatement("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES(FROM_UNIXTIME(?), " + playerID(actor) + ", ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
-                ps1.setLong(1, date);
-                ps1.setInt(2, replaced);
-                ps1.setInt(3, type);
-                ps1.setInt(4, data);
-                ps1.setInt(5, loc.getBlockX());
-                ps1.setInt(6, safeY(loc));
-                ps1.setInt(7, loc.getBlockZ());
-                ps1.executeUpdate();
-
-                int id;
-                ResultSet rs = ps1.getGeneratedKeys();
-                rs.next();
-                id = rs.getInt(1);
-
-                if (signtext != null) {
-                    ps = connection.prepareStatement("INSERT INTO `" + table + "-sign` (signtext, id) VALUES(?, ?)");
-                    ps.setString(1, signtext);
-                    ps.setInt(2, id);
-                    ps.executeUpdate();
-                } else if (ca != null) {
-                    ps = connection.prepareStatement("INSERT INTO `" + table + "-chest` (itemtype, itemamount, itemdata, id) values (?, ?, ?, ?)");
-                    ps.setInt(1, ca.itemType);
-                    ps.setInt(2, ca.itemAmount);
-                    ps.setInt(3, ca.itemData);
-                    ps.setInt(4, id);
-                    ps.executeUpdate();
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            byte[] serializedItemStack = null;
+            if (ca != null) {
+                try {
+                    serializedItemStack = Utils.saveItemStack(ca.itemStack);
+                } catch (Exception e) {
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Could not serialize ItemStack " + e.getMessage(), e);
+                    LogBlock.getInstance().getLogger().log(Level.SEVERE, "Problematic row: " + toString());
+                    return;
                 }
-            } catch (final SQLException ex) {
-                if (ps1 != null) {
-                    getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps1.toString());
+            }
+            final byte[] finalSerializedItemStack = serializedItemStack;
+            int sourceActor = playerIDAsIntIncludeUncommited(actor);
+            Location actorBlockLocation = actor.getBlockLocation();
+            if (actorBlockLocation != null) {
+                Integer tempSourceActor = batchHelper.getUncommitedBlockActor(actorBlockLocation);
+                if (tempSourceActor != null) {
+                    sourceActor = tempSourceActor;
+                } else {
+                    PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, selectActorIdStatementString, Statement.NO_GENERATED_KEYS);
+                    smt.setInt(1, actorBlockLocation.getBlockX());
+                    smt.setInt(2, safeY(actorBlockLocation));
+                    smt.setInt(3, actorBlockLocation.getBlockZ());
+                    ResultSet rs = smt.executeQuery();
+                    if (rs.next()) {
+                        sourceActor = rs.getInt(1);
+                    }
+                    rs.close();
                 }
-                if (ps != null) {
-                    getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps.toString());
-                }
-                throw ex;
-            } finally {
-                // individual try/catch here, though ugly, prevents resource leaks
-                if (ps1 != null) {
-                    try {
-                        ps1.close();
-                    } catch (SQLException e) {
-                        // ideally should log to logger, none is available in this class
-                        // at the time of this writing, so I'll leave that to the plugin
-                        // maintainers to integrate if they wish
-                        e.printStackTrace();
+            }
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.RETURN_GENERATED_KEYS);
+            smt.setLong(1, date);
+            smt.setInt(2, sourceActor);
+            smt.setInt(3, replacedMaterial);
+            smt.setInt(4, replacedData);
+            smt.setInt(5, typeMaterial);
+            smt.setInt(6, typeData);
+            smt.setInt(7, loc.getBlockX());
+            smt.setInt(8, safeY(loc));
+            smt.setInt(9, loc.getBlockZ());
+            batchHelper.addUncommitedBlockActorId(loc, sourceActor);
+            batchHelper.addBatch(smt, new LongCallback() {
+                @Override
+                public void call(long id) throws SQLException {
+                    PreparedStatement ps;
+                    if (typeState != null || replacedState != null) {
+                        ps = batchHelper.getOrPrepareStatement(conn, getWorldConfig(loc.getWorld()).insertBlockStateStatementString, Statement.NO_GENERATED_KEYS);
+                        ps.setBytes(1, replacedState);
+                        ps.setBytes(2, typeState);
+                        ps.setLong(3, id);
+                        batchHelper.addBatch(ps, null);
+                    }
+                    if (ca != null) {
+                        ps = batchHelper.getOrPrepareStatement(conn, getWorldConfig(loc.getWorld()).insertBlockChestDataStatementString, Statement.NO_GENERATED_KEYS);
+                        ps.setBytes(1, finalSerializedItemStack);
+                        ps.setInt(2, ca.remove ? 1 : 0);
+                        ps.setLong(3, id);
+                        ps.setInt(4, ca.itemType);
+                        batchHelper.addBatch(ps, null);
                     }
                 }
-
-                if (ps != null) {
-                    try {
-                        ps.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean isUnique() {
-            return !(signtext == null && ca == null && playerIds.containsKey(actor));
-        }
-
-        @Override
-        public boolean canMerge(MergeableRow row) {
-            return !this.isUnique() && !row.isUnique() && row instanceof BlockRow && getWorldConfig(loc.getWorld()).table.equals(getWorldConfig(((BlockRow) row).loc.getWorld()).table);
-        }
-
-        @Override
-        public MergeableRow merge(MergeableRow singleRow) {
-            return new MultiBlockChangeRow(this, (BlockRow) singleRow);
-        }
-    }
-
-    private class MultiBlockChangeRow implements MergeableRow {
-        private List<BlockRow> rows = new ArrayList<BlockRow>();
-        private Connection connection;
-        private Set<String> players = new HashSet<String>();
-        private Set<Actor> actors = new HashSet<Actor>();
-        private String table;
-
-        MultiBlockChangeRow(BlockRow first, BlockRow second) {
-            if (first.isUnique() || second.isUnique()) {
-                throw new IllegalArgumentException("Can't merge a unique row");
-            }
-            rows.add(first);
-            rows.add(second);
-            actors.addAll(Arrays.asList(first.getActors()));
-            actors.addAll(Arrays.asList(second.getActors()));
-            players.addAll(Arrays.asList(first.getPlayers()));
-            players.addAll(Arrays.asList(second.getPlayers()));
-            table = getWorldConfig(first.loc.getWorld()).table;
-        }
-
-        @Override
-        public void setConnection(Connection connection) {
-            this.connection = connection;
-        }
-
-        @Override
-        public void executeStatements() throws SQLException {
-            PreparedStatement ps = null;
-            try {
-                ps = connection.prepareStatement("INSERT INTO `" + table + "` (date, playerid, replaced, type, data, x, y, z) VALUES(FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?)");
-                for (BlockRow row : rows) {
-                    ps.setLong(1, row.date);
-                    ps.setInt(2, playerIds.get(row.actor));
-                    ps.setInt(3, row.replaced);
-                    ps.setInt(4, row.type);
-                    ps.setInt(5, row.data);
-                    ps.setInt(6, row.loc.getBlockX());
-                    ps.setInt(7, safeY(row.loc));
-                    ps.setInt(8, row.loc.getBlockZ());
-                    ps.addBatch();
-                }
-                ps.executeBatch();
-            } catch (final SQLException ex) {
-                if (ps != null) {
-                    getLogger().log(Level.SEVERE, "[Consumer] Troublesome query: " + ps.toString());
-                }
-                throw ex;
-            } finally {
-                // individual try/catch here, though ugly, prevents resource leaks
-                if (ps != null) {
-                    try {
-                        ps.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean isUnique() {
-            return true;
-        }
-
-        @Override
-        public boolean canMerge(MergeableRow row) {
-            return !row.isUnique() && row instanceof BlockRow && table.equals(getWorldConfig(((BlockRow) row).loc.getWorld()).table);
-        }
-
-        @Override
-        public MergeableRow merge(MergeableRow second) {
-            if (second.isUnique()) {
-                throw new IllegalArgumentException("Can't merge a unique row");
-            }
-            rows.add((BlockRow) second);
-            actors.addAll(Arrays.asList(second.getActors()));
-            players.addAll(Arrays.asList(second.getPlayers()));
-            return this;
-        }
-
-        @Override
-        public String[] getInserts() {
-            List<String> l = new ArrayList<String>();
-            for (BlockRow row : rows) {
-                l.addAll(Arrays.asList(row.getInserts()));
-            }
-            return (String[]) l.toArray();
-        }
-
-        @Override
-        public String[] getPlayers() {
-            return (String[]) players.toArray();
-        }
-
-        @Override
-        public Actor[] getActors() {
-            return (Actor[]) actors.toArray();
+            });
         }
     }
 
@@ -1030,6 +889,7 @@ public class Consumer extends TimerTask {
         final Actor killer, victim;
         final int weapon;
         final Location loc;
+        final String statementString;
 
         KillRow(Location loc, Actor attacker, Actor defender, int weapon) {
             date = System.currentTimeMillis() / 1000;
@@ -1037,88 +897,61 @@ public class Consumer extends TimerTask {
             killer = attacker;
             victim = defender;
             this.weapon = weapon;
+
+            statementString = "INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?)";
         }
 
         @Override
         public String[] getInserts() {
-            return new String[]{"INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + safeY(loc) + ", " + loc.getBlockZ() + ");"};
-        }
-
-        @Override
-        public String[] getPlayers() {
-            return new String[]{killer.getName(), victim.getName()};
+            return new String[] { "INSERT INTO `" + getWorldConfig(loc.getWorld()).table + "-kills` (date, killer, victim, weapon, x, y, z) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(killer) + ", " + playerID(victim) + ", " + weapon + ", " + loc.getBlockX() + ", " + safeY(loc) + ", "
+                    + loc.getBlockZ() + ");" };
         }
 
         @Override
         public Actor[] getActors() {
-            return new Actor[]{killer, victim};
+            return new Actor[] { killer, victim };
+        }
+
+        @Override
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
+            smt.setLong(1, date);
+            smt.setInt(2, playerIDAsIntIncludeUncommited(killer));
+            smt.setInt(3, playerIDAsIntIncludeUncommited(victim));
+            smt.setInt(4, weapon);
+            smt.setInt(5, loc.getBlockX());
+            smt.setInt(6, safeY(loc));
+            smt.setInt(7, loc.getBlockZ());
+            batchHelper.addBatch(smt, null);
         }
     }
 
-    private class ChatRow extends ChatMessage implements PreparedStatementRow {
-        private Connection connection;
+    private class ChatRow extends ChatMessage implements Row {
+        private String statementString;
 
         ChatRow(Actor player, String message) {
             super(player, message);
+
+            statementString = "INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(?), ?, ?)";
         }
 
         @Override
         public String[] getInserts() {
-            return new String[]{"INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(player) + ", '" + mysqlTextEscape(message) + "');"};
-        }
-
-        @Override
-        public String[] getPlayers() {
-            return new String[]{player.getName()};
+            return new String[] { "INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(player) + ", '" + mysqlTextEscape(message) + "');" };
         }
 
         @Override
         public Actor[] getActors() {
-            return new Actor[]{player};
+            return new Actor[] { player };
         }
 
         @Override
-        public void setConnection(Connection connection) {
-            this.connection = connection;
-        }
-
-        @Override
-        public void executeStatements() throws SQLException {
-            boolean noID = false;
-            Integer id;
-
-            String sql = "INSERT INTO `lb-chat` (date, playerid, message) VALUES (FROM_UNIXTIME(?), ";
-            if ((id = playerIDAsInt(player)) == null) {
-                noID = true;
-                sql += playerID(player) + ", ";
-            } else {
-                sql += "?, ";
-            }
-            sql += "?)";
-
-            PreparedStatement ps = null;
-            try {
-                ps = connection.prepareStatement(sql);
-                ps.setLong(1, date);
-                if (!noID) {
-                    ps.setInt(2, id);
-                    ps.setString(3, message);
-                } else {
-                    ps.setString(2, message);
-                }
-                ps.execute();
-            }
-            // we intentionally do not catch SQLException, it is thrown to the caller
-            finally {
-                if (ps != null) {
-                    try {
-                        ps.close();
-                    } catch (SQLException e) {
-                        // should print to a Logger instead if one is ever added to this class
-                        e.printStackTrace();
-                    }
-                }
-            }
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
+            smt.setLong(1, date);
+            smt.setInt(2, playerIDAsIntIncludeUncommited(player));
+            smt.setString(3, message);
+            batchHelper.addBatch(smt, null);
         }
     }
 
@@ -1126,65 +959,263 @@ public class Consumer extends TimerTask {
         private final Actor player;
         private final long lastLogin;
         private final String ip;
+        private String statementString;
 
         PlayerJoinRow(Player player) {
             this.player = Actor.actorFromEntity(player);
             lastLogin = System.currentTimeMillis() / 1000;
             ip = player.getAddress().toString().replace("'", "\\'");
+
+            if (logPlayerInfo) {
+                statementString = "UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(?), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(?), firstlogin), ip = ?, playername = ? WHERE UUID = ?";
+            } else {
+                statementString = "UPDATE `lb-players` SET playername = ? WHERE UUID = ?";
+            }
         }
 
         @Override
         public String[] getInserts() {
             if (logPlayerInfo) {
-                return new String[]{"UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "', playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + player.getUUID() + "';"};
+                return new String[] {
+                        "UPDATE `lb-players` SET lastlogin = FROM_UNIXTIME(" + lastLogin + "), firstlogin = IF(firstlogin = 0, FROM_UNIXTIME(" + lastLogin + "), firstlogin), ip = '" + ip + "', playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + player.getUUID() + "';" };
             }
-            return new String[]{"UPDATE `lb-players` SET playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + player.getUUID() + "';"};
-        }
-
-        @Override
-        public String[] getPlayers() {
-            return new String[]{player.getName()};
+            return new String[] { "UPDATE `lb-players` SET playername = '" + mysqlTextEscape(player.getName()) + "' WHERE UUID = '" + mysqlTextEscape(player.getUUID()) + "';" };
         }
 
         @Override
         public Actor[] getActors() {
-            return new Actor[]{player};
+            return new Actor[] { player };
+        }
+
+        @Override
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
+            if (logPlayerInfo) {
+                smt.setLong(1, lastLogin);
+                smt.setLong(2, lastLogin);
+                smt.setString(3, ip);
+                smt.setString(4, player.getName());
+                smt.setString(5, player.getUUID());
+            } else {
+                smt.setString(1, player.getName());
+                smt.setString(2, player.getUUID());
+            }
+            batchHelper.addBatch(smt, null);
         }
     }
 
     private class PlayerLeaveRow implements Row {
-        ;
-        private final long leaveTime;
+        private final long onlineTime;
         private final Actor actor;
+        private String statementString;
 
-        PlayerLeaveRow(Player player) {
-            leaveTime = System.currentTimeMillis() / 1000;
+        PlayerLeaveRow(Player player, long onlineTime) {
+            this.onlineTime = onlineTime;
             actor = Actor.actorFromEntity(player);
+            statementString = "UPDATE `lb-players` SET onlinetime = onlinetime + ? WHERE lastlogin > 0 && UUID = ?";
         }
 
         @Override
         public String[] getInserts() {
             if (logPlayerInfo) {
-                return new String[]{"UPDATE `lb-players` SET onlinetime = onlinetime + TIMESTAMPDIFF(SECOND, lastlogin, FROM_UNIXTIME('" + leaveTime + "')), playername = '" + mysqlTextEscape(actor.getName()) + "' WHERE lastlogin > 0 && UUID = '" + actor.getUUID() + "';"};
+                return new String[] { "UPDATE `lb-players` SET onlinetime = onlinetime + " + onlineTime + " WHERE lastlogin > 0 && UUID = '" + mysqlTextEscape(actor.getUUID()) + "';" };
             }
-            return new String[]{"UPDATE `lb-players` SET playername = '" + mysqlTextEscape(actor.getName()) + "' WHERE UUID = '" + actor.getUUID() + "';"};
-        }
-
-        @Override
-        public String[] getPlayers() {
-            return new String[]{actor.getName()};
+            return new String[0];
         }
 
         @Override
         public Actor[] getActors() {
-            return new Actor[]{actor};
+            return new Actor[] { actor };
+        }
+
+        @Override
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
+            smt.setLong(1, onlineTime);
+            smt.setString(2, actor.getUUID());
+            batchHelper.addBatch(smt, null);
         }
     }
-    
-    private int safeY(Location loc) {    
+
+    private class EntityRow extends EntityChange implements Row {
+        final String statementString;
+        final String selectActorIdStatementString;
+
+        public EntityRow(Location loc, Actor actor, EntityType type, UUID entityid, EntityChangeType changeType, byte[] data) {
+            super(System.currentTimeMillis() / 1000, loc, actor, type, entityid, changeType, data);
+            statementString = getWorldConfig(loc.getWorld()).insertEntityStatementString;
+            selectActorIdStatementString = getWorldConfig(loc.getWorld()).selectBlockActorIdStatementString;
+        }
+
+        @Override
+        public String[] getInserts() {
+            final String table = getWorldConfig(loc.getWorld()).table;
+            final String[] inserts = new String[2];
+
+            inserts[0] = "INSERT IGNORE INTO `" + table + "-entityids` (entityuuid) SELECT '" + mysqlTextEscape(entityUUID.toString()) + "' FROM `" + table + "-entityids` WHERE NOT EXISTS (SELECT NULL FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(entityUUID.toString()) + "') LIMIT 1";
+            int entityTypeId = EntityTypeConverter.getOrAddEntityTypeId(type);
+            inserts[1] = "INSERT INTO `" + table + "-entities` (date, playerid, entityid, entitytypeid, x, y, z, action, data) VALUES (FROM_UNIXTIME(" + date + "), " + playerID(actor) + ", " + "(SELECT entityid FROM `" + table + "-entityids` WHERE entityuuid = '" + mysqlTextEscape(entityUUID.toString()) + "')"
+                    + ", " + entityTypeId + ", '" + loc.getBlockX() + "', " + safeY(loc) + ", '" + loc.getBlockZ() + "', " + changeType.ordinal() + ", " + Utils.mysqlPrepareBytesForInsertAllowNull(data) + ");";
+            return inserts;
+        }
+
+        @Override
+        public Actor[] getActors() {
+            return new Actor[] { actor };
+        }
+
+        @Override
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            int sourceActor = playerIDAsIntIncludeUncommited(actor);
+            Location actorBlockLocation = actor.getBlockLocation();
+            if (actorBlockLocation != null) {
+                Integer tempSourceActor = batchHelper.getUncommitedBlockActor(actorBlockLocation);
+                if (tempSourceActor != null) {
+                    sourceActor = tempSourceActor;
+                } else {
+                    PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, selectActorIdStatementString, Statement.NO_GENERATED_KEYS);
+                    smt.setInt(1, actorBlockLocation.getBlockX());
+                    smt.setInt(2, safeY(actorBlockLocation));
+                    smt.setInt(3, actorBlockLocation.getBlockZ());
+                    ResultSet rs = smt.executeQuery();
+                    if (rs.next()) {
+                        sourceActor = rs.getInt(1);
+                    }
+                    rs.close();
+                }
+            }
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, statementString, Statement.NO_GENERATED_KEYS);
+            smt.setLong(1, date);
+            smt.setInt(2, sourceActor);
+            smt.setLong(3, getEntityUUID(conn, loc.getWorld(), entityUUID));
+            smt.setInt(4, EntityTypeConverter.getOrAddEntityTypeId(type));
+            smt.setInt(5, loc.getBlockX());
+            smt.setInt(6, safeY(loc));
+            smt.setInt(7, loc.getBlockZ());
+            smt.setInt(8, changeType.ordinal());
+            smt.setBytes(9, data);
+            batchHelper.addBatch(smt, null);
+        }
+    }
+
+    private class EntityUUIDChange implements Row {
+        private final World world;
+        private final long entityId;
+        private final UUID entityUUID;
+        final String updateEntityUUIDString;
+
+        public EntityUUIDChange(World world, long entityId, UUID entityUUID) {
+            this.world = world;
+            this.entityId = entityId;
+            this.entityUUID = entityUUID;
+            updateEntityUUIDString = getWorldConfig(world).updateEntityUUIDString;
+        }
+
+        @Override
+        public String[] getInserts() {
+            final String table = getWorldConfig(world).table;
+            final String[] inserts = new String[1];
+
+            inserts[0] = "UPDATE `" + table + "-entityids` SET entityuuid = '" + mysqlTextEscape(entityUUID.toString()) + "' WHERE entityid = " + entityId;
+            return inserts;
+        }
+
+        @Override
+        public Actor[] getActors() {
+            return new Actor[0];
+        }
+
+        @Override
+        public void process(Connection conn, BatchHelper batchHelper) throws SQLException {
+            PreparedStatement smt = batchHelper.getOrPrepareStatement(conn, updateEntityUUIDString, Statement.NO_GENERATED_KEYS);
+            smt.setString(1, entityUUID.toString());
+            smt.setLong(2, entityId);
+            smt.executeUpdate();
+        }
+    }
+
+    private int safeY(Location loc) {
         int safeY = loc.getBlockY();
-        if (safeY<0) safeY = 0;
-        if (safeY>65535) safeY=65535;
+        if (safeY < Short.MIN_VALUE) {
+            safeY = Short.MIN_VALUE;
+        }
+        if (safeY > Short.MAX_VALUE) {
+            safeY = Short.MAX_VALUE;
+        }
         return safeY;
+    }
+
+    private class BatchHelper {
+        private HashMap<String, PreparedStatement> preparedStatements = new HashMap<>();
+        private HashSet<PreparedStatement> preparedStatementsWithGeneratedKeys = new HashSet<>();
+        private LinkedHashMap<PreparedStatement, ArrayList<LongCallback>> generatedKeyHandler = new LinkedHashMap<>();
+        private HashMap<Location, Integer> uncommitedBlockActors = new HashMap<>();
+
+        public void reset() {
+            preparedStatements.clear();
+            preparedStatementsWithGeneratedKeys.clear();
+            generatedKeyHandler.clear();
+            uncommitedBlockActors.clear();
+        }
+
+        public void addUncommitedBlockActorId(Location loc, int actorId) {
+            uncommitedBlockActors.put(loc, actorId);
+        }
+
+        public Integer getUncommitedBlockActor(Location loc) {
+            return uncommitedBlockActors.get(loc);
+        }
+
+        public void processStatements(Connection conn) throws SQLException {
+            while (!generatedKeyHandler.isEmpty()) {
+                Entry<PreparedStatement, ArrayList<LongCallback>> entry = generatedKeyHandler.entrySet().iterator().next();
+                PreparedStatement smt = entry.getKey();
+                ArrayList<LongCallback> callbackList = entry.getValue();
+                generatedKeyHandler.remove(smt);
+                smt.executeBatch();
+                if (preparedStatementsWithGeneratedKeys.contains(smt)) {
+                    ResultSet keys = smt.getGeneratedKeys();
+                    long[] results = new long[callbackList.size()];
+                    int pos = 0;
+                    while (keys.next() && pos < results.length) {
+                        results[pos++] = keys.getLong(1);
+                    }
+                    keys.close();
+                    for (int i = 0; i < results.length; i++) {
+                        LongCallback callback = callbackList.get(i);
+                        if (callback != null) {
+                            callback.call(results[i]);
+                        }
+                    }
+                }
+            }
+            uncommitedBlockActors.clear();
+        }
+
+        public PreparedStatement getOrPrepareStatement(Connection conn, String sql, int autoGeneratedKeys) throws SQLException {
+            PreparedStatement smt = preparedStatements.get(sql);
+            if (smt == null) {
+                smt = conn.prepareStatement(sql, autoGeneratedKeys);
+                preparedStatements.put(sql, smt);
+                if (autoGeneratedKeys == Statement.RETURN_GENERATED_KEYS) {
+                    preparedStatementsWithGeneratedKeys.add(smt);
+                }
+            }
+            return smt;
+        }
+
+        public void addBatch(PreparedStatement smt, LongCallback generatedKeysCallback) throws SQLException {
+            smt.addBatch();
+            ArrayList<LongCallback> callbackList = generatedKeyHandler.get(smt);
+            if (callbackList == null) {
+                callbackList = new ArrayList<>();
+                generatedKeyHandler.put(smt, callbackList);
+            }
+            callbackList.add(generatedKeysCallback);
+        }
+    }
+
+    protected interface LongCallback {
+        public void call(long value) throws SQLException;
     }
 }

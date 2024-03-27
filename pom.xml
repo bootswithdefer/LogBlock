@@ -1,10 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.diddiz</groupId>
     <artifactId>logblock</artifactId>
-    <version>1.11-SNAPSHOT</version>
+    <version>1.20.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>LogBlock</name>
@@ -29,70 +29,61 @@
 
     <distributionManagement>
         <repository>
-            <id>md_5-releases</id>
-            <url>http://repo.md-5.net/content/repositories/releases/</url>
+            <id>nexus</id>
+            <name>Releases</name>
+            <url>https://www.iani.de/nexus/content/repositories/releases/</url>
         </repository>
         <snapshotRepository>
-            <id>md_5-snapshots</id>
-            <url>http://repo.md-5.net/content/repositories/snapshots/</url>
+            <id>nexus</id>
+            <name>Snapshot</name>
+            <url>https://www.iani.de/nexus/content/repositories/snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
     <dependencies>
         <dependency>
-            <groupId>org.bukkit</groupId>
-            <artifactId>bukkit</artifactId>
-            <version>1.11-R0.1-SNAPSHOT</version>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.20.4-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>questioner</artifactId>
-            <version>${project.version}</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/LogBlockQuestioner.jar</systemPath>
+            <groupId>com.sk89q.worldedit</groupId>
+            <artifactId>worldedit-bukkit</artifactId>
+            <version>7.3.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.sk89q</groupId>
-            <artifactId>worldedit</artifactId>
-            <version>6.0.0-SNAPSHOT</version>
+            <groupId>com.sk89q.worldguard</groupId>
+            <artifactId>worldguard-bukkit</artifactId>
+            <version>7.1.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>2.4.1</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <version>1.7.10</version>
+            <version>5.1.0</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
     <repositories>
         <repository>
-            <id>repobo-snap</id>
-            <url>http://repo.bukkit.org/content/groups/public</url>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
         <repository>
             <id>sk89q-repo</id>
-            <url>http://maven.sk89q.com/repo/</url>
+            <url>https://maven.enginehub.org/repo/</url>
         </repository>
         <repository>
-            <id>kitteh-repo</id>
-            <url>http://repo.kitteh.org/content/groups/public</url>
-        </repository>
-        <repository>
-            <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+            <id>brokkonaut-repo</id>
+            <url>https://www.iani.de/nexus/content/groups/public/</url>
         </repository>
     </repositories>
     <profiles>
@@ -127,23 +118,22 @@
         <resources>
             <resource>
                 <filtering>true</filtering>
-                <directory>${project.basedir}/src/main/resources</directory>
+                <directory>src/main/resources</directory>
             </resource>
         </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.12.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <release>17</release>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.9.1</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>regex-property</id>
@@ -163,7 +153,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.3</version>
+                <version>3.5.1</version>
                 <configuration>
                 </configuration>
                 <executions>
@@ -172,6 +162,14 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.zaxxer.hikari</pattern>
+                                    <shadedPattern>de.diddiz.lib.com.zaxxer.hikari</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

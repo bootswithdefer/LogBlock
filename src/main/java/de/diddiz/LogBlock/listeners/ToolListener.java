@@ -1,10 +1,12 @@
 package de.diddiz.LogBlock.listeners;
 
 import de.diddiz.LogBlock.*;
-import de.diddiz.worldedit.RegionContainer;
+import de.diddiz.LogBlock.events.ToolUseEvent;
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.CuboidRegion;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -30,11 +32,11 @@ public class ToolListener implements Listener {
         handler = logblock.getCommandsHandler();
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getMaterial() != null) {
             final Action action = event.getAction();
-            final int type = event.getMaterial().getId();
+            final Material type = event.getMaterial();
             final Tool tool = toolsByType.get(type);
             final Player player = event.getPlayer();
             if (tool != null && (action == Action.RIGHT_CLICK_BLOCK || action == Action.LEFT_CLICK_BLOCK) && logblock.hasPermission(player, "logblock.tools." + tool.name)) {
@@ -47,27 +49,26 @@ public class ToolListener implements Listener {
                         return;
                     }
                     final Block block = event.getClickedBlock();
-                    final QueryParams params = toolData.params;
+                    final QueryParams params = toolData.params.clone();
                     params.loc = null;
                     params.sel = null;
                     if (behavior == ToolBehavior.BLOCK) {
                         params.setLocation(block.getRelative(event.getBlockFace()).getLocation());
-                    } else if ((block.getTypeId() != 54 && block.getTypeId() != 146) || tool.params.radius != 0) {
+                    } else if (tool.params.radius != 0) {
                         params.setLocation(block.getLocation());
                     } else {
-                        if (logblock.getServer().getPluginManager().isPluginEnabled("WorldEdit")) {
-                            for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
-                                if (block.getRelative(face).getTypeId() == block.getTypeId()) {
-                                    params.setSelection(RegionContainer.fromCorners(event.getPlayer().getWorld(),
-                                            block.getLocation(), block.getRelative(face).getLocation()));
-                                }
-                            }
-                        }
-                        if (params.sel == null) {
+                        Block otherHalfChest = BukkitUtils.getConnectedChest(block);
+                        if (otherHalfChest == null) {
                             params.setLocation(block.getLocation());
+                        } else {
+                            params.setSelection(CuboidRegion.fromCorners(block.getLocation().getWorld(), block.getLocation(), otherHalfChest.getLocation()));
                         }
                     }
                     try {
+                        params.validate();
+                        if (this.callToolUseEvent(new ToolUseEvent(player, tool, behavior, params))) {
+                            return;
+                        }
                         if (toolData.mode == ToolMode.ROLLBACK) {
                             handler.new CommandRollback(player, params, true);
                         } else if (toolData.mode == ToolMode.REDO) {
@@ -88,6 +89,11 @@ public class ToolListener implements Listener {
         }
     }
 
+    private boolean callToolUseEvent(ToolUseEvent event) {
+        this.logblock.getServer().getPluginManager().callEvent(event);
+        return event.isCancelled();
+    }
+
     @EventHandler
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         final Player player = event.getPlayer();
@@ -98,7 +104,9 @@ public class ToolListener implements Listener {
                 final ToolData toolData = entry.getValue();
                 if (toolData.enabled && !logblock.hasPermission(player, "logblock.tools." + tool.name)) {
                     toolData.enabled = false;
-                    player.getInventory().removeItem(new ItemStack(tool.item, 1));
+                    if (tool.removeOnDisable && logblock.hasPermission(player, "logblock.spawnTools")) {
+                        player.getInventory().removeItem(new ItemStack(tool.item, 1));
+                    }
                     player.sendMessage(ChatColor.GREEN + "Tool disabled.");
                 }
             }
@@ -113,10 +121,29 @@ public class ToolListener implements Listener {
             for (final Entry<Tool, ToolData> entry : session.toolData.entrySet()) {
                 final Tool tool = entry.getKey();
                 final ToolData toolData = entry.getValue();
-                final int item = event.getItemDrop().getItemStack().getTypeId();
-                if (item == tool.item && toolData.enabled && !tool.canDrop) {
-                    player.sendMessage(ChatColor.RED + "You cannot drop this tool.");
-                    event.setCancelled(true);
+                final Material item = event.getItemDrop().getItemStack().getType();
+                if (item == tool.item && toolData.enabled) {
+                    if (tool.dropToDisable) {
+                        toolData.enabled = false;
+                        ItemStack stack = event.getItemDrop().getItemStack();
+                        if (tool.removeOnDisable && logblock.hasPermission(player, "logblock.spawnTools")) {
+                            if (stack.isSimilar(new ItemStack(item))) {
+                                if (stack.getAmount() > 1) {
+                                    stack.setAmount(stack.getAmount() - 1);
+                                    event.getItemDrop().setItemStack(stack);
+                                } else {
+                                    event.getItemDrop().remove();
+                                }
+                            }
+                        }
+                        if (BukkitUtils.hasInventoryStorageSpaceFor(player.getInventory(), stack)) {
+                            event.setCancelled(true);
+                        }
+                        player.sendMessage(ChatColor.GREEN + "Tool disabled.");
+                    } else if (!tool.canDrop) {
+                        player.sendMessage(ChatColor.RED + "You cannot drop this tool.");
+                        event.setCancelled(true);
+                    }
                 }
             }
         }

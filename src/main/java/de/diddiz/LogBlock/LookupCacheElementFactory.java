@@ -26,6 +26,12 @@ public class LookupCacheElementFactory {
                 return new SummedKills(rs, params, spaceFactor);
             }
         }
+        if (params.bct == BlockChangeType.ENTITIES || params.bct == BlockChangeType.ENTITIES_CREATED || params.bct == BlockChangeType.ENTITIES_KILLED) {
+            if (params.sum == SummarizationMode.NONE) {
+                return new EntityChange(rs, params);
+            }
+            return new SummedEntityChanges(rs, params, spaceFactor);
+        }
         if (params.sum == SummarizationMode.NONE) {
             return new BlockChange(rs, params);
         }

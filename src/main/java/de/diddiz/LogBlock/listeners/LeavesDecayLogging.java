@@ -8,8 +8,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.LeavesDecayEvent;
 
 import static de.diddiz.LogBlock.config.Config.isLogging;
-import static de.diddiz.util.LoggingUtil.smartLogBlockBreak;
-import static de.diddiz.util.LoggingUtil.smartLogFallables;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogBlockBreak;
+import static de.diddiz.LogBlock.util.LoggingUtil.smartLogFallables;
 
 public class LeavesDecayLogging extends LoggingListener {
     public LeavesDecayLogging(LogBlock lb) {

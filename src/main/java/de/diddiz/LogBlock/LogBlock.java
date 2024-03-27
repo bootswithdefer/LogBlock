@@ -1,10 +1,15 @@
 package de.diddiz.LogBlock;
 
+import de.diddiz.LogBlock.addons.worldguard.WorldGuardLoggingFlagsAddon;
 import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.listeners.*;
-import de.diddiz.util.MySQLConnectionPool;
-import de.diddiz.worldedit.WorldEditLoggingHook;
+import de.diddiz.LogBlock.questioner.Questioner;
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.MySQLConnectionPool;
+import de.diddiz.LogBlock.worldedit.WorldEditHelper;
+import de.diddiz.LogBlock.worldedit.WorldEditLoggingHook;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -12,19 +17,17 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 import java.util.logging.Level;
 
 import static de.diddiz.LogBlock.config.Config.*;
-import static de.diddiz.util.MaterialName.materialName;
 import static org.bukkit.Bukkit.getPluginManager;
 
 public class LogBlock extends JavaPlugin {
@@ -32,12 +35,20 @@ public class LogBlock extends JavaPlugin {
     private MySQLConnectionPool pool;
     private Consumer consumer = null;
     private CommandsHandler commandsHandler;
-    private Updater updater = null;
-    private Timer timer = null;
-    private boolean errorAtLoading = false, noDb = false, connected = true;
+    private boolean noDb = false, connected = true;
+    private PlayerInfoLogging playerInfoLogging;
+    private ScaffoldingLogging scaffoldingLogging;
+    private Questioner questioner;
+    private WorldGuardLoggingFlagsAddon worldGuardLoggingFlagsAddon;
+    private boolean isConfigLoaded;
+    private volatile boolean isCompletelyEnabled;
 
     public static LogBlock getInstance() {
         return logblock;
+    }
+
+    public boolean isCompletelyEnabled() {
+        return isCompletelyEnabled;
     }
 
     public Consumer getConsumer() {
@@ -48,19 +59,43 @@ public class LogBlock extends JavaPlugin {
         return commandsHandler;
     }
 
-    Updater getUpdater() {
-        return updater;
-    }
-
     @Override
     public void onLoad() {
         logblock = this;
+        BukkitUtils.isDoublePlant(Material.AIR); // Force static code to run
         try {
-            updater = new Updater(this);
             Config.load(this);
+            isConfigLoaded = true;
+        } catch (final Exception ex) {
+            getLogger().log(Level.SEVERE, "Could not load LogBlock config! " + ex.getMessage(), ex);
+        }
+        if (Config.worldGuardLoggingFlags) {
+            if (getServer().getPluginManager().getPlugin("WorldGuard") == null) {
+                getLogger().log(Level.SEVERE, "Invalid config! addons.worldguardLoggingFlags is set to true, but WorldGuard is not loaded.");
+            } else {
+                worldGuardLoggingFlagsAddon = new WorldGuardLoggingFlagsAddon(this);
+                worldGuardLoggingFlagsAddon.onPluginLoad();
+            }
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        final PluginManager pm = getPluginManager();
+        if (!isConfigLoaded) {
+            pm.disablePlugin(this);
+            return;
+        }
+        consumer = new Consumer(this);
+        try {
             getLogger().info("Connecting to " + user + "@" + url + "...");
-            pool = new MySQLConnectionPool(url, user, password);
-            final Connection conn = getConnection();
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+            } catch (ClassNotFoundException ignored) {
+                Class.forName("com.mysql.jdbc.Driver");
+            }
+            pool = new MySQLConnectionPool(url, user, password, mysqlUseSSL, mysqlRequireSSL);
+            final Connection conn = getConnection(true);
             if (conn == null) {
                 noDb = true;
                 return;
@@ -70,87 +105,61 @@ public class LogBlock extends JavaPlugin {
             if (rs.next()) {
                 Config.mb4 = true;
                 // Allegedly JDBC driver since 2010 hasn't needed this. I did.
-                st.executeQuery("SET NAMES utf8mb4;");
+                st.executeUpdate("SET NAMES utf8mb4;");
             }
             conn.close();
+            Updater updater = new Updater(this);
+            updater.checkTables();
+            MaterialConverter.initializeMaterials(getConnection());
+            MaterialConverter.getOrAddMaterialId(Material.AIR); // AIR must be the first entry
+            EntityTypeConverter.initializeEntityTypes(getConnection());
             if (updater.update()) {
                 load(this);
             }
-            updater.checkTables();
         } catch (final NullPointerException ex) {
             getLogger().log(Level.SEVERE, "Error while loading: ", ex);
         } catch (final Exception ex) {
-            getLogger().severe("Error while loading: " + ex.getMessage());
-            errorAtLoading = true;
-            return;
-        }
-        consumer = new Consumer(this);
-    }
-
-    @Override
-    public void onEnable() {
-        materialName(0);    // Force static code to run
-        final PluginManager pm = getPluginManager();
-        if (errorAtLoading) {
+            getLogger().log(Level.SEVERE, "Error while loading: " + ex.getMessage(), ex);
             pm.disablePlugin(this);
             return;
         }
-        if (noDb) {
-            return;
-        }
-        if (pm.getPlugin("WorldEdit") != null) {
-            if (Integer.parseInt(pm.getPlugin("WorldEdit").getDescription().getVersion().substring(0, 1)) > 5) {
-                new WorldEditLoggingHook(this).hook();
-            } else {
-                getLogger().warning("Failed to hook into WorldEdit. Your WorldEdit version seems to be outdated, please make sure WorldEdit is at least version 6.");
-            }
+
+        if (WorldEditHelper.hasWorldEdit()) {
+            new WorldEditLoggingHook(this).hook();
         }
         commandsHandler = new CommandsHandler(this);
         getCommand("lb").setExecutor(commandsHandler);
         if (enableAutoClearLog && autoClearLogDelay > 0) {
             getServer().getScheduler().runTaskTimerAsynchronously(this, new AutoClearLog(this), 6000, autoClearLogDelay * 60 * 20);
         }
-        getServer().getScheduler().runTaskAsynchronously(this, new DumpedLogImporter(this));
+        new DumpedLogImporter(this).run();
         registerEvents();
-        if (useBukkitScheduler) {
-            if (getServer().getScheduler().runTaskTimerAsynchronously(this, consumer, delayBetweenRuns < 20 ? 20 : delayBetweenRuns, delayBetweenRuns).getTaskId() > 0) {
-                getLogger().info("Scheduled consumer with bukkit scheduler.");
-            } else {
-                getLogger().warning("Failed to schedule consumer with bukkit scheduler. Now trying schedule with timer.");
-                timer = new Timer();
-                timer.schedule(consumer, delayBetweenRuns < 20 ? 1000 : delayBetweenRuns * 50, delayBetweenRuns * 50);
-            }
-        } else {
-            timer = new Timer();
-            timer.schedule(consumer, delayBetweenRuns < 20 ? 1000 : delayBetweenRuns * 50, delayBetweenRuns * 50);
-            getLogger().info("Scheduled consumer with timer.");
-        }
-        getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
+        consumer.start();
         for (final Tool tool : toolsByType.values()) {
             if (pm.getPermission("logblock.tools." + tool.name) == null) {
                 final Permission perm = new Permission("logblock.tools." + tool.name, tool.permissionDefault);
                 pm.addPermission(perm);
             }
         }
-        try {
-            Metrics metrics = new Metrics(this);
-            metrics.start();
-        } catch (IOException ex) {
-            getLogger().info("Could not start metrics: " + ex.getMessage());
+        questioner = new Questioner(this);
+        if (worldGuardLoggingFlagsAddon != null) {
+            worldGuardLoggingFlagsAddon.onPluginEnable();
         }
+        isCompletelyEnabled = true;
+        getServer().getScheduler().runTaskAsynchronously(this, new Updater.PlayerCountChecker(this));
     }
 
     private void registerEvents() {
         final PluginManager pm = getPluginManager();
         pm.registerEvents(new ToolListener(this), this);
-        pm.registerEvents(new PlayerInfoLogging(this), this);
+        pm.registerEvents(playerInfoLogging = new PlayerInfoLogging(this), this);
         if (askRollbackAfterBan) {
             pm.registerEvents(new BanListener(this), this);
         }
         if (isLogging(Logging.BLOCKPLACE)) {
             pm.registerEvents(new BlockPlaceLogging(this), this);
         }
-        if (isLogging(Logging.BLOCKPLACE) || isLogging(Logging.LAVAFLOW) || isLogging(Logging.WATERFLOW)) {
+        if (isLogging(Logging.LAVAFLOW) || isLogging(Logging.WATERFLOW)) {
             pm.registerEvents(new FluidFlowLogging(this), this);
         }
         if (isLogging(Logging.BLOCKBREAK)) {
@@ -168,6 +177,12 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.SNOWFADE)) {
             pm.registerEvents(new SnowFadeLogging(this), this);
         }
+        if (isLogging(Logging.SCAFFOLDING)) {
+            pm.registerEvents(scaffoldingLogging = new ScaffoldingLogging(this), this);
+        }
+        if (isLogging(Logging.CAULDRONINTERACT)) {
+            pm.registerEvents(new CauldronLogging(this), this);
+        }
         if (isLogging(Logging.CREEPEREXPLOSION) || isLogging(Logging.TNTEXPLOSION) || isLogging(Logging.GHASTFIREBALLEXPLOSION) || isLogging(Logging.ENDERDRAGON) || isLogging(Logging.MISCEXPLOSION)) {
             pm.registerEvents(new ExplosionLogging(this), this);
         }
@@ -177,7 +192,8 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.CHESTACCESS)) {
             pm.registerEvents(new ChestAccessLogging(this), this);
         }
-        if (isLogging(Logging.SWITCHINTERACT) || isLogging(Logging.DOORINTERACT) || isLogging(Logging.CAKEEAT) || isLogging(Logging.DIODEINTERACT) || isLogging(Logging.COMPARATORINTERACT) || isLogging(Logging.NOTEBLOCKINTERACT) || isLogging(Logging.PRESUREPLATEINTERACT) || isLogging(Logging.TRIPWIREINTERACT) || isLogging(Logging.CROPTRAMPLE)) {
+        if (isLogging(Logging.BLOCKBREAK) || isLogging(Logging.BLOCKPLACE) || isLogging(Logging.SWITCHINTERACT) || isLogging(Logging.DOORINTERACT) || isLogging(Logging.CAKEEAT) || isLogging(Logging.DIODEINTERACT) || isLogging(Logging.COMPARATORINTERACT) || isLogging(Logging.NOTEBLOCKINTERACT)
+                || isLogging(Logging.PRESUREPLATEINTERACT) || isLogging(Logging.TRIPWIREINTERACT) || isLogging(Logging.CROPTRAMPLE)) {
             pm.registerEvents(new InteractLogging(this), this);
         }
         if (isLogging(Logging.CREATURECROPTRAMPLE)) {
@@ -186,7 +202,7 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.KILL)) {
             pm.registerEvents(new KillLogging(this), this);
         }
-        if (isLogging(Logging.CHAT)) {
+        if (isLogging(Logging.CHAT) || isLogging(Logging.PLAYER_COMMANDS) || isLogging(Logging.CONSOLE_COMMANDS) || isLogging(Logging.COMMANDBLOCK_COMMANDS)) {
             pm.registerEvents(new ChatLogging(this), this);
         }
         if (isLogging(Logging.ENDERMEN)) {
@@ -195,49 +211,53 @@ public class LogBlock extends JavaPlugin {
         if (isLogging(Logging.WITHER)) {
             pm.registerEvents(new WitherLogging(this), this);
         }
-        if (isLogging(Logging.NATURALSTRUCTUREGROW) || isLogging(Logging.BONEMEALSTRUCTUREGROW)) {
+        if (isLogging(Logging.NATURALSTRUCTUREGROW)) {
             pm.registerEvents(new StructureGrowLogging(this), this);
         }
-        if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD)) {
+        if (isLogging(Logging.BONEMEALSTRUCTUREGROW)) {
+            pm.registerEvents(new BlockFertilizeLogging(this), this);
+        }
+        if (isLogging(Logging.GRASSGROWTH) || isLogging(Logging.MYCELIUMSPREAD) || isLogging(Logging.VINEGROWTH) || isLogging(Logging.MUSHROOMSPREAD) || isLogging(Logging.BAMBOOGROWTH) || isLogging(Logging.DRIPSTONEGROWTH) || isLogging(Logging.SCULKSPREAD)) {
             pm.registerEvents(new BlockSpreadLogging(this), this);
         }
-        if (isLogging(Logging.LOCKEDCHESTDECAY)) {
-            pm.registerEvents(new LockedChestDecayLogging(this), this);
+        if (isLogging(Logging.DRAGONEGGTELEPORT)) {
+            pm.registerEvents(new DragonEggLogging(this), this);
+        }
+        if (isLogging(Logging.LECTERNBOOKCHANGE)) {
+            pm.registerEvents(new LecternLogging(this), this);
+        }
+        if (isLogging(Logging.OXIDIZATION)) {
+            pm.registerEvents(new OxidizationLogging(this), this);
+        }
+        if (Config.isLoggingAnyEntities()) {
+            if (!WorldEditHelper.hasFullWorldEdit()) {
+                getLogger().severe("No compatible WorldEdit found, entity logging will not work!");
+            } else {
+                pm.registerEvents(new AdvancedEntityLogging(this), this);
+                getLogger().info("Entity logging enabled!");
+            }
         }
     }
 
     @Override
     public void onDisable() {
-        if (timer != null) {
-            timer.cancel();
-        }
+        isCompletelyEnabled = false;
         getServer().getScheduler().cancelTasks(this);
         if (consumer != null) {
-            if (logPlayerInfo && getServer().getOnlinePlayers() != null) {
+            if (logPlayerInfo && playerInfoLogging != null) {
                 for (final Player player : getServer().getOnlinePlayers()) {
-                    consumer.queueLeave(player);
+                    playerInfoLogging.onPlayerQuit(player);
                 }
             }
             getLogger().info("Waiting for consumer ...");
-            consumer.run();
+            consumer.shutdown();
             if (consumer.getQueueSize() > 0) {
-                int tries = 9;
-                while (consumer.getQueueSize() > 0) {
-                    getLogger().info("Remaining queue size: " + consumer.getQueueSize());
-                    if (tries > 0) {
-                        getLogger().info("Remaining tries: " + tries);
-                    } else {
-                        getLogger().info("Unable to save queue to database. Trying to write to a local file.");
-                        try {
-                            consumer.writeToFile();
-                            getLogger().info("Successfully dumped queue.");
-                        } catch (final FileNotFoundException ex) {
-                            getLogger().info("Failed to write. Given up.");
-                            break;
-                        }
-                    }
-                    consumer.run();
-                    tries--;
+                getLogger().info("Remaining queue size: " + consumer.getQueueSize() + ". Trying to write to a local file.");
+                try {
+                    consumer.writeToFile();
+                    getLogger().info("Successfully dumped queue.");
+                } catch (final FileNotFoundException ex) {
+                    getLogger().info("Failed to write. Given up.");
                 }
             }
         }
@@ -259,6 +279,10 @@ public class LogBlock extends JavaPlugin {
     }
 
     public Connection getConnection() {
+        return getConnection(false);
+    }
+
+    public Connection getConnection(boolean testConnection) {
         try {
             final Connection conn = pool.getConnection();
             if (!connected) {
@@ -267,11 +291,13 @@ public class LogBlock extends JavaPlugin {
             }
             return conn;
         } catch (final Exception ex) {
-            if (connected) {
+            if (testConnection) {
+                getLogger().log(Level.SEVERE, "Could not connect to the Database! Please check your config! " + ex.getMessage());
+            } else if (connected) {
                 getLogger().log(Level.SEVERE, "Error while fetching connection: ", ex);
                 connected = false;
             } else {
-                getLogger().severe("MySQL connection lost");
+                getLogger().log(Level.SEVERE, "MySQL connection lost", ex);
             }
             return null;
         }
@@ -298,7 +324,7 @@ public class LogBlock extends JavaPlugin {
         try {
             state = conn.createStatement();
             final ResultSet rs = state.executeQuery(params.getQuery());
-            final List<BlockChange> blockchanges = new ArrayList<BlockChange>();
+            final List<BlockChange> blockchanges = new ArrayList<>();
             while (rs.next()) {
                 blockchanges.add(new BlockChange(rs, params));
             }
@@ -312,6 +338,9 @@ public class LogBlock extends JavaPlugin {
     }
 
     public int getCount(QueryParams params) throws SQLException {
+        if (params == null || params.world == null || !Config.isLogged(params.world)) {
+            throw new IllegalArgumentException("World is not logged: " + ((params == null || params.world == null) ? "null" : params.world.getName()));
+        }
         final Connection conn = getConnection();
         Statement state = null;
         if (conn == null) {
@@ -332,5 +361,18 @@ public class LogBlock extends JavaPlugin {
             }
             conn.close();
         }
+    }
+
+    @Override
+    public File getFile() {
+        return super.getFile();
+    }
+
+    public Questioner getQuestioner() {
+        return questioner;
+    }
+
+    public ScaffoldingLogging getScaffoldingLogging() {
+        return scaffoldingLogging;
     }
 }

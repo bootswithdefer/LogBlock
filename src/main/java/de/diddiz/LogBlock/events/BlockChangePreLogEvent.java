@@ -2,123 +2,93 @@ package de.diddiz.LogBlock.events;
 
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.ChestAccess;
-import org.apache.commons.lang.Validate;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 
 public class BlockChangePreLogEvent extends PreLogEvent {
 
     private static final HandlerList handlers = new HandlerList();
     private Location location;
-    private int typeBefore, typeAfter;
-    private byte data;
-    private String signText;
+    private BlockData typeBefore, typeAfter;
     private ChestAccess chestAccess;
+    private YamlConfiguration stateBefore;
+    private YamlConfiguration stateAfter;
 
-    public BlockChangePreLogEvent(Actor owner, Location location, int typeBefore, int typeAfter, byte data,
-                                  String signText, ChestAccess chestAccess) {
-
+    public BlockChangePreLogEvent(Actor owner, Location location, BlockData typeBefore, BlockData typeAfter, YamlConfiguration stateBefore, YamlConfiguration stateAfter, ChestAccess chestAccess) {
         super(owner);
         this.location = location;
         this.typeBefore = typeBefore;
         this.typeAfter = typeAfter;
-        this.data = data;
-        this.signText = signText;
+        this.stateBefore = stateBefore;
+        this.stateAfter = stateAfter;
         this.chestAccess = chestAccess;
     }
 
     public Location getLocation() {
-
         return location;
     }
 
     public void setLocation(Location location) {
-
         this.location = location;
     }
 
-    public int getTypeBefore() {
-
+    public BlockData getTypeBefore() {
         return typeBefore;
     }
 
-    public void setTypeBefore(int typeBefore) {
-
+    public void setTypeBefore(BlockData typeBefore) {
+        if (typeBefore == null) {
+            typeBefore = Bukkit.createBlockData(Material.AIR);
+        }
         this.typeBefore = typeBefore;
     }
 
-    public int getTypeAfter() {
-
+    public BlockData getTypeAfter() {
         return typeAfter;
     }
 
-    public void setTypeAfter(int typeAfter) {
-
+    public void setTypeAfter(BlockData typeAfter) {
+        if (typeAfter == null) {
+            typeAfter = Bukkit.createBlockData(Material.AIR);
+        }
         this.typeAfter = typeAfter;
     }
 
-    public byte getData() {
-
-        return data;
+    public YamlConfiguration getStateBefore() {
+        return stateBefore;
     }
 
-    public void setData(byte data) {
-
-        this.data = data;
+    public YamlConfiguration getStateAfter() {
+        return stateAfter;
     }
 
-    public String getSignText() {
-
-        return signText;
+    public void setStateBefore(YamlConfiguration stateBefore) {
+        this.stateBefore = stateBefore;
     }
 
-    public void setSignText(String[] signText) {
-
-        if (signText != null) {
-            // Check for block
-            Validate.isTrue(isValidSign(), "Must be valid sign block");
-
-            // Check for problems
-            Validate.noNullElements(signText, "No null lines");
-            Validate.isTrue(signText.length == 4, "Sign text must be 4 strings");
-
-            this.signText = signText[0] + "\0" + signText[1] + "\0" + signText[2] + "\0" + signText[3];
-        } else {
-            this.signText = null;
-        }
-    }
-
-    private boolean isValidSign() {
-
-        if ((typeAfter == 63 || typeAfter == 68) && typeBefore == 0) {
-            return true;
-        }
-        if ((typeBefore == 63 || typeBefore == 68) && typeAfter == 0) {
-            return true;
-        }
-        if ((typeAfter == 63 || typeAfter == 68) && typeBefore == typeAfter) {
-            return true;
-        }
-        return false;
+    public void setStateAfter(YamlConfiguration stateAfter) {
+        this.stateAfter = stateAfter;
     }
 
     public ChestAccess getChestAccess() {
-
         return chestAccess;
     }
 
     public void setChestAccess(ChestAccess chestAccess) {
-
         this.chestAccess = chestAccess;
     }
 
+    @Override
     public HandlerList getHandlers() {
-
         return handlers;
     }
 
     public static HandlerList getHandlerList() {
-
         return handlers;
     }
 }

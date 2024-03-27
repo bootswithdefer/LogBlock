@@ -7,32 +7,52 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
+import org.bukkit.block.Container;
+import org.bukkit.block.data.Bisected.Half;
+import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.Bed;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.Bed.Part;
+import org.bukkit.block.data.type.Piston;
+import org.bukkit.block.data.type.PistonHead;
+import org.bukkit.block.data.type.TechnicalPiston.Type;
 import org.bukkit.command.CommandSender;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Bee;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Bed;
-import org.bukkit.material.PistonBaseMaterial;
-import org.bukkit.material.PistonExtensionMaterial;
 
+import de.diddiz.LogBlock.QueryParams.Order;
+import de.diddiz.LogBlock.blockstate.BlockStateCodecs;
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.Utils;
+import de.diddiz.LogBlock.worldedit.WorldEditHelper;
 import java.io.File;
 import java.io.PrintWriter;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.UUID;
 import java.util.logging.Level;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 
 import static de.diddiz.LogBlock.config.Config.dontRollback;
 import static de.diddiz.LogBlock.config.Config.replaceAnyway;
-import static de.diddiz.util.BukkitUtils.*;
-import static de.diddiz.util.MaterialName.materialName;
-import static org.bukkit.Bukkit.getLogger;
+import static de.diddiz.LogBlock.util.BukkitUtils.*;
 
 public class WorldEditor implements Runnable {
     private final LogBlock logblock;
-    private final Queue<Edit> edits = new LinkedBlockingQueue<Edit>();
+    private final ArrayList<Edit> edits = new ArrayList<>();
     private final World world;
 
     /**
@@ -43,10 +63,18 @@ public class WorldEditor implements Runnable {
     private int successes = 0, blacklistCollisions = 0;
     private long elapsedTime = 0;
     public LookupCacheElement[] errors;
+    private boolean forceReplace;
+    private HashMap<Integer, UUID> uuidReplacements = new HashMap<>();
+    private boolean started = false;
 
     public WorldEditor(LogBlock logblock, World world) {
+        this(logblock, world, false);
+    }
+
+    public WorldEditor(LogBlock logblock, World world, boolean forceReplace) {
         this.logblock = logblock;
         this.world = world;
+        this.forceReplace = forceReplace;
     }
 
     public int getSize() {
@@ -65,13 +93,36 @@ public class WorldEditor implements Runnable {
         return blacklistCollisions;
     }
 
-
     public void setSender(CommandSender sender) {
         this.sender = sender;
     }
 
-    public void queueEdit(int x, int y, int z, int replaced, int type, byte data, String signtext, short itemType, short itemAmount, short itemData) {
-        edits.add(new Edit(0, new Location(world, x, y, z), null, replaced, type, data, signtext, new ChestAccess(itemType, itemAmount, itemData)));
+    public void queueBlockEdit(long time, int x, int y, int z, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess item) {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        edits.add(new BlockEdit(time, new Location(world, x, y, z), null, replaced, replaceData, replacedState, type, typeData, typeState, item));
+    }
+
+    public void queueEntityEdit(ResultSet rs, QueryParams p, boolean rollback) throws SQLException {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        edits.add(new EntityEdit(rs, p, rollback));
+    }
+
+    public void reverseRowOrder() {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        Collections.reverse(edits);
+    }
+
+    public void sortRows(QueryParams.Order order) {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        edits.sort(new EditComparator(order));
     }
 
     public long getElapsedTime() {
@@ -79,6 +130,10 @@ public class WorldEditor implements Runnable {
     }
 
     synchronized public void start() throws Exception {
+        if (started) {
+            throw new IllegalStateException("Already started");
+        }
+        started = true;
         final long start = System.currentTimeMillis();
         taskID = logblock.getServer().getScheduler().scheduleSyncRepeatingTask(logblock, this, 0, 1);
         if (taskID == -1) {
@@ -94,23 +149,25 @@ public class WorldEditor implements Runnable {
 
     @Override
     public synchronized void run() {
-        final List<WorldEditorException> errorList = new ArrayList<WorldEditorException>();
+        final List<WorldEditorException> errorList = new ArrayList<>();
         int counter = 0;
         float size = edits.size();
         while (!edits.isEmpty() && counter < 100) {
             try {
-                switch (edits.poll().perform()) {
+                switch (edits.remove(edits.size() - 1).perform()) {
                     case SUCCESS:
                         successes++;
                         break;
                     case BLACKLISTED:
                         blacklistCollisions++;
                         break;
+                    case NO_ACTION:
+                        break;
                 }
             } catch (final WorldEditorException ex) {
                 errorList.add(ex);
             } catch (final Exception ex) {
-                getLogger().log(Level.WARNING, "[WorldEditor] Exeption: ", ex);
+                logblock.getLogger().log(Level.WARNING, "[WorldEditor] Exeption: ", ex);
             }
             counter++;
             if (sender != null) {
@@ -125,11 +182,15 @@ public class WorldEditor implements Runnable {
             logblock.getServer().getScheduler().cancelTask(taskID);
             if (errorList.size() > 0) {
                 try {
-                    final File file = new File("plugins/LogBlock/error/WorldEditor-" + new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis()) + ".log");
-                    file.getParentFile().mkdirs();
+                    final File errorDir = new File(logblock.getDataFolder(), "error");
+                    errorDir.mkdirs();
+                    final File file = new File(errorDir, "WorldEditor-" + new SimpleDateFormat("yy-MM-dd-HH-mm-ss").format(System.currentTimeMillis()) + ".log");
                     final PrintWriter writer = new PrintWriter(file);
-                    for (final LookupCacheElement err : errorList) {
-                        writer.println(err.getMessage());
+                    for (final WorldEditorException err : errorList) {
+                        writer.println(BaseComponent.toPlainText(err.getLogMessage()));
+                        err.printStackTrace(writer);
+                        writer.println();
+                        writer.println();
                     }
                     writer.close();
                 } catch (final Exception ex) {
@@ -140,111 +201,269 @@ public class WorldEditor implements Runnable {
         }
     }
 
-    private static enum PerformResult {
-        SUCCESS, BLACKLISTED, NO_ACTION
+    protected UUID getReplacedUUID(int entityid, UUID unreplaced) {
+        UUID replaced = uuidReplacements.get(entityid);
+        return replaced != null ? replaced : unreplaced;
     }
 
-    private class Edit extends BlockChange {
-        public Edit(long time, Location loc, Actor actor, int replaced, int type, byte data, String signtext, ChestAccess ca) {
-            super(time, loc, actor, replaced, type, data, signtext, ca);
+    public static enum PerformResult {
+        SUCCESS,
+        BLACKLISTED,
+        NO_ACTION
+    }
+
+    public interface Edit {
+        PerformResult perform() throws WorldEditorException;
+
+        public long getTime();
+    }
+
+    public class EntityEdit extends EntityChange implements Edit {
+        private boolean rollback;
+
+        public EntityEdit(ResultSet rs, QueryParams p, boolean rollback) throws SQLException {
+            super(rs, p);
+            this.rollback = rollback;
         }
 
-        PerformResult perform() throws WorldEditorException {
-            if (dontRollback.contains(replaced)) {
+        @Override
+        public long getTime() {
+            return date;
+        }
+
+        @Override
+        public PerformResult perform() throws WorldEditorException {
+            if (type == null) {
+                throw new WorldEditorException("Unkown entity type for entity " + entityUUID, loc);
+            }
+            if (changeType == (rollback ? EntityChangeType.KILL : EntityChangeType.CREATE)) {
+                // spawn entity
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                Entity result = null;
+                YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
+                double x = deserialized.getDouble("x");
+                double y = deserialized.getDouble("y");
+                double z = deserialized.getDouble("z");
+                float yaw = (float) deserialized.getDouble("yaw");
+                float pitch = (float) deserialized.getDouble("pitch");
+                Location location = new Location(world, x, y, z, yaw, pitch);
+                Entity existing = BukkitUtils.loadEntityAround(location.getChunk(), uuid);
+                if (existing != null) {
+                    return PerformResult.NO_ACTION;
+                }
+                byte[] serializedWorldEditEntity = (byte[]) deserialized.get("worldedit");
+                if (serializedWorldEditEntity != null) {
+                    result = WorldEditHelper.restoreEntity(location, type, serializedWorldEditEntity);
+                }
+                if (result == null) {
+                    throw new WorldEditorException("Could not restore " + type, location);
+                } else {
+                    if (!result.getUniqueId().equals(uuid)) {
+                        logblock.getConsumer().queueEntityUUIDChange(world, entityId, result.getUniqueId());
+                        uuidReplacements.put(entityId, result.getUniqueId());
+                    }
+                }
+                return PerformResult.SUCCESS;
+            } else if (changeType == (rollback ? EntityChangeType.CREATE : EntityChangeType.KILL)) {
+                // kill entity
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
+                double x = deserialized.getDouble("x");
+                double y = deserialized.getDouble("y");
+                double z = deserialized.getDouble("z");
+                float yaw = (float) deserialized.getDouble("yaw");
+                float pitch = (float) deserialized.getDouble("pitch");
+                Location location = new Location(world, x, y, z, yaw, pitch);
+                Entity existing = BukkitUtils.loadEntityAround(location.getChunk(), uuid);
+                if (existing != null) {
+                    existing.remove();
+                    return PerformResult.SUCCESS;
+                }
+                return PerformResult.NO_ACTION; // the entity is not there, so we cannot do anything
+            } else if (changeType == (rollback ? EntityChangeType.REMOVEEQUIP : EntityChangeType.ADDEQUIP)) {
+                // set equip
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                Entity existing = BukkitUtils.loadEntityAround(loc.getChunk(), uuid);
+                if (existing != null) {
+                    YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
+                    ItemStack item = deserialized.getItemStack("item");
+                    if (item != null && existing instanceof ItemFrame) {
+                        ItemStack old = ((ItemFrame) existing).getItem();
+                        if (old == null || old.getType() == Material.AIR) {
+                            ((ItemFrame) existing).setItem(item);
+                            return PerformResult.SUCCESS;
+                        }
+                    } else if (item != null && existing instanceof ArmorStand) {
+                        EquipmentSlot slot = EquipmentSlot.valueOf(deserialized.getString("slot"));
+                        ArmorStand stand = (ArmorStand) existing;
+                        ItemStack old = BukkitUtils.getItemInSlot(stand, slot);
+                        if (old == null || old.getType() == Material.AIR) {
+                            BukkitUtils.setItemInSlot(stand, slot, item);
+                            return PerformResult.SUCCESS;
+                        }
+                    }
+                }
+                return PerformResult.NO_ACTION; // the entity is not there, or equip does not match
+            } else if (changeType == (rollback ? EntityChangeType.ADDEQUIP : EntityChangeType.REMOVEEQUIP)) {
+                // remove equip
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                Entity existing = BukkitUtils.loadEntityAround(loc.getChunk(), uuid);
+                if (existing != null) {
+                    YamlConfiguration deserialized = Utils.deserializeYamlConfiguration(data);
+                    ItemStack item = deserialized.getItemStack("item");
+                    if (item != null && existing instanceof ItemFrame) {
+                        ItemStack old = ((ItemFrame) existing).getItem();
+                        if (old != null && old.isSimilar(item)) {
+                            ((ItemFrame) existing).setItem(null);
+                            return PerformResult.SUCCESS;
+                        }
+                    } else if (item != null && existing instanceof ArmorStand) {
+                        EquipmentSlot slot = EquipmentSlot.valueOf(deserialized.getString("slot"));
+                        ArmorStand stand = (ArmorStand) existing;
+                        ItemStack old = BukkitUtils.getItemInSlot(stand, slot);
+                        if (old != null && old.isSimilar(item)) {
+                            BukkitUtils.setItemInSlot(stand, slot, null);
+                            return PerformResult.SUCCESS;
+                        }
+                    }
+                }
+                return PerformResult.NO_ACTION; // the entity is not there, or equip does not match
+            } else if (changeType == EntityChangeType.GET_STUNG) {
+                UUID uuid = getReplacedUUID(entityId, entityUUID);
+                Entity existing = BukkitUtils.loadEntityAround(loc.getChunk(), uuid);
+                if (existing != null && existing instanceof Bee) {
+                    ((Bee) existing).setHasStung(!rollback);
+                }
+            }
+            return PerformResult.NO_ACTION;
+        }
+    }
+
+    public class BlockEdit extends BlockChange implements Edit {
+        public BlockEdit(long time, Location loc, Actor actor, int replaced, int replaceData, byte[] replacedState, int type, int typeData, byte[] typeState, ChestAccess ca) {
+            super(time, loc, actor, replaced, replaceData, replacedState, type, typeData, typeState, ca);
+        }
+
+        @Override
+        public long getTime() {
+            return date;
+        }
+
+        @Override
+        public PerformResult perform() throws WorldEditorException {
+            BlockData replacedBlock = getBlockReplaced();
+            BlockData setBlock = getBlockSet();
+            if (replacedBlock == null || setBlock == null) {
+                throw new WorldEditorException("Could not parse the material", loc.clone());
+            }
+            // action: set to replaced
+
+            if (dontRollback.contains(replacedBlock.getMaterial())) {
                 return PerformResult.BLACKLISTED;
             }
             final Block block = loc.getBlock();
-            if (replaced == 0 && block.getTypeId() == 0) {
+            if (BukkitUtils.isEmpty(replacedBlock.getMaterial()) && BukkitUtils.isEmpty(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
-            final BlockState state = block.getState();
-            if (!world.isChunkLoaded(block.getChunk())) {
-                world.loadChunk(block.getChunk());
-            }
-            if (type == replaced) {
-                if (type == 0) {
-                    if (!block.setTypeId(0)) {
-                        throw new WorldEditorException(block.getTypeId(), 0, block.getLocation());
-                    }
-                } else if (ca != null) {
-                    if (getContainerBlocks().contains(Material.getMaterial(type))) {
+            BlockState state = block.getState();
+            if (setBlock.equals(replacedBlock)) {
+                if (ca != null) {
+                    if (state instanceof Container && state.getType() == replacedBlock.getMaterial()) {
                         int leftover;
                         try {
-                            leftover = modifyContainer(state, new ItemStack(ca.itemType, -ca.itemAmount, ca.itemData));
-                            // Special-case blocks which might be double chests
-                            if (leftover > 0 && (type == 54 || type == 146)) {
-                                for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST}) {
-                                    if (block.getRelative(face).getTypeId() == type) {
-                                        leftover = modifyContainer(block.getRelative(face).getState(), new ItemStack(ca.itemType, ca.itemAmount < 0 ? leftover : -leftover, ca.itemData));
-                                    }
-                                }
-                            }
+                            leftover = modifyContainer(state, new ItemStack(ca.itemStack), !ca.remove);
                         } catch (final Exception ex) {
                             throw new WorldEditorException(ex.getMessage(), block.getLocation());
                         }
-                        if (!state.update()) {
-                            throw new WorldEditorException("Failed to update inventory of " + materialName(block.getTypeId()), block.getLocation());
+                        if (leftover > 0 && ca.remove) {
+                            throw new WorldEditorException("Not enough space left in " + block.getType(), block.getLocation());
                         }
-                        if (leftover > 0 && ca.itemAmount < 0) {
-                            throw new WorldEditorException("Not enough space left in " + materialName(block.getTypeId()), block.getLocation());
-                        }
+                        return PerformResult.SUCCESS;
                     }
-                } else {
                     return PerformResult.NO_ACTION;
                 }
-                return PerformResult.SUCCESS;
             }
-            if (!(equalTypes(block.getTypeId(), type) || replaceAnyway.contains(block.getTypeId()))) {
+            if (!forceReplace && !BukkitUtils.isSimilarForRollback(setBlock.getMaterial(), block.getType()) && !block.isEmpty() && !replaceAnyway.contains(block.getType())) {
                 return PerformResult.NO_ACTION;
             }
-            if (state instanceof InventoryHolder) {
-                ((InventoryHolder) state).getInventory().clear();
+            if (state instanceof Container && replacedBlock.getMaterial() != block.getType()) {
+                ((Container) state).getSnapshotInventory().clear();
                 state.update();
             }
-            if (block.getTypeId() == replaced) {
-                if (block.getData() != (type == 0 ? data : (byte) 0)) {
-                    block.setData(type == 0 ? data : (byte) 0, true);
-                } else {
-                    return PerformResult.NO_ACTION;
+            block.setBlockData(replacedBlock);
+            BlockData newData = block.getBlockData();
+            if (BlockStateCodecs.hasCodec(replacedBlock.getMaterial())) {
+                state = block.getState();
+                try {
+                    BlockStateCodecs.deserialize(state, Utils.deserializeYamlConfiguration(replacedState));
+                    state.update();
+                } catch (Exception e) {
+                    throw new WorldEditorException("Failed to restore blockstate of " + block.getType() + ": " + e, block.getLocation());
                 }
-            } else if (!block.setTypeIdAndData(replaced, type == 0 ? data : (byte) 0, true)) {
-                throw new WorldEditorException(block.getTypeId(), replaced, block.getLocation());
             }
-            final int curtype = block.getTypeId();
-            if (signtext != null && (curtype == 63 || curtype == 68)) {
-                final Sign sign = (Sign) block.getState();
-                final String[] lines = signtext.split("\0", 4);
-                if (lines.length < 4) {
-                    return PerformResult.NO_ACTION;
+
+            final Material curtype = block.getType();
+            if (newData instanceof Bed) {
+                final Bed bed = (Bed) newData;
+                final Block secBlock = bed.getPart() == Part.HEAD ? block.getRelative(bed.getFacing().getOppositeFace()) : block.getRelative(bed.getFacing());
+                if (secBlock.isEmpty()) {
+                    Bed bed2 = (Bed) bed.clone();
+                    bed2.setPart(bed.getPart() == Part.HEAD ? Part.FOOT : Part.HEAD);
+                    secBlock.setBlockData(bed2);
                 }
-                for (int i = 0; i < 4; i++) {
-                    sign.setLine(i, lines[i]);
+            } else if (curtype == Material.IRON_DOOR || BukkitUtils.isWoodenDoor(curtype) || BukkitUtils.isDoublePlant(curtype)) {
+                final Bisected firstPart = (Bisected) newData;
+                final Block secBlock = block.getRelative(firstPart.getHalf() == Half.TOP ? BlockFace.DOWN : BlockFace.UP);
+                if (secBlock.isEmpty()) {
+                    Bisected secondPart = (Bisected) firstPart.clone();
+                    secondPart.setHalf(firstPart.getHalf() == Half.TOP ? Half.BOTTOM : Half.TOP);
+                    secBlock.setBlockData(secondPart);
                 }
-                if (!sign.update()) {
-                    throw new WorldEditorException("Failed to update signtext of " + materialName(block.getTypeId()), block.getLocation());
+            } else if ((curtype == Material.PISTON || curtype == Material.STICKY_PISTON)) {
+                Piston piston = (Piston) newData;
+                if (piston.isExtended()) {
+                    final Block secBlock = block.getRelative(piston.getFacing());
+                    if (secBlock.isEmpty()) {
+                        PistonHead head = (PistonHead) Material.PISTON_HEAD.createBlockData();
+                        head.setFacing(piston.getFacing());
+                        head.setType(curtype == Material.PISTON ? Type.NORMAL : Type.STICKY);
+                        secBlock.setBlockData(head);
+                    }
                 }
-            } else if (curtype == 26) {
-                final Bed bed = (Bed) block.getState().getData();
-                final Block secBlock = bed.isHeadOfBed() ? block.getRelative(bed.getFacing().getOppositeFace()) : block.getRelative(bed.getFacing());
-                if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(26, (byte) (bed.getData() | 8), true)) {
-                    throw new WorldEditorException(secBlock.getTypeId(), 26, secBlock.getLocation());
+            } else if (curtype == Material.PISTON_HEAD) {
+                PistonHead head = (PistonHead) newData;
+                final Block secBlock = block.getRelative(head.getFacing().getOppositeFace());
+                if (secBlock.isEmpty()) {
+                    Piston piston = (Piston) (head.getType() == Type.NORMAL ? Material.PISTON : Material.STICKY_PISTON).createBlockData();
+                    piston.setFacing(head.getFacing());
+                    piston.setExtended(true);
+                    secBlock.setBlockData(piston);
                 }
-            } else if ((curtype == 29 || curtype == 33) && (block.getData() & 8) > 0) {
-                final PistonBaseMaterial piston = (PistonBaseMaterial) block.getState().getData();
-                final Block secBlock = block.getRelative(piston.getFacing());
-                if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(34, curtype == 29 ? (byte) (block.getData() | 8) : (byte) (block.getData() & ~8), true)) {
-                    throw new WorldEditorException(secBlock.getTypeId(), 34, secBlock.getLocation());
+            } else if (newData instanceof Chest) {
+                Chest chest = (Chest) newData;
+                if (chest.getType() != org.bukkit.block.data.type.Chest.Type.SINGLE) {
+                    if (getConnectedChest(block) == null) {
+                        chest.setType(org.bukkit.block.data.type.Chest.Type.SINGLE);
+                        block.setBlockData(chest);
+                    }
                 }
-            } else if (curtype == 34) {
-                final PistonExtensionMaterial piston = (PistonExtensionMaterial) block.getState().getData();
-                final Block secBlock = block.getRelative(piston.getFacing().getOppositeFace());
-                if (secBlock.getTypeId() == 0 && !secBlock.setTypeIdAndData(piston.isSticky() ? 29 : 33, (byte) (block.getData() | 8), true)) {
-                    throw new WorldEditorException(secBlock.getTypeId(), piston.isSticky() ? 29 : 33, secBlock.getLocation());
-                }
-            } else if (curtype == 18 && (block.getData() & 8) > 0) {
-                block.setData((byte) (block.getData() & 0xF7));
             }
             return PerformResult.SUCCESS;
+        }
+    }
+
+    public static class EditComparator implements Comparator<Edit> {
+        private final int mult;
+
+        public EditComparator(QueryParams.Order order) {
+            mult = order == Order.DESC ? 1 : -1;
+        }
+
+        @Override
+        public int compare(Edit edit1, Edit edit2) {
+            long time1 = edit1.getTime();
+            long time2 = edit2.getTime();
+            return time1 > time2 ? mult : time1 < time2 ? -mult : 0;
         }
     }
 
@@ -252,8 +471,8 @@ public class WorldEditor implements Runnable {
     public static class WorldEditorException extends Exception implements LookupCacheElement {
         private final Location loc;
 
-        public WorldEditorException(int typeBefore, int typeAfter, Location loc) {
-            this("Failed to replace " + materialName(typeBefore) + " with " + materialName(typeAfter), loc);
+        public WorldEditorException(Material typeBefore, Material typeAfter, Location loc) {
+            this("Failed to replace " + typeBefore.name() + " with " + typeAfter.name(), loc);
         }
 
         public WorldEditorException(String msg, Location loc) {
@@ -264,6 +483,11 @@ public class WorldEditor implements Runnable {
         @Override
         public Location getLocation() {
             return loc;
+        }
+
+        @Override
+        public BaseComponent[] getLogMessage(int entry) {
+            return TextComponent.fromLegacyText(getMessage());
         }
     }
 }

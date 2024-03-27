@@ -1,11 +1,11 @@
 package de.diddiz.LogBlock;
 
-import org.bukkit.Location;
-
+import de.diddiz.LogBlock.util.MessagingUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import static de.diddiz.util.Utils.spaces;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Location;
 
 public class SummedKills implements LookupCacheElement {
     private final Actor player;
@@ -25,7 +25,12 @@ public class SummedKills implements LookupCacheElement {
     }
 
     @Override
-    public String getMessage() {
-        return kills + spaces((int) ((6 - String.valueOf(kills).length()) / spaceFactor)) + killed + spaces((int) ((7 - String.valueOf(killed).length()) / spaceFactor)) + player.getName();
+    public BaseComponent[] getLogMessage(int entry) {
+        return MessagingUtil.formatSummarizedChanges(kills, killed, new TextComponent(player.getName()), 6, 7, spaceFactor);
+    }
+
+    @Override
+    public int getNumChanges() {
+        return kills + killed;
     }
 }

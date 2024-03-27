@@ -1,11 +1,18 @@
 package de.diddiz.LogBlock;
 
-import de.diddiz.LogBlock.config.Config;
-import org.bukkit.Location;
-import org.bukkit.inventory.ItemStack;
+import static de.diddiz.LogBlock.util.ActionColor.DESTROY;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyDate;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyLocation;
+import static de.diddiz.LogBlock.util.MessagingUtil.prettyMaterial;
 
+import de.diddiz.LogBlock.util.BukkitUtils;
+import de.diddiz.LogBlock.util.MessagingUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Location;
+import org.bukkit.Material;
 
 public class Kill implements LookupCacheElement {
     final long id, date;
@@ -23,7 +30,7 @@ public class Kill implements LookupCacheElement {
     }
 
     public Kill(ResultSet rs, QueryParams p) throws SQLException {
-        id = p.needId ? rs.getInt("id") : 0;
+        id = p.needId ? rs.getLong("id") : 0;
         date = p.needDate ? rs.getTimestamp("date").getTime() : 0;
         loc = p.needCoords ? new Location(p.world, rs.getInt("x"), rs.getInt("y"), rs.getInt("z")) : null;
         killerName = p.needKiller ? rs.getString("killer") : null;
@@ -33,17 +40,7 @@ public class Kill implements LookupCacheElement {
 
     @Override
     public String toString() {
-        final StringBuilder msg = new StringBuilder();
-        if (date > 0) {
-            msg.append(Config.formatter.format(date)).append(" ");
-        }
-        msg.append(killerName).append(" killed ").append(victimName);
-        if (loc != null) {
-            msg.append(" at ").append(loc.getBlockX()).append(":").append(loc.getBlockY()).append(":").append(loc.getBlockZ());
-        }
-        String weaponName = prettyItemName(new ItemStack(weapon));
-        msg.append(" with " + weaponName); // + ("aeiou".contains(weaponName.substring(0, 1)) ? "an " : "a " )
-        return msg.toString();
+        return BaseComponent.toPlainText(getLogMessage());
     }
 
     @Override
@@ -52,15 +49,29 @@ public class Kill implements LookupCacheElement {
     }
 
     @Override
-    public String getMessage() {
-        return toString();
+    public BaseComponent[] getLogMessage(int entry) {
+        TextComponent msg = new TextComponent();
+        if (date > 0) {
+            msg.addExtra(prettyDate(date));
+            msg.addExtra(" ");
+        }
+        msg.addExtra(MessagingUtil.createTextComponentWithColor(killerName + " killed ", DESTROY.getColor()));
+        msg.addExtra(new TextComponent(victimName));
+        if (loc != null) {
+            msg.addExtra(" at ");
+            msg.addExtra(prettyLocation(loc, entry));
+        }
+        if (weapon != 0) {
+            msg.addExtra(" with ");
+            msg.addExtra(prettyItemName(MaterialConverter.getMaterial(weapon)));
+        }
+        return new BaseComponent[] { msg };
     }
 
-    public String prettyItemName(ItemStack i) {
-        String item = i.getType().toString().replace('_', ' ').toLowerCase();
-        if (item.equals("air")) {
-            item = "fist";
+    public TextComponent prettyItemName(Material t) {
+        if (t == null || BukkitUtils.isEmpty(t)) {
+            return prettyMaterial("fist");
         }
-        return item;
+        return prettyMaterial(t.toString().replace('_', ' '));
     }
 }

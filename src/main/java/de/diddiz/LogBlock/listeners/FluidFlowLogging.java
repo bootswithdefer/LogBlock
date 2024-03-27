@@ -3,21 +3,23 @@ package de.diddiz.LogBlock.listeners;
 import de.diddiz.LogBlock.Actor;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.Logging;
+import de.diddiz.LogBlock.config.Config;
 import de.diddiz.LogBlock.config.WorldConfig;
+import de.diddiz.LogBlock.util.BukkitUtils;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 import static de.diddiz.LogBlock.config.Config.getWorldConfig;
 
 public class FluidFlowLogging extends LoggingListener {
-    private static final Set<Integer> nonFluidProofBlocks = new HashSet<Integer>(Arrays.asList(27, 28, 31, 32, 37, 38, 39, 40, 50, 51, 55, 59, 66, 69, 70, 75, 76, 78, 93, 94, 104, 105, 106));
 
     public FluidFlowLogging(LogBlock lb) {
         super(lb);
@@ -26,44 +28,71 @@ public class FluidFlowLogging extends LoggingListener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockFromTo(BlockFromToEvent event) {
         final WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
-        if (wcfg != null) {
+        if (wcfg != null && (wcfg.isLogging(Logging.WATERFLOW) || wcfg.isLogging(Logging.LAVAFLOW))) {
+            final BlockData blockDataFrom = event.getBlock().getBlockData();
+            Material typeFrom = blockDataFrom.getMaterial();
+            boolean fromWaterlogged = false;
+            if (blockDataFrom instanceof Waterlogged) {
+                typeFrom = Material.WATER;
+                fromWaterlogged = true;
+            }
+            if (typeFrom == Material.SEAGRASS || typeFrom == Material.KELP_PLANT || typeFrom == Material.KELP) {
+                typeFrom = Material.WATER;
+                fromWaterlogged = true;
+            }
+
+            Block source = Config.logFluidFlowAsPlayerWhoTriggeredIt ? event.getBlock() : null;
             final Block to = event.getToBlock();
-            final int typeFrom = event.getBlock().getTypeId();
-            final int typeTo = to.getTypeId();
-            final boolean canFlow = typeTo == 0 || nonFluidProofBlocks.contains(typeTo);
-            if (typeFrom == 10 || typeFrom == 11) {
-                if (canFlow && wcfg.isLogging(Logging.LAVAFLOW)) {
-                    if (isSurroundedByWater(to) && event.getBlock().getData() <= 2) {
-                        consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 4, (byte) 0);
-                    } else if (typeTo == 0) {
-                        consumer.queueBlockPlace(new Actor("LavaFlow"), to.getLocation(), 10, (byte) (event.getBlock().getData() + 1));
+            final Material typeTo = to.getType();
+            boolean down = event.getFace() == BlockFace.DOWN;
+            final boolean canFlow = BukkitUtils.isEmpty(typeTo) || BukkitUtils.isNonFluidProofBlock(typeTo);
+            if (typeFrom == Material.LAVA && wcfg.isLogging(Logging.LAVAFLOW)) {
+                Levelled levelledFrom = (Levelled) blockDataFrom;
+                if (canFlow) {
+                    if (isSurroundedByWater(to) && levelledFrom.getLevel() <= 2) {
+                        consumer.queueBlockReplace(new Actor("LavaFlow", source), to.getState(), Material.COBBLESTONE.createBlockData());
                     } else {
-                        consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 10, (byte) (event.getBlock().getData() + 1));
+                        Levelled newBlock = (Levelled) blockDataFrom.clone();
+                        newBlock.setLevel(down ? 1 : Math.min(levelledFrom.getLevel() + 1, levelledFrom.getMaximumLevel()));
+                        if (BukkitUtils.isEmpty(typeTo)) {
+                            consumer.queueBlockPlace(new Actor("LavaFlow", source), to.getLocation(), newBlock);
+                        } else {
+                            consumer.queueBlockReplace(new Actor("LavaFlow", source), to.getState(), newBlock);
+                        }
                     }
-                } else if (typeTo == 8 || typeTo == 9) {
-                    if (event.getFace() == BlockFace.DOWN) {
-                        consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 1, (byte) 0);
+                } else if (typeTo == Material.WATER) {
+                    if (down) {
+                        consumer.queueBlockReplace(new Actor("LavaFlow", source), to.getState(), Material.STONE.createBlockData());
                     } else {
-                        consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 4, (byte) 0);
+                        consumer.queueBlockReplace(new Actor("LavaFlow", source), to.getState(), Material.COBBLESTONE.createBlockData());
                     }
                 }
-            } else if ((typeFrom == 8 || typeFrom == 9) && wcfg.isLogging(Logging.WATERFLOW)) {
-                if (typeTo == 0) {
-                    consumer.queueBlockPlace(new Actor("WaterFlow"), to.getLocation(), 8, (byte) (event.getBlock().getData() + 1));
-                } else if (nonFluidProofBlocks.contains(typeTo)) {
-                    consumer.queueBlockReplace(new Actor("WaterFlow"), to.getState(), 8, (byte) (event.getBlock().getData() + 1));
-                } else if (typeTo == 10 || typeTo == 11) {
-                    if (to.getData() == 0) {
-                        consumer.queueBlockReplace(new Actor("WaterFlow"), to.getState(), 49, (byte) 0);
+            } else if ((typeFrom == Material.WATER) && wcfg.isLogging(Logging.WATERFLOW)) {
+                Levelled levelledFrom = fromWaterlogged ? null : (Levelled) blockDataFrom;
+                Levelled newBlock = (Levelled) Material.WATER.createBlockData();
+                newBlock.setLevel(fromWaterlogged || down ? 1 : Math.min(levelledFrom.getLevel() + 1, levelledFrom.getMaximumLevel()));
+                if (BukkitUtils.isEmpty(typeTo)) {
+                    consumer.queueBlockPlace(new Actor("WaterFlow", source), to.getLocation(), newBlock);
+                } else if (BukkitUtils.isNonFluidProofBlock(typeTo)) {
+                    consumer.queueBlockReplace(new Actor("WaterFlow", source), to.getState(), newBlock);
+                } else if (typeTo == Material.LAVA) {
+                    int toLevel = ((Levelled) to.getBlockData()).getLevel();
+                    if (toLevel == 0) {
+                        consumer.queueBlockReplace(new Actor("WaterFlow", source), to.getState(), Material.OBSIDIAN.createBlockData());
                     } else if (event.getFace() == BlockFace.DOWN) {
-                        consumer.queueBlockReplace(new Actor("LavaFlow"), to.getState(), 1, (byte) 0);
+                        consumer.queueBlockReplace(new Actor("WaterFlow", source), to.getState(), Material.STONE.createBlockData());
                     }
                 }
-                if (typeTo == 0 || nonFluidProofBlocks.contains(typeTo)) {
-                    for (final BlockFace face : new BlockFace[]{BlockFace.DOWN, BlockFace.NORTH, BlockFace.WEST, BlockFace.EAST, BlockFace.SOUTH}) {
+                if (BukkitUtils.isEmpty(typeTo) || BukkitUtils.isNonFluidProofBlock(typeTo)) {
+                    for (final BlockFace face : new BlockFace[] { BlockFace.DOWN, BlockFace.NORTH, BlockFace.WEST, BlockFace.EAST, BlockFace.SOUTH }) {
                         final Block lower = to.getRelative(face);
-                        if (lower.getTypeId() == 10 || lower.getTypeId() == 11) {
-                            consumer.queueBlockReplace(new Actor("WaterFlow"), lower.getState(), lower.getData() == 0 ? 49 : 4, (byte) 0);
+                        if (lower.getType() == Material.LAVA) {
+                            int toLevel = ((Levelled) lower.getBlockData()).getLevel();
+                            if (toLevel == 0) {
+                                consumer.queueBlockReplace(new Actor("WaterFlow", source), lower.getState(), Material.OBSIDIAN.createBlockData());
+                            } else if (event.getFace() == BlockFace.DOWN) {
+                                consumer.queueBlockReplace(new Actor("WaterFlow", source), lower.getState(), Material.STONE.createBlockData());
+                            }
                         }
                     }
                 }
@@ -71,10 +100,25 @@ public class FluidFlowLogging extends LoggingListener {
         }
     }
 
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockForm(BlockFormEvent event) {
+        final WorldConfig wcfg = getWorldConfig(event.getBlock().getWorld());
+        if (wcfg != null && (wcfg.isLogging(Logging.WATERFLOW) || wcfg.isLogging(Logging.LAVAFLOW))) {
+            if (wcfg.isLogging(Logging.LAVAFLOW) && event.getBlock().getType() == Material.WATER && event.getNewState().getType() == Material.COBBLESTONE) {
+                consumer.queueBlockReplace(new Actor("LavaFlow"), event.getBlock().getBlockData(), event.getNewState());
+            }
+            if (wcfg.isLogging(Logging.WATERFLOW) && event.getBlock().getType() == Material.LAVA) {
+                consumer.queueBlockReplace(new Actor("WaterFlow"), event.getBlock().getBlockData(), event.getNewState());
+            }
+            if (wcfg.isLogging(Logging.WATERFLOW) && BukkitUtils.isConcreteBlock(event.getNewState().getType())) {
+                consumer.queueBlockReplace(new Actor("WaterFlow"), event.getBlock().getBlockData(), event.getNewState());
+            }
+        }
+    }
+
     private static boolean isSurroundedByWater(Block block) {
-        for (final BlockFace face : new BlockFace[]{BlockFace.NORTH, BlockFace.WEST, BlockFace.EAST, BlockFace.SOUTH}) {
-            final int type = block.getRelative(face).getTypeId();
-            if (type == 8 || type == 9) {
+        for (final BlockFace face : new BlockFace[] { BlockFace.NORTH, BlockFace.WEST, BlockFace.EAST, BlockFace.SOUTH }) {
+            if (block.getRelative(face).getType() == Material.WATER) {
                 return true;
             }
         }
