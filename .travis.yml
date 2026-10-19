@@ -1,5 +1,6 @@
 language: java
 jdk:
-  - oraclejdk7
+  - openjdk25
+script: mvn --batch-mode clean verify
 notifications:
   email: false
