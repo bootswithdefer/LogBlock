@@ -1,19 +1,19 @@
 package de.diddiz.LogBlock;
 
+import static de.diddiz.LogBlock.util.BukkitUtils.entityName;
+
+import java.lang.ref.WeakReference;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.projectiles.BlockProjectileSource;
 import org.bukkit.projectiles.ProjectileSource;
-
-import static de.diddiz.LogBlock.util.BukkitUtils.entityName;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.block.Block;
 
 public class Actor {
 
@@ -34,7 +34,7 @@ public class Actor {
     final String name;
     final String UUID;
     final Location blockLocation;
-    final Entity entity;
+    final WeakReference<Entity> entity;
 
     public Actor(String name, String UUID) {
         this.name = name;
@@ -68,7 +68,7 @@ public class Actor {
         this.name = name;
         this.UUID = UUID.toString();
         this.blockLocation = null;
-        this.entity = entity;
+        this.entity = entity == null ? null : new WeakReference<>(entity);
     }
 
     public Actor(String name) {
@@ -83,7 +83,7 @@ public class Actor {
         this.name = name;
         this.UUID = generateUUID(name);
         this.blockLocation = null;
-        this.entity = entity;
+        this.entity = entity == null ? null : new WeakReference<>(entity);
     }
 
     public Actor(ResultSet rs) throws SQLException {
@@ -106,7 +106,7 @@ public class Actor {
      * The acting entity object (if known)
      */
     public Entity getEntity() {
-        return entity;
+        return entity == null ? null : entity.get();
     }
 
     public static Actor actorFromEntity(Entity entity) {
